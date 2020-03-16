@@ -1,0 +1,23 @@
+Product Backlog									
+									
+Priority	Item	Details	Size Estimate	1	2	3	4	5	6
+1	Creation and execution of a game server. The server must be configurable on IP and port.		5						
+2	"Creation of a client; it should connect to the game server."		3						
+3	Clients and server itself should create public rooms.		3						
+4	"Clients must join and leave rooms."		5
+5	Rooms might have properties(owner, maxClients...), that could generate constraints.		34						
+6	Room should track connected clients.		3						
+7	Room should react to specific events (Message received, client connected...)		5						
+8	"Client should visualize all existing rooms. Room list might be filtered on various constraints decided by the client."		8
+9	Rooms shootdown and deletion.		13						
+10	"Clients should create private rooms. Private rooms must be accessible using room name or password."		21						
+11	Heartbeat service.		8						
+12	"Rooms might have a modifiable ""State""."		34
+13	"Clients should reconnect after fail, on certain circumstances."		34						
+14	Rooms might have properties(owner, maxClients...), that could generate constraints.		21						
+15	Matchmaking		21						
+16	"Client must send and receive messages from and to current connected rooms. "		13						
+17	"Rooms periodically update clients about room ""State""."		34						
+18	Rooms might have game loop.		13						
+19	Rooms might be locked for a certain period of time.		34						
+20	Implement prototype of Rock Paper Scissor 		89						
