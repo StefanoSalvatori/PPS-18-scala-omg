@@ -10,6 +10,8 @@ object TestActor {
 class TestActorImpl extends TestActor {
 
   override def receive: Receive = {
-    case msg => print("Received: " + msg)
+    case msg =>
+      print("Received: " + msg)
+      sender ! "Reply"
   }
 }
