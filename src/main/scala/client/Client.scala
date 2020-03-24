@@ -1,14 +1,19 @@
 package client
 
-object Client extends App {
+sealed trait Client {
+  def shutdown(): Unit
+}
+
+object Client {
+  def apply(): ClientImpl = new ClientImpl()
+}
+
+class ClientImpl extends Client {
 
   import akka.actor.ActorSystem
   import com.typesafe.config.ConfigFactory
-  val sys = ActorSystem("ClientSystem", ConfigFactory.load())
+  private val system = ActorSystem("ClientSystem", ConfigFactory.load())
+  //private val clientActor = system actorOf ClientActor()
 
-  val ref1 = sys.actorOf(TestActor(), "testActor")
-  ref1 ! "ping"
-
-  sys stop ref1
-  sys.terminate()
+  override def shutdown(): Unit = system.terminate()
 }
