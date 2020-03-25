@@ -1,7 +1,7 @@
 package client
 
 import akka.actor.{Actor, ActorSystem}
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest, HttpResponse, StatusCodes}
 import akka.util.ByteString
 import akka.pattern.pipe
 
@@ -20,23 +20,27 @@ class ClientActorImpl(private val serverUri: String) extends ClientActor {
 
   import akka.http.scaladsl.Http
   private val http = Http()
-  //http singleRequest HttpRequest{
-  //  uri = serverUri
-  //} pipeTo self
 
   import MessageDictionary._
   override def receive: Receive = {
+
+    case CreatePublicRoom =>
+      http singleRequest HttpRequest(
+        method = HttpMethods.POST,
+        uri = serverUri + Routes.publicRooms
+      ) pipeTo self
 
     case HttpResponse(StatusCodes.OK, headers, entity, _) =>
       entity.dataBytes.runFold(ByteString(""))(_ ++ _).foreach { body =>
         println("Response body: " + body.utf8String)
       }
 
-    case response @ HttpResponse(code, _, _, _) =>
+    case response@HttpResponse(code, _, _, _) =>
       println("Request failed, response code: " + code)
       response.discardEntityBytes()
 
     case _ =>
       print("Ignoring unknown message: " + _)
       sender ! UnknownMessageReply
+  }
 }
