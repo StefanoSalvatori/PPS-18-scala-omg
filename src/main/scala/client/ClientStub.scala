@@ -2,7 +2,10 @@ package client
 
 object ClientStub extends App {
 
-  val client = Client()
+  private val serverAddress = "localhost"
+  private val serverPort = 8080
 
-  client.shutdown()
+  val client = Client(serverAddress, serverPort)
+
+  //client.shutdown()
 }
