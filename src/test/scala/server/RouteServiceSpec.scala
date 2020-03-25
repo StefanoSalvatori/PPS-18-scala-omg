@@ -29,6 +29,7 @@ class RouteServiceSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest
 
   behavior of "Route Service"
 
+  /// --- Rooms routes --- ///
   it should "handle GET request on path 'rooms'" in {
     Get(ROOMS) ~> route ~> check {
       assert(status.isSuccess)
@@ -58,4 +59,6 @@ class RouteServiceSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest
       assert(status.isSuccess)
     }
   }
+
+
 }
