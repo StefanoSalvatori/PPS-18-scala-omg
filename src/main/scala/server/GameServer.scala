@@ -1,5 +1,18 @@
 package server
 
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.stream.scaladsl.Sink
+import com.typesafe.scalalogging.LazyLogging
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.language.postfixOps
+
+sealed trait ServerEvent
+
+case class ServerStarted(host: String, port: Int) extends ServerEvent
+
+case class ServerTerminated(value: Any) extends ServerEvent
 
 trait GameServer {
 
@@ -16,14 +29,24 @@ trait GameServer {
   val port: Int
 
   /**
-   * Start the server listening at [[server.GameServer#host]]:[[server.GameServer#port]].
+   *
+   * @return true if the server is started
    */
-  def start(): Unit
+  def isStarted: Boolean
+
+  /**
+   * Start the server listening at [[server.GameServer#host]]:[[server.GameServer#port]].
+   *
+   * @return A future that completes when the server is started
+   */
+  def start(): Future[ServerStarted]
 
   /**
    * Shutdown the server.
+   *
+   * @return A future that completes when the server is terminated
    */
-  def shutdown(): Unit
+  def shutdown(): Future[ServerTerminated]
 
   /**
    * Add a new type of room to the server
@@ -36,6 +59,10 @@ trait GameServer {
 
 
 object GameServer {
+
+  val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
+
+
   /**
    * Create a new game server at the the specified host and port
    *
@@ -43,42 +70,57 @@ object GameServer {
    * @param port the port it will be listening on
    * @return an instance if a [[server.GameServer]]
    */
-  def apply(host: String, port: Int): GameServer = new GameServerImpl(host, port)
+  def apply(host: String, port: Int)(implicit system: ActorSystem): GameServer = new GameServerImpl(host, port, system)
 
 
-  def fromExistingServer(akkaServer: Any): GameServer = _
+  /*def fromExistingServer(host: String, port: Int)(implicit system: ActorSystem): GameServer =
+    new GameServerImpl("", 0, system)*/
 }
 
 
 private class GameServerImpl(override val host: String,
-                             override val port: Int) extends GameServer {
+                             override val port: Int,
+                             implicit val system: ActorSystem) extends GameServer with GameServerRoutes with LazyLogging {
 
-  /**
-   * Start the server listening at [[server.GameServer#host]]:[[server.GameServer#port]].
-   */
-  override def start(): Unit = {
-    println("Starting server")
-    println("Server is listening on " + host + ":" + port)
+
+  implicit val executionContext: ExecutionContextExecutor = system.dispatcher
+
+  private var serverBinding: Option[Http.ServerBinding] = Option.empty
+
+  override def start(): Future[ServerStarted] = {
+    val serverSource = Http().bind(this.host, this.port)
+    val serverStartedFuture = serverSource.to(Sink.foreach(this.onClientConnected)).run()
+    serverStartedFuture.transform(binding => {
+      this.serverBinding = Option(binding)
+      ServerStarted(this.host, this.port)
+    }, identity)
   }
 
-
-  /**
-   * Shutdown the server.
-   */
-  override def shutdown(): Unit = {
-    println("Shutting down server")
-    println("Server is down")
-
+  override def shutdown(): Future[ServerTerminated] = {
+    this.serverBinding match {
+      case Some(binding) =>
+        binding.terminate(GameServer.SERVER_TERMINATION_DEADLINE).transform(_ => {
+          this.serverBinding = Option.empty
+          ServerTerminated()
+        }, identity)
+      case None => Future.failed(new IllegalStateException("Can't shutdown server if it is not started"))
+    }
   }
 
-  /**
-   * Add a new type of room to the server
-   *
-   * @param room The type of room to add
-   */
   override def defineRoom(room: Room): Unit = {
-    println("Defined " + room)
+    logger.debug("Defined " + room)
   }
+
+  private def onClientConnected(connection: Http.IncomingConnection): Unit = {
+    logger.debug("GAMESERVER: Accepted new connection from " + connection.remoteAddress)
+    connection handleWith route
+  }
+
+  /**
+   *
+   * @return true if the server is started
+   */
+  override def isStarted: Boolean = this.serverBinding.nonEmpty
 }
 
 
