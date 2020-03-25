@@ -78,6 +78,15 @@ class GameServerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest w
     assert(response.status equals StatusCodes.OK)
   }
 
+  it should "restart calling start() after shutdown()" in {
+    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    val res = Await.result(this.makeEmptyRequest(), MAX_WAIT_SERVER_STARTUP)
+    assert(res.isResponse())
+
+  }
+
 
   private def makeEmptyRequest(): Future[HttpResponse] = {
     this.makeEmptyRequestAt("")

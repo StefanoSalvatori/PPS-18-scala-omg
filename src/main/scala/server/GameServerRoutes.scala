@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.Route
 
 trait GameServerRoutes {
   val BASE_PATH = "gameserver"
-  val route: Route =
+  val serverRoutes: Route =
     path(this.BASE_PATH) {
       get {
         complete("Hello from server")

@@ -70,20 +70,27 @@ object GameServer {
    * @param port the port it will be listening on
    * @return an instance if a [[server.GameServer]]
    */
-  def apply(host: String, port: Int)(implicit system: ActorSystem): GameServer = new GameServerImpl(host, port, system)
+  def apply(host: String, port: Int): GameServer = new GameServerImpl(host, port)
 
 
   /*def fromExistingServer(host: String, port: Int)(implicit system: ActorSystem): GameServer =
     new GameServerImpl("", 0, system)*/
 }
 
-
+/**
+ * Implementation of a game server. It uses Akka Http internally with a private actor system to handle the server.
+ * @param host the address of the server
+ * @param port the port it will listen on
+ */
 private class GameServerImpl(override val host: String,
-                             override val port: Int,
-                             implicit val system: ActorSystem) extends GameServer with GameServerRoutes with LazyLogging {
+                             override val port: Int) extends GameServer with GameServerRoutes with LazyLogging {
 
 
-  implicit val executionContext: ExecutionContextExecutor = system.dispatcher
+  /**
+   * Internally creates actor system
+   */
+  implicit private val system: ActorSystem = ActorSystem("gameserver")
+  implicit private val executionContext: ExecutionContextExecutor = system.dispatcher
 
   private var serverBinding: Option[Http.ServerBinding] = Option.empty
 
@@ -113,7 +120,7 @@ private class GameServerImpl(override val host: String,
 
   private def onClientConnected(connection: Http.IncomingConnection): Unit = {
     logger.debug("GAMESERVER: Accepted new connection from " + connection.remoteAddress)
-    connection handleWith route
+    connection handleWith serverRoutes
   }
 
   /**
