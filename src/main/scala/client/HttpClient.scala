@@ -1,18 +1,17 @@
 package client
 
-import akka.actor.{Actor, ActorSystem}
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest, HttpResponse, StatusCodes}
-import akka.util.ByteString
+import akka.actor.{Actor, ActorSystem, Props}
+import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
 import akka.pattern.pipe
+import akka.util.ByteString
 
-sealed trait ClientActor extends Actor
+sealed trait HttpClient extends Actor
 
-object ClientActor {
-  import akka.actor.Props
-  def apply(serverUri: String): Props = Props(classOf[ClientActorImpl], serverUri)
+object HttpClient {
+  def apply(serverUri: String): Props = Props(classOf[HttpClientImpl], serverUri)
 }
 
-class ClientActorImpl(private val serverUri: String) extends ClientActor {
+class HttpClientImpl(private val serverUri: String) extends HttpClient {
 
   implicit val system: ActorSystem = context.system
   import scala.concurrent.ExecutionContext

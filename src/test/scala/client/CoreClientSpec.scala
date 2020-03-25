@@ -8,16 +8,16 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import client.MessageDictionary._
 
-class ClientActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
+class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with ImplicitSender
   with AnyWordSpecLike
   with BeforeAndAfterAll {
 
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
-  "A client actor" must {
+  "A core client" must {
     "ignore an unknown message" in {
-      val testActor = system actorOf ClientActor("http://localhost:8080")
+      val testActor = system actorOf CoreClient("http://localhost:8080")
       testActor ! "random message"
       expectMsg(UnknownMessageReply)
     }
