@@ -20,6 +20,8 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   private val system = ActorSystem("ClientSystem", ConfigFactory.load())
   private val clientActor = system actorOf CoreClient(serverUri)
 
+  clientActor ! "b"
+
   override def createPublicRoom(): Unit = clientActor ! CreatePublicRoom
 
   override def shutdown(): Unit = system.terminate()

@@ -1,8 +1,6 @@
 package client
 
-import akka.actor.{Actor, ActorSystem}
-
-sealed trait CoreClient extends Actor
+sealed trait CoreClient extends BasicActor
 
 object CoreClient {
   import akka.actor.Props
@@ -11,20 +9,13 @@ object CoreClient {
 
 class CoreClientImpl(private val serverUri: String) extends CoreClient {
 
-  implicit val system: ActorSystem = context.system
-  import scala.concurrent.ExecutionContext
-  implicit val executionContext: ExecutionContext = system.dispatcher
-
   private val httpClient = context.system actorOf HttpClient(serverUri)
 
   import MessageDictionary._
-  override def receive: Receive = {
-
+  val onReceive:PartialFunction[Any, Unit] = {
     case CreatePublicRoom =>
       httpClient ! CreatePublicRoom
-
-    case _ =>
-      print("Ignoring unknown message: " + _)
-      sender ! UnknownMessageReply
   }
+
+  override def receive: Receive = onReceive orElse fallbackReceive
 }
