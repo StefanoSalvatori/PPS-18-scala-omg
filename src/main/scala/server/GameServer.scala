@@ -4,6 +4,9 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.scaladsl.Sink
 import com.typesafe.scalalogging.LazyLogging
+import server.room.{Room, RoomOptions}
+import server.route_service.RouteService
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.language.postfixOps
@@ -78,14 +81,19 @@ object GameServer {
 }
 
 
+
+
+
 private class GameServerImpl(override val host: String,
                              override val port: Int,
-                             implicit val system: ActorSystem) extends GameServer with GameServerRoutes with LazyLogging {
+                             implicit val system: ActorSystem) extends GameServer with LazyLogging {
 
 
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
   private var serverBinding: Option[Http.ServerBinding] = Option.empty
+
+  private val routeService: RouteService = RouteService()
 
   override def start(): Future[ServerStarted] = {
     val serverSource = Http().bind(this.host, this.port)
@@ -113,7 +121,7 @@ private class GameServerImpl(override val host: String,
 
   private def onClientConnected(connection: Http.IncomingConnection): Unit = {
     logger.debug("GAMESERVER: Accepted new connection from " + connection.remoteAddress)
-    connection handleWith route
+    connection handleWith routeService.route
   }
 
   /**

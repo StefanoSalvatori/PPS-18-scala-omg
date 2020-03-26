@@ -4,6 +4,7 @@ package server
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.Materializer
+import server.route_service.RouteService
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.io.StdIn
