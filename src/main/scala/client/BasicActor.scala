@@ -1,9 +1,10 @@
 package client
 
 import akka.actor.{Actor, ActorSystem}
+import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.ExecutionContext
 
-trait BasicActor extends Actor {
+trait BasicActor extends Actor with LazyLogging {
 
   implicit val system: ActorSystem = context.system
   implicit val executionContext: ExecutionContext = system.dispatcher
@@ -11,7 +12,7 @@ trait BasicActor extends Actor {
   import MessageDictionary._
   val fallbackReceive: PartialFunction[Any, Unit] = {
     case msg =>
-      print("Ignoring unknown message: " + msg)
+      logger debug s"Ignoring unknown message: $msg"
       sender ! UnknownMessageReply
   }
 }
