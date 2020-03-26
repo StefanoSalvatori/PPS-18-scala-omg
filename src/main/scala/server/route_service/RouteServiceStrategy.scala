@@ -4,25 +4,25 @@ import common.{Room, RoomJsonSupport, RoomOptions}
 
 trait RouteServiceStrategy {
 
-  def onGetAllRooms: Option[RoomOptions] => Seq[Room]
+  def onGetAllRooms: Option[RoomOptions] => List[Room]
 
-  def onGetRoomType: (String, Option[RoomOptions]) => Seq[Room]
+  def onGetRoomType: (String, Option[RoomOptions]) => List[Room]
 
-  def onPutRoomType: (String, Option[RoomOptions]) => Seq[Room]
+  def onPutRoomType: (String, Option[RoomOptions]) => List[Room]
 
   def onPostRoomType: (String, Option[RoomOptions]) => Room
 
-  def onGetRoomTypeId: (String, Int) => Room
+  def onGetRoomTypeId: (String, String) => Option[Room]
 }
 
 case class RoomHandlerStrategy(roomHandler: RoomHandler) extends RouteServiceStrategy with RoomJsonSupport {
-  override def onGetAllRooms: Option[RoomOptions] => Seq[Room] = _ => Seq.empty
+  override def onGetAllRooms: Option[RoomOptions] => List[Room] = _ => this.roomHandler.availableRooms
 
-  override def onGetRoomType: (String, Option[RoomOptions]) => Seq[Room] = (_, _) => Seq.empty
+  override def onGetRoomType: (String, Option[RoomOptions]) => List[Room] = (_, _) => List.empty
 
-  override def onPutRoomType: (String, Option[RoomOptions]) => Seq[Room] = (_, _) => Seq.empty
+  override def onPutRoomType: (String, Option[RoomOptions]) => List[Room] = (_, _) => List.empty
 
   override def onPostRoomType: (String, Option[RoomOptions]) => Room = (_, _) => Room("")
 
-  override def onGetRoomTypeId: (String, Int) => Room = (_, _) => Room("")
+  override def onGetRoomTypeId: (String, String) => Option[Room] = (_, id) => this.roomHandler.getRoomById(id)
 }

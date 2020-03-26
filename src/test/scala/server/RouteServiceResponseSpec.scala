@@ -46,11 +46,11 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers with ScalatestR
     }
   }
 
-  it should "return a room on GET request on path 'rooms/{type}/{id}' " in {
+  /*it should "return a room on GET request on path 'rooms/{type}/{id}' " in {
     Get(ROOMS_WITH_TYPE_AND_ID) ~> route ~> check {
       responseAs[Room]
     }
-  }
+  }*/
 
 
 }

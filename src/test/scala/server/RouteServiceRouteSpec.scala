@@ -1,6 +1,6 @@
 package server
 
-import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes}
+import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.util.ByteString
 import common.Routes
@@ -14,8 +14,8 @@ import scala.concurrent.ExecutionContextExecutor
 trait TestOptions {
   val TEST_ROOM_TYPE = "test-room"
   val ROOMS = "/" + Routes.publicRooms
-  val ROOMS_WITH_TYPE = ROOMS + "/" + TEST_ROOM_TYPE
-  val ROOMS_WITH_TYPE_AND_ID = ROOMS_WITH_TYPE + "/" + "0"
+  val ROOMS_WITH_TYPE = "/" + Routes.roomsByType(TEST_ROOM_TYPE)
+  val ROOMS_WITH_TYPE_AND_ID = "/" + Routes.roomByTypeAndId(TEST_ROOM_TYPE, "a0")
   val TEST_ROOM_OPT_JSON = ByteString(
     s"""
        |{
@@ -29,7 +29,7 @@ trait TestOptions {
 
 
 class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with TestOptions
-  with BeforeAndAfter{
+  with BeforeAndAfter {
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private val routeService = RouteService()
@@ -39,15 +39,28 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
   behavior of "Route Service routing"
 
-  it should " enable the addition of routes for new rooms type" in {
+  before {
+    //ensure to have at least one room-type
     routeService.addRouteForRoomType(TEST_ROOM_TYPE)
+
+  }
+
+  it should " enable the addition of routes for new rooms type" in {
     assert(routeService.roomTypes.contains(TEST_ROOM_TYPE))
   }
 
-  it should " reject requests if the given room type does not exists" in {
-      Get(ROOMS + "/" + "wrong-type") ~> route ~> check{
-        assert(status.isFailure)
-      }
+
+  it should " reject requests if the given room type  does not exists" in {
+    Get("/" + Routes.roomsByType("wrong-type")) ~> route ~> check {
+      handled shouldBe false
+    }
+  }
+
+
+  it should " reject requests if the given id does not exists" in {
+    Get(ROOMS_WITH_TYPE + "/wrong-id" ) ~> route ~> check {
+      handled shouldBe false
+    }
   }
 
   /// --- Rooms routes ---
@@ -55,13 +68,13 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
   /// GET rooms
   it should "handle GET request on path 'rooms' with room options as payload" in {
     makeRequestWithDefaultRoomOptions(HttpMethods.GET)(ROOMS) ~> route ~> check {
-      assert(status.isSuccess)
+      handled shouldBe true
     }
   }
 
   it should "handle GET request on path 'rooms' with no payload" in {
     Get(ROOMS) ~> route ~> check {
-      assert(status.isSuccess)
+      handled shouldBe true
     }
   }
 
@@ -69,13 +82,13 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
   /// GET rooms/{type}
   it should "handle GET request on path 'rooms/{type}' with room options as payload " in {
     makeRequestWithDefaultRoomOptions(HttpMethods.GET)(ROOMS_WITH_TYPE) ~> route ~> check {
-      assert(status.isSuccess)
+      handled shouldBe true
     }
   }
 
   it should "handle GET request on path 'rooms/{type}' with no payload " in {
     Get(ROOMS_WITH_TYPE) ~> route ~> check {
-      assert(status.isSuccess)
+      handled shouldBe true
     }
   }
 
@@ -83,13 +96,13 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
   /// PUT rooms/{type}
   it should "handle PUT request on path 'rooms/{type}' with room options as payload  " in {
     makeRequestWithDefaultRoomOptions(HttpMethods.PUT)(ROOMS_WITH_TYPE) ~> route ~> check {
-      assert(status.isSuccess)
+      handled shouldBe true
     }
   }
 
   it should "handle PUT request on path 'rooms/{type}' with no payload " in {
     Put(ROOMS_WITH_TYPE) ~> route ~> check {
-      assert(status.isSuccess)
+      handled shouldBe true
     }
   }
 
@@ -97,27 +110,24 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
   /// --- POST rooms/{type}
   it should "handle POST request on path 'rooms/{type}' with room options as payload" in {
     makeRequestWithDefaultRoomOptions(HttpMethods.POST)(ROOMS_WITH_TYPE) ~> route ~> check {
-      assert(status.isSuccess)
+      handled shouldBe true
     }
   }
 
 
   it should "handle POST request on path 'rooms/{type}' with no payload" in {
     Post(ROOMS_WITH_TYPE) ~> route ~> check {
-      assert(status.isSuccess)
+      handled shouldBe true
     }
   }
 
 
-  /// GET rooms/{type}/{id}
+ /* /// GET rooms/{type}/{id}
   it should "handle GET request on path 'rooms/{type}/{id}' " in {
     Get(ROOMS_WITH_TYPE_AND_ID) ~> route ~> check {
-      assert(status.isSuccess)
+      handled shouldBe true
     }
-  }
-
-
-
+  }*/
 
 
 }

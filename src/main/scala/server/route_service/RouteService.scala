@@ -1,10 +1,12 @@
 package server.route_service
 
+import akka.http.scaladsl.model.{HttpResponse, StatusCode, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, get, path, put, _}
-import akka.http.scaladsl.server.{PathMatcher, Route}
-import common.{Room, RoomJsonSupport, RoomOptions, RoomSeq, Routes}
+import akka.http.scaladsl.server.{PathMatcher, RejectionHandler, Route}
+import common.{RoomJsonSupport, RoomOptions, RoomSeq, Routes}
 
-import scala.collection.mutable
+
+
 
 trait RouteService {
   val route: Route
@@ -14,12 +16,17 @@ trait RouteService {
 }
 
 object RouteService {
-  def apply(): RouteService = RouteServiceImpl(Set.empty, RoomHandlerStrategy(RoomHandler(Seq.empty)))
+  def apply(): RouteService = {
+    RouteServiceImpl(Set.empty, RoomHandlerStrategy(RoomHandler()) )
+  }
 }
 
-case class RoomTypeNotFound() extends Throwable
-case class RouteServiceImpl(var roomTypes: Set[String], routeServiceStrategy: RouteServiceStrategy)
+
+case class RouteServiceImpl(var roomTypes: Set[String],
+                            routeServiceStrategy: RouteServiceStrategy)
   extends RouteService with RoomJsonSupport {
+
+
 
   val route: Route =
     pathPrefix(Routes.publicRooms) {
@@ -31,13 +38,12 @@ case class RouteServiceImpl(var roomTypes: Set[String], routeServiceStrategy: Ro
             getRoomsByTypeRoute(roomType) ~
               putRoomsByTypeRoute(roomType) ~
               postRoomsByTypeRoute(roomType)
-          } ~ path(IntNumber) { roomId =>
+          } ~ pathPrefix(Segment) { roomId =>
             getRoomByTypeAndId(roomType, roomId)
           }
         } else {
-          failWith(RoomTypeNotFound())
+          reject //TODO: how to handle this?
         }
-
       }
     }
 
@@ -107,23 +113,16 @@ case class RouteServiceImpl(var roomTypes: Set[String], routeServiceStrategy: Ro
   /**
    * GET rooms/{type}/{id}
    */
-  private def getRoomByTypeAndId(roomType: String, roomId: Int): Route =
+  private def getRoomByTypeAndId(roomType: String, roomId: String): Route =
     get {
-      val room = this.routeServiceStrategy.onGetRoomTypeId(roomType, roomId)
-      complete(room)
+      this.routeServiceStrategy.onGetRoomTypeId(roomType, roomId) match {
+        case Some(room) => complete(room)
+        case None => reject //TODO: how to handle this?
+      }
     }
 
 
-  private def roomTypeMatcher: PathMatcher[Unit] = this.roomTypes.foldLeft(Neutral)(_ | _)
-
-
-
 
 }
 
-/**
- * Stub for a room handler
- */
-case class RoomHandler(room: Seq[Room]) {
 
-}
