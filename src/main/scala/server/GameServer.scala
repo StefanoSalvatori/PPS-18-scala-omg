@@ -49,6 +49,18 @@ trait GameServer {
   def shutdown(): Future[ServerTerminated]
 
   /**
+   * Define what to do on server start up
+   * @param callback the function to call on startup
+   */
+  def onStart(callback: => Unit)
+
+  /**
+   * Define what to do on server shutdown
+   * @param callback the function to call on shutdown
+   */
+  def onShutdown(callback: => Unit)
+
+  /**
    * Add a new type of room to the server
    *
    * @param room The type of room to add
@@ -61,7 +73,6 @@ trait GameServer {
 object GameServer {
 
   val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
-
 
   /**
    * Create a new game server at the the specified host and port
@@ -89,27 +100,31 @@ private class GameServerImpl(override val host: String,
   /**
    * Internally creates actor system
    */
-  implicit private val system: ActorSystem = ActorSystem("gameserver")
-  implicit private val executionContext: ExecutionContextExecutor = system.dispatcher
+  implicit private var system: ActorSystem = _
+  implicit private var executionContext: ExecutionContextExecutor = _
 
   private var serverBinding: Option[Http.ServerBinding] = Option.empty
 
+  private var onStart: () => Unit = () => {}
+  private var onShutdown: () => Unit = () => {}
+
+
+  override def onStart(callback: => Unit): Unit = this.onStart = () => callback
+
+  override def onShutdown(callback: => Unit): Unit = this.onShutdown = () => callback
+
+  override def isStarted: Boolean = this.serverBinding.nonEmpty
+
   override def start(): Future[ServerStarted] = {
-    val serverSource = Http().bind(this.host, this.port)
-    val serverStartedFuture = serverSource.to(Sink.foreach(this.onClientConnected)).run()
-    serverStartedFuture.transform(binding => {
-      this.serverBinding = Option(binding)
-      ServerStarted(this.host, this.port)
-    }, identity)
+    this.serverBinding match {
+      case Some(_) => Future.failed(new IllegalStateException("Server already started"))
+      case None => this.startServer()
+    }
   }
 
   override def shutdown(): Future[ServerTerminated] = {
     this.serverBinding match {
-      case Some(binding) =>
-        binding.terminate(GameServer.SERVER_TERMINATION_DEADLINE).transform(_ => {
-          this.serverBinding = Option.empty
-          ServerTerminated()
-        }, identity)
+      case Some(_) => this.shutdownServer()
       case None => Future.failed(new IllegalStateException("Can't shutdown server if it is not started"))
     }
   }
@@ -118,16 +133,45 @@ private class GameServerImpl(override val host: String,
     logger.debug("Defined " + room)
   }
 
+  /**
+   * Unbind http socket and terminate actorsystem
+   */
+  private def shutdownServer(): Future[ServerTerminated] = {
+    for {
+      _ <- this.serverBinding.get.terminate(GameServer.SERVER_TERMINATION_DEADLINE)
+      _ <- system.terminate()
+    } yield {
+      this.onShutdown()
+      this.serverBinding = Option.empty
+      ServerTerminated()
+    }
+  }
+
+  private def startServer(): Future[ServerStarted] = {
+    this.setupActorSystem()
+    val serverSource = Http().bind(this.host, this.port)
+    val serverStartedFuture = serverSource.to(Sink.foreach(this.onClientConnected)).run()
+    serverStartedFuture map (binding => {
+      this.onStart()
+      this.serverBinding = Option(binding)
+      ServerStarted(this.host, this.port)
+    })
+
+  }
+
   private def onClientConnected(connection: Http.IncomingConnection): Unit = {
     logger.debug("GAMESERVER: Accepted new connection from " + connection.remoteAddress)
     connection handleWith serverRoutes
   }
 
   /**
-   *
-   * @return true if the server is started
+   * Create a new actorsystem and restart the execution context
    */
-  override def isStarted: Boolean = this.serverBinding.nonEmpty
+  private def setupActorSystem(): Unit = {
+    this.system = ActorSystem()
+    this.executionContext = system.dispatcher
+  }
+
 }
 
 
