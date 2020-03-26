@@ -1,14 +1,42 @@
 package client
 
-object Client extends App {
+import java.util.concurrent.TimeUnit
+
+import akka.pattern.ask
+import MessageDictionary._
+import common.Room
+
+import scala.concurrent.{Await, ExecutionContext}
+
+sealed trait Client {
+  def createPublicRoom(): Unit
+  def joinedRooms(): Set[Room]
+  def shutdown(): Unit
+}
+
+object Client {
+  def apply(serverAddress: String, serverPort: Int): ClientImpl = new ClientImpl(serverAddress, serverPort)
+}
+
+class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
+
+  private val requestTimeout = 5 // Seconds
+  import akka.util.Timeout
+  implicit val timeout: Timeout = Timeout(requestTimeout, TimeUnit.SECONDS)
+
+  private val serverUri = "http://" + serverAddress + ":" + serverPort
 
   import akka.actor.ActorSystem
   import com.typesafe.config.ConfigFactory
-  val sys = ActorSystem("ClientSystem", ConfigFactory.load())
+  private val system = ActorSystem("ClientSystem", ConfigFactory.load())
+  implicit val executionContext: ExecutionContext = system.dispatcher
 
-  val ref1 = sys.actorOf(TestActor(), "testActor")
-  ref1 ! "ping"
+  private val coreClient = system actorOf CoreClient(serverUri)
 
-  sys stop ref1
-  sys.terminate()
+  override def createPublicRoom(): Unit = coreClient ! CreatePublicRoom
+
+  override def joinedRooms(): Set[Room] =
+    Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].rooms
+
+  override def shutdown(): Unit = system.terminate()
 }

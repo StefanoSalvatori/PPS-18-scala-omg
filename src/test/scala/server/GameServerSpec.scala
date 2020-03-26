@@ -79,6 +79,40 @@ class GameServerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest w
     assert(response.status equals StatusCodes.OK)
   }
 
+  it should "restart calling start() after shutdown()" in {
+    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    val res = Await.result(this.makeEmptyRequest(), MAX_WAIT_SERVER_STARTUP)
+    assert(res.isResponse())
+  }
+
+  it should "throw an IllegalStateException if start() is called twice" in {
+    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    assertThrows[IllegalStateException]{
+      Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    }
+  }
+
+  it should "allow to specify behaviour during shutdown" in {
+    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    var flag = false
+    this.server.onShutdown {
+      flag = true
+    }
+    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_STARTUP)
+    flag shouldBe true
+  }
+
+  it should "allow to specify behaviour during startup" in {
+    var flag = false
+    this.server.onStart {
+      flag = true
+    }
+    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    flag shouldBe true
+  }
+
 
   private def makeEmptyRequest(): Future[HttpResponse] = {
     this.makeEmptyRequestAt("")
