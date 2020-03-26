@@ -3,17 +3,19 @@ package server
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import common.Routes
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import server.route_service.RouteService
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.language.{implicitConversions, postfixOps}
 
-class GameServerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfter with
-  GameServerRoutes {
+class GameServerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfter{
 
+  private val BASE_PATH = Routes.publicRooms
   private val MAX_WAIT_REQUESTS = 5 seconds
   private val MAX_WAIT_CONNECTION_POOL_SHUTDOWN = 15 seconds
 
