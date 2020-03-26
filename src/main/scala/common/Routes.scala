@@ -2,5 +2,5 @@ package common
 
 object Routes {
 
-  val publicRooms = "/rooms"
+  val publicRooms = "rooms"
 }

@@ -3,22 +3,23 @@ package server
 import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.util.ByteString
+import common.Routes
+import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import server.room.{Room, RoomJsonSupport, RoomSeq}
 import server.route_service.RouteService
 
 import scala.concurrent.ExecutionContextExecutor
 
 trait TestOptions {
-  val ROOMS = "/" + RouteService.ROOMS_PATH
-  val ROOMS_WITH_TYPE = ROOMS + "/" + "type"
-  val ROOMS_WITH_TYPE_AND_ID = ROOMS + "/" + "type" + "/" + "0"
+  val TEST_ROOM_TYPE = "test-room"
+  val ROOMS = "/" + Routes.publicRooms
+  val ROOMS_WITH_TYPE = ROOMS + "/" + TEST_ROOM_TYPE
+  val ROOMS_WITH_TYPE_AND_ID = ROOMS_WITH_TYPE + "/" + "0"
   val TEST_ROOM_OPT_JSON = ByteString(
     s"""
        |{
-       |  "roomName":"",
-       |  "maxClients":0
+       |  "id":0
        |}
         """.stripMargin)
 
@@ -27,13 +28,27 @@ trait TestOptions {
 }
 
 
-class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with TestOptions {
+class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with TestOptions
+  with BeforeAndAfter{
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
-  private val route = RouteService().route
+  private val routeService = RouteService()
+
+  private val route = routeService.route
+
 
   behavior of "Route Service routing"
 
+  it should " enable the addition of routes for new rooms type" in {
+    routeService.addRouteForRoomType(TEST_ROOM_TYPE)
+    assert(routeService.roomTypes.contains(TEST_ROOM_TYPE))
+  }
+
+  it should " reject requests if the given room type does not exists" in {
+      Get(ROOMS + "/" + "wrong-type") ~> route ~> check{
+        assert(status.isFailure)
+      }
+  }
 
   /// --- Rooms routes ---
 
@@ -100,6 +115,9 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
       assert(status.isSuccess)
     }
   }
+
+
+
 
 
 }
