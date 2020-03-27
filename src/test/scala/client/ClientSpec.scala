@@ -58,7 +58,7 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "create a public room and automatically join such room" in {
-    client.createPublicRoom()
+    client createPublicRoom ROOM_TYPE_NAME
     Thread sleep 3000
     client.joinedRooms.size shouldEqual 1
   }

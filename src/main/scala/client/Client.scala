@@ -9,7 +9,7 @@ import common.{Room, Routes}
 import scala.concurrent.{Await, ExecutionContext}
 
 sealed trait Client {
-  def createPublicRoom(): Unit
+  def createPublicRoom(roomType: String): Unit
   def joinedRooms: Set[Room]
   def shutdown(): Unit
 }
@@ -33,7 +33,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   private val coreClient = system actorOf CoreClient(serverUri)
 
-  override def createPublicRoom(): Unit = coreClient ! CreatePublicRoom
+  override def createPublicRoom(roomType: String): Unit = coreClient ! CreatePublicRoom(roomType)
 
   override def joinedRooms: Set[Room] =
     Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].rooms

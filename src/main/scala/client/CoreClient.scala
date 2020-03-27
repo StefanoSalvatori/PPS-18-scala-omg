@@ -17,8 +17,8 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient {
 
   import MessageDictionary._
   val onReceive: PartialFunction[Any, Unit] = {
-    case CreatePublicRoom =>
-      httpClient ! CreatePublicRoom
+    case msg @ CreatePublicRoom(_) =>
+      httpClient ! msg
 
     case NewJoinedRoom(room) =>
       if (joinedRooms map (_ roomId) contains room.roomId) {

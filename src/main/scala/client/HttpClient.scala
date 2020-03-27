@@ -27,10 +27,10 @@ class HttpClientImpl(private val serverUri: String, private val coreClient: Acto
   import MessageDictionary._
   private val onReceive: PartialFunction[Any, Unit] = {
 
-    case CreatePublicRoom =>
+    case CreatePublicRoom(roomType) =>
       val f: Future[HttpResponse] = http singleRequest HttpRequest(
         method = HttpMethods.POST,
-        uri = serverUri + "/" + Routes.roomsByType("test_room")
+        uri = serverUri + "/" + Routes.roomsByType(roomType)
       )
 
       f onComplete (response => {

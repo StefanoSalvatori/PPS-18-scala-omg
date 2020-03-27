@@ -25,6 +25,8 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   private val serverPort = 8080
   private val serverUri = Routes.uri(serverAddress, serverPort)
 
+  private val ROOM_TYPE_NAME: String = "test_room"
+
   implicit val executionContext: ExecutionContext = system.dispatcher
   private val requestTimeout = 5 // Seconds
   import akka.util.Timeout
@@ -74,7 +76,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   "When the client creates a new public room, the core client" must {
     "add the new room to the set of joined rooms" in {
-      coreClient ! CreatePublicRoom
+      coreClient ! CreatePublicRoom(ROOM_TYPE_NAME)
       Thread sleep 1000
       (coreClient ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])

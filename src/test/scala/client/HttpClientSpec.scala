@@ -62,7 +62,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     val httpTestActor: ActorRef = system actorOf HttpClient(serverUri, probe.ref)
 
     "when asked to create a new public room, return the new room" in {
-      httpTestActor ! CreatePublicRoom
+      httpTestActor ! CreatePublicRoom(ROOM_TYPE_NAME)
       probe expectMsgClass classOf[NewJoinedRoom]
     }
   }
