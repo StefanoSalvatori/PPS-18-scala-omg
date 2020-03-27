@@ -9,7 +9,6 @@ import server.route_service.RouteService
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.io.StdIn
 
-
 //Main
 object Server{
 
