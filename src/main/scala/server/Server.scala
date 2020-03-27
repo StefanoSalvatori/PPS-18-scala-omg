@@ -9,6 +9,22 @@ import server.route_service.RouteService
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.io.StdIn
 
+object Test{
+
+  val Address: String = "localhost"
+  val Port: Int = 8080
+
+  def main(args: Array[String]): Unit = {
+    val l1 = List(1,2,3)
+    val l2 = List(4,5,6)
+    val l3 = List(7,8,9)
+    val l = Map("l1" -> l1, "l2" -> l2, "l3" -> l3)
+
+    val lr = l.values.flatMap(_.toList).toList
+    println(lr)
+  }
+
+  }
 
 //Main
 object Server{

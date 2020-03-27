@@ -17,16 +17,15 @@ trait RouteService {
 
 object RouteService {
   def apply(): RouteService = {
-    val roomHandler: RoomHandler = RoomHandler()
-    RouteServiceImpl(roomHandler, RouteServiceStrategyImpl(roomHandler))
+    RouteServiceImpl()
   }
 }
 
 
-case class RouteServiceImpl( private val roomHandler: RoomHandler,
-                             private val routeServiceStrategy: RouteServiceStrategy) extends RouteService with
-  RoomJsonSupport {
+case class RouteServiceImpl()
+  extends RouteService with RoomJsonSupport with RoomHandling {
 
+  this: RoomHandlerService =>
   var roomTypes: Set[String] = Set.empty
 
   val route: Route =
@@ -59,11 +58,11 @@ case class RouteServiceImpl( private val roomHandler: RoomHandler,
   private def getAllRoomsRoute: Route =
     get {
       entity(as[RoomOptions]) { roomOptions =>
-        val rooms = this.routeServiceStrategy.onGetAllRooms(Some(roomOptions))
+        val rooms = onGetAllRooms(Some(roomOptions))
         complete(RoomSeq(rooms))
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = this.routeServiceStrategy.onGetAllRooms(Option.empty)
+        val rooms = onGetAllRooms(Option.empty)
         complete(RoomSeq(rooms))
       }
     }
@@ -75,11 +74,11 @@ case class RouteServiceImpl( private val roomHandler: RoomHandler,
   private def getRoomsByTypeRoute(roomType: String): Route =
     get {
       entity(as[RoomOptions]) { roomOptions =>
-        val rooms = this.routeServiceStrategy.onGetRoomType(roomType, Some(roomOptions))
+        val rooms = onGetRoomType(roomType, Some(roomOptions))
         complete(common.RoomSeq(rooms))
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = this.routeServiceStrategy.onGetRoomType(roomType, Option.empty)
+        val rooms = onGetRoomType(roomType, Option.empty)
         complete(RoomSeq(rooms))
       }
     }
@@ -90,11 +89,11 @@ case class RouteServiceImpl( private val roomHandler: RoomHandler,
   private def putRoomsByTypeRoute(roomType: String): Route =
     put {
       entity(as[RoomOptions]) { roomOptions =>
-        val rooms = this.routeServiceStrategy.onPutRoomType(roomType, Some(roomOptions))
+        val rooms = onPutRoomType(roomType, Some(roomOptions))
         complete(RoomSeq(rooms)) //return a list containing only the created room if no room is available
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = this.routeServiceStrategy.onPutRoomType(roomType, Option.empty)
+        val rooms = onPutRoomType(roomType, Option.empty)
         complete(RoomSeq(rooms))
       }
     }
@@ -105,11 +104,11 @@ case class RouteServiceImpl( private val roomHandler: RoomHandler,
   private def postRoomsByTypeRoute(roomType: String): Route =
     post {
       entity(as[RoomOptions]) { roomOptions =>
-        val room = this.routeServiceStrategy.onPostRoomType(roomType, Some(roomOptions))
+        val room = onPostRoomType(roomType, Some(roomOptions))
         complete(room)
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
-        val room = this.routeServiceStrategy.onPostRoomType(roomType, Option.empty)
+        val room = onPostRoomType(roomType, Option.empty)
         complete(room)
       }
     }
@@ -119,7 +118,7 @@ case class RouteServiceImpl( private val roomHandler: RoomHandler,
    */
   private def getRoomByTypeAndId(roomType: String, roomId: String): Route =
     get {
-      this.routeServiceStrategy.onGetRoomTypeId(roomType, roomId) match {
+      onGetRoomTypeId(roomType, roomId) match {
         case Some(room) => complete(room)
         case None => reject //TODO: how to handle this?
       }

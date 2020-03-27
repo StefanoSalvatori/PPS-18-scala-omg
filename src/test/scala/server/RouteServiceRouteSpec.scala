@@ -1,9 +1,10 @@
 package server
 
+import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.util.ByteString
-import common.Routes
+import common.{RoomOptions, Routes}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -23,12 +24,14 @@ trait TestOptions {
        |  "id":0
        |}
         """.stripMargin)
-  val EMPTY_ROOM: RoomStrategy = new RoomStrategy {
+  val EMPTY_ROOM_STRATEGY: RoomStrategy = new RoomStrategy {
     override def onJoin(): Unit = {}
     override def onMessageReceived(): Unit = {}
     override def onLeave(): Unit = {}
     override def onCreate(): Unit = {}
   }
+
+  val EMPTY_ROOM_OPTIONS: RoomOptions = RoomOptions("")
 
   def makeRequestWithDefaultRoomOptions(method: HttpMethod)(uri: String): HttpRequest = HttpRequest(
     uri = uri, method = method, entity = HttpEntity(MediaTypes.`application/json`, TEST_ROOM_OPT_JSON))
@@ -48,8 +51,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
   before {
     //ensure to have at least one room-type
-    routeService.addRouteForRoomType(TEST_ROOM_TYPE, EMPTY_ROOM)
-
+    routeService.addRouteForRoomType(TEST_ROOM_TYPE, EMPTY_ROOM_STRATEGY)
   }
 
   it should " enable the addition of routes for new rooms type" in {
