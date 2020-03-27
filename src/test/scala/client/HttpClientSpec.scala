@@ -1,7 +1,5 @@
 package client
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
@@ -15,10 +13,6 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   with BeforeAndAfterAll {
 
   private val serverUri = "http://localhost:8080"
-
-  private val requestTimeout = 5 // Seconds
-  import akka.util.Timeout
-  implicit val timeout: Timeout = Timeout(requestTimeout, TimeUnit.SECONDS)
 
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
