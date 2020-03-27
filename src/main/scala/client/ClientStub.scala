@@ -6,7 +6,7 @@ object ClientStub extends App {
   private val serverPort = 8080
   val client = Client(serverAddress, serverPort)
 
-  //client.createPublicRoom()
+  client.createPublicRoom()
 
   //client.shutdown()
 }

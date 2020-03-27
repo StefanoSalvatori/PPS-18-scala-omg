@@ -27,14 +27,6 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
-  "A core client" must {
-    "ignore an unknown message" in {
-      val testActor = system actorOf CoreClient(serverUri)
-      testActor ! "random message"
-      expectMsg(UnknownMessageReply)
-    }
-  }
-
   "Regarding joined rooms, a core client" must {
     val testActor = system actorOf CoreClient(serverUri)
     val A = "A"; val B = "B"
