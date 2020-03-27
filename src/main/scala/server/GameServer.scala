@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.scaladsl.Sink
 import com.typesafe.scalalogging.LazyLogging
+import server.room.RoomStrategy
 import server.route_service.RouteService
 
 import scala.concurrent.duration._
@@ -17,8 +18,6 @@ case class ServerStarted(host: String, port: Int) extends ServerEvent
 case class ServerTerminated(value: Any) extends ServerEvent
 
 trait GameServer {
-
-  type Room = String
 
   /**
    * The host where the game server runs.
@@ -63,11 +62,11 @@ trait GameServer {
   def onShutdown(callback: => Unit)
 
   /**
-   * Add a new type of room to the server
-   *
-   * @param room The type of room to add
+   * Adds a new type of room to the server
+   * @param roomTypeName The name of the room
+   * @param roomStrategy The strategy that the room will use
    */
-  def defineRoom(room: Room)
+  def defineRoom(roomTypeName: String, roomStrategy: RoomStrategy)
 
 }
 
@@ -132,8 +131,9 @@ private class GameServerImpl(override val host: String,
     }
   }
 
-  override def defineRoom(room: Room): Unit = {
-    logger.debug("Defined " + room)
+  override def defineRoom(roomTypeName: String, room: RoomStrategy): Unit = {
+    logger.debug("Defined " + roomTypeName)
+    routeService.addRouteForRoomType(roomTypeName, room)
   }
 
   /**

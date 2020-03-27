@@ -1,6 +1,7 @@
 package server.route_service
 
 import common.Room
+import server.room.RoomStrategy
 
 trait RoomHandler{
 
@@ -10,14 +11,18 @@ trait RoomHandler{
 
   def getRoomById(id: String): Option[Room]
 
+  def defineRoomType(roomTypeName: String, roomStrategy: RoomStrategy)
+
+
 }
 
 object RoomHandler{
-  def apply(): RoomHandler = RoomHandlerImpl(Map.empty)
+  def apply(): RoomHandler = RoomHandlerImpl()
 }
-case class RoomHandlerImpl(var roomsMap: Map[String, Room]) extends RoomHandler {
+case class RoomHandlerImpl() extends RoomHandler {
 
-
+  var roomTypesHandlers: Map[String, RoomStrategy] = Map.empty
+  var roomsMap: Map[String, Room] = Map.empty
 
   override def createRoom(): Room = {
     val newId = (this.roomsMap.size + 1).toString
@@ -29,4 +34,7 @@ case class RoomHandlerImpl(var roomsMap: Map[String, Room]) extends RoomHandler 
   override def getRoomById(id: String): Option[Room] = this.roomsMap.get(id)
 
   override def availableRooms: List[Room] = roomsMap.values.toList
+
+  override def defineRoomType(roomTypeName: String, roomStrategy: RoomStrategy): Unit =
+    roomTypesHandlers = roomTypesHandlers + (roomTypeName -> roomStrategy)
 }

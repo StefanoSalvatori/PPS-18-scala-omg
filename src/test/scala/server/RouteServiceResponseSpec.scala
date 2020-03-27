@@ -15,7 +15,7 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers with ScalatestR
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private val routeService = RouteService()
   private val route = routeService.route
-  routeService.addRouteForRoomType(TEST_ROOM_TYPE)
+  routeService.addRouteForRoomType(TEST_ROOM_TYPE, EMPTY_ROOM)
 
   behavior of "Route Service routing with room handling"
 

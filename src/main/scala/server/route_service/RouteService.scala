@@ -4,6 +4,7 @@ import akka.http.scaladsl.model.{HttpResponse, StatusCode, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, get, path, put, _}
 import akka.http.scaladsl.server.{PathMatcher, RejectionHandler, Route}
 import common.{RoomJsonSupport, RoomOptions, RoomSeq, Routes}
+import server.room.RoomStrategy
 
 
 
@@ -11,22 +12,22 @@ import common.{RoomJsonSupport, RoomOptions, RoomSeq, Routes}
 trait RouteService {
   val route: Route
   var roomTypes: Set[String]
-
-  def addRouteForRoomType(roomType: String)
+  def addRouteForRoomType(roomType: String, roomStrategy: RoomStrategy)
 }
 
 object RouteService {
   def apply(): RouteService = {
-    RouteServiceImpl(Set.empty, RoomHandlerStrategy(RoomHandler()) )
+    val roomHandler: RoomHandler = RoomHandler()
+    RouteServiceImpl(roomHandler, RouteServiceStrategyImpl(roomHandler))
   }
 }
 
 
-case class RouteServiceImpl(var roomTypes: Set[String],
-                            routeServiceStrategy: RouteServiceStrategy)
-  extends RouteService with RoomJsonSupport {
+case class RouteServiceImpl( private val roomHandler: RoomHandler,
+                             private val routeServiceStrategy: RouteServiceStrategy) extends RouteService with
+  RoomJsonSupport {
 
-
+  var roomTypes: Set[String] = Set.empty
 
   val route: Route =
     pathPrefix(Routes.publicRooms) {
@@ -47,7 +48,10 @@ case class RouteServiceImpl(var roomTypes: Set[String],
       }
     }
 
-  def addRouteForRoomType(roomType: String): Unit = this.roomTypes = this.roomTypes + roomType
+  def addRouteForRoomType(roomType: String, roomStrategy: RoomStrategy): Unit = {
+    this.roomTypes = this.roomTypes + roomType
+    this.roomHandler.defineRoomType(roomType, roomStrategy)
+  }
 
   /**
    * GET rooms/

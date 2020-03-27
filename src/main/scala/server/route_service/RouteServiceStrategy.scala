@@ -15,7 +15,7 @@ trait RouteServiceStrategy {
   def onGetRoomTypeId: (String, String) => Option[Room]
 }
 
-case class RoomHandlerStrategy(roomHandler: RoomHandler) extends RouteServiceStrategy with RoomJsonSupport {
+case class RouteServiceStrategyImpl(roomHandler: RoomHandler) extends RouteServiceStrategy with RoomJsonSupport {
   override def onGetAllRooms: Option[RoomOptions] => List[Room] = _ => this.roomHandler.availableRooms
 
   override def onGetRoomType: (String, Option[RoomOptions]) => List[Room] = (_, _) => List.empty

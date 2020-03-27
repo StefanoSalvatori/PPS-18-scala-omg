@@ -7,21 +7,28 @@ import common.Routes
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import server.room.RoomStrategy
 import server.route_service.RouteService
 
 import scala.concurrent.ExecutionContextExecutor
 
 trait TestOptions {
   val TEST_ROOM_TYPE = "test-room"
-  val ROOMS = "/" + Routes.publicRooms
-  val ROOMS_WITH_TYPE = "/" + Routes.roomsByType(TEST_ROOM_TYPE)
-  val ROOMS_WITH_TYPE_AND_ID = "/" + Routes.roomByTypeAndId(TEST_ROOM_TYPE, "a0")
-  val TEST_ROOM_OPT_JSON = ByteString(
+  val ROOMS: String = "/" + Routes.publicRooms
+  val ROOMS_WITH_TYPE: String = "/" + Routes.roomsByType(TEST_ROOM_TYPE)
+  val ROOMS_WITH_TYPE_AND_ID: String = "/" + Routes.roomByTypeAndId(TEST_ROOM_TYPE, "a0")
+  val TEST_ROOM_OPT_JSON: ByteString = ByteString(
     s"""
        |{
        |  "id":0
        |}
         """.stripMargin)
+  val EMPTY_ROOM: RoomStrategy = new RoomStrategy {
+    override def onJoin(): Unit = {}
+    override def onMessageReceived(): Unit = {}
+    override def onLeave(): Unit = {}
+    override def onCreate(): Unit = {}
+  }
 
   def makeRequestWithDefaultRoomOptions(method: HttpMethod)(uri: String): HttpRequest = HttpRequest(
     uri = uri, method = method, entity = HttpEntity(MediaTypes.`application/json`, TEST_ROOM_OPT_JSON))
@@ -41,7 +48,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
   before {
     //ensure to have at least one room-type
-    routeService.addRouteForRoomType(TEST_ROOM_TYPE)
+    routeService.addRouteForRoomType(TEST_ROOM_TYPE, EMPTY_ROOM)
 
   }
 
