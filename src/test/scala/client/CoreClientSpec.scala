@@ -40,13 +40,13 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "add a room to joined room if such room was not previously joined" in {
-      testActor ! NewJoinedRoom(A)
+      testActor ! NewJoinedRoom(roomA)
       (testActor ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])
         assert(reply.asInstanceOf[JoinedRooms].rooms equals Set(roomA))
       })
 
-      testActor ! NewJoinedRoom(B)
+      testActor ! NewJoinedRoom(roomB)
       (testActor ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])
         assert(reply.asInstanceOf[JoinedRooms].rooms equals Set(roomA, roomB))
@@ -54,7 +54,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "not add an already joined room" in {
-      testActor ! NewJoinedRoom(A)
+      testActor ! NewJoinedRoom(roomA)
       (testActor ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])
         assert(reply.asInstanceOf[JoinedRooms].rooms equals Set(roomA, roomB))

@@ -5,7 +5,7 @@ import common.Room
 object MessageDictionary {
 
   case class CreatePublicRoom()
-  case class NewJoinedRoom(roomId: String)
+  case class NewJoinedRoom(room: Room)
   case class GetJoinedRooms()
   case class JoinedRooms(rooms: Set[Room])
 

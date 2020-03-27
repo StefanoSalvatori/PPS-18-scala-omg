@@ -20,12 +20,12 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient {
     case CreatePublicRoom =>
       httpClient ! CreatePublicRoom
 
-    case NewJoinedRoom(roomId) =>
-      if (joinedRooms map (_ roomId) contains roomId) {
-        logger debug s"Room $roomId was already joined!"
+    case NewJoinedRoom(room) =>
+      if (joinedRooms map (_ roomId) contains room.roomId) {
+        logger debug s"Room ${room.roomId} was already joined!"
       } else {
-        joinedRooms += Room(roomId)
-        logger debug s"New joined room $roomId"
+        joinedRooms += room
+        logger debug s"New joined room ${room.roomId}"
       }
       logger debug s"Current joined rooms: $joinedRooms"
 
