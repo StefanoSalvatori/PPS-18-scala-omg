@@ -1,38 +1,33 @@
 package client
 
-import java.util.concurrent.TimeUnit
-
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import common.TestConfig
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.RoomStrategy
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
 class ClientSpec extends AnyFlatSpec
   with Matchers
   with BeforeAndAfter
-  with BeforeAndAfterAll {
+  with BeforeAndAfterAll
+  with TestConfig {
 
   private val serverAddress = "localhost"
-  private val serverPort = 8080
+  private val serverPort = CLIENT_SPEC_SERVER_PORT
 
   private val ROOM_TYPE_NAME: String = "test_room"
-  private val SERVER_LAUNCH_AWAIT_TIME = 10 // sec
+  private val SERVER_LAUNCH_AWAIT_TIME = 10 seconds
+  private val SERVER_SHUTDOWN_AWAIT_TIME = 10 seconds
 
   private var gameServer: GameServer = _
   private var client: Client = _
 
   override def beforeAll(): Unit = {
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer onStart {
-      println("GAMESERVER STARTED")
-    }
-    gameServer onShutdown {
-      println("GAMESERVER IS DOWN :-(")
-    }
 
     gameServer.defineRoom(ROOM_TYPE_NAME, new RoomStrategy {
       override def onJoin(): Unit = {}
@@ -41,11 +36,11 @@ class ClientSpec extends AnyFlatSpec
       override def onCreate(): Unit = {}
     })
 
-    Await.ready(gameServer.start(), Duration(SERVER_LAUNCH_AWAIT_TIME, TimeUnit.SECONDS))
-    println(s"try http://$serverAddress:$serverPort/rooms/$ROOM_TYPE_NAME from your browser")
+    Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
   }
 
-  override def afterAll(): Unit = gameServer.shutdown()
+  override def afterAll(): Unit =
+    Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
 
   behavior of "Client"
 

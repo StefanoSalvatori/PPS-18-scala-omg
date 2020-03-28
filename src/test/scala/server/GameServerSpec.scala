@@ -3,7 +3,7 @@ package server
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import common.Routes
+import common.{Routes, TestConfig}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -13,7 +13,11 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.language.{implicitConversions, postfixOps}
 
-class GameServerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfter{
+class GameServerSpec extends AnyFlatSpec
+  with Matchers
+  with ScalatestRouteTest
+  with BeforeAndAfter
+  with TestConfig {
 
   private val BASE_PATH = Routes.publicRooms
   private val MAX_WAIT_REQUESTS = 5 seconds
@@ -23,7 +27,7 @@ class GameServerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest w
   private val MAX_WAIT_SERVER_SHUTDOWN = 5 seconds
 
   private val HOST: String = "localhost"
-  private val PORT: Int = 8080
+  private val PORT: Int = GAMESERVER_SPEC_SERVER_PORT
 
   implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private var server: GameServer = _
