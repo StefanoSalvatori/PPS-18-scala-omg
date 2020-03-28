@@ -8,7 +8,6 @@ trait Room <: {
   val roomId: String
 }
 
-
 case class SimpleRoomWithId(roomId: String) extends Room
 
 case class RoomOptions(options: String)
@@ -25,7 +24,6 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val roomIdJsonFormat: RootJsonFormat[SimpleRoomWithId]  = jsonFormat1(SimpleRoomWithId)
   implicit val roomSeqJsonFormat: RootJsonFormat[RoomSeq]  = jsonFormat1(RoomSeq)
 
-
   implicit val roomJsonFormat: RootJsonFormat[Room]  = new RootJsonFormat[Room] {
     def write(a: Room): JsValue = a match {
       case p: SimpleRoomWithId => roomIdJsonFormat.write(p)
@@ -33,5 +31,4 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
     def read(value: JsValue): SimpleRoomWithId =  value.convertTo[SimpleRoomWithId]
   }
-
 }

@@ -1,10 +1,15 @@
 package client
 
+import akka.NotUsed
 import akka.actor.{ActorRef, Props}
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
-import akka.pattern.pipe
-import akka.util.ByteString
-import common.Routes
+import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse}
+import common.{Room, RoomJsonSupport, Routes}
+import akka.http.scaladsl.unmarshalling._
+import akka.http.scaladsl.common.EntityStreamingSupport
+import akka.http.scaladsl.common.JsonEntityStreamingSupport
+import akka.stream.scaladsl.Source
+
+import scala.concurrent.Future
 
 sealed trait HttpClient extends BasicActor
 
@@ -12,28 +17,38 @@ object HttpClient {
   def apply(serverUri: String, coreClient: ActorRef): Props = Props(classOf[HttpClientImpl], serverUri, coreClient)
 }
 
-class HttpClientImpl(private val serverUri: String, private val coreClient: ActorRef) extends HttpClient {
+class HttpClientImpl(private val serverUri: String, private val coreClient: ActorRef) extends HttpClient with RoomJsonSupport {
 
   import akka.http.scaladsl.Http
   private val http = Http()
 
+  implicit val jsonStreamingSupport: JsonEntityStreamingSupport = EntityStreamingSupport.json()
+
   import MessageDictionary._
   private val onReceive: PartialFunction[Any, Unit] = {
 
-    case CreatePublicRoom =>
-      http singleRequest HttpRequest(
+    case CreatePublicRoom(roomType) =>
+      val f: Future[HttpResponse] = http singleRequest HttpRequest(
         method = HttpMethods.POST,
-        uri = serverUri + Routes.publicRooms
-      ) pipeTo self
+        uri = serverUri + "/" + Routes.roomsByType(roomType)
+      )
 
-    case HttpResponse(StatusCodes.OK, _, entity, _) =>
-      entity.dataBytes.runFold(ByteString(""))(_ ++ _).foreach { body =>
-        println("Response body: " + body.utf8String)
-      }
-
-    case response @ HttpResponse(code, _, _, _) =>
-      println("Request failed, response code: " + code)
-      response.discardEntityBytes()
+      f onComplete (response => {
+        if (response.isSuccess) {
+          val res: HttpResponse = response.get
+          val unmarshalled: Future[Source[Room, NotUsed]] = Unmarshal(res).to[Source[Room, NotUsed]]
+          val source = Source futureSource unmarshalled
+          source.runFold(Set[Room]())(_ + _) onComplete { res =>
+            if (res.isSuccess) {
+              coreClient ! NewJoinedRoom(res.get.head)
+            } else {
+              logger debug s"Failed to parse server response $response"
+            }
+          }
+        } else {
+          logger debug s"Failed to receive server response $response"
+        }
+      })
   }
 
   override def receive: Receive = onReceive orElse fallbackReceive
