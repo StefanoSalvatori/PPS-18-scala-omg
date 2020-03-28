@@ -11,16 +11,22 @@ object ClientStub extends App {
   //client.shutdown()
 
 
-  import common.MyOpt
+  import common.RoomOption
   import common.FilterOptions
 
-  val prop1 = MyOpt[Int]("A", 3)
-  val prop2 = MyOpt[String]("B", "svv")
-  val prop3 = MyOpt[Boolean]("C", true)
+  val prop1 = RoomOption("A", 3)
+  val prop2 = RoomOption("B", "svv")
+  val prop3 = RoomOption("C", true)
 
-  val filters = (prop1 > 2) andThen (prop2 :!= "asc") andThen (prop3 := true)
-  val shortFilter = FilterOptions.just(prop1 > 2)
+  //val empty = FilterOptions.empty()
+  //val short = FilterOptions just prop1 > 2
+  //val filters = (prop1 > 2) andThen (prop2 :!= "asc") andThen (prop3 := true)
+  //val combined = short ++ filters ++ empty
 
-  println(filters.options)
-  println(shortFilter.options)
+  //FilterOptions just prop2 := true
+
+  //println(empty.options)
+  //println(short.options)
+  //println(filters.options)
+  //println(combined.options)
 }

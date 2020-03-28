@@ -1,12 +1,13 @@
 package common
 
-trait FilterStrategy
-case class EqualStrategy() extends FilterStrategy
-case class NotEqualStrategy() extends FilterStrategy
-case class GreaterStrategy() extends FilterStrategy
-case class LowerStrategy() extends FilterStrategy
+sealed trait FilterStrategy
 
-trait FilterStrategies[T] {  opt: MyOpt[T] =>
+trait FilterStrategies[T] {  option: RoomOption[T] =>
+
+  case class EqualStrategy() extends FilterStrategy
+  case class NotEqualStrategy() extends FilterStrategy
+  case class GreaterStrategy() extends FilterStrategy
+  case class LowerStrategy() extends FilterStrategy
 
   def :=(that: T): FilterOption[T] = filterOption(EqualStrategy(), that)
   def :!=(that: T): FilterOption[T] = filterOption(NotEqualStrategy(), that)
@@ -14,25 +15,19 @@ trait FilterStrategies[T] {  opt: MyOpt[T] =>
   def <(that: T): FilterOption[T] = filterOption(LowerStrategy(), that)
 
   private def filterOption(filterStrategy: FilterStrategy, that: T): FilterOption[T] =
-    FilterOption(opt.name, filterStrategy, that)
+    FilterOption(option.name, filterStrategy, that)
 }
 
 case class FilterOption[T](optName: String, strategy: FilterStrategy, value: T) {
-  def andThen[U](filterOpt: FilterOption[U]): FilterOptions[_] = new FilterOptions(Seq(this, filterOpt))
+  def andThen[U](filterOpt: FilterOption[U]): FilterOptions[_] = FilterOptions(Seq(this, filterOpt))
 }
 
 object FilterOptions {
-  def just[T](filter: FilterOption[T]): FilterOptions[_] = new FilterOptions(Seq(filter))
+  def just(filter: FilterOption[_]): FilterOptions[_] = FilterOptions(Seq(filter))
+  def empty(): FilterOptions[_] = FilterOptions(Seq())
 }
 
-class FilterOptions[_](val options: Seq[FilterOption[_]]) {
-  def andThen[T](filterOpt: FilterOption[T]): FilterOptions[_]= new FilterOptions(options ++ Seq(filterOpt))
-
+case class FilterOptions[_](options: Seq[FilterOption[_]]) {
+  def andThen[T](that: FilterOption[T]): FilterOptions[_]= FilterOptions(options :+ that)
+  def ++[_](that: FilterOptions[_]): FilterOptions[_] = FilterOptions(options ++ that.options)
 }
-
-object MyOpt {
-  def apply[T](name: String, value: T): MyOpt[T] = new MyOpt(name, value)
-}
-
-case class MyOpt[T](name: String, value: T) extends FilterStrategies[T]
-
