@@ -2,13 +2,15 @@ package server
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Sink
 import com.typesafe.scalalogging.LazyLogging
 import server.room.RoomStrategy
 import server.route_service.RouteService
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 
 sealed trait ServerEvent
@@ -51,18 +53,22 @@ trait GameServer {
 
   /**
    * Define what to do on server start up
+   *
    * @param callback the function to call on startup
    */
   def onStart(callback: => Unit)
 
   /**
    * Define what to do on server shutdown
+   *
    * @param callback the function to call on shutdown
    */
   def onShutdown(callback: => Unit)
 
+
   /**
    * Adds a new type of room to the server
+   *
    * @param roomTypeName The name of the room
    * @param roomStrategy The strategy that the room will use
    */
@@ -76,40 +82,44 @@ object GameServer {
   val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
 
   /**
-   * Create a new game server at the the specified host and port
+   * Create a new game server at the the specified host and port.
+   * <br>
+   * You can pass optional routes that will be used by the server so that, for example, you can use this both as game
+   * server and web-server.
    *
-   * @param host the hostname of the server
-   * @param port the port it will be listening on
+   * @note <b>If your routes contain 'rooms' as base path they will not be used because that is a reserved path used
+   *       internally</b>
+   *
+   * @param host           the hostname of the server
+   * @param port           the port it will be listening on
+   * @param existingRoutes (optional) additional routes that will be used by the server
    * @return an instance if a [[server.GameServer]]
    */
-  def apply(host: String, port: Int): GameServer = new GameServerImpl(host, port)
+  def apply(host: String, port: Int, existingRoutes: Route = reject): GameServer = new GameServerImpl(host, port, existingRoutes)
 
 
-  /*def fromExistingServer(host: String, port: Int)(implicit system: ActorSystem): GameServer =
-    new GameServerImpl("", 0, system)*/
 }
 
 /**
  * Implementation of a game server. It uses Akka Http internally with a private actor system to handle the server.
+ *
  * @param host the address of the server
  * @param port the port it will listen on
- */
+ * @param additionalRoutes (optional) additional routes that will be used by the server
+ **/
 private class GameServerImpl(override val host: String,
-                             override val port: Int) extends GameServer  with LazyLogging {
+                     override val port: Int,
+                     private val additionalRoutes: Route = reject) extends GameServer with LazyLogging {
 
+  implicit var system: ActorSystem = _
+  implicit var executionContext: ExecutionContext = _
 
-  /**
-   * Internally creates actor system
-   */
-  implicit private var system: ActorSystem = _
-  implicit private var executionContext: ExecutionContextExecutor = _
 
   private val routeService = RouteService()
   private var serverBinding: Option[Http.ServerBinding] = Option.empty
 
   private var onStart: () => Unit = () => {}
   private var onShutdown: () => Unit = () => {}
-
 
   override def onStart(callback: => Unit): Unit = this.onStart = () => callback
 
@@ -132,8 +142,11 @@ private class GameServerImpl(override val host: String,
   }
 
   override def defineRoom(roomTypeName: String, room: RoomStrategy): Unit = {
-    logger.debug("Defined " + roomTypeName)
     routeService.addRouteForRoomType(roomTypeName, room)
+  }
+
+  private def onClientConnected(connection: Http.IncomingConnection): Unit = {
+    connection handleWith routeService.route ~ additionalRoutes
   }
 
   /**
@@ -142,7 +155,7 @@ private class GameServerImpl(override val host: String,
   private def shutdownServer(): Future[ServerTerminated] = {
     for {
       _ <- this.serverBinding.get.terminate(GameServer.SERVER_TERMINATION_DEADLINE)
-      _ <- system.terminate()
+      _ <- this.system.terminate()
     } yield {
       this.onShutdown()
       this.serverBinding = Option.empty
@@ -162,18 +175,11 @@ private class GameServerImpl(override val host: String,
 
   }
 
-  private def onClientConnected(connection: Http.IncomingConnection): Unit = {
-    logger.debug("GAMESERVER: Accepted new connection from " + connection.remoteAddress)
-    connection handleWith routeService.route
+  private def setupActorSystem(): Unit = {
+      this.system = ActorSystem()
+      this.executionContext = this.system.dispatcher
   }
 
-  /**
-   * Create a new actorsystem and restart the execution context
-   */
-  private def setupActorSystem(): Unit = {
-    this.system = ActorSystem()
-    this.executionContext = system.dispatcher
-  }
 
 }
 
