@@ -9,7 +9,7 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpecLike
 import client.MessageDictionary._
-import common.Room
+import common.CommonRoom.Room
 
 import scala.concurrent.ExecutionContext
 

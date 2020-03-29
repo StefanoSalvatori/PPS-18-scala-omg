@@ -5,7 +5,6 @@ import java.util.concurrent.{Future, TimeUnit}
 import akka.pattern.ask
 import MessageDictionary._
 import client.room.ClientRoom.ClientRoom
-import common.Room
 import server.room.ServerRoom.{RoomId, RoomType}
 
 import scala.concurrent.{Await, ExecutionContext}

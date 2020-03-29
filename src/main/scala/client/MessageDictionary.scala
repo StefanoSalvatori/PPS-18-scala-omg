@@ -1,7 +1,6 @@
 package client
 
 import client.room.ClientRoom.ClientRoom
-import common.Room
 
 object MessageDictionary {
 

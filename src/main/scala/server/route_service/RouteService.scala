@@ -2,7 +2,8 @@ package server.route_service
 
 import akka.http.scaladsl.server.Directives.{complete, get, put, _}
 import akka.http.scaladsl.server.Route
-import common.{RoomJsonSupport, RoomOptions, RoomSeq, Routes}
+import common.CommonRoom.{RoomJsonSupport, RoomOptions, RoomSeq}
+import common.Routes
 import server.room.ServerRoom.{RoomId, RoomStrategy}
 
 
@@ -88,7 +89,7 @@ case class RouteServiceImpl() extends RouteService with RoomJsonSupport with Roo
     get {
       entity(as[RoomOptions]) { roomOptions =>
         val rooms = onGetRoomType(roomType, Some(roomOptions))
-        complete(common.RoomSeq(rooms))
+        complete(RoomSeq(rooms))
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
         val rooms = onGetRoomType(roomType, Option.empty)

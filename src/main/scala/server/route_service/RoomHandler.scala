@@ -2,7 +2,7 @@ package server.route_service
 
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.{Flow, Keep, RunnableGraph, Sink, Source}
-import common.{Room, RoomOptions}
+import common.CommonRoom.{Room, RoomOptions}
 import server.room.ServerRoom.{RoomId, RoomStrategy}
 import server.route_service.RoomHandler.ClientConnectionHandler
 

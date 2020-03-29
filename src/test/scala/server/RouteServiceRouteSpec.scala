@@ -4,7 +4,8 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes, StatusCodes}
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.util.ByteString
-import common.{Room, RoomJsonSupport, RoomOptions, Routes}
+import common.CommonRoom.{Room, RoomJsonSupport, RoomOptions}
+import common.Routes
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

@@ -2,7 +2,7 @@ package server
 
 import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import common.{Room, RoomJsonSupport, RoomSeq}
+import common.CommonRoom.{Room, RoomJsonSupport, RoomSeq}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import server.route_service.RouteService
