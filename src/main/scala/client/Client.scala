@@ -1,16 +1,57 @@
 package client
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{Future, TimeUnit}
 
 import akka.pattern.ask
 import MessageDictionary._
+import client.room.ClientRoom.ClientRoom
 import common.Room
+import server.room.ServerRoom.{RoomId, RoomType}
 
 import scala.concurrent.{Await, ExecutionContext}
 
 sealed trait Client {
-  def createPublicRoom(): Unit
-  def joinedRooms(): Set[Room]
+
+  /**
+   * Creates a new public room the join
+   * @param roomType type of room to create
+   * @param roomOption options
+   * @return a future with the joined room
+   */
+  def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom]
+
+  /**
+   * Join an existing room or create a new one, by provided roomType and options
+   * @param roomType type of room to join
+   * @param roomOption filtering options
+   * @return a future with the joined room
+   */
+  def joinOrCreate(roomType: RoomType, roomOption: Any) : Future[ClientRoom]
+
+  /**
+   * Joins an existing room by provided roomType and options.
+   * @param roomType type of room to join
+   * @param roomOption filtering options
+   * @return a future containing the joined room
+   */
+  def join(roomType: RoomType, roomOption: Any) : Future[ClientRoom]
+
+  /**
+   * Joins an existing room by its roomId.
+   * @param roomId the id of the room to join
+   * @return a future with the joined room
+   */
+  def joinById(roomId: RoomId) : Future[ClientRoom]
+
+
+  /**
+   * @param roomType type of room to get
+   * @return List all available rooms to connect of the given type
+   */
+  def getAvailableRoomsByType(roomType: String) : Future[List[ClientRoom]]
+
+  def joinedRooms(): Set[ClientRoom]
+
   def shutdown(): Unit
 }
 
@@ -33,10 +74,21 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   private val coreClient = system actorOf CoreClient(serverUri)
 
-  override def createPublicRoom(): Unit = coreClient ! CreatePublicRoom
+  /*override def createPublicRoom(roomType: RoomType, roomOption: Any): Unit =
+    coreClient ! CreatePublicRoom*/
 
-  override def joinedRooms(): Set[Room] =
+  override def joinedRooms(): Set[ClientRoom] =
     Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].rooms
 
   override def shutdown(): Unit = system.terminate()
+
+  override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] = ???
+
+  override def joinOrCreate(roomType: RoomType, roomOption: Any): Future[ClientRoom] = ???
+
+  override def join(roomType: RoomType, roomOption: Any): Future[ClientRoom] = ???
+
+  override def joinById(roomId: RoomId): Future[ClientRoom] = ???
+
+  override def getAvailableRoomsByType(roomType: String): Future[List[ClientRoom]] = ???
 }

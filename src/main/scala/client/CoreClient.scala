@@ -1,6 +1,6 @@
 package client
 
-import common.Room
+import client.room.ClientRoom.ClientRoom
 
 sealed trait CoreClient extends BasicActor
 
@@ -13,7 +13,7 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient {
 
   private val httpClient = context.system actorOf HttpClient(serverUri, self)
 
-  private var joinedRooms: Set[Room] = Set()
+  private var joinedRooms: Set[ClientRoom] = Set()
 
   import MessageDictionary._
   val onReceive: PartialFunction[Any, Unit] = {
@@ -24,7 +24,7 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient {
       if (joinedRooms map (_ roomId) contains roomId) {
         logger debug s"Room $roomId was already joined!"
       } else {
-        joinedRooms += Room(roomId)
+        joinedRooms += ClientRoom(roomId)
         logger debug s"New joined room $roomId"
       }
       logger debug s"Current joined rooms: $joinedRooms"
