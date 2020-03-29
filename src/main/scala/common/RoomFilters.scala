@@ -19,15 +19,15 @@ trait FilterStrategies[T] {  option: RoomOption[T] =>
 }
 
 case class FilterOption[T](optName: String, strategy: FilterStrategy, value: T) {
-  def andThen[U](filterOpt: FilterOption[U]): FilterOptions[_] = FilterOptions(Seq(this, filterOpt))
+  def andThen(filterOpt: FilterOption[_]): FilterOptions = FilterOptions(Seq(this, filterOpt))
 }
 
 object FilterOptions {
-  def just(filter: FilterOption[_]): FilterOptions[_] = FilterOptions(Seq(filter))
-  def empty(): FilterOptions[_] = FilterOptions(Seq())
+  def just(filter: FilterOption[_]): FilterOptions = FilterOptions(Seq(filter))
+  def empty(): FilterOptions = FilterOptions(Seq())
 }
 
-case class FilterOptions[_](options: Seq[FilterOption[_]]) {
-  def andThen[T](that: FilterOption[T]): FilterOptions[_]= FilterOptions(options :+ that)
-  def ++[_](that: FilterOptions[_]): FilterOptions[_] = FilterOptions(options ++ that.options)
+case class FilterOptions(options: Seq[FilterOption[_]]) {
+  def andThen(that: FilterOption[_]): FilterOptions= FilterOptions(options :+ that)
+  def ++(that: FilterOptions): FilterOptions = FilterOptions(options ++ that.options)
 }
