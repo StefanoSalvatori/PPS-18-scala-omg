@@ -20,11 +20,11 @@ object ServerActor {
   case object StopServer extends ServerRequest
 
 
-  sealed trait ServerReponse
-  case object Started extends ServerReponse
-  case object Stopped extends ServerReponse
+  sealed trait ServerResponse
+  case object Started extends ServerResponse
+  case object Stopped extends ServerResponse
 
-  case class ErrorResponse(msg: String) extends ServerReponse
+  case class ErrorResponse(msg: String) extends ServerResponse
   object ServerAlreadyRunning extends ErrorResponse("Server already running")
   object ServerIsStarting extends ErrorResponse("Server is starting")
   object ServerAlreadyStopped extends ErrorResponse("Server already stopped")

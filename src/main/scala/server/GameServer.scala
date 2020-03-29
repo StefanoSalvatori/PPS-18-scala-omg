@@ -71,6 +71,7 @@ object GameServer {
 
   val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
 
+
   /**
    * Create a new game server at the the specified host and port.
    * <br>
@@ -120,26 +121,26 @@ private class GameServerImpl(override val host: String,
 
   override def start(): Future[Unit] = {
     (serverActor ? StartServer(host, port, routeService.route ~ additionalRoutes))
-      .asInstanceOf[Future[ServerReponse]] flatMap {
+      .asInstanceOf[Future[ServerResponse]] flatMap {
       case Started  =>
         this.onStart()
         Future.successful()
       case ErrorResponse(msg) => Future.failed(new IllegalStateException(msg))
-      case _ => Future.failed(new Exception())
+      case _ => Future.failed(new IllegalStateException())
     }
   }
 
   override def shutdown(): Future[Unit] = {
-    (serverActor ? StopServer).asInstanceOf[Future[ServerReponse]] flatMap  {
+    (serverActor ? StopServer).asInstanceOf[Future[ServerResponse]] flatMap  {
       case Stopped =>
         this.onShutdown()
         Future.successful()
       case ErrorResponse(msg) => Future.failed(new IllegalStateException(msg))
-      case _ => Future.failed(new Exception())
+      case _ => Future.failed(new IllegalStateException())
     }
   }
 
-  override def defineRoom(roomTypeName: String, room: RoomStrategy): Unit = {
+  override def defineRoom(roomTypeName: String, room: RoomStrategy) : Unit = {
     routeService.addRouteForRoomType(roomTypeName, room)
   }
 
