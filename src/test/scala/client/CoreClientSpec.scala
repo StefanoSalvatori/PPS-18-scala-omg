@@ -14,6 +14,8 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.ExecutionContext
 
+import scala.concurrent.duration._
+
 class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with ImplicitSender
   with AnyWordSpecLike
@@ -29,9 +31,8 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   private val ROOM_TYPE_NAME: String = "test_room"
 
   implicit val executionContext: ExecutionContext = system.dispatcher
-  private val requestTimeout = 5 // Seconds
   import akka.util.Timeout
-  implicit val timeout: Timeout = Timeout(requestTimeout, TimeUnit.SECONDS)
+  implicit val timeout: Timeout = 5 seconds
 
   private var coreClient: ActorRef = _
 
