@@ -9,7 +9,7 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.wordspec.AnyWordSpecLike
 import client.MessageDictionary._
-import common.{Room, Routes}
+import common.{Room, Routes, TestConfig}
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.ExecutionContext
@@ -19,10 +19,11 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   with AnyWordSpecLike
   with Matchers
   with BeforeAndAfter
-  with BeforeAndAfterAll {
+  with BeforeAndAfterAll
+  with TestConfig {
 
   private val serverAddress = "localhost"
-  private val serverPort = 8080
+  private val serverPort = CORE_CLIENT_SPEC_SERVER_PORT
   private val serverUri = Routes.uri(serverAddress, serverPort)
 
   private val ROOM_TYPE_NAME: String = "test_room"
