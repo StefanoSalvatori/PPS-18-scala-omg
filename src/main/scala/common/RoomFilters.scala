@@ -1,16 +1,15 @@
 package common
 
 sealed trait FilterStrategy
+case class EqualStrategy() extends FilterStrategy
+case class NotEqualStrategy() extends FilterStrategy
+case class GreaterStrategy() extends FilterStrategy
+case class LowerStrategy() extends FilterStrategy
 
-trait FilterStrategies[T] {  option: RoomOption[T] =>
+trait FilterStrategies[T] {  option: RoomProperty[T] =>
 
-  case class EqualStrategy() extends FilterStrategy
-  case class NotEqualStrategy() extends FilterStrategy
-  case class GreaterStrategy() extends FilterStrategy
-  case class LowerStrategy() extends FilterStrategy
-
-  def :=(that: T): FilterOption[T] = filterOption(EqualStrategy(), that)
-  def :!=(that: T): FilterOption[T] = filterOption(NotEqualStrategy(), that)
+  def =:=(that: T): FilterOption[T] = filterOption(EqualStrategy(), that)
+  def =!=(that: T): FilterOption[T] = filterOption(NotEqualStrategy(), that)
   def >(that: T): FilterOption[T] = filterOption(GreaterStrategy(), that)
   def <(that: T): FilterOption[T] = filterOption(LowerStrategy(), that)
 

@@ -1,6 +1,6 @@
 package common
 
-case class RoomOption[T:Ordering](name: String, value: T) extends FilterStrategies[T]
+case class RoomProperty[T:Ordering](name: String, value: T) extends FilterStrategies[T]
 
 object BasicRoomOptionValueComparators {
   implicit object IntOrdering extends Ordering[Int] {
