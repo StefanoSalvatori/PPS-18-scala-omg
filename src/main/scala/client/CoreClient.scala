@@ -1,6 +1,8 @@
 package client
 
-import common.Room
+import client.room.ClientRoom.ClientRoom
+import common.CommonRoom.Room
+
 
 sealed trait CoreClient extends BasicActor
 
@@ -13,11 +15,11 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient {
 
   private val httpClient = context.system actorOf HttpClient(serverUri, self)
 
-  private var joinedRooms: Set[Room] = Set()
+  private var joinedRooms: Set[ClientRoom] = Set()
 
   import MessageDictionary._
   val onReceive: PartialFunction[Any, Unit] = {
-    case msg @ CreatePublicRoom(_) =>
+    case msg @ CreatePublicRoom(_, _) =>
       httpClient ! msg
 
     case NewJoinedRoom(room) =>

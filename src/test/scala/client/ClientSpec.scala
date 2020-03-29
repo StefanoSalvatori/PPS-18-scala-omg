@@ -5,7 +5,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
-import server.room.RoomStrategy
+import server.room.ServerRoom.RoomStrategy
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -53,7 +53,7 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "create a public room and automatically join such room" in {
-    client createPublicRoom ROOM_TYPE_NAME
+    client createPublicRoom(ROOM_TYPE_NAME, "")
     Thread sleep 3000
     client.joinedRooms.size shouldEqual 1
   }

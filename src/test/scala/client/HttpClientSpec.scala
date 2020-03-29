@@ -8,7 +8,7 @@ import common.{Routes, TestConfig}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer
-import server.room.RoomStrategy
+import server.room.ServerRoom.RoomStrategy
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -54,7 +54,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     val httpTestActor: ActorRef = system actorOf HttpClient(serverUri, probe.ref)
 
     "when asked to create a new public room, return the new room" in {
-      httpTestActor ! CreatePublicRoom(ROOM_TYPE_NAME)
+      httpTestActor ! CreatePublicRoom(ROOM_TYPE_NAME, "")
       probe expectMsgClass classOf[NewJoinedRoom]
     }
   }

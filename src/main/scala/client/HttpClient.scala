@@ -3,11 +3,13 @@ package client
 import akka.NotUsed
 import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse}
-import common.{Room, RoomJsonSupport, Routes}
 import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.common.EntityStreamingSupport
 import akka.http.scaladsl.common.JsonEntityStreamingSupport
 import akka.stream.scaladsl.Source
+import client.room.ClientRoom.ClientRoom
+import common.CommonRoom.{Room, RoomJsonSupport}
+import common.Routes
 
 import scala.concurrent.Future
 
@@ -27,7 +29,7 @@ class HttpClientImpl(private val serverUri: String, private val coreClient: Acto
   import MessageDictionary._
   private val onReceive: PartialFunction[Any, Unit] = {
 
-    case CreatePublicRoom(roomType) =>
+    case CreatePublicRoom(roomType, _) =>
       val f: Future[HttpResponse] = http singleRequest HttpRequest(
         method = HttpMethods.POST,
         uri = serverUri + "/" + Routes.roomsByType(roomType)
@@ -36,9 +38,9 @@ class HttpClientImpl(private val serverUri: String, private val coreClient: Acto
       f onComplete (response => {
         if (response.isSuccess) {
           val res: HttpResponse = response.get
-          val unmarshalled: Future[Source[Room, NotUsed]] = Unmarshal(res).to[Source[Room, NotUsed]]
+          val unmarshalled: Future[Source[ClientRoom, NotUsed]] = Unmarshal(res).to[Source[ClientRoom, NotUsed]]
           val source = Source futureSource unmarshalled
-          source.runFold(Set[Room]())(_ + _) onComplete { res =>
+          source.runFold(Set[ClientRoom]())(_ + _) onComplete { res =>
             if (res.isSuccess) {
               coreClient ! NewJoinedRoom(res.get.head)
             } else {
@@ -50,6 +52,8 @@ class HttpClientImpl(private val serverUri: String, private val coreClient: Acto
         }
       })
   }
+
+
 
   override def receive: Receive = onReceive orElse fallbackReceive
 }

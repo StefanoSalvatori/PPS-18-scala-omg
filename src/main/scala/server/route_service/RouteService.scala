@@ -4,8 +4,8 @@ import akka.http.scaladsl.server.Directives.{complete, get, put, _}
 import akka.http.scaladsl.server.Route
 import common.CommonRoom.{RoomJsonSupport, RoomOptions, RoomSeq}
 import common.Routes
-import server.room.ServerRoom.{RoomId, RoomStrategy}
-
+import server.room.ServerRoom.RoomStrategy
+import common.CommonRoom
 
 trait RouteService {
   val route: Route

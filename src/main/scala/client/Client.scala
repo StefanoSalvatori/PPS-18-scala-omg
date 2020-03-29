@@ -3,7 +3,7 @@ package client
 import akka.pattern.ask
 import client.MessageDictionary._
 import client.room.ClientRoom.ClientRoom
-import server.room.ServerRoom.{RoomId, RoomType}
+import common.CommonRoom.{RoomId, RoomType}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -81,7 +81,8 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   override def shutdown(): Unit = system.terminate()
 
-  override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] = ???
+  override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
+    (coreClient ? CreatePublicRoom(roomType, roomOption)).mapTo[ClientRoom]
 
   override def joinOrCreate(roomType: RoomType, roomOption: Any): Future[ClientRoom] = {
     (coreClient ? JoinOrCreate(roomType, roomOption)).mapTo[ClientRoom]
