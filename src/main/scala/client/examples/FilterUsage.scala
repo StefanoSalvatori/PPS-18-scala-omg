@@ -14,7 +14,7 @@ object FilterUsage extends App {
   // Create filter options, i.e. concatenation of clauses
   val empty = FilterOptions.empty() // Empty filter
   val short = FilterOptions just prop1 > 2 // Filter with 1 clause
-  val filters = FilterOptions just (prop1 > 2) andThen (prop2 =!= "asc") andThen simple // Filter with more concatenated clauses
+  val filters = FilterOptions just prop1 > 2 andThen prop2 =!= "asc" andThen simple // Filter with more concatenated clauses
   val combined = short ++ filters ++ empty // Combine more filters in one single filter (union of the clauses)
 
   println(empty.options)
@@ -33,7 +33,7 @@ object FilterUsage extends App {
   val myProp = RoomProperty("D", MyRoomPropertyValue("ddd", 1))
   val testPropertyValue = MyRoomPropertyValue("ccc", 3)
   var myFilter = FilterOptions just myProp > testPropertyValue
-  myFilter = myFilter andThen (RoomProperty("E", "test") =:= "abc") // Also custom filters can be combined
+  myFilter = myFilter andThen RoomProperty("E", "test") =:= "abc" // Simple and custom filters can be combined obviously
 
   println()
   println(myFilter)

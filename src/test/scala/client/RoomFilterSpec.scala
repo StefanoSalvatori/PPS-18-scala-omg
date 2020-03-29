@@ -1,6 +1,5 @@
 package client
 
-import client.examples.FilterUsage.MyRoomPropertyValue
 import common.{EqualStrategy, FilterOption, FilterOptions, FilterStrategy, GreaterStrategy, NotEqualStrategy, RoomProperty}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
@@ -47,7 +46,7 @@ class RoomFilterSpec extends AnyFlatSpec
   }
 
   "A concatenation of filter clauses " should "create a filter with all such clauses" in {
-    val filter = (testProperty =!= 1) andThen (testProperty2 =:= "aba") andThen (testProperty3 =:= true)
+    val filter = testProperty =!= 1 andThen testProperty2 =:= "aba" andThen testProperty3 =:= true
     val options = filter.options
     options.size shouldEqual 3
     checkFilterOptionCorrectness(options.head)(testProperty.name, NotEqualStrategy(), 1)
@@ -63,7 +62,7 @@ class RoomFilterSpec extends AnyFlatSpec
 
   "A concatenation of custom filter clauses " should "create a filter with all such clauses" in {
 
-    val filter = FilterOptions just myProperty > myTestProperty andThen (myProperty =:= myTestProperty2)
+    val filter = FilterOptions just myProperty > myTestProperty andThen myProperty =:= myTestProperty2
     val options = filter.options
     options.size shouldEqual 2
     checkFilterOptionCorrectness(options.head)(myProperty.name, GreaterStrategy(), myTestProperty)
@@ -71,7 +70,7 @@ class RoomFilterSpec extends AnyFlatSpec
   }
 
   "Filters" should "indifferently mix simple and custom values" in {
-    val filter = FilterOptions just myProperty =:= myTestProperty andThen (testProperty =!= 2)
+    val filter = FilterOptions just myProperty =:= myTestProperty andThen testProperty =!= 2
     val options = filter.options
     options.size shouldEqual 2
     checkFilterOptionCorrectness(options.head)(myProperty.name,EqualStrategy(), myTestProperty)
