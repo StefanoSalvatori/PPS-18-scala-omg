@@ -24,8 +24,8 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   private val serverUri = Routes.uri(serverAddress, serverPort)
 
   private val ROOM_TYPE_NAME: String = "test_room"
-  private val SERVER_LAUNCH_AWAIT_TIME = 10 seconds // sec
-  private val SERVER_SHUTDOWN_AWAIT_TIME = 10 seconds// sec
+  private val SERVER_LAUNCH_AWAIT_TIME = 10 seconds
+  private val SERVER_SHUTDOWN_AWAIT_TIME = 10 seconds
 
 
   private var gameServer: GameServer = _
