@@ -1,8 +1,7 @@
 package common
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.marshalling.ToResponseMarshaller
-import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
+import spray.json.{DefaultJsonProtocol, JsValue, RootJsonFormat}
 
 trait Room <: {
   val roomId: String

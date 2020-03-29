@@ -1,7 +1,12 @@
 package server.route_service
 
+import akka.http.scaladsl.model.ws.{Message, TextMessage}
+import akka.stream.scaladsl.{Flow, Keep, RunnableGraph, Sink, Source}
 import common.{Room, RoomOptions}
-import server.room.RoomStrategy
+import server.room.ServerRoom.{RoomId, RoomStrategy}
+import server.route_service.RoomHandler.ClientConnectionHandler
+
+import scala.concurrent.Future
 
 
 trait RoomHandler {
@@ -58,11 +63,21 @@ trait RoomHandler {
   def defineRoomType(roomType: String, roomStrategy: RoomStrategy)
 
 
+  /**
+   * Handle new client web socket connection to a room.
+   * @param roomId the id of the room the client connects to
+   * @return the connection handler if such room id exists
+   */
+  def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler]
+
+
 }
 
 object RoomHandler {
+  type ClientConnectionHandler = Flow[Message, Message, Any]
   def apply(): RoomHandler = RoomHandlerImpl()
 }
+
 
 case class RoomHandlerImpl() extends RoomHandler {
 
@@ -105,5 +120,7 @@ case class RoomHandlerImpl() extends RoomHandler {
     newRoom
   }
 
-
+  override def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler] ={
+    Some(Flow.fromFunction(_ => TextMessage("foo")))
+  }
 }

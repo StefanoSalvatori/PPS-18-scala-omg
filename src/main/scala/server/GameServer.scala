@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.scaladsl.Sink
 import com.typesafe.scalalogging.LazyLogging
-import server.room.RoomStrategy
+import server.room.ServerRoom.RoomStrategy
 import server.route_service.RouteService
 
 import scala.concurrent.duration._

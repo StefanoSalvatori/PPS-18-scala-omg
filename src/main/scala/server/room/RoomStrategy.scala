@@ -1,13 +1,23 @@
 package server.room
 
-trait RoomStrategy {
+import akka.actor.{Actor, ActorRef}
 
-  def onJoin()
+object ServerRoom {
+  type RoomId = String
+  type RoomType = String
 
-  def onMessageReceived()
+  trait RoomStrategy {
 
-  def onLeave()
+    def onCreate()
 
-  def onCreate()
+    def onJoin()
+
+    def onMessageReceived()
+
+    def onLeave()
+
+  }
+
 
 }
+

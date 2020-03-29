@@ -1,17 +1,15 @@
 package server.route_service
 
-import akka.http.scaladsl.model.{HttpResponse, StatusCode, StatusCodes}
-import akka.http.scaladsl.server.Directives.{complete, get, path, put, _}
-import akka.http.scaladsl.server.{PathMatcher, RejectionHandler, Route}
+import akka.http.scaladsl.server.Directives.{complete, get, put, _}
+import akka.http.scaladsl.server.Route
 import common.{RoomJsonSupport, RoomOptions, RoomSeq, Routes}
-import server.room.RoomStrategy
-
-
+import server.room.ServerRoom.{RoomId, RoomStrategy}
 
 
 trait RouteService {
   val route: Route
   var roomTypes: Set[String]
+
   def addRouteForRoomType(roomType: String, roomStrategy: RoomStrategy)
 }
 
@@ -22,30 +20,45 @@ object RouteService {
 }
 
 
-case class RouteServiceImpl()
-  extends RouteService with RoomJsonSupport with RoomHandling {
-
+case class RouteServiceImpl() extends RouteService with RoomJsonSupport with RoomHandling {
   this: RoomHandlerService =>
+
   var roomTypes: Set[String] = Set.empty
 
-  val route: Route =
-    pathPrefix(Routes.publicRooms) {
-      pathEnd {
-        getAllRoomsRoute
-      } ~ pathPrefix(Segment) { roomType: String =>
-        if(this.roomTypes.contains(roomType)){
-          pathEnd {
-            getRoomsByTypeRoute(roomType) ~
-              putRoomsByTypeRoute(roomType) ~
-              postRoomsByTypeRoute(roomType)
-          } ~ pathPrefix(Segment) { roomId =>
-            getRoomByTypeAndId(roomType, roomId)
-          }
-        } else {
-          reject //TODO: how to handle this?
+
+  val restHttpRoute = pathPrefix(Routes.publicRooms) {
+    pathEnd {
+      getAllRoomsRoute
+    } ~ pathPrefix(Segment) { roomType: String =>
+      if (this.roomTypes.contains(roomType)) {
+        pathEnd {
+          getRoomsByTypeRoute(roomType) ~
+            putRoomsByTypeRoute(roomType) ~
+            postRoomsByTypeRoute(roomType)
+        } ~ pathPrefix(Segment) { roomId =>
+          getRoomByTypeAndId(roomType, roomId)
         }
+      } else {
+        reject //TODO: how to handle this? Wrong type in rooms/{type}
       }
     }
+  }
+
+
+  /**
+   * Handle web socket connection on path /connection/{roomId}
+   */
+  val webSocketRoute: Route =  pathPrefix(Routes.connectionRoute / Segment) { roomId =>
+    get {
+        onWebSocketConnection(roomId) match {
+          case Some(handler) =>  handleWebSocketMessages(handler)
+          case None => reject
+        }
+      }
+  }
+
+  val route: Route = restHttpRoute ~ webSocketRoute
+
 
   def addRouteForRoomType(roomType: String, roomStrategy: RoomStrategy): Unit = {
     this.roomTypes = this.roomTypes + roomType
@@ -113,6 +126,7 @@ case class RouteServiceImpl()
       }
     }
 
+
   /**
    * GET rooms/{type}/{id}
    */
@@ -120,10 +134,9 @@ case class RouteServiceImpl()
     get {
       onGetRoomTypeId(roomType, roomId) match {
         case Some(room) => complete(room)
-        case None => reject //TODO: how to handle this?
+        case None => reject //TODO: how to handle this? Wrong id in rooms/{type}/{id}
       }
     }
-
 
 
 }

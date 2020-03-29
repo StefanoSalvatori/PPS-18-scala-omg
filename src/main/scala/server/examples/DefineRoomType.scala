@@ -1,7 +1,7 @@
 package server.examples
 
 import server.GameServer
-import server.room.RoomStrategy
+import server.room.ServerRoom.RoomStrategy
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
