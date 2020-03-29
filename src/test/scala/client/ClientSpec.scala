@@ -1,42 +1,60 @@
 package client
 
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import client.Client
-import com.typesafe.scalalogging.{LazyLogging, Logger}
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import common.TestConfig
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
-import server.room.ServerRoom.RoomStrategy
+import server.room.RoomStrategy
 
-import scala.language.{implicitConversions, postfixOps}
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
-class ClientSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfter with BeforeAndAfterAll
-with LazyLogging{
-
-
+class ClientSpec extends AnyFlatSpec
+  with Matchers
+  with BeforeAndAfter
+  with BeforeAndAfterAll
+  with TestConfig {
 
   private val serverAddress = "localhost"
-  private val serverPort = 8080
-  val client = Client(serverAddress, serverPort)
-  val gameServer = GameServer(serverAddress, serverPort)
+  private val serverPort = CLIENT_SPEC_SERVER_PORT
 
+  private val ROOM_TYPE_NAME: String = "test_room"
+  private val SERVER_LAUNCH_AWAIT_TIME = 10 seconds
+  private val SERVER_SHUTDOWN_AWAIT_TIME = 10 seconds
 
-  behavior of "Client facade"
+  private var gameServer: GameServer = _
+  private var client: Client = _
 
-  override def beforeAll() {
-    gameServer.defineRoom("test", RoomStrategy.empty)
-    gameServer.onStart(logger debug "server started")
-    gameServer.start()
+  override def beforeAll(): Unit = {
+    gameServer = GameServer(serverAddress, serverPort)
+
+    gameServer.defineRoom(ROOM_TYPE_NAME, new RoomStrategy {
+      override def onJoin(): Unit = {}
+      override def onMessageReceived(): Unit = {}
+      override def onLeave(): Unit = {}
+      override def onCreate(): Unit = {}
+    })
+
+    Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
   }
+
+  override def afterAll(): Unit =
+    Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
+
+  behavior of "Client"
 
   before {
+    client = Client(serverAddress, serverPort)
   }
 
-  after {
+  it should "start with no joined rooms" in {
+    assert(client.joinedRooms isEmpty)
   }
 
-  it should "get available room of specific type" in {
-    client.getAvailableRoomsByType("test")
+  it should "create a public room and automatically join such room" in {
+    client createPublicRoom ROOM_TYPE_NAME
+    Thread sleep 3000
+    client.joinedRooms.size shouldEqual 1
   }
 }

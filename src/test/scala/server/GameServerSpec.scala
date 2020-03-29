@@ -2,18 +2,22 @@ package server
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
+import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import common.Routes
+import common.{Routes, TestConfig}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import server.route_service.RouteService
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.language.{implicitConversions, postfixOps}
 
-class GameServerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfter{
+class GameServerSpec extends AnyFlatSpec
+  with Matchers
+  with ScalatestRouteTest
+  with BeforeAndAfter
+  with TestConfig {
 
   private val BASE_PATH = Routes.publicRooms
   private val MAX_WAIT_REQUESTS = 5 seconds
@@ -23,7 +27,15 @@ class GameServerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest w
   private val MAX_WAIT_SERVER_SHUTDOWN = 5 seconds
 
   private val HOST: String = "localhost"
-  private val PORT: Int = 8080
+  private val PORT: Int = GAMESERVER_SPEC_SERVER_PORT
+
+  private val ADDITIONAL_PATH = "test"
+  private val ADDITIONAL_TEST_ROUTES =
+    path(ADDITIONAL_PATH) {
+      get {
+        complete(StatusCodes.OK)
+      }
+    }
 
   implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private var server: GameServer = _
@@ -31,7 +43,7 @@ class GameServerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest w
   behavior of "Game Server facade"
 
   before {
-    this.server = GameServer(HOST, PORT)
+    this.server = GameServer(HOST, PORT, ADDITIONAL_TEST_ROUTES)
   }
 
   after {
@@ -90,7 +102,7 @@ class GameServerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest w
 
   it should "throw an IllegalStateException if start() is called twice" in {
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    assertThrows[IllegalStateException]{
+    assertThrows[IllegalStateException] {
       Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     }
   }
@@ -112,6 +124,12 @@ class GameServerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest w
     }
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     flag shouldBe true
+  }
+
+  it should "use the additional routes passed as parameter" in {
+    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    val response = Await.result(this.makeEmptyRequestAt(ADDITIONAL_PATH), MAX_WAIT_REQUESTS)
+    response.status shouldBe StatusCodes.OK
   }
 
 

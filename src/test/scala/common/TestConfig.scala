@@ -1,0 +1,10 @@
+package common
+
+trait TestConfig {
+
+  val GAMESERVER_SPEC_SERVER_PORT = 8080
+  val CLIENT_SPEC_SERVER_PORT = 8081
+  val HTTP_CLIENT_SPEC_SERVER_PORT = 8082
+
+
+}

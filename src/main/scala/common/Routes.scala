@@ -13,6 +13,8 @@ object Routes {
 
   def roomByTypeAndId(roomType: String, roomId: String): String = roomsByType(roomType) + "/" + roomId
 
+  def uri(address: String, port: Int): String = "http://" + address + ":" + port
+
   /**
    * Route for web socket connection to a room
    * @param roomId

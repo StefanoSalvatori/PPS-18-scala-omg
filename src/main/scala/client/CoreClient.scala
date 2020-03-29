@@ -1,6 +1,6 @@
 package client
 
-import client.room.ClientRoom.ClientRoom
+import common.Room
 
 sealed trait CoreClient extends BasicActor
 
@@ -13,32 +13,25 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient {
 
   private val httpClient = context.system actorOf HttpClient(serverUri, self)
 
-  private var joinedRooms: Set[ClientRoom] = Set()
+  private var joinedRooms: Set[Room] = Set()
 
   import MessageDictionary._
   val onReceive: PartialFunction[Any, Unit] = {
-    case CreatePublicRoom =>
-      httpClient ! CreatePublicRoom
+    case msg @ CreatePublicRoom(_) =>
+      httpClient ! msg
 
-    case NewJoinedRoom(roomId) =>
-      if (joinedRooms map (_ roomId) contains roomId) {
-        logger debug s"Room $roomId was already joined!"
+    case NewJoinedRoom(room) =>
+      if (joinedRooms map (_ roomId) contains room.roomId) {
+        logger debug s"Room ${room.roomId} was already joined!"
       } else {
-        joinedRooms += ClientRoom(roomId)
-        logger debug s"New joined room $roomId"
+        joinedRooms += room
+        logger debug s"New joined room ${room.roomId}"
       }
       logger debug s"Current joined rooms: $joinedRooms"
 
     case GetJoinedRooms =>
       sender ! JoinedRooms(joinedRooms)
-
-    case JoinOrCreate(roomType, roomOption) =>
-      httpClient ! JoinOrCreate(roomType, roomOption)
-
-    case GetAvailableRooms(roomType) =>
-      httpClient ! GetAvailableRooms(roomType)
-
-  }
+    }
 
   override def receive: Receive = onReceive orElse fallbackReceive
 }
