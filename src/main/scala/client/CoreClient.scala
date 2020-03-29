@@ -31,7 +31,14 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient {
 
     case GetJoinedRooms =>
       sender ! JoinedRooms(joinedRooms)
-    }
+
+    case JoinOrCreate(roomType, roomOption) =>
+      httpClient ! JoinOrCreate(roomType, roomOption)
+
+    case GetAvailableRooms(roomType) =>
+      httpClient ! GetAvailableRooms(roomType)
+
+  }
 
   override def receive: Receive = onReceive orElse fallbackReceive
 }

@@ -15,7 +15,7 @@ object HttpClient {
 class HttpClientImpl(private val serverUri: String, private val coreClient: ActorRef) extends HttpClient {
 
   import akka.http.scaladsl.Http
-  private val http = Http()
+  private val http = Http(context.system)
 
   import MessageDictionary._
   private val onReceive: PartialFunction[Any, Unit] = {
@@ -24,6 +24,18 @@ class HttpClientImpl(private val serverUri: String, private val coreClient: Acto
       http singleRequest HttpRequest(
         method = HttpMethods.POST,
         uri = serverUri + Routes.publicRooms
+      ) pipeTo self
+
+    case JoinOrCreate(roomType, roomOption) =>
+      http singleRequest HttpRequest(
+        method = HttpMethods.PUT,
+        uri = serverUri + Routes.roomsByType(roomType)
+      ) pipeTo self
+
+    case GetAvailableRooms(roomType) =>
+      http singleRequest HttpRequest(
+        method = HttpMethods.GET,
+        uri = serverUri + Routes.roomsByType(roomType)
       ) pipeTo self
 
     case HttpResponse(StatusCodes.OK, _, entity, _) =>

@@ -18,6 +18,18 @@ object ServerRoom {
 
   }
 
+  object RoomStrategy{
+    def empty = new RoomStrategy {
+      override def onCreate() = {}
+
+      override def onJoin() = {}
+
+      override def onMessageReceived() = {}
+
+      override def onLeave() = {}
+    }
+  }
+
 
 }
 

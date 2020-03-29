@@ -12,4 +12,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   with AnyWordSpecLike
   with BeforeAndAfterAll {
 
+
+
+
 }

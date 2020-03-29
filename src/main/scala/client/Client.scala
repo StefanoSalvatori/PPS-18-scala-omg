@@ -1,13 +1,13 @@
 package client
 
-import java.util.concurrent.{Future, TimeUnit}
-
 import akka.pattern.ask
-import MessageDictionary._
+import client.MessageDictionary._
 import client.room.ClientRoom.ClientRoom
 import server.room.ServerRoom.{RoomId, RoomType}
 
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.postfixOps
 
 sealed trait Client {
 
@@ -62,7 +62,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   private val requestTimeout = 5 // Seconds
   import akka.util.Timeout
-  implicit val timeout: Timeout = Timeout(requestTimeout, TimeUnit.SECONDS)
+  implicit val timeout: Timeout = requestTimeout seconds
 
   private val serverUri = "http://" + serverAddress + ":" + serverPort
 
@@ -83,11 +83,17 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] = ???
 
-  override def joinOrCreate(roomType: RoomType, roomOption: Any): Future[ClientRoom] = ???
+  override def joinOrCreate(roomType: RoomType, roomOption: Any): Future[ClientRoom] = {
+    (coreClient ? JoinOrCreate(roomType, roomOption)).mapTo[ClientRoom]
+  }
 
   override def join(roomType: RoomType, roomOption: Any): Future[ClientRoom] = ???
 
   override def joinById(roomId: RoomId): Future[ClientRoom] = ???
 
-  override def getAvailableRoomsByType(roomType: String): Future[List[ClientRoom]] = ???
+  override def getAvailableRoomsByType(roomType: String): Future[List[ClientRoom]] =
+    (coreClient ? GetAvailableRooms(roomType)).mapTo[List[ClientRoom]]
+
+
+
 }
