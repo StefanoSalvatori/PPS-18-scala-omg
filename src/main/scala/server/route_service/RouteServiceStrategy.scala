@@ -11,7 +11,7 @@ trait RouteServiceStrategy {
    * @param roomOptions options for room filtering
    * @return a list of rooms filtered with the room options
    */
-  def onGetAllRooms(roomOptions: Option[RoomOptions]): List[Room]
+  def onGetAllRooms(roomOptions: Option[RoomOptions]): Seq[Room]
 
   /**
    * Handle request for getting all rooms of specific type
@@ -20,7 +20,7 @@ trait RouteServiceStrategy {
    * @param roomOptions roomOptions options for room filtering
    * @return a list of rooms filtered with the room options
    */
-  def onGetRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): List[Room]
+  def onGetRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): Seq[Room]
 
   /**
    * Handle request for put room
@@ -29,7 +29,7 @@ trait RouteServiceStrategy {
    * @param roomOptions roomOptions options for room creation
    * @return a list available rooms or a list containing the only created room if no rooms were available
    */
-  def onPutRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): List[Room]
+  def onPutRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): Seq[Room]
 
   /**
    * Handle request for post room
@@ -59,12 +59,12 @@ trait RoomHandlerService {
 
 trait RoomHandling extends RouteServiceStrategy with RoomHandlerService with RoomJsonSupport {
 
-  override def onGetAllRooms(roomOptions: Option[RoomOptions]): List[Room] = this.roomHandler.availableRooms
+  override def onGetAllRooms(roomOptions: Option[RoomOptions]): Seq[Room] = this.roomHandler.availableRooms
 
-  override def onGetRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): List[Room]
+  override def onGetRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): Seq[Room]
   = this.roomHandler.getRoomsByType(roomType)
 
-  override def onPutRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): List[Room] =
+  override def onPutRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): Seq[Room] =
     this.roomHandler.getOrCreate(roomType, roomOptions)
 
   override def onPostRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): Room =

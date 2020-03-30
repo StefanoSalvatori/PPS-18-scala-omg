@@ -2,7 +2,8 @@ package server.route_service
 
 import akka.http.scaladsl.server.Directives.{complete, get, put, _}
 import akka.http.scaladsl.server.Route
-import common.CommonRoom.{RoomJsonSupport, RoomOptions, RoomSeq}
+import com.typesafe.scalalogging.LazyLogging
+import common.CommonRoom.{RoomJsonSupport, RoomOptions}
 import common.Routes
 import server.room.ServerRoom.RoomStrategy
 import common.CommonRoom
@@ -21,7 +22,8 @@ object RouteService {
 }
 
 
-case class RouteServiceImpl() extends RouteService with RoomJsonSupport with RoomHandling {
+case class RouteServiceImpl() extends RouteService with RoomJsonSupport with RoomHandling
+with LazyLogging {
   this: RoomHandlerService =>
 
   var roomTypes: Set[String] = Set.empty
@@ -73,11 +75,11 @@ case class RouteServiceImpl() extends RouteService with RoomJsonSupport with Roo
     get {
       entity(as[RoomOptions]) { roomOptions =>
         val rooms = onGetAllRooms(Some(roomOptions))
-        complete(RoomSeq(rooms))
+        complete(rooms)
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
         val rooms = onGetAllRooms(Option.empty)
-        complete(RoomSeq(rooms))
+        complete(rooms)
       }
     }
 
@@ -89,11 +91,11 @@ case class RouteServiceImpl() extends RouteService with RoomJsonSupport with Roo
     get {
       entity(as[RoomOptions]) { roomOptions =>
         val rooms = onGetRoomType(roomType, Some(roomOptions))
-        complete(RoomSeq(rooms))
+        complete(rooms)
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
         val rooms = onGetRoomType(roomType, Option.empty)
-        complete(RoomSeq(rooms))
+        complete(rooms)
       }
     }
 
@@ -104,11 +106,11 @@ case class RouteServiceImpl() extends RouteService with RoomJsonSupport with Roo
     put {
       entity(as[RoomOptions]) { roomOptions =>
         val rooms = onPutRoomType(roomType, Some(roomOptions))
-        complete(RoomSeq(rooms)) //return a list containing only the created room if no room is available
+        complete(rooms) //return a list containing only the created room if no room is available
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
         val rooms = onPutRoomType(roomType, Option.empty)
-        complete(RoomSeq(rooms))
+        complete(rooms)
       }
     }
 

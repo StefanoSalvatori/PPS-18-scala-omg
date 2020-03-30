@@ -1,20 +1,26 @@
 package client
 
+import akka.http.scaladsl.testkit.ScalatestRouteTest
+import com.typesafe.scalalogging.LazyLogging
 import common.TestConfig
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.GameServer
+import server.{GameServer, ServerTerminated}
 import server.room.ServerRoom.RoomStrategy
 
-import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, ExecutionContextExecutor}
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 class ClientSpec extends AnyFlatSpec
   with Matchers
   with BeforeAndAfter
   with BeforeAndAfterAll
-  with TestConfig {
+  with TestConfig
+  with ScalatestRouteTest
+  with LazyLogging {
 
   private val serverAddress = "localhost"
   private val serverPort = CLIENT_SPEC_SERVER_PORT
@@ -23,20 +29,16 @@ class ClientSpec extends AnyFlatSpec
   private val SERVER_LAUNCH_AWAIT_TIME = 10 seconds
   private val SERVER_SHUTDOWN_AWAIT_TIME = 10 seconds
 
+  implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private var gameServer: GameServer = _
   private var client: Client = _
 
   override def beforeAll(): Unit = {
     gameServer = GameServer(serverAddress, serverPort)
 
-    gameServer.defineRoom(ROOM_TYPE_NAME, new RoomStrategy {
-      override def onJoin(): Unit = {}
-      override def onMessageReceived(): Unit = {}
-      override def onLeave(): Unit = {}
-      override def onCreate(): Unit = {}
-    })
-
+    gameServer.defineRoom(ROOM_TYPE_NAME, RoomStrategy.empty)
     Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
+    logger debug s"Server started at $serverAddress:$serverPort"
   }
 
   override def afterAll(): Unit =
@@ -49,12 +51,27 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "start with no joined rooms" in {
-    assert(client.joinedRooms isEmpty)
+    client.joinedRooms shouldBe empty
+  }
+
+  it should "create public rooms" in {
+    val r = Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
+    logger debug r.roomId
+  }
+
+
+  it should "get all available rooms of specific type" in {
+    val r1 = Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
+    val r2 = Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
+    val roomList = Await.result(client getAvailableRoomsByType (ROOM_TYPE_NAME), 5 seconds)
+    roomList should have size 3
   }
 
   it should "create a public room and automatically join such room" in {
-    client createPublicRoom(ROOM_TYPE_NAME, "")
-    Thread sleep 3000
-    client.joinedRooms.size shouldEqual 1
+    client createPublicRoom(ROOM_TYPE_NAME, "") onComplete {
+      case Success(_) => client.joinedRooms should have size 1
+      case Failure(exception) => logger error (exception.toString)
+    }
   }
+
 }

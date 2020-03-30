@@ -47,7 +47,7 @@ sealed trait Client {
    * @param roomType type of room to get
    * @return List all available rooms to connect of the given type
    */
-  def getAvailableRoomsByType(roomType: String) : Future[List[ClientRoom]]
+  def getAvailableRoomsByType(roomType: String) : Future[Seq[ClientRoom]]
 
   def joinedRooms(): Set[ClientRoom]
 
@@ -70,7 +70,6 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   import com.typesafe.config.ConfigFactory
   private val system = ActorSystem("ClientSystem", ConfigFactory.load())
   implicit val executionContext: ExecutionContext = system.dispatcher
-
   private val coreClient = system actorOf CoreClient(serverUri)
 
   /*override def createPublicRoom(roomType: RoomType, roomOption: Any): Unit =
@@ -92,8 +91,8 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   override def joinById(roomId: RoomId): Future[ClientRoom] = ???
 
-  override def getAvailableRoomsByType(roomType: String): Future[List[ClientRoom]] =
-    (coreClient ? GetAvailableRooms(roomType)).mapTo[List[ClientRoom]]
+  override def getAvailableRoomsByType(roomType: String): Future[Seq[ClientRoom]] =
+    (coreClient ? GetAvailableRooms(roomType)).mapTo[Seq[ClientRoom]]
 
 
 

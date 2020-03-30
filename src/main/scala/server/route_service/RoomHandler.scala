@@ -14,7 +14,7 @@ trait RoomHandler {
   /**
    * @return the list of available rooms
    */
-  def availableRooms: List[Room]
+  def availableRooms: Seq[Room]
 
   /**
    * create a new room of specific type
@@ -34,7 +34,7 @@ trait RoomHandler {
    * @param roomOptions room options for creation
    * @return list of rooms
    */
-  def getOrCreate(roomType: String, roomOptions: Option[RoomOptions]): List[Room]
+  def getOrCreate(roomType: String, roomOptions: Option[RoomOptions]): Seq[Room]
 
   /**
    * Return a room with given type and id. Non if does not exists
@@ -51,7 +51,7 @@ trait RoomHandler {
    * @param roomType rooms type
    * @return the list of rooms of given type
    */
-  def getRoomsByType(roomType: String): List[Room]
+  def getRoomsByType(roomType: String): Seq[Room]
 
   /**
    * Define a new room type to handle on room creation.
@@ -65,6 +65,7 @@ trait RoomHandler {
 
   /**
    * Handle new client web socket connection to a room.
+   *
    * @param roomId the id of the room the client connects to
    * @return the connection handler if such room id exists
    */
@@ -75,6 +76,7 @@ trait RoomHandler {
 
 object RoomHandler {
   type ClientConnectionHandler = Flow[Message, Message, Any]
+
   def apply(): RoomHandler = RoomHandlerImpl()
 }
 
@@ -88,18 +90,22 @@ case class RoomHandlerImpl() extends RoomHandler {
   var roomsByType: Map[String, Map[String, Room]] = Map.empty
 
 
-  override def availableRooms: List[Room] = roomsByType.values.flatMap(_.values).toList
+  override def availableRooms: Seq[Room] = roomsByType.values.flatMap(_.values).toSeq
 
   override def createRoom(roomType: String, roomOptions: Option[RoomOptions]): Room = {
     this.handleRoomCreation(roomType, roomOptions)
   }
 
-  override def getRoomsByType(roomType: String): List[Room] = this.roomsByType(roomType).values.toList
+  override def getRoomsByType(roomType: String): Seq[Room] =
+    this.roomsByType(roomType).values.toSeq
 
-  override def getOrCreate(roomType: String, roomOptions: Option[RoomOptions]): List[Room] =
-    this.roomsByType.get(roomType) match {
-      case Some(r) => r.values.toList
-      case None => List(createRoom(roomType, roomOptions))
+  override def getOrCreate(roomType: String, roomOptions: Option[RoomOptions]): Seq[Room] =
+    this.roomsByType(roomType) match {
+      //if map is empty no room exists with type: roomType so we create a new room
+      case m: Map[String, Room] if m.isEmpty => Seq(createRoom(roomType, roomOptions))
+      case m => m.values.toSeq
+
+
     }
 
   override def getRoomById(roomType: String, roomId: String): Option[Room] =
@@ -120,7 +126,7 @@ case class RoomHandlerImpl() extends RoomHandler {
     newRoom
   }
 
-  override def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler] ={
+  override def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler] = {
     Some(Flow.fromFunction(_ => TextMessage("foo")))
   }
 }

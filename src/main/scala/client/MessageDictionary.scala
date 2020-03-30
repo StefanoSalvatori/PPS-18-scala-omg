@@ -11,6 +11,7 @@ object MessageDictionary {
 
   case class GetAvailableRooms(roomType: RoomType)
 
+
   case class NewJoinedRoom(roomId: ClientRoom)
 
   case class GetJoinedRooms()
