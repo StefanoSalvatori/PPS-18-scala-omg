@@ -1,6 +1,5 @@
 package server.utils
 
-import java.net.http.HttpResponse
 
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.http.impl.settings.HostConnectionPoolSetup

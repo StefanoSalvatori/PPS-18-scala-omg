@@ -8,7 +8,7 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import common.actors.ApplicationActorSystem
 import server.ServerActor._
-import server.room.RoomStrategy
+import server.room.ServerRoom.RoomStrategy
 import server.route_service.RouteService
 
 import scala.concurrent.Future

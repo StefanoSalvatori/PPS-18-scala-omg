@@ -6,7 +6,7 @@ import common.TestConfig
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.{GameServer, ServerTerminated}
+import server.{GameServer}
 import server.room.ServerRoom.RoomStrategy
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -33,21 +33,21 @@ class ClientSpec extends AnyFlatSpec
   private var gameServer: GameServer = _
   private var client: Client = _
 
-  override def beforeAll(): Unit = {
-    gameServer = GameServer(serverAddress, serverPort)
 
-    gameServer.defineRoom(ROOM_TYPE_NAME, RoomStrategy.empty)
-    Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
-    logger debug s"Server started at $serverAddress:$serverPort"
-  }
-
-  override def afterAll(): Unit =
-    Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
 
   behavior of "Client"
 
   before {
+    gameServer = GameServer(serverAddress, serverPort)
+    gameServer.defineRoom(ROOM_TYPE_NAME, RoomStrategy.empty)
+    Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
+    logger debug s"Server started at $serverAddress:$serverPort"
+
     client = Client(serverAddress, serverPort)
+  }
+
+  after {
+    Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
   }
 
   it should "start with no joined rooms" in {
@@ -56,15 +56,16 @@ class ClientSpec extends AnyFlatSpec
 
   it should "create public rooms" in {
     val r = Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
-    logger debug r.roomId
+    val roomList = Await.result(client getAvailableRoomsByType (ROOM_TYPE_NAME), 5 seconds)
+    roomList should have size 1
   }
 
 
   it should "get all available rooms of specific type" in {
-    val r1 = Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
-    val r2 = Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
+    Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
+    Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
     val roomList = Await.result(client getAvailableRoomsByType (ROOM_TYPE_NAME), 5 seconds)
-    roomList should have size 3
+    roomList should have size 2
   }
 
   it should "create a public room and automatically join such room" in {
