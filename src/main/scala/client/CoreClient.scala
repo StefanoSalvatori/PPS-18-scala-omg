@@ -11,8 +11,7 @@ import akka.stream.scaladsl.Source
 import client.room.ClientRoom.ClientRoom
 import common.CommonRoom.{Room, RoomJsonSupport, RoomType}
 import common.Routes
-
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
@@ -76,7 +75,7 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
         case Success(response) =>
           logger debug s"Response -> $response"
           val unmarshalled: Future[Seq[ClientRoom]] = Unmarshal(response).to[Seq[ClientRoom]]
-          resTo ! Await.result(unmarshalled, Duration(5, TimeUnit.SECONDS))
+          resTo ! Await.result(unmarshalled, 5 seconds)
 
         case Failure(exception) => logger debug s"Failed to get rooms by type"
       }

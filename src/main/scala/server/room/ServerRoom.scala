@@ -17,7 +17,8 @@ object ServerRoom {
   }
 
   object RoomStrategy{
-    def empty = new RoomStrategy {
+
+    def empty: RoomStrategy = new RoomStrategy {
       override def onCreate() = {}
 
       override def onJoin() = {}

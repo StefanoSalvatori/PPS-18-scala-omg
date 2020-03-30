@@ -16,9 +16,9 @@ object ClientRoom {
   }
 
   case class ClientRoomImpl(roomId: RoomId) extends ClientRoom {
-    override def join() = {}
+    override def join(): Any = {}
 
-    override def leave() = {}
+    override def leave(): Any = {}
   }
 
 }
