@@ -35,7 +35,7 @@ The developer will be provided with high-level support that is game logic indepe
 
 ### Client side API
 
-- Creation \ elimination of games
+- Creation \ deletion of games
 
 - Access \ Exit from existing matches
 
