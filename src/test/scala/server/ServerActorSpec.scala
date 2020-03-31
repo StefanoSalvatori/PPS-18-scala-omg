@@ -35,7 +35,7 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
   private val PORT: Int = SERVER_ACTOR_SPEC_PORT
   private val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
   private val MAX_WAIT_CONNECTION_POOL_SHUTDOWN = 15 seconds
-
+  private val REQUEST_FAIL_TIMEOUT: FiniteDuration = 20 seconds
   private val ROUTES_BASE_PATH: String = "test"
   private val ROUTES: Route =
     path(ROUTES_BASE_PATH) {
@@ -88,7 +88,7 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
       Await.ready(Http(system).shutdownAllConnectionPools(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
       //Now requests fail
       makeGetRequestAt(s"$ROUTES_BASE_PATH")
-      expectMsgType[RequestFailed](20 seconds)
+      expectMsgType[RequestFailed](REQUEST_FAIL_TIMEOUT)
 
     }
 
