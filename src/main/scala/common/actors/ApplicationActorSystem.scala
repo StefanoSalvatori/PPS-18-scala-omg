@@ -1,8 +1,8 @@
 package common.actors
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Terminated}
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait ApplicationActorSystem {
 
@@ -10,8 +10,9 @@ trait ApplicationActorSystem {
   implicit lazy val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
 
 
-  def terminateActorSystem(): Unit = {
+  def terminateActorSystem(): Future[Terminated] = {
     this.actorSystem.terminate()
+
   }
 
 

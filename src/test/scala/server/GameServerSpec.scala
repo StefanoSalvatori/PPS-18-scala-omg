@@ -4,6 +4,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.stream.scaladsl.Sink
 import common.actors.ApplicationActorSystem
 import common.{Routes, TestConfig}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -63,6 +64,15 @@ class GameServerSpec extends AnyFlatSpec
       Await.result(this.makeEmptyRequest(), MAX_WAIT_REQUESTS)
     }
   }
+
+  it should "throw an exception if we call start() but the port we want to use is already binded" in {
+    val bind = Await.result(Http(actorSystem).bind(HOST, PORT).to(Sink.ignore).run(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
+    assertThrows[Exception] {
+      Await.result(server.start(), MAX_WAIT_SERVER_STARTUP)
+    }
+    Await.ready(bind.unbind(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
+  }
+
 
   it should "allow to start a server listening for http requests" in {
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)

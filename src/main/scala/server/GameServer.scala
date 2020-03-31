@@ -1,7 +1,5 @@
 package server
 
-import akka.Done
-import akka.actor.PoisonPill
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
@@ -108,9 +106,8 @@ private class GameServerImpl(override val host: String,
 
   implicit private val actorRequestsTimeout: Timeout = Timeout(5 seconds)
   private val serverActor = actorSystem actorOf ServerActor(SERVER_TERMINATION_DEADLINE)
-
-
   private val routeService = RouteService()
+
 
   private var onStart: () => Unit = () => {}
   private var onShutdown: () => Unit = () => {}
@@ -120,28 +117,29 @@ private class GameServerImpl(override val host: String,
   override def onShutdown(callback: => Unit): Unit = this.onShutdown = () => callback
 
   override def start(): Future[Unit] = {
-    (serverActor ? StartServer(host, port, routeService.route ~ additionalRoutes))
-      .asInstanceOf[Future[ServerResponse]] flatMap {
-      case Started  =>
-        this.onStart()
-        Future.successful()
-      case ErrorResponse(msg) => Future.failed(new IllegalStateException(msg))
-      case _ => Future.failed(new IllegalStateException())
-    }
+    (serverActor ? StartServer(host, port, this.routeService.route ~ additionalRoutes))
+      .asInstanceOf[Future[ServerResponse]]
+      .flatMap {
+        case Started => this.onStart(); Future.successful()
+        case Error(msg) => Future.failed(new IllegalStateException(msg))
+        case Failure(exception) => Future.failed(exception)
+        case _ => Future.failed(new IllegalStateException())
+      }
   }
 
   override def shutdown(): Future[Unit] = {
-    (serverActor ? StopServer).asInstanceOf[Future[ServerResponse]] flatMap  {
-      case Stopped =>
-        this.onShutdown()
-        Future.successful()
-      case ErrorResponse(msg) => Future.failed(new IllegalStateException(msg))
-      case _ => Future.failed(new IllegalStateException())
-    }
+    (serverActor ? StopServer)
+      .asInstanceOf[Future[ServerResponse]]
+      .flatMap {
+        case Stopped => this.onShutdown(); Future.successful()
+        case Error(msg) => Future.failed(new IllegalStateException(msg))
+        case Failure(exception) => Future.failed(exception)
+        case _ => Future.failed(new IllegalStateException())
+      }
   }
 
-  override def defineRoom(roomTypeName: String, room: RoomStrategy) : Unit = {
-    routeService.addRouteForRoomType(roomTypeName, room)
+  override def defineRoom(roomTypeName: String, room: RoomStrategy): Unit = {
+    this.routeService.addRouteForRoomType(roomTypeName, room)
   }
 
 }

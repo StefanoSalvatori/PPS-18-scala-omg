@@ -1,40 +1,38 @@
 package server
 
-import akka.Done
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, Stash}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, Stash, Status}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Sink
 
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.duration.{FiniteDuration, _}
 import scala.language.postfixOps
-import scala.concurrent.duration._
 
 object ServerActor {
 
   private val DEFAULT_DEADLINE: FiniteDuration = 3 seconds
 
-  sealed trait ServerRequest
-  case class StartServer(host: String, port: Int, routes: Route) extends ServerRequest
-  case object StopServer extends ServerRequest
+  sealed trait ServerEvent
 
+  sealed trait Command extends ServerEvent
+  case class StartServer(host: String, port: Int, routes: Route) extends Command
+  case object StopServer extends Command
+
+  private sealed trait InternalMessage extends ServerEvent
+  private case class ServerStarted(binding: Http.ServerBinding) extends InternalMessage
+  private case object ServerStopped extends InternalMessage
 
   sealed trait ServerResponse
   case object Started extends ServerResponse
   case object Stopped extends ServerResponse
+  case class Failure(exception: Throwable) extends ServerResponse
 
-  case class ErrorResponse(msg: String) extends ServerResponse
-  object ServerAlreadyRunning extends ErrorResponse("Server already running")
-  object ServerIsStarting extends ErrorResponse("Server is starting")
-  object ServerAlreadyStopped extends ErrorResponse("Server already stopped")
-  object ServerIsStopping extends ErrorResponse("Server is stopping")
-
-
-  //messages used internally by the actor
-  private case class ServerStarted(binding: Http.ServerBinding, sender: ActorRef)
-  private case class ServerStopped(sender: ActorRef)
-
+  case class Error(msg: String) extends ServerResponse
+  object ServerAlreadyRunning extends Error("Server already running")
+  object ServerIsStarting extends Error("Server is starting")
+  object ServerAlreadyStopped extends Error("Server already stopped")
+  object ServerIsStopping extends Error("Server is stopping")
 
   def apply(terminationDeadline: FiniteDuration = DEFAULT_DEADLINE): Props = Props(classOf[ServerActor], terminationDeadline)
 }
@@ -52,20 +50,23 @@ class ServerActor(private val terminationDeadline: FiniteDuration) extends Actor
       val serverStartedFuture = source.to(Sink.foreach(_ handleWith routes)).run()
 
       import akka.pattern.pipe
-      val requestSender = sender
-      serverStartedFuture map (result => ServerStarted(result, requestSender)) pipeTo self
-      context.become(serverStarting(serverStartedFuture))
+      serverStartedFuture map (result => ServerStarted(result)) pipeTo self
+      context.become(serverStarting(sender))
 
     case StopServer => sender ! ServerAlreadyStopped
   }
 
-  def serverStarting(started: Future[Http.ServerBinding]): Receive = {
-    case ServerStarted(binding, requestSender) =>
-      requestSender ! Started
+  def serverStarting(replyTo: ActorRef): Receive = {
+    case ServerStarted(binding) =>
+      replyTo ! Started
       context.become(serverRunning(binding))
       unstashAll()
     case _: StartServer => sender ! ServerIsStarting
     case StopServer => stash()
+    case Status.Failure(exception: Exception) =>
+      replyTo ! ServerActor.Failure(exception)
+      context.become(receive)
+
   }
 
   def serverRunning(binding: Http.ServerBinding): Receive = {
@@ -73,18 +74,20 @@ class ServerActor(private val terminationDeadline: FiniteDuration) extends Actor
       sender ! ServerAlreadyRunning
     case StopServer =>
       import akka.pattern.pipe
-      val requestSender = sender
-      binding.terminate(this.terminationDeadline) map (_ => ServerStopped(requestSender)) pipeTo self
-      context.become(serverStopping())
+      binding.terminate(this.terminationDeadline)
+      binding.whenTerminated map (_ => ServerStopped) pipeTo self
+      context.become(serverStopping(binding, sender))
   }
 
-  def serverStopping(): Receive = {
-    case ServerStopped(requestSender) =>
-      requestSender ! Stopped
+  def serverStopping(binding: Http.ServerBinding, replyTo: ActorRef): Receive = {
+    case ServerStopped =>
+      replyTo ! Stopped
       context.become(receive)
       unstashAll()
     case StopServer => sender ! ServerIsStopping
     case _: StartServer => stash()
-
+    case Status.Failure(exception: Exception) =>
+      replyTo ! ServerActor.Failure(exception)
+      context.become(serverRunning(binding))
   }
 }
