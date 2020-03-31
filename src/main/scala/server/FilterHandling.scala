@@ -40,12 +40,7 @@ class RoomManagerService {
 
            field setAccessible false
 
-           filterOption.strategy match {
-             case EqualStrategy() => (value compare filterValue) == 0
-             case NotEqualStrategy() => (value compare filterValue) != 0
-             case GreaterStrategy() => (value compare filterValue) > 0
-             case LowerStrategy() => (value compare filterValue) < 0
-           }
+           filterOption.strategy evaluate (value, filterValue)
          } catch {
            // A room is dropped if it doesn't contain the specified field to be used in the filter
            case _: NoSuchFieldException => false

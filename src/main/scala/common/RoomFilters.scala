@@ -1,10 +1,21 @@
 package common
 
-abstract class FilterStrategy
-case class EqualStrategy() extends FilterStrategy
-case class NotEqualStrategy() extends FilterStrategy
-case class GreaterStrategy() extends FilterStrategy
-case class LowerStrategy() extends FilterStrategy
+trait FilterStrategy {
+  protected def basicStrategy(x: RoomPropertyValue, y: RoomPropertyValue): Int = x compare y.asInstanceOf[x.type]
+  def evaluate(x: RoomPropertyValue, y: RoomPropertyValue): Boolean
+}
+case class EqualStrategy() extends FilterStrategy {
+  override def evaluate(x: RoomPropertyValue, y: RoomPropertyValue): Boolean = basicStrategy(x, y) == 0
+}
+case class NotEqualStrategy() extends FilterStrategy {
+  override def evaluate(x: RoomPropertyValue, y: RoomPropertyValue): Boolean = basicStrategy(x, y) != 0
+}
+case class GreaterStrategy() extends FilterStrategy {
+  override def evaluate(x: RoomPropertyValue, y: RoomPropertyValue): Boolean = basicStrategy(x, y) > 0
+}
+case class LowerStrategy() extends FilterStrategy {
+  override def evaluate(x: RoomPropertyValue, y: RoomPropertyValue): Boolean = basicStrategy(x, y) < 0
+}
 
 trait FilterStrategies { option: RoomProperty =>
 

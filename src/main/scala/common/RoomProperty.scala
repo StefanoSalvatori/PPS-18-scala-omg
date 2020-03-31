@@ -2,10 +2,6 @@ package common
 
 case class RoomProperty(name: String, value: RoomPropertyValue) extends FilterStrategies
 
-case class CustomRoomOptionValue(a: String, b: Int) extends Ordered[CustomRoomOptionValue] {
-  override def compare(that: CustomRoomOptionValue): Int = this.b - that.b
-}
-
 object BasicRoomPropertyValueConversions {
   implicit def intToIntProperty(value: Int): IntRoomPropertyValue = IntRoomPropertyValue(value)
   implicit def stringToStringProperty(value: String): StringRoomPropertyValue = StringRoomPropertyValue(value)
