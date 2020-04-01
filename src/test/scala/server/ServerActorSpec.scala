@@ -1,10 +1,13 @@
 package server
 
-import akka.actor.{ActorRef, ActorSystem}
+import java.net.BindException
+
+import akka.actor.{ActorRef, ActorSystem, Status}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.server.Route
+import akka.stream.scaladsl.Sink
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
@@ -13,7 +16,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.ServerActor._
 import server.utils.HttpRequestsActor
-import server.utils.HttpRequestsActor.Request
+import server.utils.HttpRequestsActor.{Request, RequestFailed}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -31,6 +34,8 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
   private val HOST: String = "localhost"
   private val PORT: Int = SERVER_ACTOR_SPEC_PORT
   private val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
+  private val MAX_WAIT_CONNECTION_POOL_SHUTDOWN = 15 seconds
+  private val REQUEST_FAIL_TIMEOUT: FiniteDuration = 20 seconds
   private val ROUTES_BASE_PATH: String = "test"
   private val ROUTES: Route =
     path(ROUTES_BASE_PATH) {
@@ -43,22 +48,20 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
   private val httpClientActor: ActorRef = system actorOf HttpRequestsActor()
 
 
-  before {
-  }
-  after {
-
-  }
-
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
   }
 
-  override def beforeAll(): Unit = {
-
-  }
-
   "A server actor" must {
-    "start a server at the specified host and port when receives StartServer message" in {
+    "fail to start the server if the port is already binded" in {
+      val bind = Await.result(Http().bind(HOST,PORT).to(Sink.ignore).run(), 5 seconds)
+      serverActor ! StartServer(HOST, PORT, ROUTES)
+      expectMsgType[Failure]
+      Await.ready(bind.unbind(), 5 seconds)
+
+    }
+
+    "send a 'Started' response when StartServer is successful" in {
       serverActor ! StartServer(HOST, PORT, ROUTES)
       expectMsg(Started)
     }
@@ -76,25 +79,16 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
       response.discardEntityBytes()
     }
 
-    "stop the server when StopServer is received waiting the server termination deadline before closing existing " +
-      "connections" in {
+
+
+    "stop the server when StopServer is received" in {
       serverActor ! StopServer
       expectMsg(Stopped)
 
-      //Even if the server is stopped, connections already opened are still active
-      makeGetRequestAt(s"$ROUTES_BASE_PATH")
-      val response = expectMsgType[HttpResponse]
-      response.status shouldBe StatusCodes.OK
-      response.discardEntityBytes()
-
-      Await.ready(Http(system).shutdownAllConnectionPools(), 10 seconds)
-
-      //Wait that the termination deadline is reached
-      Thread.sleep(SERVER_TERMINATION_DEADLINE.toMillis)
-
+      Await.ready(Http(system).shutdownAllConnectionPools(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
       //Now requests fail
       makeGetRequestAt(s"$ROUTES_BASE_PATH")
-      expectNoMessage()
+      expectMsgType[RequestFailed](REQUEST_FAIL_TIMEOUT)
 
     }
 
