@@ -1,8 +1,7 @@
 package server.route_service
 
-import common.{Room, RoomOptions}
+import common.{Room, RoomOptions, RoomPropertyValue, FilterOptions}
 import server.room.RoomStrategy
-
 
 trait RoomHandler {
 
@@ -12,7 +11,16 @@ trait RoomHandler {
   def availableRooms: List[Room]
 
   /**
-   * create a new room of specific type
+   * FIlter rooms using the specified filters.
+   * @param filterOptions
+   *     The filters to be applied
+   * @return
+   *     A set of rooms that satisfy the filters
+   */
+  def availableRooms(filterOptions: FilterOptions): Set[Room]
+
+  /**
+   * Create a new room of specific type
    *
    * @param roomType    room type
    * @param roomOptions room options
@@ -41,7 +49,7 @@ trait RoomHandler {
   def getRoomById(roomType: String, roomId: String): Option[Room]
 
   /**
-   * All available rooms filterd by type
+   * All available rooms filtered by type
    *
    * @param roomType rooms type
    * @return the list of rooms of given type
@@ -56,8 +64,6 @@ trait RoomHandler {
    * @param roomStrategy room strategy
    */
   def defineRoomType(roomType: String, roomStrategy: RoomStrategy)
-
-
 }
 
 object RoomHandler {
@@ -72,8 +78,30 @@ case class RoomHandlerImpl() extends RoomHandler {
   //type2 -> (id->room), (id2, room2) ...
   var roomsByType: Map[String, Map[String, Room]] = Map.empty
 
-
   override def availableRooms: List[Room] = roomsByType.values.flatMap(_.values).toList
+
+  override def availableRooms(filterOptions: FilterOptions): Set[Room] =
+    roomsByType.values.flatMap(_ values).filter(room => {
+
+    // Given a room, check if such room satisfies all filter constraints
+    filterOptions.options.forall(filterOption => {
+      try {
+        val field = room.getClass getDeclaredField filterOption.optionName
+
+        field setAccessible true
+
+        val value = (field get room).asInstanceOf[RoomPropertyValue]
+        val filterValue = filterOption.value.asInstanceOf[value.type]
+
+        field setAccessible false
+
+        filterOption.strategy evaluate (value, filterValue)
+      } catch {
+        // A room is dropped if it doesn't contain the specified field to be used in the filter
+        case _: NoSuchFieldException => false
+      }
+    })
+  }).toSet
 
   override def createRoom(roomType: String, roomOptions: Option[RoomOptions]): Room = {
     this.handleRoomCreation(roomType, roomOptions)
@@ -104,6 +132,4 @@ case class RoomHandlerImpl() extends RoomHandler {
     this.roomsByType = this.roomsByType.updated(roomType, newRoomMap)
     newRoom
   }
-
-
 }

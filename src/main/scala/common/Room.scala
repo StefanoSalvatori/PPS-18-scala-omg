@@ -17,7 +17,6 @@ object Room {
   def apply(roomId: String): Room = SimpleRoomWithId(roomId)
 }
 
-
 trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val roomOptJsonFormat: RootJsonFormat[RoomOptions]  = jsonFormat1(RoomOptions)
