@@ -1,10 +1,10 @@
 package server
 
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes, StatusCodes}
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.util.ByteString
-import common.Routes
+import common.CommonRoom.Room
+import common.{RoomJsonSupport, Routes}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -33,7 +33,7 @@ trait TestOptions {
 
 
 class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with TestOptions
-  with BeforeAndAfter {
+  with BeforeAndAfter with RoomJsonSupport {
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private val routeService = RouteService()
@@ -61,7 +61,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
 
   it should " reject requests if the given id does not exists" in {
-    Get(ROOMS_WITH_TYPE + "/wrong-id" ) ~> route ~> check {
+    Get(ROOMS_WITH_TYPE + "/wrong-id") ~> route ~> check {
       handled shouldBe false
     }
   }
@@ -125,13 +125,32 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
   }
 
 
- /* /// GET rooms/{type}/{id}
-  it should "handle GET request on path 'rooms/{type}/{id}' " in {
-    Get(ROOMS_WITH_TYPE_AND_ID) ~> route ~> check {
+  /// GET rooms/{type}/{id}
+  it should "handle GET request on path 'rooms/{type}/{id}' if such id exists " in {
+
+    val room = createRoom()
+    Get("/" + Routes.roomByTypeAndId(TEST_ROOM_TYPE, room.roomId)) ~> route ~> check { //try to get the created room by id
       handled shouldBe true
     }
-  }*/
+  }
 
+  /// --- Web socket  ---
+  it should "handle web socket request on path 'connection/?id={id}'" in {
+    val room = createRoom()
+    val wsClient = WSProbe()
+    WS("/" + Routes.connectionRoute + "/" + room.roomId, wsClient.flow) ~> route ~>
+      check {
+        // check response for WS Upgrade headers
+        isWebSocketUpgrade shouldEqual true
+
+      }
+  }
+
+  private def createRoom(): Room = {
+    Post(ROOMS_WITH_TYPE) ~> route ~> check {
+      responseAs[Room]
+    }
+  }
 
 }
 

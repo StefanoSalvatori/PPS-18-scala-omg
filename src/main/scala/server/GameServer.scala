@@ -4,7 +4,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import common.Room
 import common.actors.ApplicationActorSystem
 import server.ServerActor._
 import server.room.ServerRoom
