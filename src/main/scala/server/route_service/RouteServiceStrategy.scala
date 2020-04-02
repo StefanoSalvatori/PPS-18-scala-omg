@@ -1,6 +1,8 @@
 package server.route_service
 
-import common.{Room, RoomJsonSupport, RoomProperty}
+import common.CommonRoom.{Room, RoomId}
+import common.{RoomJsonSupport, RoomProperty}
+import server.route_service.RoomHandler.ClientConnectionHandler
 
 trait RouteServiceStrategy {
 
@@ -10,7 +12,7 @@ trait RouteServiceStrategy {
    * @param roomOptions options for room filtering
    * @return a list of rooms filtered with the room options
    */
-  def onGetAllRooms(roomOptions: Option[RoomProperty[Any]]): List[Room]
+  def onGetAllRooms(roomOptions: Option[RoomProperty[Any]]): Seq[Room]
 
   /**
    * Handle request for getting all rooms of specific type
@@ -19,7 +21,7 @@ trait RouteServiceStrategy {
    * @param roomOptions roomOptions options for room filtering
    * @return a list of rooms filtered with the room options
    */
-  def onGetRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room]
+  def onGetRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Seq[Room]
 
   /**
    * Handle request for put room
@@ -28,7 +30,7 @@ trait RouteServiceStrategy {
    * @param roomOptions roomOptions options for room creation
    * @return a list available rooms or a list containing the only created room if no rooms were available
    */
-  def onPutRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room]
+  def onPutRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Seq[Room]
 
   /**
    * Handle request for post room
@@ -48,20 +50,30 @@ trait RouteServiceStrategy {
    */
   def onGetRoomTypeId(roomType: String, roomId: String): Option[Room]
 
+  def onWebSocketConnection(roomId: RoomId): Option[ClientConnectionHandler]
+
 }
 
 trait RoomHandlerService {
   val roomHandler: RoomHandler = RoomHandler()
 }
 trait RoomHandling extends RouteServiceStrategy with RoomHandlerService with RoomJsonSupport {
-  override def onGetAllRooms(roomOptions: Option[RoomProperty[Any]]): List[Room] = this.roomHandler.availableRooms
+  override def onGetAllRooms(roomOptions: Option[RoomProperty[Any]]): Seq[Room] =
+    this.roomHandler.availableRooms
 
-  override def onGetRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room] = this.roomHandler
+  override def onGetRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Seq[Room] =
+    this.roomHandler
     .getRoomsByType(roomType)
 
-  override def onPutRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room] = this.roomHandler.getOrCreate(roomType, roomOptions)
+  override def onPutRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Seq[Room] =
+    this.roomHandler.getOrCreate(roomType, roomOptions)
 
-  override def onPostRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Room = this.roomHandler.createRoom(roomType, roomOptions)
+  override def onPostRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Room =
+    this.roomHandler.createRoom(roomType, roomOptions)
 
-  override def onGetRoomTypeId(roomType: String, roomId: String): Option[Room] = this.roomHandler.getRoomById(roomType, roomId)
+  override def onGetRoomTypeId(roomType: String, roomId: String): Option[Room] =
+    this.roomHandler.getRoomById(roomType, roomId)
+
+  override def onWebSocketConnection(roomId: RoomId): Option[ClientConnectionHandler] =
+    this.roomHandler.handleClientConnection(roomId)
 }

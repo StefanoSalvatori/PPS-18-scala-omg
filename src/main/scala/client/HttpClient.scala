@@ -8,8 +8,7 @@ import akka.http.scaladsl.common.EntityStreamingSupport
 import akka.http.scaladsl.common.JsonEntityStreamingSupport
 import akka.stream.scaladsl.Source
 import client.room.ClientRoom.ClientRoom
-import common.CommonRoom.{Room, RoomJsonSupport}
-import common.Routes
+import common.{RoomJsonSupport, Routes}
 
 import scala.concurrent.Future
 

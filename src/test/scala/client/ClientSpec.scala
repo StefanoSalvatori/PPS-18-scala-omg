@@ -1,5 +1,7 @@
 package client
 
+import akka.http.scaladsl.testkit.ScalatestRouteTest
+import com.typesafe.scalalogging.LazyLogging
 import common.TestConfig
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -46,7 +48,7 @@ class ClientSpec extends AnyFlatSpec
 
   before {
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ROOM_TYPE_NAME, RoomStrategy.empty)
+    gameServer.defineRoom(ROOM_TYPE_NAME, ServerRoom(_))
     Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
     logger debug s"Server started at $serverAddress:$serverPort"
 
@@ -81,7 +83,7 @@ class ClientSpec extends AnyFlatSpec
       case Success(_) => client.joinedRooms should have size 1
       case Failure(exception) => logger error (exception.toString)
     }
-  }*/
+  }
 
 
 }

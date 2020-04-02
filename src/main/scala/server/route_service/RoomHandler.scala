@@ -1,9 +1,13 @@
 package server.route_service
 
 import akka.actor.ActorRef
+import akka.http.scaladsl.model.ws.{Message, TextMessage}
+import akka.stream.scaladsl.Flow
+import common.CommonRoom.{Room, RoomId}
 import common.actors.ApplicationActorSystem
-import common.{Room, RoomProperty}
+import common.RoomProperty
 import server.room.{RoomActor, ServerRoom}
+import server.route_service.RoomHandler.ClientConnectionHandler
 
 
 trait RoomHandler {
@@ -11,7 +15,7 @@ trait RoomHandler {
   /**
    * @return the list of available rooms
    */
-  def availableRooms: List[Room]
+  def availableRooms: Seq[Room]
 
   /**
    * create a new room of specific type
@@ -31,7 +35,7 @@ trait RoomHandler {
    * @param roomOptions room options for creation
    * @return list of rooms
    */
-  def getOrCreate(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room]
+  def getOrCreate(roomType: String, roomOptions: Option[RoomProperty[Any]]): Seq[Room]
 
   /**
    * Return a room with given type and id. Non if does not exists
@@ -57,10 +61,19 @@ trait RoomHandler {
    */
   def defineRoomType(roomType: String, roomFactory: String => ServerRoom)
 
+  /**
+   * Handle new client web socket connection to a room.
+   *
+   * @param roomId the id of the room the client connects to
+   * @return the connection handler if such room id exists
+   */
+  def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler]
+
 
 }
 
 object RoomHandler {
+  type ClientConnectionHandler = Flow[Message, Message, Any]
   def apply(): RoomHandler = RoomHandlerImpl()
 }
 
@@ -81,7 +94,7 @@ case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
 
   override def getRoomsByType(roomType: String): List[Room] = this.roomsByType(roomType).keys.toList
 
-  override def getOrCreate(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room] =
+  override def getOrCreate(roomType: String, roomOptions: Option[RoomProperty[Any]]): Seq[Room] =
     this.roomsByType.get(roomType) match {
       case Some(r) => r.keys.toList
       case None => List(createRoom(roomType, roomOptions))
@@ -104,7 +117,10 @@ case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
     val newRoomActor = actorSystem actorOf RoomActor(newRoom)
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
     newRoom
+  }
 
+  override def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler] = {
+    Some(Flow.fromFunction(_ => TextMessage("foo")))//TODO: get web socket handler
   }
 
 

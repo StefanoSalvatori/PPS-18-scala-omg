@@ -1,7 +1,7 @@
 package client
 
 import client.room.ClientRoom.ClientRoom
-import common.CommonRoom.{Room, RoomId, RoomType}
+import common.CommonRoom.RoomType
 
 object MessageDictionary {
 

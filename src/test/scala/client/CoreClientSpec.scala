@@ -10,7 +10,6 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.wordspec.AnyWordSpecLike
 import client.MessageDictionary._
 import client.room.ClientRoom.ClientRoom
-import common.CommonRoom.Room
 import common.Routes
 import org.scalatest.matchers.should.Matchers
 

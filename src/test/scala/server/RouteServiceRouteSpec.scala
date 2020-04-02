@@ -1,10 +1,10 @@
 package server
 
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes, StatusCodes}
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.util.ByteString
-import common.Routes
+import common.CommonRoom.Room
+import common.{RoomJsonSupport, Routes}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -33,7 +33,7 @@ trait TestOptions {
 
 
 class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with TestOptions
-  with BeforeAndAfter {
+  with BeforeAndAfter with RoomJsonSupport {
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private val routeService = RouteService()
@@ -61,7 +61,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
 
   it should " reject requests if the given id does not exists" in {
-    Get(ROOMS_WITH_TYPE + "/wrong-id" ) ~> route ~> check {
+    Get(ROOMS_WITH_TYPE + "/wrong-id") ~> route ~> check {
       handled shouldBe false
     }
   }

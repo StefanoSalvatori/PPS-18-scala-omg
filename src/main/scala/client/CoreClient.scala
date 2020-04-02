@@ -9,8 +9,8 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Source
 import client.room.ClientRoom.ClientRoom
-import common.CommonRoom.{Room, RoomJsonSupport, RoomType}
-import common.Routes
+import common.{RoomJsonSupport, Routes}
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}

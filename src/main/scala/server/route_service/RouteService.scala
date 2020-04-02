@@ -3,16 +3,14 @@ package server.route_service
 import akka.http.scaladsl.server.Directives.{complete, get, put, _}
 import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.LazyLogging
-import common.CommonRoom.{RoomJsonSupport, RoomOptions}
-import common.Routes
-import server.room.ServerRoom.RoomStrategy
-import common.CommonRoom
+import common.{RoomJsonSupport, RoomProperty, Routes}
+import server.room.ServerRoom
 
 trait RouteService {
   val route: Route
   var roomTypes: Set[String]
 
-  def addRouteForRoomType(roomType: String, roomStrategy: RoomStrategy)
+  def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom)
 }
 
 object RouteService {
@@ -63,9 +61,9 @@ with LazyLogging {
   val route: Route = restHttpRoute ~ webSocketRoute
 
 
-  def addRouteForRoomType(roomType: String, roomStrategy: RoomStrategy): Unit = {
-    this.roomTypes = this.roomTypes + roomType
-    this.roomHandler.defineRoomType(roomType, roomStrategy)
+  def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom): Unit = {
+    this.roomTypes = this.roomTypes + roomTypeName
+    this.roomHandler.defineRoomType(roomTypeName, roomFactory)
   }
 
   /**
@@ -73,7 +71,7 @@ with LazyLogging {
    */
   private def getAllRoomsRoute: Route =
     get {
-      entity(as[RoomOptions]) { roomOptions =>
+      entity(as[RoomProperty[Any]]) { roomOptions =>
         val rooms = onGetAllRooms(Some(roomOptions))
         complete(rooms)
       } ~ {
@@ -89,7 +87,7 @@ with LazyLogging {
    */
   private def getRoomsByTypeRoute(roomType: String): Route =
     get {
-      entity(as[RoomOptions]) { roomOptions =>
+      entity(as[RoomProperty[Any]]) { roomOptions =>
         val rooms = onGetRoomType(roomType, Some(roomOptions))
         complete(rooms)
       } ~ {
@@ -104,7 +102,7 @@ with LazyLogging {
    */
   private def putRoomsByTypeRoute(roomType: String): Route =
     put {
-      entity(as[RoomOptions]) { roomOptions =>
+      entity(as[RoomProperty[Any]]) { roomOptions =>
         val rooms = onPutRoomType(roomType, Some(roomOptions))
         complete(rooms) //return a list containing only the created room if no room is available
       } ~ {
@@ -119,7 +117,7 @@ with LazyLogging {
    */
   private def postRoomsByTypeRoute(roomType: String): Route =
     post {
-      entity(as[RoomOptions]) { roomOptions =>
+      entity(as[RoomProperty[Any]]) { roomOptions =>
         val room = onPostRoomType(roomType, Some(roomOptions))
         complete(room)
       } ~ {

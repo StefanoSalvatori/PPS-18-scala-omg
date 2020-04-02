@@ -2,11 +2,12 @@ package server
 
 import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import common.CommonRoom.{Room, RoomJsonSupport}
+import common.CommonRoom.Room
+import common.RoomJsonSupport
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import server.room.ServerRoom.RoomStrategy
+import server.room.ServerRoom
 import server.route_service.RouteService
 
 import scala.concurrent.ExecutionContextExecutor
@@ -28,7 +29,7 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers with ScalatestR
     route = routeService.route
 
     //define two room type for test
-    routeService.addRouteForRoomType(TEST_ROOM_TYPE, RoomStrategy.empty)
+    routeService.addRouteForRoomType(TEST_ROOM_TYPE, ServerRoom(_))
   }
 
   it should "respond with a list of available rooms on GET request on path 'rooms'" in {
