@@ -1,8 +1,6 @@
 package server
 
-import java.net.BindException
-
-import akka.actor.{ActorRef, ActorSystem, Status}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, get, _}
