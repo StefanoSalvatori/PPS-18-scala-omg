@@ -1,6 +1,8 @@
 package server.route_service
 
-import common.{RoomPropertyValue, FilterOptions}
+import java.util.UUID
+
+import common.{FilterOptions, RoomPropertyValue}
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.Flow
@@ -116,7 +118,7 @@ case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
     })
   }).toSet
 
-  override def availableRooms: List[Room] = roomsByType.values.flatMap(_.keys).toList
+  override def availableRooms: Seq[Room] = roomsByType.values.flatMap(_.keys).toSeq
 
   override def createRoom(roomType: String, roomOptions: Option[RoomProperty]): Room = {
     this.handleRoomCreation(roomType, roomOptions)
@@ -142,9 +144,8 @@ case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
 
   private def handleRoomCreation(roomType: String, roomOptions: Option[RoomProperty]): Room = {
     val roomMap = this.roomsByType(roomType)
-    val newId = (roomMap.size + 1).toString
     val roomFactory = this.roomTypesHandlers(roomType)
-    val newRoom = roomFactory(newId)
+    val newRoom = roomFactory(UUID.randomUUID.toString)
     val newRoomActor = actorSystem actorOf RoomActor(newRoom)
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
     newRoom

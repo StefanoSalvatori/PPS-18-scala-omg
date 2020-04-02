@@ -19,7 +19,10 @@ object RoomActor {
 
 }
 
-
+/**
+ * This actor acts as a wrapper for server rooms to handle concurrency
+ * @param serverRoom
+ */
 class RoomActor(private val serverRoom: ServerRoom) extends Actor with ActorLogging {
 
   import RoomActor._
@@ -43,7 +46,12 @@ class RoomActor(private val serverRoom: ServerRoom) extends Actor with ActorLogg
     case Leave(client) =>
       this.serverRoom.removeClient(client)
       sender ! ClientLeaved
-    case Msg(client, payload) => this.serverRoom.onMessageReceived(client, payload)
+    case Msg(client, payload) =>
+      if(this.serverRoom.clientAuthorized(client)) {
+        this.serverRoom.onMessageReceived(client, payload)
+      } else {
+        sender ! ClientNotAuthorized
+      }
   }
 
 

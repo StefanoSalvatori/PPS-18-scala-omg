@@ -66,6 +66,7 @@ trait GameServer {
 
 object GameServer {
 
+  implicit val ACTOR_REQUEST_TIMEOUT: Timeout = Timeout(5 seconds)
   val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
 
 
@@ -103,8 +104,7 @@ private class GameServerImpl(override val host: String,
   import GameServer._
   import akka.pattern.ask
 
-  implicit private val actorRequestsTimeout: Timeout = Timeout(5 seconds)
-  private val serverActor = actorSystem actorOf ServerActor(SERVER_TERMINATION_DEADLINE)
+  private val serverActor = actorSystem actorOf(ServerActor(SERVER_TERMINATION_DEADLINE), "GameServer")
   private val routeService = RouteService()
 
 
