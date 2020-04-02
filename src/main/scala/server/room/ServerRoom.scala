@@ -95,9 +95,9 @@ trait ServerRoom extends Room {
   /**
    * Called when the room receives a message
    *
-   * @param client
-   * @param message
-   * @tparam M
+   * @param client the client that sent the message
+   * @param message the message received
+   * @tparam M the type of the message
    */
   def onMessageReceived[M](client: Client, message: M)
 
