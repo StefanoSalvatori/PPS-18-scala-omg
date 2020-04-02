@@ -1,13 +1,11 @@
 package client
 
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import com.typesafe.scalalogging.LazyLogging
 import common.TestConfig
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.{GameServer}
-import server.room.ServerRoom.RoomStrategy
+import server.GameServer
+import server.room.ServerRoom
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, ExecutionContextExecutor}
@@ -33,7 +31,16 @@ class ClientSpec extends AnyFlatSpec
   private var gameServer: GameServer = _
   private var client: Client = _
 
+  override def beforeAll(): Unit = {
+    gameServer = GameServer(serverAddress, serverPort)
 
+    gameServer.defineRoom(ROOM_TYPE_NAME, id => ServerRoom(id))
+
+    Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
+  }
+
+  override def afterAll(): Unit =
+    Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
 
   behavior of "Client"
 
@@ -68,11 +75,13 @@ class ClientSpec extends AnyFlatSpec
     roomList should have size 2
   }
 
+  //TODO: check this test
   it should "create a public room and automatically join such room" in {
     client createPublicRoom(ROOM_TYPE_NAME, "") onComplete {
       case Success(_) => client.joinedRooms should have size 1
       case Failure(exception) => logger error (exception.toString)
     }
-  }
+  }*/
+
 
 }

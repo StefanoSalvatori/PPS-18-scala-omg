@@ -2,14 +2,13 @@ package server
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes, StatusCodes}
-import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.util.ByteString
-import common.CommonRoom.{Room, RoomJsonSupport, RoomOptions}
 import common.Routes
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import server.room.ServerRoom.RoomStrategy
+import server.room.ServerRoom
 import server.route_service.RouteService
 
 import scala.concurrent.ExecutionContextExecutor
@@ -26,7 +25,7 @@ trait TestOptions {
        |}
         """.stripMargin)
 
-  val EMPTY_ROOM_OPTIONS: RoomOptions = RoomOptions("")
+  // val EMPTY_ROOM_OPTIONS: RoomOptions = RoomOptions("")
 
   def makeRequestWithDefaultRoomOptions(method: HttpMethod)(uri: String): HttpRequest = HttpRequest(
     uri = uri, method = method, entity = HttpEntity(MediaTypes.`application/json`, TEST_ROOM_OPT_JSON))
@@ -34,7 +33,7 @@ trait TestOptions {
 
 
 class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with TestOptions
-  with BeforeAndAfter with RoomJsonSupport {
+  with BeforeAndAfter {
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private val routeService = RouteService()
@@ -46,7 +45,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
   before {
     //ensure to have at least one room-type
-    routeService.addRouteForRoomType(TEST_ROOM_TYPE, RoomStrategy.empty)
+    routeService.addRouteForRoomType(TEST_ROOM_TYPE, ServerRoom(_))
   }
 
   it should " enable the addition of routes for new rooms type" in {
@@ -62,7 +61,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
 
   it should " reject requests if the given id does not exists" in {
-    Get(ROOMS_WITH_TYPE + "/wrong-id") ~> route ~> check {
+    Get(ROOMS_WITH_TYPE + "/wrong-id" ) ~> route ~> check {
       handled shouldBe false
     }
   }
@@ -134,7 +133,6 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
       handled shouldBe true
     }
   }
-
 
   /// --- Web socket  ---
   it should "handle web socket request on path 'connection/?id={id}'" in {

@@ -3,7 +3,7 @@ package server
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import server.room.ServerRoom.RoomStrategy
+import server.room.ServerRoom
 import server.route_service.RoomHandler
 
 class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with TestOptions  {
@@ -16,7 +16,7 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
   }
 
   it should "create a new room on createRoom()" in {
-    this.roomHandler.defineRoomType(TEST_ROOM_TYPE, RoomStrategy.empty)
+    this.roomHandler.defineRoomType(TEST_ROOM_TYPE, ServerRoom(_))
     this.roomHandler.createRoom(TEST_ROOM_TYPE, None)
     this.roomHandler.availableRooms should have size 1
   }
@@ -24,8 +24,8 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
   it should "return room of given type calling getRoomsByType() " in {
     val roomType1 = "type1"
     val roomType2 = "type2"
-    this.roomHandler.defineRoomType(roomType1, RoomStrategy.empty)
-    this.roomHandler.defineRoomType(roomType2, RoomStrategy.empty)
+    this.roomHandler.defineRoomType(roomType1, ServerRoom(_))
+    this.roomHandler.defineRoomType(roomType2, ServerRoom(_))
     this.roomHandler.createRoom(roomType1, None)
     this.roomHandler.createRoom(roomType2, None)
     this.roomHandler.createRoom(roomType2, None)

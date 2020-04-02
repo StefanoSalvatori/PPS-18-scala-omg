@@ -1,7 +1,6 @@
 package server.route_service
 
-import common.CommonRoom._
-import server.route_service.RoomHandler.ClientConnectionHandler
+import common.{Room, RoomJsonSupport, RoomProperty}
 
 trait RouteServiceStrategy {
 
@@ -11,7 +10,7 @@ trait RouteServiceStrategy {
    * @param roomOptions options for room filtering
    * @return a list of rooms filtered with the room options
    */
-  def onGetAllRooms(roomOptions: Option[RoomOptions]): Seq[Room]
+  def onGetAllRooms(roomOptions: Option[RoomProperty[Any]]): List[Room]
 
   /**
    * Handle request for getting all rooms of specific type
@@ -20,7 +19,7 @@ trait RouteServiceStrategy {
    * @param roomOptions roomOptions options for room filtering
    * @return a list of rooms filtered with the room options
    */
-  def onGetRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): Seq[Room]
+  def onGetRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room]
 
   /**
    * Handle request for put room
@@ -29,7 +28,7 @@ trait RouteServiceStrategy {
    * @param roomOptions roomOptions options for room creation
    * @return a list available rooms or a list containing the only created room if no rooms were available
    */
-  def onPutRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): Seq[Room]
+  def onPutRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room]
 
   /**
    * Handle request for post room
@@ -38,7 +37,7 @@ trait RouteServiceStrategy {
    * @param roomOptions room options for creation
    * @return the created room
    */
-  def onPostRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): Room
+  def onPostRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Room
 
   /**
    * Handle request for getting a room with specific id
@@ -47,32 +46,22 @@ trait RouteServiceStrategy {
    * @param roomId   room id
    * @return An option containing the room with the given id or empty if the  doesn't exists
    */
-  def onGetRoomTypeId(roomType: RoomType, roomId: RoomId): Option[Room]
-
-  def onWebSocketConnection(roomId: RoomId): Option[ClientConnectionHandler]
+  def onGetRoomTypeId(roomType: String, roomId: String): Option[Room]
 
 }
 
 trait RoomHandlerService {
   val roomHandler: RoomHandler = RoomHandler()
 }
-
 trait RoomHandling extends RouteServiceStrategy with RoomHandlerService with RoomJsonSupport {
+  override def onGetAllRooms(roomOptions: Option[RoomProperty[Any]]): List[Room] = this.roomHandler.availableRooms
 
-  override def onGetAllRooms(roomOptions: Option[RoomOptions]): Seq[Room] = this.roomHandler.availableRooms
+  override def onGetRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room] = this.roomHandler
+    .getRoomsByType(roomType)
 
-  override def onGetRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): Seq[Room]
-  = this.roomHandler.getRoomsByType(roomType)
+  override def onPutRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room] = this.roomHandler.getOrCreate(roomType, roomOptions)
 
-  override def onPutRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): Seq[Room] =
-    this.roomHandler.getOrCreate(roomType, roomOptions)
+  override def onPostRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Room = this.roomHandler.createRoom(roomType, roomOptions)
 
-  override def onPostRoomType(roomType: RoomType, roomOptions: Option[RoomOptions]): Room =
-    this.roomHandler.createRoom(roomType, roomOptions)
-
-  override def onGetRoomTypeId(roomType: RoomType, roomId: RoomId): Option[Room] =
-    this.roomHandler.getRoomById(roomType, roomId)
-
-  override def onWebSocketConnection(roomId: RoomId): Option[ClientConnectionHandler] =
-    this.roomHandler.handleClientConnection(roomId)
+  override def onGetRoomTypeId(roomType: String, roomId: String): Option[Room] = this.roomHandler.getRoomById(roomType, roomId)
 }

@@ -1,12 +1,9 @@
 package server.route_service
 
-import akka.http.scaladsl.model.ws.{Message, TextMessage}
-import akka.stream.scaladsl.{Flow, Keep, RunnableGraph, Sink, Source}
-import common.CommonRoom.{Room, RoomId, RoomOptions}
-import server.room.ServerRoom.RoomStrategy
-import server.route_service.RoomHandler.ClientConnectionHandler
-
-import scala.concurrent.Future
+import akka.actor.ActorRef
+import common.actors.ApplicationActorSystem
+import common.{Room, RoomProperty}
+import server.room.{RoomActor, ServerRoom}
 
 
 trait RoomHandler {
@@ -14,7 +11,7 @@ trait RoomHandler {
   /**
    * @return the list of available rooms
    */
-  def availableRooms: Seq[Room]
+  def availableRooms: List[Room]
 
   /**
    * create a new room of specific type
@@ -23,7 +20,7 @@ trait RoomHandler {
    * @param roomOptions room options
    * @return the created room
    */
-  def createRoom(roomType: String, roomOptions: Option[RoomOptions]): Room
+  def createRoom(roomType: String, roomOptions: Option[RoomProperty[Any]]): Room
 
   /**
    * Get the list of available room of given type.
@@ -34,7 +31,7 @@ trait RoomHandler {
    * @param roomOptions room options for creation
    * @return list of rooms
    */
-  def getOrCreate(roomType: String, roomOptions: Option[RoomOptions]): Seq[Room]
+  def getOrCreate(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room]
 
   /**
    * Return a room with given type and id. Non if does not exists
@@ -51,82 +48,64 @@ trait RoomHandler {
    * @param roomType rooms type
    * @return the list of rooms of given type
    */
-  def getRoomsByType(roomType: String): Seq[Room]
+  def getRoomsByType(roomType: String): List[Room]
 
   /**
-   * Define a new room type to handle on room creation.
-   * New rooms with this type are created with the given room strategy
    *
-   * @param roomType     room type
-   * @param roomStrategy room strategy
+   * @param roomType    the name of the room's type
+   * @param roomFactory the factory to create given an id
    */
-  def defineRoomType(roomType: String, roomStrategy: RoomStrategy)
-
-
-  /**
-   * Handle new client web socket connection to a room.
-   *
-   * @param roomId the id of the room the client connects to
-   * @return the connection handler if such room id exists
-   */
-  def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler]
+  def defineRoomType(roomType: String, roomFactory: String => ServerRoom)
 
 
 }
 
 object RoomHandler {
-  type ClientConnectionHandler = Flow[Message, Message, Any]
-
   def apply(): RoomHandler = RoomHandlerImpl()
 }
 
+case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
 
-case class RoomHandlerImpl() extends RoomHandler {
+  var roomTypesHandlers: Map[String, String => ServerRoom] = Map.empty
 
-  var roomTypesHandlers: Map[String, RoomStrategy] = Map.empty
-
-  //type1 ->  (id->room), (id2, room2) ...
-  //type2 -> (id->room), (id2, room2) ...
-  var roomsByType: Map[String, Map[String, Room]] = Map.empty
+  //type1 ->  (id->roomActor1), (id2, roomActor2) ...
+  //type2 -> (id->roomActor3), (id2, roomActor4) ...
+  var roomsByType: Map[String, Map[Room, ActorRef]] = Map.empty
 
 
-  override def availableRooms: Seq[Room] = roomsByType.values.flatMap(_.values).toSeq
+  override def availableRooms: List[Room] = roomsByType.values.flatMap(_.keys).toList
 
-  override def createRoom(roomType: String, roomOptions: Option[RoomOptions]): Room = {
+  override def createRoom(roomType: String, roomOptions: Option[RoomProperty[Any]]): Room = {
     this.handleRoomCreation(roomType, roomOptions)
   }
 
-  override def getRoomsByType(roomType: String): Seq[Room] =
-    this.roomsByType(roomType).values.toSeq
+  override def getRoomsByType(roomType: String): List[Room] = this.roomsByType(roomType).keys.toList
 
-  override def getOrCreate(roomType: String, roomOptions: Option[RoomOptions]): Seq[Room] =
-    this.roomsByType(roomType) match {
-      //if map is empty no room exists with type: roomType so we create a new room
-      case m: Map[String, Room] if m.isEmpty => Seq(createRoom(roomType, roomOptions))
-      case m => m.values.toSeq
-
-
+  override def getOrCreate(roomType: String, roomOptions: Option[RoomProperty[Any]]): List[Room] =
+    this.roomsByType.get(roomType) match {
+      case Some(r) => r.keys.toList
+      case None => List(createRoom(roomType, roomOptions))
     }
 
   override def getRoomById(roomType: String, roomId: String): Option[Room] =
-    this.roomsByType(roomType).get(roomId)
+    this.roomsByType(roomType).keys.find(_.roomId == roomId)
 
 
-  override def defineRoomType(roomTypeName: String, roomStrategy: RoomStrategy): Unit = {
+  override def defineRoomType(roomTypeName: String, roomFactory: String => ServerRoom): Unit = {
     this.roomsByType = this.roomsByType + (roomTypeName -> Map.empty)
-    this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomStrategy)
+    this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
   }
 
-  private def handleRoomCreation(roomType: String, roomOptions: Option[RoomOptions]): Room = {
+  private def handleRoomCreation(roomType: String, roomOptions: Option[RoomProperty[Any]]): Room = {
     val roomMap = this.roomsByType(roomType)
     val newId = (roomMap.size + 1).toString
-    val newRoom = Room(newId)
-    val newRoomMap = roomMap + (newId -> newRoom)
-    this.roomsByType = this.roomsByType.updated(roomType, newRoomMap)
+    val roomFactory = this.roomTypesHandlers(roomType)
+    val newRoom = roomFactory(newId)
+    val newRoomActor = actorSystem actorOf RoomActor(newRoom)
+    this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
     newRoom
+
   }
 
-  override def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler] = {
-    Some(Flow.fromFunction(_ => TextMessage("foo")))
-  }
+
 }
