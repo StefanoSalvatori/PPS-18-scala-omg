@@ -1,6 +1,6 @@
 package server.route_service
 
-import common.CommonRoom.{Room, RoomId}
+import common.SharedRoom.{Room, RoomId}
 import common.{RoomJsonSupport, RoomProperty}
 import server.route_service.RoomHandler.ClientConnectionHandler
 
@@ -57,6 +57,7 @@ trait RouteServiceStrategy {
 trait RoomHandlerService {
   val roomHandler: RoomHandler = RoomHandler()
 }
+
 trait RoomHandling extends RouteServiceStrategy with RoomHandlerService with RoomJsonSupport {
   override def onGetAllRooms(roomOptions: Option[RoomProperty]): Seq[Room] =
     this.roomHandler.availableRooms

@@ -2,7 +2,7 @@ package client
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
-import client.MessageDictionary._
+import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.{Routes, TestConfig}
 import org.scalatest.BeforeAndAfterAll

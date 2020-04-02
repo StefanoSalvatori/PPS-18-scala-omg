@@ -19,9 +19,7 @@ object RouteService {
   }
 }
 
-
-case class RouteServiceImpl() extends RouteService with RoomJsonSupport with RoomHandling
-with LazyLogging {
+case class RouteServiceImpl() extends RouteService with RoomJsonSupport with RoomHandling with LazyLogging {
   this: RoomHandlerService =>
 
   var roomTypes: Set[String] = Set.empty

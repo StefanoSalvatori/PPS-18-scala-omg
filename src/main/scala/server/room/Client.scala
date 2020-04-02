@@ -30,8 +30,7 @@ object Client {
  * @param id          the id of the client
  * @param clientActor the actor that will receive the messages
  */
-private class ClientImpl(override val id: String, private val clientActor: ActorRef) extends Client with
-  ApplicationActorSystem {
+private class ClientImpl(override val id: String, private val clientActor: ActorRef) extends Client with ApplicationActorSystem {
   override def send[T](msg: T): Unit = this.clientActor ! msg
 }
 

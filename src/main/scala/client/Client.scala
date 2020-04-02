@@ -1,12 +1,11 @@
 package client
 
 import akka.pattern.ask
-
 import common.actors.ApplicationActorSystem
-
-import client.MessageDictionary._
+import client.utils.MessageDictionary._
 import client.room.ClientRoom.ClientRoom
-import common.CommonRoom.{RoomId, RoomType}
+import common.SharedRoom.{RoomId, RoomType}
+import common.Routes
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -69,23 +68,16 @@ object Client {
 
 class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client with ApplicationActorSystem {
 
-  private val requestTimeout = 5 // Seconds
-
   import akka.util.Timeout
-
+  private val requestTimeout = 5 // Seconds
   implicit val timeout: Timeout = requestTimeout seconds
 
-  private val serverUri = "http://" + serverAddress + ":" + serverPort
+  private val serverUri = Routes.uri(serverAddress, serverPort)
 
   private val coreClient = actorSystem actorOf CoreClient(serverUri)
 
-  /*override def createPublicRoom(roomType: RoomType, roomOption: Any): Unit =
-    coreClient ! CreatePublicRoom*/
-
   override def joinedRooms(): Set[ClientRoom] =
     Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].rooms
-
-  override def shutdown(): Unit = super.terminateActorSystem()
 
   override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
     (coreClient ? CreatePublicRoom(roomType, roomOption)).mapTo[ClientRoom]
@@ -101,4 +93,6 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   override def getAvailableRoomsByType(roomType: String): Future[Seq[ClientRoom]] =
     (coreClient ? GetAvailableRooms(roomType)).mapTo[Seq[ClientRoom]]
+
+  override def shutdown(): Unit = super.terminateActorSystem()
 }

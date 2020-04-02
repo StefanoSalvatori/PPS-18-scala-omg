@@ -4,7 +4,7 @@ import common.{RoomPropertyValue, FilterOptions}
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.Flow
-import common.CommonRoom.{Room, RoomId}
+import common.SharedRoom.{Room, RoomId}
 import common.actors.ApplicationActorSystem
 import common.RoomProperty
 import server.room.{RoomActor, ServerRoom}
