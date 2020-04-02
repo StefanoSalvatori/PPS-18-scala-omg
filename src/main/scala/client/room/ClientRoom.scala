@@ -46,11 +46,12 @@ object ClientRoom extends ApplicationActorSystem {
 
 
   case class ClientRoomImpl(roomId: RoomId) extends ClientRoom with ApplicationActorSystem {
+    private val buffSize = 100
     val clientRoomActor = actorSystem.actorOf(Props(classOf[ClientRoomActor], roomId))
 
     private def initServerSource: (ActorRef, Publisher[TextMessage.Strict]) =
       Source.actorRef({ case Done => CompletionStrategy.draining },
-        PartialFunction.empty, 100, OverflowStrategy.dropHead)
+        PartialFunction.empty, buffSize, OverflowStrategy.dropHead)
         .map(msg => TextMessage.Strict(msg))
         .toMat(Sink.asPublisher(false))(Keep.both).run()
 
