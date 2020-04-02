@@ -2,7 +2,7 @@ package client
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.typesafe.scalalogging.LazyLogging
-import common.TestConfig
+import common.{RoomJsonSupport, TestConfig}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -20,7 +20,8 @@ class ClientSpec extends AnyFlatSpec
   with BeforeAndAfterAll
   with TestConfig
   with ScalatestRouteTest
-  with LazyLogging {
+  with LazyLogging
+with RoomJsonSupport{
 
   private val serverAddress = "localhost"
   private val serverPort = CLIENT_SPEC_SERVER_PORT
@@ -33,16 +34,6 @@ class ClientSpec extends AnyFlatSpec
   private var gameServer: GameServer = _
   private var client: Client = _
 
-  override def beforeAll(): Unit = {
-    gameServer = GameServer(serverAddress, serverPort)
-
-    gameServer.defineRoom(ROOM_TYPE_NAME, id => ServerRoom(id))
-
-    Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
-  }
-
-  override def afterAll(): Unit =
-    Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
 
   behavior of "Client"
 
@@ -65,10 +56,25 @@ class ClientSpec extends AnyFlatSpec
 
   it should "create public rooms" in {
     val r = Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
-    val roomList = Await.result(client getAvailableRoomsByType (ROOM_TYPE_NAME), 5 seconds)
+    val roomList = Await.result(client getAvailableRoomsByType ROOM_TYPE_NAME, 5 seconds)
     roomList should have size 1
   }
 
+  it should "fail on create public rooms if server is unreachable" in {
+    Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
+
+    assertThrows[Exception] {
+      Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
+    }
+  }
+
+  it should "fail on getting rooms  if server is unreachable" in {
+    Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
+
+    assertThrows[Exception] {
+      Await.result(client getAvailableRoomsByType (ROOM_TYPE_NAME), 5 seconds)
+    }
+  }
 
   it should "get all available rooms of specific type" in {
     Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
@@ -81,7 +87,7 @@ class ClientSpec extends AnyFlatSpec
   it should "create a public room and automatically join such room" in {
     client createPublicRoom(ROOM_TYPE_NAME, "") onComplete {
       case Success(_) => client.joinedRooms should have size 1
-      case Failure(exception) => logger error (exception.toString)
+      case Failure(exception) => logger error exception.toString
     }
   }
 

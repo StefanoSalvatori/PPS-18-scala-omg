@@ -1,18 +1,13 @@
 package client
 
-import java.util.concurrent.TimeUnit
-
-import akka.NotUsed
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSupport}
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse}
+import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.scaladsl.Source
 import client.room.ClientRoom.ClientRoom
-import common.{RoomJsonSupport, Routes}
+import common.{HttpRequests, RoomJsonSupport}
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 
@@ -28,57 +23,60 @@ object CoreClient {
 class CoreClientImpl(private val serverUri: String) extends CoreClient with RoomJsonSupport {
 
   private val httpClient = context.system actorOf HttpClient(serverUri, self)
-  implicit val jsonStreamingSupport: JsonEntityStreamingSupport = EntityStreamingSupport.json()
   private var joinedRooms: Set[ClientRoom] = Set()
 
   import MessageDictionary._
 
-  val onReceive: PartialFunction[Any, Unit] = {
-
-    case msg@CreatePublicRoom(roomType, _) =>
+  val onReceive: Receive = {
+    case CreatePublicRoom(roomType, _) =>
       val resTo = sender
-      val f: Future[HttpResponse] = Http() singleRequest HttpRequest(
-        method = HttpMethods.POST,
-        uri = serverUri + "/" + Routes.roomsByType(roomType)
-      )
+      val createRoomFuture: Future[HttpResponse] = Http() singleRequest
+        HttpRequests.postRoom(serverUri)(roomType)
 
-      f onComplete (response => {
-        if (response.isSuccess) {
-          val res: HttpResponse = response.get
-          val unmarshalled = Unmarshal(res).to[Source[ClientRoom, NotUsed]]
-          val source = Source futureSource unmarshalled
-          source.runFold(Set[ClientRoom]())(_ + _) onComplete { res =>
-            if (res.isSuccess) {
-              joinedRooms += res.get.head
-              resTo ! res.get.head
-            } else {
-              logger debug s"Failed to parse server response $response"
-            }
-          }
-        } else {
-          logger debug s"Failed to receive server response $response"
-        }
-      })
+      (for {
+        response <- createRoomFuture
+        room <- Unmarshal(response).to[ClientRoom]
+      } yield room) onComplete {
+        case Success(room) =>
+          joinedRooms = joinedRooms + room
+          resTo ! room
+        case Failure(exception) => Future.failed(exception)
+      }
 
     case GetAvailableRooms(roomType) =>
       val resTo = sender
 
-      val getRoomsByTypeHttpRequest = HttpRequest(
-        method = HttpMethods.GET,
-        uri = serverUri + "/" + Routes.roomsByType(roomType)
-      )
-      logger debug s"Request-> $getRoomsByTypeHttpRequest"
-      val f: Future[HttpResponse] = Http() singleRequest getRoomsByTypeHttpRequest
+      val getRoomsFuture: Future[HttpResponse] = Http() singleRequest
+        HttpRequests.getRoomsByType(serverUri)(roomType)
 
-
-      f onComplete {
-        case Success(response) =>
-          logger debug s"Response -> $response"
-          val unmarshalled: Future[Seq[ClientRoom]] = Unmarshal(response).to[Seq[ClientRoom]]
-          resTo ! Await.result(unmarshalled, 5 seconds)
-
-        case Failure(exception) => logger debug s"Failed to get rooms by type"
+      (for {
+        response <- getRoomsFuture
+        rooms <- Unmarshal(response).to[Seq[ClientRoom]]
+      } yield rooms) onComplete {
+        case Success(rooms) => resTo ! rooms
+        case Failure(exception) => Future.failed(exception)
       }
+
+    case Join(roomType, _) =>
+      val resTo = sender
+
+      val getRoomsFuture: Future[HttpResponse] = Http() singleRequest
+        HttpRequests.getRoomsByType(serverUri)(roomType)
+
+      (for {
+        response <- getRoomsFuture
+        rooms <- Unmarshal(response).to[Seq[ClientRoom]]
+        joinedRoom <-  rooms.head.join()
+      } yield joinedRoom) onComplete {
+        case Success(r) => resTo ! r
+        case Failure(ex) => Future.failed(ex)
+      }
+
+
+
+    case JoinOrCreate(roomType, _) =>
+
+    case JoinById(roomId) =>
 
     case NewJoinedRoom(room) =>
       if (joinedRooms map (_ roomId) contains room.roomId) {

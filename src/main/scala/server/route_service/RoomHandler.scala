@@ -95,9 +95,10 @@ case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
   override def getRoomsByType(roomType: String): List[Room] = this.roomsByType(roomType).keys.toList
 
   override def getOrCreate(roomType: String, roomOptions: Option[RoomProperty[Any]]): Seq[Room] =
-    this.roomsByType.get(roomType) match {
-      case Some(r) => r.keys.toList
-      case None => List(createRoom(roomType, roomOptions))
+    this.roomsByType(roomType) match {
+      //if map is empty no room exists with type 'roomType' so we create a new room and return
+      case m: Map[Room, ActorRef] if m.isEmpty => Seq(createRoom(roomType, roomOptions))
+      case m => m.keys.toSeq
     }
 
   override def getRoomById(roomType: String, roomId: String): Option[Room] =

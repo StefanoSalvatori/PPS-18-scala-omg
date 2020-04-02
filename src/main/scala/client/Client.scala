@@ -13,7 +13,8 @@ sealed trait Client {
 
   /**
    * Creates a new public room the join
-   * @param roomType type of room to create
+   *
+   * @param roomType   type of room to create
    * @param roomOption options
    * @return a future with the joined room
    */
@@ -21,33 +22,37 @@ sealed trait Client {
 
   /**
    * Join an existing room or create a new one, by provided roomType and options
-   * @param roomType type of room to join
+   *
+   * @param roomType   type of room to join
    * @param roomOption filtering options
    * @return a future with the joined room
    */
-  def joinOrCreate(roomType: RoomType, roomOption: Any) : Future[ClientRoom]
+  def joinOrCreate(roomType: RoomType, roomOption: Any): Future[ClientRoom]
 
   /**
    * Joins an existing room by provided roomType and options.
-   * @param roomType type of room to join
+   * Fails if no room of such type exists
+   *
+   * @param roomType   type of room to join
    * @param roomOption filtering options
    * @return a future containing the joined room
    */
-  def join(roomType: RoomType, roomOption: Any) : Future[ClientRoom]
+  def join(roomType: RoomType, roomOption: Any): Future[ClientRoom]
 
   /**
    * Joins an existing room by its roomId.
+   *
    * @param roomId the id of the room to join
    * @return a future with the joined room
    */
-  def joinById(roomId: RoomId) : Future[ClientRoom]
+  def joinById(roomId: RoomId): Future[ClientRoom]
 
 
   /**
    * @param roomType type of room to get
    * @return List all available rooms to connect of the given type
    */
-  def getAvailableRoomsByType(roomType: String) : Future[Seq[ClientRoom]]
+  def getAvailableRoomsByType(roomType: String): Future[Seq[ClientRoom]]
 
   def joinedRooms(): Set[ClientRoom]
 
@@ -61,15 +66,17 @@ object Client {
 class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
 
   private val requestTimeout = 5 // Seconds
+
   import akka.util.Timeout
+
   implicit val timeout: Timeout = requestTimeout seconds
 
   private val serverUri = "http://" + serverAddress + ":" + serverPort
 
   import akka.actor.ActorSystem
   import com.typesafe.config.ConfigFactory
+
   private val system = ActorSystem("ClientSystem", ConfigFactory.load())
-  implicit val executionContext: ExecutionContext = system.dispatcher
   private val coreClient = system actorOf CoreClient(serverUri)
 
   /*override def createPublicRoom(roomType: RoomType, roomOption: Any): Unit =
@@ -83,17 +90,17 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
     (coreClient ? CreatePublicRoom(roomType, roomOption)).mapTo[ClientRoom]
 
-  override def joinOrCreate(roomType: RoomType, roomOption: Any): Future[ClientRoom] = {
+  override def joinOrCreate(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
     (coreClient ? JoinOrCreate(roomType, roomOption)).mapTo[ClientRoom]
-  }
 
-  override def join(roomType: RoomType, roomOption: Any): Future[ClientRoom] = ???
+  override def join(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
+    (coreClient ? Join(roomType, roomOption)).mapTo[ClientRoom]
 
-  override def joinById(roomId: RoomId): Future[ClientRoom] = ???
+  override def joinById(roomId: RoomId): Future[ClientRoom] =
+    (coreClient ? JoinById(roomId)).mapTo[ClientRoom]
 
   override def getAvailableRoomsByType(roomType: String): Future[Seq[ClientRoom]] =
     (coreClient ? GetAvailableRooms(roomType)).mapTo[Seq[ClientRoom]]
-
 
 
 }
