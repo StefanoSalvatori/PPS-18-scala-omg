@@ -1,6 +1,8 @@
 package client
 
-import common.{EqualStrategy, FilterOption, FilterOptions, FilterStrategy, GreaterStrategy, NotEqualStrategy, RoomProperty}
+import common._
+import common.BasicRoomPropertyValueConversions._
+
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -11,16 +13,16 @@ class RoomFilterSpec extends AnyFlatSpec
 
   private val testPropertyName = "A"
   private val testPropertyValue = 1
-  private val testProperty: RoomProperty[Int] = RoomProperty(testPropertyName, testPropertyValue)
+  private val testProperty: RoomProperty = RoomProperty(testPropertyName, testPropertyValue)
   private val testPropertyName2 = "B"
   private val testPropertyValue2 = "abc"
-  private val testProperty2: RoomProperty[String] = RoomProperty(testPropertyName2, testPropertyValue2)
+  private val testProperty2: RoomProperty = RoomProperty(testPropertyName2, testPropertyValue2)
   private val testPropertyName3 = "C"
   private val testPropertyValue3 = true
-  private val testProperty3: RoomProperty[Boolean] = RoomProperty(testPropertyName3, testPropertyValue3)
+  private val testProperty3: RoomProperty = RoomProperty(testPropertyName3, testPropertyValue3)
 
-  case class MyRoomPropertyValue(a: String, b: Int) extends Ordered[MyRoomPropertyValue] {
-    override def compare(that: MyRoomPropertyValue): Int = this.b - that.b
+  case class MyRoomPropertyValue(a: String, b: Int) extends RoomPropertyValue {
+    override def compare(that: this.type): Int = this.b - that.b
   }
   private val myRoomPropertyName = "D"
   private val myProperty = RoomProperty(myRoomPropertyName, MyRoomPropertyValue("abc", 1))
@@ -77,9 +79,9 @@ class RoomFilterSpec extends AnyFlatSpec
     checkFilterOptionCorrectness(options(1))(testProperty.name, NotEqualStrategy(), 2)
   }
 
-  private def checkFilterOptionCorrectness[T](option: FilterOption[T])(propertyName: String, strategy: FilterStrategy, value: Any): Unit = {
-    option.optName shouldEqual propertyName
+  private def checkFilterOptionCorrectness(option: FilterOption)(propertyName: String, strategy: FilterStrategy, value: RoomPropertyValue): Unit = {
+    option.optionName shouldEqual propertyName
     option.strategy shouldEqual strategy
-    option.value shouldEqual value.asInstanceOf[T]
+    option.value shouldEqual value
   }
 }

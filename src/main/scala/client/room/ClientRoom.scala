@@ -2,19 +2,14 @@ package client.room
 
 import akka.{Done, NotUsed}
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
-import akka.http.scaladsl.model.ws.{Message, TextMessage, WebSocketRequest}
-import akka.pattern.ask
+import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.stream.{CompletionStrategy, OverflowStrategy}
 import common.CommonRoom.{Room, RoomId}
-import common.HttpRequests
 import common.actors.ApplicationActorSystem
 import akka.util.Timeout
 import org.reactivestreams.Publisher
 
-import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 

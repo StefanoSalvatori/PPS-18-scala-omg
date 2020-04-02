@@ -1,11 +1,8 @@
 package client
 
 import common.actors.ApplicationActorSystem
-import server.GameServer
 
-import scala.concurrent.Await
 import scala.util.{Failure, Success}
-import scala.concurrent.duration._
 object ClientStub extends App with ApplicationActorSystem{
 
   private val serverAddress = "localhost"

@@ -1,32 +1,47 @@
 package common
 
-sealed trait FilterStrategy
-case class EqualStrategy() extends FilterStrategy
-case class NotEqualStrategy() extends FilterStrategy
-case class GreaterStrategy() extends FilterStrategy
-case class LowerStrategy() extends FilterStrategy
+trait FilterStrategy {
+  protected def basicStrategy(x: RoomPropertyValue, y: RoomPropertyValue): Int = x compare y.asInstanceOf[x.type]
+  def evaluate(x: RoomPropertyValue, y: RoomPropertyValue): Boolean
+}
 
-trait FilterStrategies[T] {  option: RoomProperty[T] =>
+case class EqualStrategy() extends FilterStrategy {
+  override def evaluate(x: RoomPropertyValue, y: RoomPropertyValue): Boolean = basicStrategy(x, y) == 0
+}
 
-  def =:=(that: T): FilterOption[T] = filterOption(EqualStrategy(), that)
-  def =!=(that: T): FilterOption[T] = filterOption(NotEqualStrategy(), that)
-  def >(that: T): FilterOption[T] = filterOption(GreaterStrategy(), that)
-  def <(that: T): FilterOption[T] = filterOption(LowerStrategy(), that)
+case class NotEqualStrategy() extends FilterStrategy {
+  override def evaluate(x: RoomPropertyValue, y: RoomPropertyValue): Boolean = basicStrategy(x, y) != 0
+}
 
-  private def filterOption(filterStrategy: FilterStrategy, that: T): FilterOption[T] =
+case class GreaterStrategy() extends FilterStrategy {
+  override def evaluate(x: RoomPropertyValue, y: RoomPropertyValue): Boolean = basicStrategy(x, y) > 0
+}
+
+case class LowerStrategy() extends FilterStrategy {
+  override def evaluate(x: RoomPropertyValue, y: RoomPropertyValue): Boolean = basicStrategy(x, y) < 0
+}
+
+trait FilterStrategies { option: RoomProperty =>
+
+  def =:=(that: RoomPropertyValue): FilterOption = filterOption(EqualStrategy(), that)
+  def =!=(that: RoomPropertyValue): FilterOption = filterOption(NotEqualStrategy(), that)
+  def >(that: RoomPropertyValue): FilterOption= filterOption(GreaterStrategy(), that)
+  def <(that: RoomPropertyValue): FilterOption = filterOption(LowerStrategy(), that)
+
+  private def filterOption(filterStrategy: FilterStrategy, that: RoomPropertyValue): FilterOption =
     FilterOption(option.name, filterStrategy, that)
 }
 
-case class FilterOption[T](optName: String, strategy: FilterStrategy, value: T) {
-  def andThen(filterOpt: FilterOption[_]): FilterOptions = FilterOptions(Seq(this, filterOpt))
+case class FilterOption(optionName: String, strategy: FilterStrategy, value: RoomPropertyValue) {
+  def andThen(filterOpt: FilterOption): FilterOptions = FilterOptions(Seq(this, filterOpt))
 }
 
 object FilterOptions {
-  def just(filter: FilterOption[_]): FilterOptions = FilterOptions(Seq(filter))
+  def just(filter: FilterOption): FilterOptions = FilterOptions(Seq(filter))
   def empty(): FilterOptions = FilterOptions(Seq())
 }
 
-case class FilterOptions(options: Seq[FilterOption[_]]) {
-  def andThen(that: FilterOption[_]): FilterOptions= FilterOptions(options :+ that)
+case class FilterOptions(options: Seq[FilterOption]) {
+  def andThen(that: FilterOption): FilterOptions = FilterOptions(options :+ that)
   def ++(that: FilterOptions): FilterOptions = FilterOptions(options ++ that.options)
 }

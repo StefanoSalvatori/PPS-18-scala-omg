@@ -51,7 +51,6 @@ object ServerRoom {
    * @return the room
    */
   def apply(id: String): ServerRoom = new BasicServerRoom(id)
-
 }
 
 private class BasicServerRoom(override val roomId: String) extends ServerRoom {

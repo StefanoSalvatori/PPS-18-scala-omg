@@ -71,7 +71,7 @@ with LazyLogging {
    */
   private def getAllRoomsRoute: Route =
     get {
-      entity(as[RoomProperty[Any]]) { roomOptions =>
+      entity(as[RoomProperty]) { roomOptions =>
         val rooms = onGetAllRooms(Some(roomOptions))
         complete(rooms)
       } ~ {
@@ -87,7 +87,7 @@ with LazyLogging {
    */
   private def getRoomsByTypeRoute(roomType: String): Route =
     get {
-      entity(as[RoomProperty[Any]]) { roomOptions =>
+      entity(as[RoomProperty]) { roomOptions =>
         val rooms = onGetRoomType(roomType, Some(roomOptions))
         complete(rooms)
       } ~ {
@@ -102,7 +102,7 @@ with LazyLogging {
    */
   private def putRoomsByTypeRoute(roomType: String): Route =
     put {
-      entity(as[RoomProperty[Any]]) { roomOptions =>
+      entity(as[RoomProperty]) { roomOptions =>
         val rooms = onPutRoomType(roomType, Some(roomOptions))
         complete(rooms) //return a list containing only the created room if no room is available
       } ~ {
@@ -117,7 +117,7 @@ with LazyLogging {
    */
   private def postRoomsByTypeRoute(roomType: String): Route =
     post {
-      entity(as[RoomProperty[Any]]) { roomOptions =>
+      entity(as[RoomProperty]) { roomOptions =>
         val room = onPostRoomType(roomType, Some(roomOptions))
         complete(room)
       } ~ {
