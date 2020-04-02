@@ -3,6 +3,7 @@ package client.examples
 object FilterUsage extends App {
 
   // Filters on basic room option values: Int, String, Boolean
+  import common.BasicRoomPropertyValueConversions._ // Implicit conversions Int -> IntRoomPropertyValue etc.
   import common.RoomProperty
   val prop1 = RoomProperty("A", 3) // Int room option
   val prop2 = RoomProperty("B", "svv") // String room option
@@ -24,9 +25,10 @@ object FilterUsage extends App {
 
   // Filters on custom room options values
 
-  // Create a class that define a comparing method via Ordered[T]
-  case class MyRoomPropertyValue(a: String, b: Int) extends Ordered[MyRoomPropertyValue] {
-    override def compare(that: MyRoomPropertyValue): Int = this.b - that.b
+  // Create a class that defines a custom comparing method by extending RoomPropertyValue
+  import common.RoomPropertyValue
+  case class MyRoomPropertyValue(a: String, b: Int) extends RoomPropertyValue {
+    override def compare(that: this.type): Int = this.b - that.b
   }
 
   // Now a room property with MyRoomOptionValue as value can be created
@@ -37,8 +39,4 @@ object FilterUsage extends App {
 
   println()
   println(myFilter)
-  // Values can be compared using specified custom logic
-  println(myProp.value compare testPropertyValue)
-  println(myProp.value < testPropertyValue)
-  println(myProp.value >= testPropertyValue)
 }

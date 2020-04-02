@@ -12,7 +12,7 @@ trait RouteServiceStrategy {
    * @param roomOptions options for room filtering
    * @return a list of rooms filtered with the room options
    */
-  def onGetAllRooms(roomOptions: Option[RoomProperty[Any]]): Seq[Room]
+  def onGetAllRooms(roomOptions: Option[RoomProperty]): Seq[Room]
 
   /**
    * Handle request for getting all rooms of specific type
@@ -21,7 +21,7 @@ trait RouteServiceStrategy {
    * @param roomOptions roomOptions options for room filtering
    * @return a list of rooms filtered with the room options
    */
-  def onGetRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Seq[Room]
+  def onGetRoomType(roomType: String, roomOptions: Option[RoomProperty]): Seq[Room]
 
   /**
    * Handle request for put room
@@ -30,7 +30,7 @@ trait RouteServiceStrategy {
    * @param roomOptions roomOptions options for room creation
    * @return a list available rooms or a list containing the only created room if no rooms were available
    */
-  def onPutRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Seq[Room]
+  def onPutRoomType(roomType: String, roomOptions: Option[RoomProperty]): Seq[Room]
 
   /**
    * Handle request for post room
@@ -39,7 +39,7 @@ trait RouteServiceStrategy {
    * @param roomOptions room options for creation
    * @return the created room
    */
-  def onPostRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Room
+  def onPostRoomType(roomType: String, roomOptions: Option[RoomProperty]): Room
 
   /**
    * Handle request for getting a room with specific id
@@ -58,17 +58,17 @@ trait RoomHandlerService {
   val roomHandler: RoomHandler = RoomHandler()
 }
 trait RoomHandling extends RouteServiceStrategy with RoomHandlerService with RoomJsonSupport {
-  override def onGetAllRooms(roomOptions: Option[RoomProperty[Any]]): Seq[Room] =
+  override def onGetAllRooms(roomOptions: Option[RoomProperty]): Seq[Room] =
     this.roomHandler.availableRooms
 
-  override def onGetRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Seq[Room] =
+  override def onGetRoomType(roomType: String, roomOptions: Option[RoomProperty]): Seq[Room] =
     this.roomHandler
     .getRoomsByType(roomType)
 
-  override def onPutRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Seq[Room] =
+  override def onPutRoomType(roomType: String, roomOptions: Option[RoomProperty]): Seq[Room] =
     this.roomHandler.getOrCreate(roomType, roomOptions)
 
-  override def onPostRoomType(roomType: String, roomOptions: Option[RoomProperty[Any]]): Room =
+  override def onPostRoomType(roomType: String, roomOptions: Option[RoomProperty]): Room =
     this.roomHandler.createRoom(roomType, roomOptions)
 
   override def onGetRoomTypeId(roomType: String, roomId: String): Option[Room] =

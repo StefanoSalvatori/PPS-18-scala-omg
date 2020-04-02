@@ -1,7 +1,6 @@
 package client
 
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSupport}
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import client.room.ClientRoom.ClientRoom
@@ -9,7 +8,6 @@ import common.{HttpRequests, RoomJsonSupport}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-
 
 sealed trait CoreClient extends BasicActor
 
@@ -71,8 +69,6 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
         case Success(r) => resTo ! r
         case Failure(ex) => Future.failed(ex)
       }
-
-
 
     case JoinOrCreate(roomType, _) =>
 

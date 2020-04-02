@@ -3,7 +3,6 @@ package server
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.util.ByteString
-import common.CommonRoom.Room
 import common.{RoomJsonSupport, Routes}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
@@ -124,7 +123,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
     }
   }
 
-
+/*
   /// GET rooms/{type}/{id}
   it should "handle GET request on path 'rooms/{type}/{id}' if such id exists " in {
 
@@ -145,12 +144,15 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
       }
   }
+  */
 
+  /*
   private def createRoom(): Room = {
     Post(ROOMS_WITH_TYPE) ~> route ~> check {
       responseAs[Room]
     }
   }
+  */
 
 }
 

@@ -1,13 +1,17 @@
 package client
 
 import akka.pattern.ask
+
+import common.actors.ApplicationActorSystem
+
 import client.MessageDictionary._
 import client.room.ClientRoom.ClientRoom
 import common.CommonRoom.{RoomId, RoomType}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
+
 
 sealed trait Client {
 
@@ -63,7 +67,7 @@ object Client {
   def apply(serverAddress: String, serverPort: Int): ClientImpl = new ClientImpl(serverAddress, serverPort)
 }
 
-class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
+class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client with ApplicationActorSystem {
 
   private val requestTimeout = 5 // Seconds
 
@@ -73,11 +77,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   private val serverUri = "http://" + serverAddress + ":" + serverPort
 
-  import akka.actor.ActorSystem
-  import com.typesafe.config.ConfigFactory
-
-  private val system = ActorSystem("ClientSystem", ConfigFactory.load())
-  private val coreClient = system actorOf CoreClient(serverUri)
+  private val coreClient = actorSystem actorOf CoreClient(serverUri)
 
   /*override def createPublicRoom(roomType: RoomType, roomOption: Any): Unit =
     coreClient ! CreatePublicRoom*/
@@ -85,7 +85,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   override def joinedRooms(): Set[ClientRoom] =
     Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].rooms
 
-  override def shutdown(): Unit = system.terminate()
+  override def shutdown(): Unit = super.terminateActorSystem()
 
   override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
     (coreClient ? CreatePublicRoom(roomType, roomOption)).mapTo[ClientRoom]
@@ -101,6 +101,4 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   override def getAvailableRoomsByType(roomType: String): Future[Seq[ClientRoom]] =
     (coreClient ? GetAvailableRooms(roomType)).mapTo[Seq[ClientRoom]]
-
-
 }
