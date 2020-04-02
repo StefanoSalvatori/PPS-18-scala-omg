@@ -67,10 +67,11 @@ object Client {
   def apply(serverAddress: String, serverPort: Int): ClientImpl = new ClientImpl(serverAddress, serverPort)
 }
 
-class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client with ApplicationActorSystem {
+class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
 
   private val requestTimeout = 5 // Seconds
 
+  import common.actors.ApplicationActorSystem._
   import akka.util.Timeout
 
   implicit val timeout: Timeout = requestTimeout seconds
@@ -85,7 +86,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   override def joinedRooms(): Set[ClientRoom] =
     Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].rooms
 
-  override def shutdown(): Unit = super.terminateActorSystem()
+  override def shutdown(): Unit = terminateActorSystem()
 
   override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
     (coreClient ? CreatePublicRoom(roomType, roomOption)).mapTo[ClientRoom]

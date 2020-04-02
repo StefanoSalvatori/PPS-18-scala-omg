@@ -4,7 +4,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import common.actors.ApplicationActorSystem
 import server.ServerActor._
 import server.room.ServerRoom
 import server.route_service.RouteService
@@ -66,6 +65,7 @@ trait GameServer {
 
 object GameServer {
 
+
   implicit val ACTOR_REQUEST_TIMEOUT: Timeout = Timeout(5 seconds)
   val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
 
@@ -85,7 +85,6 @@ object GameServer {
    */
   def apply(host: String, port: Int, existingRoutes: Route = reject): GameServer = new GameServerImpl(host, port, existingRoutes)
 
-
 }
 
 /**
@@ -98,13 +97,13 @@ object GameServer {
 private class GameServerImpl(override val host: String,
                              override val port: Int,
                              private val additionalRoutes: Route = reject) extends GameServer
-  with LazyLogging
-  with ApplicationActorSystem {
+  with LazyLogging {
 
   import GameServer._
   import akka.pattern.ask
+  import common.actors.ApplicationActorSystem._
 
-  private val serverActor = actorSystem actorOf(ServerActor(SERVER_TERMINATION_DEADLINE), "GameServer")
+  private val serverActor = actorSystem actorOf ServerActor(SERVER_TERMINATION_DEADLINE)
   private val routeService = RouteService()
 
 

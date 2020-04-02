@@ -21,10 +21,11 @@ trait RoomHandler {
 
   /**
    * FIlter rooms using the specified filters.
+   *
    * @param filterOptions
-   *     The filters to be applied
+   * The filters to be applied
    * @return
-   *     A set of rooms that satisfy the filters
+   * A set of rooms that satisfy the filters
    */
   def availableRooms(filterOptions: FilterOptions): Set[Room]
 
@@ -84,10 +85,13 @@ trait RoomHandler {
 
 object RoomHandler {
   type ClientConnectionHandler = Flow[Message, Message, Any]
+
   def apply(): RoomHandler = RoomHandlerImpl()
 }
 
-case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
+case class RoomHandlerImpl() extends RoomHandler {
+
+  import common.actors.ApplicationActorSystem._
 
   var roomTypesHandlers: Map[String, String => ServerRoom] = Map.empty
 
@@ -98,25 +102,25 @@ case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
   override def availableRooms(filterOptions: FilterOptions): Set[Room] =
     roomsByType.values.flatMap(_ keys).filter(room => {
 
-    // Given a room, check if such room satisfies all filter constraints
-    filterOptions.options.forall(filterOption => {
-      try {
-        val field = room.getClass getDeclaredField filterOption.optionName
+      // Given a room, check if such room satisfies all filter constraints
+      filterOptions.options.forall(filterOption => {
+        try {
+          val field = room.getClass getDeclaredField filterOption.optionName
 
-        field setAccessible true
+          field setAccessible true
 
-        val value = (field get room).asInstanceOf[RoomPropertyValue]
-        val filterValue = filterOption.value.asInstanceOf[value.type]
+          val value = (field get room).asInstanceOf[RoomPropertyValue]
+          val filterValue = filterOption.value.asInstanceOf[value.type]
 
-        field setAccessible false
+          field setAccessible false
 
-        filterOption.strategy evaluate (value, filterValue)
-      } catch {
-        // A room is dropped if it doesn't contain the specified field to be used in the filter
-        case _: NoSuchFieldException => false
-      }
-    })
-  }).toSet
+          filterOption.strategy evaluate(value, filterValue)
+        } catch {
+          // A room is dropped if it doesn't contain the specified field to be used in the filter
+          case _: NoSuchFieldException => false
+        }
+      })
+    }).toSet
 
   override def availableRooms: Seq[Room] = roomsByType.values.flatMap(_.keys).toSeq
 
@@ -152,6 +156,6 @@ case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
   }
 
   override def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler] = {
-    Some(Flow.fromFunction(_ => TextMessage("foo")))//TODO: get web socket handler
+    Some(Flow.fromFunction(_ => TextMessage("foo"))) //TODO: get web socket handler
   }
 }

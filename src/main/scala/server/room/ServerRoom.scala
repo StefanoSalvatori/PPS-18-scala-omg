@@ -2,6 +2,8 @@ package server.room
 
 import common.CommonRoom.Room
 
+trait Server
+
 
 trait ServerRoom extends Room {
 
