@@ -39,7 +39,7 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   //TODO: only works with RoomProperty[Any]
-  implicit val simpleRoomPropertyJsonFormat: RootJsonFormat[RoomProerty] = new RootJsonFormat[RoomProperty] {
+  implicit val simpleRoomPropertyJsonFormat: RootJsonFormat[RoomProperty] = new RootJsonFormat[RoomProperty] {
     def write(a: RoomProperty): JsValue = JsArray(JsString(a.name), JsString(a.value.toString))
 
     import spray.json.deserializationError

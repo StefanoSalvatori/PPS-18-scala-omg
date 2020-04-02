@@ -81,7 +81,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       Thread sleep 1000
       (coreClient ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])
-        reply.asInstanceOf[JoinedRooms].rooms.size shouldEqual 1
+        reply.asInstanceOf[JoinedRooms].rooms should have size 1
       })
     }
   }

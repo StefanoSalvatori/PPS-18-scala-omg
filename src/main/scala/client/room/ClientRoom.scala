@@ -5,9 +5,9 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.stream.{CompletionStrategy, OverflowStrategy}
-import common.CommonRoom.{Room, RoomId}
 import common.actors.ApplicationActorSystem
 import akka.util.Timeout
+import common.SharedRoom.{Room, RoomId}
 import org.reactivestreams.Publisher
 
 import scala.concurrent.Future
