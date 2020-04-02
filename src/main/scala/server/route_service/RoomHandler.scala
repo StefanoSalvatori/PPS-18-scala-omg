@@ -1,14 +1,21 @@
 package server.route_service
 
-import common.{Room, RoomOptions, RoomPropertyValue, FilterOptions}
-import server.room.RoomStrategy
+import common.{RoomPropertyValue, FilterOptions}
+import akka.actor.ActorRef
+import akka.http.scaladsl.model.ws.{Message, TextMessage}
+import akka.stream.scaladsl.Flow
+import common.CommonRoom.{Room, RoomId}
+import common.actors.ApplicationActorSystem
+import common.RoomProperty
+import server.room.{RoomActor, ServerRoom}
+import server.route_service.RoomHandler.ClientConnectionHandler
 
 trait RoomHandler {
 
   /**
    * @return the list of available rooms
    */
-  def availableRooms: List[Room]
+  def availableRooms: Seq[Room]
 
   /**
    * FIlter rooms using the specified filters.
@@ -26,7 +33,7 @@ trait RoomHandler {
    * @param roomOptions room options
    * @return the created room
    */
-  def createRoom(roomType: String, roomOptions: Option[RoomOptions]): Room
+  def createRoom(roomType: String, roomOptions: Option[RoomProperty]): Room
 
   /**
    * Get the list of available room of given type.
@@ -37,7 +44,7 @@ trait RoomHandler {
    * @param roomOptions room options for creation
    * @return list of rooms
    */
-  def getOrCreate(roomType: String, roomOptions: Option[RoomOptions]): List[Room]
+  def getOrCreate(roomType: String, roomOptions: Option[RoomProperty]): Seq[Room]
 
   /**
    * Return a room with given type and id. Non if does not exists
@@ -57,31 +64,37 @@ trait RoomHandler {
   def getRoomsByType(roomType: String): List[Room]
 
   /**
-   * Define a new room type to handle on room creation.
-   * New rooms with this type are created with the given room strategy
    *
-   * @param roomType     room type
-   * @param roomStrategy room strategy
+   * @param roomType    the name of the room's type
+   * @param roomFactory the factory to create given an id
    */
-  def defineRoomType(roomType: String, roomStrategy: RoomStrategy)
+
+  def defineRoomType(roomType: String, roomFactory: String => ServerRoom)
+
+  /**
+   * Handle new client web socket connection to a room.
+   *
+   * @param roomId the id of the room the client connects to
+   * @return the connection handler if such room id exists
+   */
+  def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler]
 }
 
 object RoomHandler {
+  type ClientConnectionHandler = Flow[Message, Message, Any]
   def apply(): RoomHandler = RoomHandlerImpl()
 }
 
-case class RoomHandlerImpl() extends RoomHandler {
+case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
 
-  var roomTypesHandlers: Map[String, RoomStrategy] = Map.empty
+  var roomTypesHandlers: Map[String, String => ServerRoom] = Map.empty
 
-  //type1 ->  (id->room), (id2, room2) ...
-  //type2 -> (id->room), (id2, room2) ...
-  var roomsByType: Map[String, Map[String, Room]] = Map.empty
-
-  override def availableRooms: List[Room] = roomsByType.values.flatMap(_.values).toList
+  //type1 ->  (id->roomActor1), (id2, roomActor2) ...
+  //type2 -> (id->roomActor3), (id2, roomActor4) ...
+  var roomsByType: Map[String, Map[Room, ActorRef]] = Map.empty
 
   override def availableRooms(filterOptions: FilterOptions): Set[Room] =
-    roomsByType.values.flatMap(_ values).filter(room => {
+    roomsByType.values.flatMap(_ keys).filter(room => {
 
     // Given a room, check if such room satisfies all filter constraints
     filterOptions.options.forall(filterOption => {
@@ -103,33 +116,41 @@ case class RoomHandlerImpl() extends RoomHandler {
     })
   }).toSet
 
-  override def createRoom(roomType: String, roomOptions: Option[RoomOptions]): Room = {
+  override def availableRooms: List[Room] = roomsByType.values.flatMap(_.keys).toList
+
+  override def createRoom(roomType: String, roomOptions: Option[RoomProperty]): Room = {
     this.handleRoomCreation(roomType, roomOptions)
   }
 
-  override def getRoomsByType(roomType: String): List[Room] = this.roomsByType(roomType).values.toList
+  override def getRoomsByType(roomType: String): List[Room] = this.roomsByType(roomType).keys.toList
 
-  override def getOrCreate(roomType: String, roomOptions: Option[RoomOptions]): List[Room] =
-    this.roomsByType.get(roomType) match {
-      case Some(r) => r.values.toList
-      case None => List(createRoom(roomType, roomOptions))
+  override def getOrCreate(roomType: String, roomOptions: Option[RoomProperty]): Seq[Room] =
+    this.roomsByType(roomType) match {
+      //if map is empty no room exists with type 'roomType' so we create a new room and return
+      case m: Map[Room, ActorRef] if m.isEmpty => Seq(createRoom(roomType, roomOptions))
+      case m => m.keys.toSeq
     }
 
   override def getRoomById(roomType: String, roomId: String): Option[Room] =
-    this.roomsByType(roomType).get(roomId)
+    this.roomsByType(roomType).keys.find(_.roomId == roomId)
 
 
-  override def defineRoomType(roomTypeName: String, roomStrategy: RoomStrategy): Unit = {
+  override def defineRoomType(roomTypeName: String, roomFactory: String => ServerRoom): Unit = {
     this.roomsByType = this.roomsByType + (roomTypeName -> Map.empty)
-    this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomStrategy)
+    this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
   }
 
-  private def handleRoomCreation(roomType: String, roomOptions: Option[RoomOptions]): Room = {
+  private def handleRoomCreation(roomType: String, roomOptions: Option[RoomProperty]): Room = {
     val roomMap = this.roomsByType(roomType)
     val newId = (roomMap.size + 1).toString
-    val newRoom = Room(newId)
-    val newRoomMap = roomMap + (newId -> newRoom)
-    this.roomsByType = this.roomsByType.updated(roomType, newRoomMap)
+    val roomFactory = this.roomTypesHandlers(roomType)
+    val newRoom = roomFactory(newId)
+    val newRoomActor = actorSystem actorOf RoomActor(newRoom)
+    this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
     newRoom
+  }
+
+  override def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler] = {
+    Some(Flow.fromFunction(_ => TextMessage("foo")))//TODO: get web socket handler
   }
 }

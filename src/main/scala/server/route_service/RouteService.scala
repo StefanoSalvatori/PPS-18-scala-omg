@@ -1,18 +1,16 @@
 package server.route_service
 
-import akka.http.scaladsl.model.{HttpResponse, StatusCode, StatusCodes}
-import akka.http.scaladsl.server.Directives.{complete, get, path, put, _}
-import akka.http.scaladsl.server.{PathMatcher, RejectionHandler, Route}
-import common.{RoomJsonSupport, RoomOptions, RoomSeq, Routes}
-import server.room.RoomStrategy
-
-
-
+import akka.http.scaladsl.server.Directives.{complete, get, put, _}
+import akka.http.scaladsl.server.Route
+import com.typesafe.scalalogging.LazyLogging
+import common.{RoomJsonSupport, RoomProperty, Routes}
+import server.room.ServerRoom
 
 trait RouteService {
   val route: Route
   var roomTypes: Set[String]
-  def addRouteForRoomType(roomType: String, roomStrategy: RoomStrategy)
+
+  def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom)
 }
 
 object RouteService {
@@ -22,34 +20,50 @@ object RouteService {
 }
 
 
-case class RouteServiceImpl()
-  extends RouteService with RoomJsonSupport with RoomHandling {
-
+case class RouteServiceImpl() extends RouteService with RoomJsonSupport with RoomHandling
+with LazyLogging {
   this: RoomHandlerService =>
+
   var roomTypes: Set[String] = Set.empty
 
-  val route: Route =
-    pathPrefix(Routes.publicRooms) {
-      pathEnd {
-        getAllRoomsRoute
-      } ~ pathPrefix(Segment) { roomType: String =>
-        if(this.roomTypes.contains(roomType)){
-          pathEnd {
-            getRoomsByTypeRoute(roomType) ~
-              putRoomsByTypeRoute(roomType) ~
-              postRoomsByTypeRoute(roomType)
-          } ~ pathPrefix(Segment) { roomId =>
-            getRoomByTypeAndId(roomType, roomId)
-          }
-        } else {
-          reject //TODO: how to handle this?
+
+  val restHttpRoute = pathPrefix(Routes.publicRooms) {
+    pathEnd {
+      getAllRoomsRoute
+    } ~ pathPrefix(Segment) { roomType: String =>
+      if (this.roomTypes.contains(roomType)) {
+        pathEnd {
+          getRoomsByTypeRoute(roomType) ~
+            putRoomsByTypeRoute(roomType) ~
+            postRoomsByTypeRoute(roomType)
+        } ~ pathPrefix(Segment) { roomId =>
+          getRoomByTypeAndId(roomType, roomId)
         }
+      } else {
+        reject //TODO: how to handle this? Wrong type in rooms/{type}
       }
     }
+  }
 
-  def addRouteForRoomType(roomType: String, roomStrategy: RoomStrategy): Unit = {
-    this.roomTypes = this.roomTypes + roomType
-    this.roomHandler.defineRoomType(roomType, roomStrategy)
+
+  /**
+   * Handle web socket connection on path /connection/{roomId}
+   */
+  val webSocketRoute: Route =  pathPrefix(Routes.connectionRoute / Segment) { roomId =>
+    get {
+        onWebSocketConnection(roomId) match {
+          case Some(handler) =>  handleWebSocketMessages(handler)
+          case None => reject
+        }
+      }
+  }
+
+  val route: Route = restHttpRoute ~ webSocketRoute
+
+
+  def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom): Unit = {
+    this.roomTypes = this.roomTypes + roomTypeName
+    this.roomHandler.defineRoomType(roomTypeName, roomFactory)
   }
 
   /**
@@ -57,13 +71,13 @@ case class RouteServiceImpl()
    */
   private def getAllRoomsRoute: Route =
     get {
-      entity(as[RoomOptions]) { roomOptions =>
+      entity(as[RoomProperty]) { roomOptions =>
         val rooms = onGetAllRooms(Some(roomOptions))
-        complete(RoomSeq(rooms))
+        complete(rooms)
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
         val rooms = onGetAllRooms(Option.empty)
-        complete(RoomSeq(rooms))
+        complete(rooms)
       }
     }
 
@@ -73,13 +87,13 @@ case class RouteServiceImpl()
    */
   private def getRoomsByTypeRoute(roomType: String): Route =
     get {
-      entity(as[RoomOptions]) { roomOptions =>
+      entity(as[RoomProperty]) { roomOptions =>
         val rooms = onGetRoomType(roomType, Some(roomOptions))
-        complete(common.RoomSeq(rooms))
+        complete(rooms)
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
         val rooms = onGetRoomType(roomType, Option.empty)
-        complete(RoomSeq(rooms))
+        complete(rooms)
       }
     }
 
@@ -88,13 +102,13 @@ case class RouteServiceImpl()
    */
   private def putRoomsByTypeRoute(roomType: String): Route =
     put {
-      entity(as[RoomOptions]) { roomOptions =>
+      entity(as[RoomProperty]) { roomOptions =>
         val rooms = onPutRoomType(roomType, Some(roomOptions))
-        complete(RoomSeq(rooms)) //return a list containing only the created room if no room is available
+        complete(rooms) //return a list containing only the created room if no room is available
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
         val rooms = onPutRoomType(roomType, Option.empty)
-        complete(RoomSeq(rooms))
+        complete(rooms)
       }
     }
 
@@ -103,7 +117,7 @@ case class RouteServiceImpl()
    */
   private def postRoomsByTypeRoute(roomType: String): Route =
     post {
-      entity(as[RoomOptions]) { roomOptions =>
+      entity(as[RoomProperty]) { roomOptions =>
         val room = onPostRoomType(roomType, Some(roomOptions))
         complete(room)
       } ~ {
@@ -113,6 +127,7 @@ case class RouteServiceImpl()
       }
     }
 
+
   /**
    * GET rooms/{type}/{id}
    */
@@ -120,10 +135,9 @@ case class RouteServiceImpl()
     get {
       onGetRoomTypeId(roomType, roomId) match {
         case Some(room) => complete(room)
-        case None => reject //TODO: how to handle this?
+        case None => reject //TODO: how to handle this? Wrong id in rooms/{type}/{id}
       }
     }
-
 
 
 }

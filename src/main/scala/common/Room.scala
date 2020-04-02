@@ -1,33 +1,29 @@
 package common
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.marshalling.ToResponseMarshaller
-import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
+object CommonRoom {
 
-trait Room <: {
-  val roomId: String
-}
+  type RoomId = String
+  type RoomType = String
 
-case class SimpleRoomWithId(roomId: String) extends Room
+  trait RoomState[T] {
+    this: Room =>
+    val state: T
+  }
 
-case class RoomOptions(options: String)
-case class RoomSeq(rooms: Seq[Room])
+  trait Room {
+    val roomId: RoomId
+    // val roomType: String
+  }
 
-object Room {
-  def apply(roomId: String): Room = SimpleRoomWithId(roomId)
-}
 
-trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-
-  implicit val roomOptJsonFormat: RootJsonFormat[RoomOptions]  = jsonFormat1(RoomOptions)
-  implicit val roomIdJsonFormat: RootJsonFormat[SimpleRoomWithId]  = jsonFormat1(SimpleRoomWithId)
-  implicit val roomSeqJsonFormat: RootJsonFormat[RoomSeq]  = jsonFormat1(RoomSeq)
-
-  implicit val roomJsonFormat: RootJsonFormat[Room]  = new RootJsonFormat[Room] {
-    def write(a: Room): JsValue = a match {
-      case p: SimpleRoomWithId => roomIdJsonFormat.write(p)
+  object Room {
+    def apply(id: RoomId): Room = new Room {
+      override val roomId: RoomId = id
     }
-
-    def read(value: JsValue): SimpleRoomWithId =  value.convertTo[SimpleRoomWithId]
   }
 }
+
+
+
+
+

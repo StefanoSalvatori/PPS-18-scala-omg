@@ -1,14 +1,13 @@
 package server
 
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes, StatusCodes}
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.util.ByteString
-import common.{RoomOptions, Routes}
+import common.{RoomJsonSupport, Routes}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import server.room.RoomStrategy
+import server.room.ServerRoom
 import server.route_service.RouteService
 
 import scala.concurrent.ExecutionContextExecutor
@@ -24,14 +23,8 @@ trait TestOptions {
        |  "id":0
        |}
         """.stripMargin)
-  val EMPTY_ROOM_STRATEGY: RoomStrategy = new RoomStrategy {
-    override def onJoin(): Unit = {}
-    override def onMessageReceived(): Unit = {}
-    override def onLeave(): Unit = {}
-    override def onCreate(): Unit = {}
-  }
 
-  val EMPTY_ROOM_OPTIONS: RoomOptions = RoomOptions("")
+  // val EMPTY_ROOM_OPTIONS: RoomOptions = RoomOptions("")
 
   def makeRequestWithDefaultRoomOptions(method: HttpMethod)(uri: String): HttpRequest = HttpRequest(
     uri = uri, method = method, entity = HttpEntity(MediaTypes.`application/json`, TEST_ROOM_OPT_JSON))
@@ -39,7 +32,7 @@ trait TestOptions {
 
 
 class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with TestOptions
-  with BeforeAndAfter {
+  with BeforeAndAfter with RoomJsonSupport {
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private val routeService = RouteService()
@@ -51,7 +44,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
   before {
     //ensure to have at least one room-type
-    routeService.addRouteForRoomType(TEST_ROOM_TYPE, EMPTY_ROOM_STRATEGY)
+    routeService.addRouteForRoomType(TEST_ROOM_TYPE, ServerRoom(_))
   }
 
   it should " enable the addition of routes for new rooms type" in {
@@ -67,7 +60,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
 
   it should " reject requests if the given id does not exists" in {
-    Get(ROOMS_WITH_TYPE + "/wrong-id" ) ~> route ~> check {
+    Get(ROOMS_WITH_TYPE + "/wrong-id") ~> route ~> check {
       handled shouldBe false
     }
   }
@@ -130,14 +123,36 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
     }
   }
 
+/*
+  /// GET rooms/{type}/{id}
+  it should "handle GET request on path 'rooms/{type}/{id}' if such id exists " in {
 
- /* /// GET rooms/{type}/{id}
-  it should "handle GET request on path 'rooms/{type}/{id}' " in {
-    Get(ROOMS_WITH_TYPE_AND_ID) ~> route ~> check {
+    val room = createRoom()
+    Get("/" + Routes.roomByTypeAndId(TEST_ROOM_TYPE, room.roomId)) ~> route ~> check { //try to get the created room by id
       handled shouldBe true
     }
-  }*/
+  }
 
+  /// --- Web socket  ---
+  it should "handle web socket request on path 'connection/?id={id}'" in {
+    val room = createRoom()
+    val wsClient = WSProbe()
+    WS("/" + Routes.connectionRoute + "/" + room.roomId, wsClient.flow) ~> route ~>
+      check {
+        // check response for WS Upgrade headers
+        isWebSocketUpgrade shouldEqual true
+
+      }
+  }
+  */
+
+  /*
+  private def createRoom(): Room = {
+    Post(ROOMS_WITH_TYPE) ~> route ~> check {
+      responseAs[Room]
+    }
+  }
+  */
 
 }
 

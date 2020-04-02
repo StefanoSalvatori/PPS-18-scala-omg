@@ -1,9 +1,5 @@
 package client.examples
 
-import java.lang.reflect.Field
-
-import common.{IntRoomPropertyValue, RoomProperty, RoomPropertyValue, StringRoomPropertyValue}
-
 object FilterUsage extends App {
 
   // Filters on basic room option values: Int, String, Boolean
@@ -12,9 +8,6 @@ object FilterUsage extends App {
   val prop1 = RoomProperty("A", 3) // Int room option
   val prop2 = RoomProperty("B", "svv") // String room option
   val prop3 = RoomProperty("C", true) // Boolean room option
-
-  implicit def a(s: String): RoomProperty = RoomProperty(s, null)
-  val prop4: RoomProperty = "A"
 
   import common.FilterOptions
   // Create simple filter option

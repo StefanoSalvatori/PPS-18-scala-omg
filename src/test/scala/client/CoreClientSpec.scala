@@ -9,30 +9,29 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.wordspec.AnyWordSpecLike
 import client.MessageDictionary._
-import common.{Room, Routes, TestConfig}
+import client.room.ClientRoom.ClientRoom
+import common.Routes
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.ExecutionContext
-
-import scala.concurrent.duration._
 
 class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with ImplicitSender
   with AnyWordSpecLike
   with Matchers
   with BeforeAndAfter
-  with BeforeAndAfterAll
-  with TestConfig {
+  with BeforeAndAfterAll {
 
   private val serverAddress = "localhost"
-  private val serverPort = CORE_CLIENT_SPEC_SERVER_PORT
+  private val serverPort = 8080
   private val serverUri = Routes.uri(serverAddress, serverPort)
 
   private val ROOM_TYPE_NAME: String = "test_room"
 
   implicit val executionContext: ExecutionContext = system.dispatcher
+  private val requestTimeout = 5 // Seconds
   import akka.util.Timeout
-  implicit val timeout: Timeout = 5 seconds
+  implicit val timeout: Timeout = Timeout(requestTimeout, TimeUnit.SECONDS)
 
   private var coreClient: ActorRef = _
 
@@ -44,7 +43,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   "Regarding joined rooms, a core client" must {
     val A = "A"; val B = "B"
-    val roomA = Room(A); val roomB = Room(B)
+    val roomA = ClientRoom(A); val roomB = ClientRoom(B)
 
     "start with no joined rooms" in {
       (coreClient ? GetJoinedRooms).onComplete(reply => {
@@ -78,7 +77,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   "When the client creates a new public room, the core client" must {
     "add the new room to the set of joined rooms" in {
-      coreClient ! CreatePublicRoom(ROOM_TYPE_NAME)
+      coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, "")
       Thread sleep 1000
       (coreClient ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])

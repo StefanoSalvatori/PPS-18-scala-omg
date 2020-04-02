@@ -6,7 +6,7 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import common.actors.ApplicationActorSystem
 import server.ServerActor._
-import server.room.RoomStrategy
+import server.room.ServerRoom
 import server.route_service.RouteService
 
 import scala.concurrent.Future
@@ -55,12 +55,11 @@ trait GameServer {
 
 
   /**
-   * Adds a new type of room to the server
    *
-   * @param roomTypeName The name of the room
-   * @param roomStrategy The strategy that the room will use
+   * @param roomFactory the function to create the room given the room id
    */
-  def defineRoom(roomTypeName: String, roomStrategy: RoomStrategy)
+  def defineRoom(roomTypeName: String, roomFactory: String => ServerRoom)
+
 
 }
 
@@ -138,10 +137,11 @@ private class GameServerImpl(override val host: String,
       }
   }
 
-  override def defineRoom(roomTypeName: String, room: RoomStrategy): Unit = {
-    this.routeService.addRouteForRoomType(roomTypeName, room)
+  override def defineRoom(roomTypeName: String, roomFactory: String => ServerRoom): Unit = {
+    this.routeService.addRouteForRoomType(roomTypeName, roomFactory)
   }
-
 }
+
+
 
 
