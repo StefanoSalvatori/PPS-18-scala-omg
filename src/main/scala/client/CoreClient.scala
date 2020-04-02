@@ -38,7 +38,9 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
         case Success(room) =>
           joinedRooms = joinedRooms + room
           resTo ! room
-        case Failure(exception) => Future.failed(exception)
+        case Failure(exception) =>
+          println("AA")
+          Future.failed(exception)
       }
 
     case GetAvailableRooms(roomType) =>

@@ -1,6 +1,7 @@
 package server.examples
 
 import server.GameServer
+import server.room.ServerRoom
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.io.StdIn
@@ -29,6 +30,8 @@ object GameServerCreation extends App {
     case Failure(exception) => println(s"Startup failed: $exception")
 
   }
+
+  gameServer defineRoom ("test_room", id => ServerRoom(id))
 
 
 }

@@ -5,10 +5,10 @@ import common.actors.ApplicationActorSystem
 import client.utils.MessageDictionary._
 import client.room.ClientRoom.ClientRoom
 import common.SharedRoom.{RoomId, RoomType}
-import common.Routes
+import common.{FilterOptions, Routes}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, Future, Promise}
 import scala.language.postfixOps
 
 
@@ -57,6 +57,13 @@ sealed trait Client {
    */
   def getAvailableRoomsByType(roomType: String): Future[Seq[ClientRoom]]
 
+  /**
+   *
+   * @param filterOptions options that will be used to filter the rooms
+   * @return rooms that satisfy the constraints specified in the filter
+   */
+  def getAvailableRooms(filterOptions: FilterOptions): Future[Seq[ClientRoom]]
+
   def joinedRooms(): Set[ClientRoom]
 
   def shutdown(): Unit
@@ -93,6 +100,9 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   override def getAvailableRoomsByType(roomType: String): Future[Seq[ClientRoom]] =
     (coreClient ? GetAvailableRooms(roomType)).mapTo[Seq[ClientRoom]]
+
+  override def getAvailableRooms(filterOptions: FilterOptions): Future[Seq[ClientRoom]] =
+    (coreClient ? GetFilteredAvailableRooms(filterOptions)).mapTo[Seq[ClientRoom]]
 
   override def shutdown(): Unit = super.terminateActorSystem()
 }

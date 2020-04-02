@@ -3,7 +3,7 @@ package server.route_service
 import akka.http.scaladsl.server.Directives.{complete, get, put, _}
 import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.LazyLogging
-import common.{RoomJsonSupport, RoomProperty, Routes}
+import common.{FilterOptions, RoomJsonSupport, RoomProperty, Routes}
 import server.room.ServerRoom
 
 trait RouteService {
@@ -69,7 +69,7 @@ case class RouteServiceImpl() extends RouteService with RoomJsonSupport with Roo
    */
   private def getAllRoomsRoute: Route =
     get {
-      entity(as[RoomProperty]) { roomOptions =>
+      entity(as[FilterOptions]) { roomOptions =>
         val rooms = onGetAllRooms(Some(roomOptions))
         complete(rooms)
       } ~ {
