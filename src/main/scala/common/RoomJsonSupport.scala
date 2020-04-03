@@ -3,8 +3,10 @@ package common
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import client.room.ClientRoom.ClientRoom
 import common.SharedRoom.{Room, RoomId}
-import spray.json.{DefaultJsonProtocol, JsArray, JsString, JsValue, RootJsonFormat, deserializationError}
+import spray.json.{DefaultJsonProtocol, JsArray, JsBoolean, JsNumber, JsObject, JsString, JsValue, JsonFormat, JsonReader, JsonWriter, RootJsonFormat, deserializationError}
 import common.BasicRoomPropertyValueConversions._
+
+import scala.collection.immutable.Map
 
 trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
@@ -34,71 +36,54 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit val intRoomPropertyJsonFormat: RootJsonFormat[IntRoomPropertyValue] = new RootJsonFormat[IntRoomPropertyValue] {
-    def read(json: JsValue): IntRoomPropertyValue = json match {
-      case JsString(value) =>
-        IntRoomPropertyValue(value.asInstanceOf[Int])
-      case _ =>
-        deserializationError("Int room property value deserialization error")
-    }
+  // ____________________________________________________________________________________________________________________
 
-    def write(obj: IntRoomPropertyValue): JsValue = JsString(obj.value.toString)
-  }
+  // Basic room property values
+  implicit val intRoomPropertyJsonFormat: RootJsonFormat[IntRoomPropertyValue] = jsonFormat(IntRoomPropertyValue, "value")
+  implicit val stringRoomPropertyJsonFormat: RootJsonFormat[StringRoomPropertyValue] = jsonFormat(StringRoomPropertyValue, "value")
+  implicit val booleanRoomPropertyJsonFormat: RootJsonFormat[BooleanRoomPropertyValue] = jsonFormat(BooleanRoomPropertyValue, "value")
 
-  implicit val stringRoomPropertyJsonFormat: RootJsonFormat[StringRoomPropertyValue] = new RootJsonFormat[StringRoomPropertyValue] {
-    def read(json: JsValue): StringRoomPropertyValue = json match {
-      case JsString(value) =>
-        StringRoomPropertyValue(value)
-      case _ =>
-        deserializationError("Int room property value deserialization error")
-    }
+  // Room property
+  implicit val roomPropertyJsonFormat: RootJsonFormat[RoomProperty] = new RootJsonFormat[RoomProperty] {
 
-    def write(obj: StringRoomPropertyValue): JsValue = JsString(obj.value)
-  }
-
-  implicit val booleanRoomPropertyJsonFormat: RootJsonFormat[BooleanRoomPropertyValue] = new RootJsonFormat[BooleanRoomPropertyValue] {
-    def read(json: JsValue): BooleanRoomPropertyValue = json match {
-      case JsString(value) =>
-        BooleanRoomPropertyValue(value.asInstanceOf[Boolean])
-      case _ =>
-        deserializationError("Int room property value deserialization error")
-    }
-
-    def write(obj: BooleanRoomPropertyValue): JsValue = JsString(obj.value.toString)
-  }
-
-  //TODO: only works with RoomProperty[Any]
-  implicit val simpleRoomPropertyJsonFormat: RootJsonFormat[RoomProperty] = new RootJsonFormat[RoomProperty] {
-    def write(a: RoomProperty): JsValue = JsArray(JsString(a.name), JsString(a.value.toString))
+    def write(a: RoomProperty): JsValue = JsObject("name" -> JsString(a.name), "value" -> (a.value match {
+      case p: IntRoomPropertyValue => intRoomPropertyJsonFormat write p
+      case p: StringRoomPropertyValue => stringRoomPropertyJsonFormat write p
+      case p: BooleanRoomPropertyValue => booleanRoomPropertyJsonFormat write p
+    }))
 
     def read(value: JsValue): RoomProperty = value match {
-      case JsArray(Vector(JsString(roomId), JsString(value))) =>
-        RoomProperty(roomId, value)
-      case _ => deserializationError("String id expected")
+      case json: JsObject =>
+        val value = json.fields("value").asJsObject
+        RoomProperty(json.fields("name").convertTo[String], value.fields("value") match {
+          case _: JsNumber => value.convertTo[IntRoomPropertyValue]
+          case _: JsString => value.convertTo[StringRoomPropertyValue]
+          case _: JsBoolean => value.convertTo[BooleanRoomPropertyValue]
+          case _ => deserializationError("Unknown room property value")
+        })
+      case _ => deserializationError("Room property deserialization error")
     }
   }
 
-  /*
-  implicit val equalFilterStrategyJsonFormat: RootJsonFormat[EqualStrategy] = new RootJsonFormat[EqualStrategy] {
-    def read(json: JsValue): FilterStrategy = json match {
-      case JsArray.empty =>
-        EqualStrategy()
-      case _ => deserializationError("Equal strategy deserialization error")
+  // Filter Strategy
+  implicit val equalStrategyJsonFormat: RootJsonFormat[EqualStrategy] = createStrategyJsonFormat(EqualStrategy())
+  implicit val notEqualStrategyJsonFormat: RootJsonFormat[NotEqualStrategy] = createStrategyJsonFormat(NotEqualStrategy())
+  implicit val greaterStrategyJsonFormat: RootJsonFormat[GreaterStrategy] = createStrategyJsonFormat(GreaterStrategy())
+  implicit val lowerStrategyJsonFormat: RootJsonFormat[LowerStrategy] = createStrategyJsonFormat(LowerStrategy())
 
+  private def createStrategyJsonFormat[T](strategyType: T): RootJsonFormat[T] = new RootJsonFormat[T] {
+    override def read(json: JsValue): T = json match {
+      case JsArray.empty => strategyType
+      case _ => deserializationError(s"Strategy $strategyType deserialization error")
     }
 
-    def write(obj: FilterStrategy): JsValue = JsArray.empty
+    override def write(obj: T): JsValue = JsArray.empty
   }
 
-  implicit val filterOptionsJsonFormat : RootJsonFormat[FilterOption] = new RootJsonFormat[FilterOption] {
-    def read(json: JsValue): FilterOption = json match {
-      case JsArray(Vector(JsString(optionName), strategy, JsString(value))) =>
-        FilterOption(optionName, strategy, value)
-      case _ => deserializationError("Filter option deserialization error")
-    }
+  // filter options
+  implicit val filterOptionsJsonFormat: RootJsonFormat[FilterOptions] = new RootJsonFormat[FilterOptions] {
+    override def read(json: JsValue): FilterOptions = ???
 
-    def write(obj: FilterOption): JsValue =
-      JsArray(JsString(obj.optionName), JsString(obj.strategy.toString), JsString(obj.value.toString))
+    override def write(obj: FilterOptions): JsValue = ???
   }
-  */
 }

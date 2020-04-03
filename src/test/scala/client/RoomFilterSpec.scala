@@ -2,10 +2,10 @@ package client
 
 import common._
 import common.BasicRoomPropertyValueConversions._
-
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import spray.json.{JsString, JsValue}
 
 class RoomFilterSpec extends AnyFlatSpec
   with Matchers
