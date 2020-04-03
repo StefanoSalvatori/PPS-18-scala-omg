@@ -1,40 +1,56 @@
 package server.route_service
 
+import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.http.scaladsl.server.Directives.{complete, get, put, _}
 import akka.http.scaladsl.server.Route
+import akka.stream.scaladsl.{Flow, Source}
 import com.typesafe.scalalogging.LazyLogging
-import common.{RoomJsonSupport, RoomProperty, Routes}
+import common.{FilterOption, FilterOptions, RoomJsonSupport, RoomProperty, Routes}
+import server.RoomHandler
 import server.room.ServerRoom
 
 trait RouteService {
+  /**
+   * Main route
+   */
   val route: Route
-  var roomTypes: Set[String]
 
+
+  /**
+   * Add a route for a new type of rooms.
+   * @param roomTypeName room type name used as the route name
+   * @param roomFactory a factory to create rooms of that type
+   */
   def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom)
 }
 
 object RouteService {
   def apply(): RouteService = {
-    RouteServiceImpl()
+    new RouteServiceImpl()
   }
+
+  def routeServiceWithEchoWebSocket(): RouteService = new EchoRouteServiceImpl()
 }
 
 
-case class RouteServiceImpl() extends RouteService with RoomJsonSupport with RoomHandling
+class RouteServiceImpl() extends RouteService with RoomJsonSupport
 with LazyLogging {
-  this: RoomHandlerService =>
 
   var roomTypes: Set[String] = Set.empty
 
+  private val roomHandler = RoomHandler()
 
-  val restHttpRoute = pathPrefix(Routes.publicRooms) {
+  /**
+   * rest api for rooms.
+   */
+  def restHttpRoute: Route = pathPrefix(Routes.publicRooms) {
     pathEnd {
       getAllRoomsRoute
     } ~ pathPrefix(Segment) { roomType: String =>
       if (this.roomTypes.contains(roomType)) {
         pathEnd {
           getRoomsByTypeRoute(roomType) ~
-            putRoomsByTypeRoute(roomType) ~
+            //putRoomsByTypeRoute(roomType) ~
             postRoomsByTypeRoute(roomType)
         } ~ pathPrefix(Segment) { roomId =>
           getRoomByTypeAndId(roomType, roomId)
@@ -47,11 +63,11 @@ with LazyLogging {
 
 
   /**
-   * Handle web socket connection on path /connection/{roomId}
+   * Handle web socket connection on path /[[common.Routes#connectionRoute]]/{roomId}
    */
-  val webSocketRoute: Route =  pathPrefix(Routes.connectionRoute / Segment) { roomId =>
+  def webSocketRoute: Route =  pathPrefix(Routes.connectionRoute / Segment) { roomId =>
     get {
-        onWebSocketConnection(roomId) match {
+        this.roomHandler.handleClientConnection(roomId) match {
           case Some(handler) =>  handleWebSocketMessages(handler)
           case None => reject
         }
@@ -71,12 +87,12 @@ with LazyLogging {
    */
   private def getAllRoomsRoute: Route =
     get {
-      entity(as[RoomProperty]) { roomOptions =>
-        val rooms = onGetAllRooms(Some(roomOptions))
+      entity(as[FilterOptions]) { filterOptions =>
+        val rooms = this.roomHandler.getAvailableRooms(filterOptions)
         complete(rooms)
       } ~ {
-        //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = onGetAllRooms(Option.empty)
+        //if payload is not parsable as room options we just accept the request as with empty filter options
+        val rooms = this.roomHandler.getAvailableRooms()
         complete(rooms)
       }
     }
@@ -87,42 +103,29 @@ with LazyLogging {
    */
   private def getRoomsByTypeRoute(roomType: String): Route =
     get {
-      entity(as[RoomProperty]) { roomOptions =>
-        val rooms = onGetRoomType(roomType, Some(roomOptions))
+      entity(as[FilterOptions]) { filterOptions =>
+        val rooms = this.roomHandler.getRoomsByType(roomType, filterOptions)
         complete(rooms)
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = onGetRoomType(roomType, Option.empty)
+        val rooms = this.roomHandler.getRoomsByType(roomType)
         complete(rooms)
       }
     }
 
-  /**
-   * PUT rooms/{type}
-   */
-  private def putRoomsByTypeRoute(roomType: String): Route =
-    put {
-      entity(as[RoomProperty]) { roomOptions =>
-        val rooms = onPutRoomType(roomType, Some(roomOptions))
-        complete(rooms) //return a list containing only the created room if no room is available
-      } ~ {
-        //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = onPutRoomType(roomType, Option.empty)
-        complete(rooms)
-      }
-    }
+
 
   /**
    * POST rooms/{type}
    */
   private def postRoomsByTypeRoute(roomType: String): Route =
     post {
-      entity(as[RoomProperty]) { roomOptions =>
-        val room = onPostRoomType(roomType, Some(roomOptions))
+      entity(as[Set[RoomProperty]]) { roomProperties =>
+        val room = this.roomHandler.createRoom(roomType, roomProperties)
         complete(room)
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
-        val room = onPostRoomType(roomType, Option.empty)
+        val room = this.roomHandler.createRoom(roomType)
         complete(room)
       }
     }
@@ -133,13 +136,47 @@ with LazyLogging {
    */
   private def getRoomByTypeAndId(roomType: String, roomId: String): Route =
     get {
-      onGetRoomTypeId(roomType, roomId) match {
+      this.roomHandler.getRoomByTypeAndId(roomType, roomId) match {
         case Some(room) => complete(room)
         case None => reject //TODO: how to handle this? Wrong id in rooms/{type}/{id}
       }
     }
 
 
+  /**
+   * PUT rooms/{type}
+
+  private def putRoomsByTypeRoute(roomType: String): Route =
+    put {
+      entity(as[FilterOptions]) { filterOptions =>
+        val rooms = this.roomHandler.getOrCreate(roomType, filterOptions)
+        complete(rooms) //return a list containing only the created room if no room is available
+      } ~ {
+        //if payload is not parsable as room options we just accept the request as with empty room options
+        val rooms = this.roomHandler.getOrCreate(roomType)
+        complete(rooms)
+      }
+    }
+   */
+
+
+}
+
+/**
+ * Mock routing that echos messages received on the web socket
+ */
+class EchoRouteServiceImpl() extends RouteServiceImpl {
+  def echoHandler: Flow[Message, Message, Any] =
+    Flow[Message].map {
+      case tm: TextMessage.Strict =>  TextMessage.Strict(tm.text)
+    }
+
+  override def webSocketRoute: Route =
+    pathPrefix(Routes.connectionRoute / Segment) { roomId =>
+    get {
+      handleWebSocketMessages(echoHandler)
+    }
+  }
 }
 
 

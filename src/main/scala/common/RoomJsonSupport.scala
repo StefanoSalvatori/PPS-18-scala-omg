@@ -1,7 +1,6 @@
 package common
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import client.room.ClientRoom.ClientRoom
 import common.CommonRoom.{Room, RoomId}
 import spray.json.{DefaultJsonProtocol, JsArray, JsString, JsValue, RootJsonFormat, deserializationError}
 import common.BasicRoomPropertyValueConversions._
@@ -29,14 +28,6 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit val clientRoomJsonFormat: RootJsonFormat[ClientRoom] = new RootJsonFormat[ClientRoom] {
-    def write(a: ClientRoom): JsValue = JsString(a.roomId)
-
-    def read(value: JsValue): ClientRoom =  value match {
-      case JsString(roomId) =>  ClientRoom(roomId)
-      case _ => deserializationError("String id expected")
-    }
-  }
 
   //TODO: only works with RoomProperty[Any]
   implicit val simpleRoomPropertyJsonFormat: RootJsonFormat[RoomProperty] = new RootJsonFormat[RoomProperty] {
@@ -44,9 +35,15 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
     import spray.json.deserializationError
     def read(value: JsValue): RoomProperty = value match {
-      case JsArray(Vector(JsString(roomId), JsString(value))) =>
-        RoomProperty(roomId, value)
+      case JsArray(Vector(JsString(roomId), JsString(value))) =>  RoomProperty(roomId, value)
       case _ => deserializationError("String id expected")
     }
+  }
+
+
+  implicit val simpleFilterOptionsJsonFormat: RootJsonFormat[FilterOptions] = new RootJsonFormat[FilterOptions] {
+    def write(a: FilterOptions): JsValue = JsString("")
+
+    def read(value: JsValue): FilterOptions = FilterOptions.empty()
   }
 }

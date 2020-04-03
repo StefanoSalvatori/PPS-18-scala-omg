@@ -1,13 +1,10 @@
 package client
 
 import akka.pattern.ask
-
 import common.actors.ApplicationActorSystem
-
 import client.MessageDictionary._
-import client.room.ClientRoom.ClientRoom
+import client.room.ClientRoom
 import common.CommonRoom.{RoomId, RoomType}
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
@@ -67,7 +64,8 @@ object Client {
   def apply(serverAddress: String, serverPort: Int): ClientImpl = new ClientImpl(serverAddress, serverPort)
 }
 
-class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client with ApplicationActorSystem {
+class ClientImpl(private val serverAddress: String, private val serverPort: Int)
+  extends Client with ApplicationActorSystem {
 
   private val requestTimeout = 5 // Seconds
 

@@ -21,7 +21,7 @@ class ClientSpec extends AnyFlatSpec
   with TestConfig
   with ScalatestRouteTest
   with LazyLogging
-with RoomJsonSupport{
+  with RoomJsonSupport {
 
   private val serverAddress = "localhost"
   private val serverPort = CLIENT_SPEC_SERVER_PORT
@@ -72,24 +72,32 @@ with RoomJsonSupport{
     Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
 
     assertThrows[Exception] {
-      Await.result(client getAvailableRoomsByType (ROOM_TYPE_NAME), 5 seconds)
+      Await.result(client getAvailableRoomsByType ROOM_TYPE_NAME, 5 seconds)
     }
   }
 
   it should "get all available rooms of specific type" in {
     Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
     Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
-    val roomList = Await.result(client getAvailableRoomsByType (ROOM_TYPE_NAME), 5 seconds)
+    val roomList = Await.result(client getAvailableRoomsByType ROOM_TYPE_NAME, 5 seconds)
     roomList should have size 2
   }
 
-  //TODO: check this test
-  it should "create a public room and automatically join such room" in {
-    client createPublicRoom(ROOM_TYPE_NAME, "") onComplete {
-      case Success(_) => client.joinedRooms should have size 1
-      case Failure(exception) => logger error exception.toString
+
+  it should "fail on joining a room if server is unreachable" in {
+    Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
+    Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
+
+    assertThrows[Exception] {
+      Await.result(client join(ROOM_TYPE_NAME, Option.empty), 5 seconds)
     }
   }
+
+  /*it should "be able to join an existing room" in {
+    val room = Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
+    val joined = Await.result(client join(ROOM_TYPE_NAME, ""), 5 seconds)
+    assert(room.roomId == joined.roomId)
+  }*/
 
 
 }

@@ -7,7 +7,7 @@ import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.common.EntityStreamingSupport
 import akka.http.scaladsl.common.JsonEntityStreamingSupport
 import akka.stream.scaladsl.Source
-import client.room.ClientRoom.ClientRoom
+import client.room.ClientRoom
 import common.{RoomJsonSupport, Routes}
 
 import scala.concurrent.Future
@@ -29,27 +29,6 @@ class HttpClientImpl(private val serverUri: String, private val coreClient: Acto
   private val onReceive: PartialFunction[Any, Unit] = {
 
     case CreatePublicRoom(roomType, _) =>
-      val f: Future[HttpResponse] = http singleRequest HttpRequest(
-        method = HttpMethods.POST,
-        uri = serverUri + "/" + Routes.roomsByType(roomType)
-      )
-
-      f onComplete (response => {
-        if (response.isSuccess) {
-          val res: HttpResponse = response.get
-          val unmarshalled: Future[Source[ClientRoom, NotUsed]] = Unmarshal(res).to[Source[ClientRoom, NotUsed]]
-          val source = Source futureSource unmarshalled
-          source.runFold(Set[ClientRoom]())(_ + _) onComplete { res =>
-            if (res.isSuccess) {
-              coreClient ! NewJoinedRoom(res.get.head)
-            } else {
-              logger debug s"Failed to parse server response $response"
-            }
-          }
-        } else {
-          logger debug s"Failed to receive server response $response"
-        }
-      })
   }
 
 

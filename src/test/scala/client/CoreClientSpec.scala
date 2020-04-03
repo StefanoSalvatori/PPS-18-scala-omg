@@ -9,7 +9,8 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.wordspec.AnyWordSpecLike
 import client.MessageDictionary._
-import client.room.ClientRoom.ClientRoom
+import client.room.ClientRoom
+import common.CommonRoom.Room
 import common.Routes
 import org.scalatest.matchers.should.Matchers
 
@@ -43,7 +44,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   "Regarding joined rooms, a core client" must {
     val A = "A"; val B = "B"
-    val roomA = ClientRoom(A); val roomB = ClientRoom(B)
+    val roomA = ClientRoom(serverUri, "A"); val roomB = ClientRoom(serverUri, "B")
 
     "start with no joined rooms" in {
       (coreClient ? GetJoinedRooms).onComplete(reply => {

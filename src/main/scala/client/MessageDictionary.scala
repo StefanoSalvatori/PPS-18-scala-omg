@@ -1,6 +1,6 @@
 package client
 
-import client.room.ClientRoom.ClientRoom
+import client.room.ClientRoom
 import common.CommonRoom.{RoomId, RoomType}
 
 object MessageDictionary {
@@ -16,7 +16,7 @@ object MessageDictionary {
   case class GetAvailableRooms(roomType: RoomType)
 
 
-  case class NewJoinedRoom(roomId: ClientRoom)
+  case class NewJoinedRoom(clientRoom: ClientRoom)
 
   case class GetJoinedRooms()
 

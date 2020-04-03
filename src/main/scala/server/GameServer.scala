@@ -82,9 +82,10 @@ object GameServer {
    * @param existingRoutes (optional) additional routes that will be used by the server
    * @return an instance if a [[server.GameServer]]
    */
-  def apply(host: String, port: Int, existingRoutes: Route = reject): GameServer = new GameServerImpl(host, port, existingRoutes)
+  def apply(host: String, port: Int, existingRoutes: Route = reject): GameServer = new GameServerImpl(host, port, RouteService(), existingRoutes)
 
-
+  //TODO: just for testing, remove this
+  def mock(host: String, port: Int, customRoute: RouteService) : GameServer = new GameServerImpl(host, port, customRoute)
 }
 
 /**
@@ -96,6 +97,7 @@ object GameServer {
  **/
 private class GameServerImpl(override val host: String,
                              override val port: Int,
+                             private val routeService: RouteService,
                              private val additionalRoutes: Route = reject) extends GameServer
   with LazyLogging
   with ApplicationActorSystem {
@@ -105,7 +107,6 @@ private class GameServerImpl(override val host: String,
 
   implicit private val actorRequestsTimeout: Timeout = Timeout(5 seconds)
   private val serverActor = actorSystem actorOf ServerActor(SERVER_TERMINATION_DEADLINE)
-  private val routeService = RouteService()
 
 
   private var onStart: () => Unit = () => {}
@@ -141,6 +142,10 @@ private class GameServerImpl(override val host: String,
     this.routeService.addRouteForRoomType(roomTypeName, roomFactory)
   }
 }
+
+
+
+
 
 
 
