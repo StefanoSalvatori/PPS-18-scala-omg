@@ -34,7 +34,7 @@ trait FilterStrategies { option: RoomProperty =>
 
   def =:=(that: RoomPropertyValue): FilterOption = filterOption(EqualStrategy(), that)
   def =!=(that: RoomPropertyValue): FilterOption = filterOption(NotEqualStrategy(), that)
-  def >(that: RoomPropertyValue): FilterOption= filterOption(GreaterStrategy(), that)
+  def >(that: RoomPropertyValue): FilterOption = filterOption(GreaterStrategy(), that)
   def <(that: RoomPropertyValue): FilterOption = filterOption(LowerStrategy(), that)
 
   private def filterOption(filterStrategy: FilterStrategy, that: RoomPropertyValue): FilterOption =

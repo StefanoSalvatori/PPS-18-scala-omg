@@ -5,11 +5,8 @@ import common.BasicRoomPropertyValueConversions._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import spray.json.{JsString, JsValue}
 
-class RoomFilterSpec extends AnyFlatSpec
-  with Matchers
-  with BeforeAndAfter {
+class RoomFilterSpec extends AnyFlatSpec with Matchers with BeforeAndAfter {
 
   private val testPropertyName = "A"
   private val testPropertyValue = 1
