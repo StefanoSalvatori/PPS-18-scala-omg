@@ -38,32 +38,34 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   // ____________________________________________________________________________________________________________________
 
-  // Basic room property values
-  implicit val intRoomPropertyJsonFormat: RootJsonFormat[IntRoomPropertyValue] = jsonFormat(IntRoomPropertyValue, "value")
-  implicit val stringRoomPropertyJsonFormat: RootJsonFormat[StringRoomPropertyValue] = jsonFormat(StringRoomPropertyValue, "value")
-  implicit val booleanRoomPropertyJsonFormat: RootJsonFormat[BooleanRoomPropertyValue] = jsonFormat(BooleanRoomPropertyValue, "value")
+  // Room property values
+  implicit val intRoomPropertyJsonFormat: RootJsonFormat[IntRoomPropertyValue] = jsonFormat1(IntRoomPropertyValue)
+  implicit val stringRoomPropertyJsonFormat: RootJsonFormat[StringRoomPropertyValue] = jsonFormat1(StringRoomPropertyValue)
+  implicit val booleanRoomPropertyJsonFormat: RootJsonFormat[BooleanRoomPropertyValue] = jsonFormat1(BooleanRoomPropertyValue)
 
-  // Room property
-  implicit val roomPropertyJsonFormat: RootJsonFormat[RoomProperty] = new RootJsonFormat[RoomProperty] {
+  implicit val roomPropertyValueJsonFormat: RootJsonFormat[RoomPropertyValue] = new RootJsonFormat[RoomPropertyValue] {
 
-    def write(a: RoomProperty): JsValue = JsObject("name" -> JsString(a.name), "value" -> (a.value match {
+    def write(v: RoomPropertyValue): JsValue = JsObject("value" -> (v match {
       case p: IntRoomPropertyValue => intRoomPropertyJsonFormat write p
       case p: StringRoomPropertyValue => stringRoomPropertyJsonFormat write p
       case p: BooleanRoomPropertyValue => booleanRoomPropertyJsonFormat write p
     }))
 
-    def read(value: JsValue): RoomProperty = value match {
+    def read(value: JsValue): RoomPropertyValue = value match {
       case json: JsObject =>
         val value = json.fields("value").asJsObject
-        RoomProperty(json.fields("name").convertTo[String], value.fields("value") match {
+        value.fields("value") match {
           case _: JsNumber => value.convertTo[IntRoomPropertyValue]
           case _: JsString => value.convertTo[StringRoomPropertyValue]
           case _: JsBoolean => value.convertTo[BooleanRoomPropertyValue]
           case _ => deserializationError("Unknown room property value")
-        })
-      case _ => deserializationError("Room property deserialization error")
+        }
+      case _ => deserializationError("Room property value deserialization error")
     }
   }
+
+  // Room property
+  implicit val roomPropertyJsonFormat: RootJsonFormat[RoomProperty] = jsonFormat2(RoomProperty)
 
   // Filter Strategy
   implicit val equalStrategyJsonFormat: RootJsonFormat[EqualStrategy] = createStrategyJsonFormat(EqualStrategy())
@@ -71,19 +73,36 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val greaterStrategyJsonFormat: RootJsonFormat[GreaterStrategy] = createStrategyJsonFormat(GreaterStrategy())
   implicit val lowerStrategyJsonFormat: RootJsonFormat[LowerStrategy] = createStrategyJsonFormat(LowerStrategy())
 
-  private def createStrategyJsonFormat[T](strategyType: T): RootJsonFormat[T] = new RootJsonFormat[T] {
+  private def createStrategyJsonFormat[T <: FilterStrategy](strategyType: T): RootJsonFormat[T] = new RootJsonFormat[T] {
     override def read(json: JsValue): T = json match {
-      case JsArray.empty => strategyType
+      case JsString(_) => strategyType
       case _ => deserializationError(s"Strategy $strategyType deserialization error")
     }
 
-    override def write(obj: T): JsValue = JsArray.empty
+    override def write(obj: T): JsValue = JsString(strategyType.name)
   }
 
-  // filter options
-  implicit val filterOptionsJsonFormat: RootJsonFormat[FilterOptions] = new RootJsonFormat[FilterOptions] {
-    override def read(json: JsValue): FilterOptions = ???
+  implicit val filterStrategy: RootJsonFormat[FilterStrategy] = new RootJsonFormat[FilterStrategy] {
+    override def write(obj: FilterStrategy): JsValue = obj match {
+      case s: EqualStrategy => equalStrategyJsonFormat write s
+      case s: NotEqualStrategy => notEqualStrategyJsonFormat write s
+      case s: GreaterStrategy => greaterStrategyJsonFormat write s
+      case s: LowerStrategy => lowerStrategyJsonFormat write s
+    }
 
-    override def write(obj: FilterOptions): JsValue = ???
+    override def read(json: JsValue): FilterStrategy = json match {
+      case JsString(name) if name == EqualStrategy().name => EqualStrategy()
+      case JsString(name) if name == NotEqualStrategy().name => NotEqualStrategy()
+      case JsString(name) if name == GreaterStrategy().name => GreaterStrategy()
+      case JsString(name) if name == LowerStrategy().name => LowerStrategy()
+    }
+  }
+
+  // Filter options
+  implicit val filterOptionJsonFormat: RootJsonFormat[FilterOption] = jsonFormat3(FilterOption)
+  implicit val filterOptionsJsonFormat: RootJsonFormat[FilterOptions] = new RootJsonFormat[FilterOptions] {
+    override def write(obj: FilterOptions): JsValue = obj.options.map(filterOptionJsonFormat write).toJson
+
+    override def read(json: JsValue): FilterOptions = FilterOptions(json.convertTo[Seq[FilterOption]])
   }
 }
