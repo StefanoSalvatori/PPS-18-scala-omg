@@ -2,10 +2,10 @@ package client
 
 import common.actors.ApplicationActorSystem
 
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.util.{Failure, Success}
 object ClientStub extends App {
 
-  import common.actors.ApplicationActorSystem._
   private val serverAddress = "localhost"
   private val serverPort = 8080
 
@@ -13,6 +13,8 @@ object ClientStub extends App {
   gameServer.defineRoom("test_room", RoomStrategy.empty)
   Await.ready(gameServer.start(), 5 seconds)
   println(s"Server started at $serverAddress:$serverPort")*/
+
+  implicit val executor: ExecutionContextExecutor = ExecutionContext.global
 
   val client = Client(serverAddress, serverPort)
   client createPublicRoom("test_room", "") onComplete {

@@ -1,11 +1,12 @@
 package server.route_service
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
-import akka.http.scaladsl.server.Directives.{complete, get, put, _}
+import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.server.Route
-import akka.stream.scaladsl.{Flow, Source}
+import akka.stream.scaladsl.Flow
 import com.typesafe.scalalogging.LazyLogging
-import common.{FilterOption, FilterOptions, RoomJsonSupport, RoomProperty, Routes}
+import common.{FilterOptions, RoomJsonSupport, RoomProperty, Routes}
 import server.RoomHandler
 import server.room.ServerRoom
 
@@ -25,20 +26,17 @@ trait RouteService {
 }
 
 object RouteService {
-  def apply(): RouteService = {
+  def apply()(implicit actorSystem:ActorSystem): RouteService = {
     new RouteServiceImpl()
   }
 
-  def routeServiceWithEchoWebSocket(): RouteService = new EchoRouteServiceImpl()
 }
 
 
-class RouteServiceImpl() extends RouteService with RoomJsonSupport
-with LazyLogging {
+class RouteServiceImpl(private implicit val actorSystem: ActorSystem) extends RouteService with RoomJsonSupport with LazyLogging {
 
-  var roomTypes: Set[String] = Set.empty
-
-  private val roomHandler = RoomHandler()
+  private var roomTypes: Set[String] = Set.empty
+  private val roomHandler = RoomHandler(actorSystem)
 
   /**
    * rest api for rooms.
@@ -73,6 +71,9 @@ with LazyLogging {
         }
       }
   }
+
+
+
 
   val route: Route = restHttpRoute ~ webSocketRoute
 
@@ -158,25 +159,8 @@ with LazyLogging {
       }
     }
    */
-
-
 }
 
-/**
- * Mock routing that echos messages received on the web socket
- */
-class EchoRouteServiceImpl() extends RouteServiceImpl {
-  def echoHandler: Flow[Message, Message, Any] =
-    Flow[Message].map {
-      case tm: TextMessage.Strict =>  TextMessage.Strict(tm.text)
-    }
 
-  override def webSocketRoute: Route =
-    pathPrefix(Routes.connectionRoute / Segment) { roomId =>
-    get {
-      handleWebSocketMessages(echoHandler)
-    }
-  }
-}
 
 

@@ -1,10 +1,10 @@
 package server
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import common.actors.ApplicationActorSystem
 import server.ServerActor._
 import server.room.ServerRoom
 import server.route_service.RouteService
@@ -67,7 +67,7 @@ trait GameServer {
 object GameServer {
 
 
-  implicit val ACTOR_REQUEST_TIMEOUT: Timeout = Timeout(5 seconds)
+  implicit val ACTOR_REQUEST_TIMEOUT: Timeout = 20 seconds
   val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
 
 
@@ -85,11 +85,8 @@ object GameServer {
    * @return an instance if a [[server.GameServer]]
    */
   def apply(host: String, port: Int, existingRoutes: Route = reject): GameServer =
-    new GameServerImpl(host, port, RouteService(), existingRoutes)
+    new GameServerImpl(host, port, existingRoutes)
 
-  //TODO: just for testing, remove this
-  def mock(host: String, port: Int, customRoute: RouteService) : GameServer =
-    new GameServerImpl(host, port, customRoute)
 }
 
 /**
@@ -101,18 +98,18 @@ object GameServer {
  **/
 private class GameServerImpl(override val host: String,
                              override val port: Int,
-                             private val routeService: RouteService,
                              private val additionalRoutes: Route = reject) extends GameServer
   with LazyLogging {
 
   import GameServer._
   import akka.pattern.ask
-  import common.actors.ApplicationActorSystem._
-
-  implicit private val actorRequestsTimeout: Timeout = Timeout(5 seconds)
-  private val serverActor = actorSystem actorOf ServerActor(SERVER_TERMINATION_DEADLINE)
 
 
+  private implicit val gameServerActorSystem = ActorSystem()
+  private implicit val executor = gameServerActorSystem.dispatcher
+  private val serverActor = gameServerActorSystem actorOf ServerActor(SERVER_TERMINATION_DEADLINE)
+
+  private val routeService: RouteService = RouteService()
   private var onStart: () => Unit = () => {}
   private var onShutdown: () => Unit = () => {}
 

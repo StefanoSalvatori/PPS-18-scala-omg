@@ -5,16 +5,15 @@ import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Sink
-import common.actors.ApplicationActorSystem
+import common.actors.ApplicationActorSystem._
 import common.{Routes, TestConfig}
+import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.{implicitConversions, postfixOps}
-import common.actors.ApplicationActorSystem._
 
 class GameServerSpec extends AnyFlatSpec
   with Matchers

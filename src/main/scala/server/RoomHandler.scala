@@ -2,11 +2,10 @@ package server
 
 import java.util.UUID
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.Flow
 import common.CommonRoom.{Room, RoomId}
-import common.actors.ApplicationActorSystem
 import common.{FilterOptions, RoomProperty, RoomPropertyValue}
 import server.room.{RoomActor, ServerRoom}
 
@@ -65,11 +64,9 @@ trait RoomHandler {
 }
 
 object RoomHandler {
-  def apply(): RoomHandler = RoomHandlerImpl()
+  def apply(implicit actorSystem: ActorSystem): RoomHandler = RoomHandlerImpl()
 }
-
-import common.actors.ApplicationActorSystem._
-case class RoomHandlerImpl() extends RoomHandler  {
+case class RoomHandlerImpl(private implicit val actorSystem: ActorSystem) extends RoomHandler  {
 
   var roomTypesHandlers: Map[String, String => ServerRoom] = Map.empty
 

@@ -8,7 +8,7 @@ import server.routes.RouteCommonTestOptions
 
 class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with RouteCommonTestOptions  {
 
-  private val roomHandler: RoomHandler = RoomHandler()
+  private val roomHandler: RoomHandler = RoomHandler(system)
   behavior of "a RoomHandler"
 
   it should "start with no available rooms" in {

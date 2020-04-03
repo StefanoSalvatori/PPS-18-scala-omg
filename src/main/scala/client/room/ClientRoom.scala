@@ -1,10 +1,9 @@
 package client.room
 
-import akka.Done
-import akka.pattern.ask
+import akka.actor.ActorSystem
 import akka.util.Timeout
 import common.CommonRoom.{Room, RoomId}
-import common.actors.ApplicationActorSystem
+import common.Routes
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -16,6 +15,7 @@ trait ClientRoom extends Room {
 
   /**
    * Open web socket with server room and try to join
+   *
    * @return success if this room can be joined fail if the socket can be opened or the room can't be joined
    */
   def join(): Future[Unit]
@@ -49,36 +49,33 @@ trait ClientRoom extends Room {
 }
 
 object ClientRoom {
-  def apply(serverUri: String, roomId: RoomId): ClientRoom = ClientRoomImpl(serverUri, roomId)
-
+  def apply(serverUri: String, roomId: RoomId)(implicit actorSystem: ActorSystem): ClientRoom = ClientRoomImpl(serverUri, roomId)
 
 }
 
-import common.actors.ApplicationActorSystem._
-case class ClientRoomImpl(serverUri: String, roomId: RoomId) extends ClientRoom {
-  private implicit val timeout : Timeout = 5 seconds
-
-  private val socketHandler = SocketHandler(serverUri.replace("http://", ""), roomId)
+case class ClientRoomImpl(serverUri: String, roomId: RoomId)
+                         (private implicit val actorSystem: ActorSystem) extends ClientRoom {
+  private implicit val timeout: Timeout = 5 seconds
+  private implicit val executionContext = actorSystem.dispatcher
+  private val roomSocket = RoomSocket(Routes.webSocketConnection(roomId))
 
   override def join(): Future[Unit] = {
     //open socket,
     // if successful try to join
     for {
-      _ <- socketHandler.openSocket()
-      _ <- socketHandler.join()
-    } yield {
-      Future.successful()
-    }
+      _ <- roomSocket.openSocket()
+      _ <- roomSocket.sendJoin()
+    } yield { }
   }
 
   //TODO: should we check if this room is joined?
-  override def leave(): Unit =  socketHandler.leave()
+  override def leave(): Unit = this.roomSocket.sendLeave()
 
   //TODO: should we check if this room is joined?
-  override def send(msg: String): Unit = socketHandler.sendMessage(msg)
+  override def send(msg: String): Unit = this.roomSocket.sendMessage(msg)
 
   //TODO: should we check if this room is joined?
-  override def onMessageReceived(callback: String => Unit): Unit = this.socketHandler.onMessageReceived(callback)
+  override def onMessageReceived(callback: String => Unit): Unit = this.roomSocket.onMessageReceived(callback)
 }
 
 
