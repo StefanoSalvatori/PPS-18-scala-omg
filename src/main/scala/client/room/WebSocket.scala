@@ -38,7 +38,6 @@ class BasicWebSocket(val socketUri: String)
 
   private implicit val executor: ExecutionContext = actorSystem.dispatcher
   private val BuffSize = 200 //TODO: test best value
-
   protected var messageReceivedCallback: String => Unit = x => {}
 
   //incoming
@@ -73,7 +72,7 @@ class BasicWebSocket(val socketUri: String)
   private def checkOpenSuccess(upgradeResponse: WebSocketUpgradeResponse) = {
     // status code 101 (Switching Protocols) indicates that server support WebSockets
     if (upgradeResponse.response.status != StatusCodes.SwitchingProtocols) {
-      throw new RuntimeException(s"Connection failed: ${upgradeResponse.response.status}")
+      throw new Exception(s"Connection failed: ${upgradeResponse.response.status}")
     }
   }
 

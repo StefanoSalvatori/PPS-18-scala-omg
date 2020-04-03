@@ -56,7 +56,7 @@ class ClientSpec extends AnyFlatSpec
 
   it should "create public rooms" in {
     val r = Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
-    val roomList = Await.result(client getAvailableRoomsByType ROOM_TYPE_NAME, 5 seconds)
+    val roomList = Await.result(client getAvailableRoomsByType(ROOM_TYPE_NAME, ""), 5 seconds)
     roomList should have size 1
   }
 
@@ -72,14 +72,14 @@ class ClientSpec extends AnyFlatSpec
     Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
 
     assertThrows[Exception] {
-      Await.result(client getAvailableRoomsByType ROOM_TYPE_NAME, 5 seconds)
+      Await.result(client getAvailableRoomsByType(ROOM_TYPE_NAME, ""), 5 seconds)
     }
   }
 
   it should "get all available rooms of specific type" in {
     Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
     Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
-    val roomList = Await.result(client getAvailableRoomsByType ROOM_TYPE_NAME, 5 seconds)
+    val roomList = Await.result(client getAvailableRoomsByType(ROOM_TYPE_NAME, ""), 5 seconds)
     roomList should have size 2
   }
 
@@ -88,9 +88,33 @@ class ClientSpec extends AnyFlatSpec
     Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
     Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
 
+
     assertThrows[Exception] {
-      Await.result(client join(ROOM_TYPE_NAME, Option.empty), 5 seconds)
+      Await.result(client join(ROOM_TYPE_NAME, ""), 5 seconds)
     }
+  }
+
+  it should "fail on joining a room of a type that does not exists" in {
+    assertThrows[Exception] {
+      Await.result(client join(ROOM_TYPE_NAME, ""), 5 seconds)
+    }
+  }
+
+  it should "be able to join a room by it's id" in {
+    val client1 = Client(serverAddress, serverPort)
+    val client2 = Client(serverAddress, serverPort)
+    val room1 = Await.result(client1.createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
+    val room2 = Await.result(client2.joinById(room1.roomId), 5 seconds)
+    val joinedRooms = client2 joinedRooms()
+    joinedRooms should have size 1
+    room2.roomId shouldEqual room1.roomId
+  }
+
+  it should "join a room or create it if it does not exists" in {
+    val room = Await.result(client.joinOrCreate(ROOM_TYPE_NAME, ""),  10 seconds)
+    client joinedRooms() should have size 1
+    val roomOnServer = Await.result(client.getAvailableRoomsByType(ROOM_TYPE_NAME, ""), 5 seconds)
+    assert(roomOnServer.map(_.roomId).contains(room.roomId))
   }
 
   /*it should "be able to join an existing room" in {

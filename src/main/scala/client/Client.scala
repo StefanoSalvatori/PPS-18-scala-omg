@@ -2,7 +2,6 @@ package client
 
 import akka.actor.ActorSystem
 import akka.pattern.ask
-import common.actors.ApplicationActorSystem
 import client.MessageDictionary._
 import client.room.ClientRoom
 import common.CommonRoom.{RoomId, RoomType}
@@ -10,6 +9,7 @@ import common.CommonRoom.{RoomId, RoomType}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
 
 sealed trait Client {
@@ -55,7 +55,7 @@ sealed trait Client {
    * @param roomType type of room to get
    * @return List all available rooms to connect of the given type
    */
-  def getAvailableRoomsByType(roomType: String): Future[Seq[ClientRoom]]
+  def getAvailableRoomsByType(roomType: String, roomOption: Any): Future[Seq[ClientRoom]]
 
   def joinedRooms(): Set[ClientRoom]
 
@@ -71,7 +71,6 @@ class ClientImpl(private val serverAddress: String,
 
   private val requestTimeout = 5 // Seconds
 
-  import common.actors.ApplicationActorSystem._
   import akka.util.Timeout
 
   implicit val timeout: Timeout = requestTimeout seconds
@@ -82,26 +81,40 @@ class ClientImpl(private val serverAddress: String,
   private implicit val executor = actorSystem.dispatcher
   private val coreClient = actorSystem actorOf CoreClient(serverUri)
 
-  /*override def createPublicRoom(roomType: RoomType, roomOption: Any): Unit =
-    coreClient ! CreatePublicRoom*/
 
   override def joinedRooms(): Set[ClientRoom] =
-    Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].rooms
+    Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].joinedRooms
 
   override def shutdown(): Unit = this.actorSystem.terminate()
 
-  override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
-    (coreClient ? CreatePublicRoom(roomType, roomOption)).mapTo[ClientRoom]
+  override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] = {
+    (coreClient ? CreatePublicRoom(roomType, roomOption)) flatMap {
+      case Success(room) => Future.successful(room.asInstanceOf[ClientRoom])
+      case Failure(ex) => Future.failed(ex)
+    }
+  }
 
-  override def joinOrCreate(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
-    (coreClient ? JoinOrCreate(roomType, roomOption)).mapTo[ClientRoom]
+  override def joinOrCreate(roomType: RoomType, roomOption: Any): Future[ClientRoom] = {
+    this.join(roomType, roomOption) fallbackTo {
+      this.createPublicRoom(roomType, roomOption)
+    }
+  }
 
   override def join(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
-    (coreClient ? Join(roomType, roomOption)).mapTo[ClientRoom]
+    coreClient ? Join(roomType, roomOption) flatMap {
+      case Success(room) => Future.successful(room.asInstanceOf[ClientRoom])
+      case Failure(ex) => Future.failed(ex)
+    }
 
   override def joinById(roomId: RoomId): Future[ClientRoom] =
-    (coreClient ? JoinById(roomId)).mapTo[ClientRoom]
+    (coreClient ? JoinById(roomId)) flatMap {
+      case Success(room) => Future.successful(room.asInstanceOf[ClientRoom])
+      case Failure(ex) => Future.failed(ex)
+    }
 
-  override def getAvailableRoomsByType(roomType: String): Future[Seq[ClientRoom]] =
-    (coreClient ? GetAvailableRooms(roomType)).mapTo[Seq[ClientRoom]]
+  override def getAvailableRoomsByType(roomType: String, roomOption: Any): Future[Seq[ClientRoom]] =
+    (coreClient ? GetAvailableRooms(roomType, roomOption)) flatMap {
+      case Success(room) => Future.successful(room.asInstanceOf[Seq[ClientRoom]])
+      case Failure(ex) => Future.failed(ex)
+    }
 }

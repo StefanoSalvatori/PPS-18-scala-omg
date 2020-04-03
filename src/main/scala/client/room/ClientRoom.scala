@@ -62,10 +62,12 @@ case class ClientRoomImpl(serverUri: String, roomId: RoomId)
   override def join(): Future[Unit] = {
     //open socket,
     // if successful try to join
-    for {
+    /*for {
       _ <- roomSocket.openSocket()
       _ <- roomSocket.sendJoin()
-    } yield { }
+    } yield { }*/
+
+    Future.successful()
   }
 
   //TODO: should we check if this room is joined?

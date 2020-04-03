@@ -123,7 +123,7 @@ private class GameServerImpl(override val host: String,
       .flatMap {
         case Started => this.onStart(); Future.successful()
         case Error(msg) => Future.failed(new IllegalStateException(msg))
-        case Failure(exception) => Future.failed(exception)
+        case ServerFailure(exception) => Future.failed(exception)
         case _ => Future.failed(new IllegalStateException())
       }
   }
@@ -134,7 +134,7 @@ private class GameServerImpl(override val host: String,
       .flatMap {
         case Stopped => this.onShutdown(); Future.successful()
         case Error(msg) => Future.failed(new IllegalStateException(msg))
-        case Failure(exception) => Future.failed(exception)
+        case ServerFailure(exception) => Future.failed(exception)
         case _ => Future.failed(new IllegalStateException())
       }
   }
