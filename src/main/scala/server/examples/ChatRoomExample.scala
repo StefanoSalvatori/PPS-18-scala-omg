@@ -22,7 +22,9 @@ class ChatRoom(override val roomId: String) extends ServerRoom {
 }
 
 
-object ChatRoomExample extends App with ApplicationActorSystem {
+object ChatRoomExample extends App {
+  import common.actors.ApplicationActorSystem._
+
   val HOST: String = "localhost"
   val PORT: Int = 8080
   val ESCAPE_TEXT = "quit"
@@ -36,7 +38,7 @@ object ChatRoomExample extends App with ApplicationActorSystem {
     Http().singleRequest(HttpRequest(HttpMethods.POST, uri = s"http://$HOST:$PORT/rooms/$ROOM_PATH"))
   }
   Await.ready(gameServer.shutdown(), 10 seconds)
-  Await.ready(this.terminateActorSystem(), 10 seconds)
+  Await.ready(terminateActorSystem(), 10 seconds)
   System.exit(0)
 
 }

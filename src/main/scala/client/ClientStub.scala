@@ -4,8 +4,9 @@ import common.actors.ApplicationActorSystem
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
-object ClientStub extends App with ApplicationActorSystem{
+object ClientStub extends App {
 
+  import common.actors.ApplicationActorSystem._
   private val serverAddress = "localhost"
   private val serverPort = 8080
 

@@ -1,16 +1,13 @@
 package client
 
 import akka.pattern.ask
-import common.actors.ApplicationActorSystem
 import client.utils.MessageDictionary._
 import client.room.ClientRoom.ClientRoom
 import common.SharedRoom.{RoomId, RoomType}
 import common.{FilterOptions, Routes}
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-
 
 sealed trait Client {
 
@@ -73,10 +70,12 @@ object Client {
   def apply(serverAddress: String, serverPort: Int): ClientImpl = new ClientImpl(serverAddress, serverPort)
 }
 
-class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client with ApplicationActorSystem {
+class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
 
+  import common.actors.ApplicationActorSystem._
   import akka.util.Timeout
   private val requestTimeout = 5 // Seconds
+  import scala.concurrent.duration._
   implicit val timeout: Timeout = requestTimeout seconds
 
   private val serverUri = Routes.uri(serverAddress, serverPort)
@@ -104,5 +103,5 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   override def getAvailableRooms(filterOptions: FilterOptions): Future[Seq[ClientRoom]] =
     (coreClient ? GetFilteredAvailableRooms(filterOptions)).mapTo[Seq[ClientRoom]]
 
-  override def shutdown(): Unit = super.terminateActorSystem()
+  override def shutdown(): Unit = terminateActorSystem()
 }

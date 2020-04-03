@@ -1,6 +1,8 @@
 package server.route_service
 
-import common.{RoomPropertyValue, FilterOptions}
+import java.util.UUID
+
+import common.{FilterOptions, RoomPropertyValue}
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.Flow
@@ -19,10 +21,11 @@ trait RoomHandler {
 
   /**
    * FIlter rooms using the specified filters.
+   *
    * @param filterOptions
-   *     The filters to be applied
+   * The filters to be applied
    * @return
-   *     A set of rooms that satisfy the filters
+   * A set of rooms that satisfy the filters
    */
   def availableRooms(filterOptions: FilterOptions): Set[Room]
 
@@ -82,10 +85,13 @@ trait RoomHandler {
 
 object RoomHandler {
   type ClientConnectionHandler = Flow[Message, Message, Any]
+
   def apply(): RoomHandler = RoomHandlerImpl()
 }
 
-case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
+case class RoomHandlerImpl() extends RoomHandler {
+
+  import common.actors.ApplicationActorSystem._
 
   var roomTypesHandlers: Map[String, String => ServerRoom] = Map.empty
 
@@ -96,27 +102,27 @@ case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
   override def availableRooms(filterOptions: FilterOptions): Set[Room] =
     roomsByType.values.flatMap(_ keys).filter(room => {
 
-    // Given a room, check if such room satisfies all filter constraints
-    filterOptions.options.forall(filterOption => {
-      try {
-        val field = room.getClass getDeclaredField filterOption.optionName
+      // Given a room, check if such room satisfies all filter constraints
+      filterOptions.options.forall(filterOption => {
+        try {
+          val field = room.getClass getDeclaredField filterOption.optionName
 
-        field setAccessible true
+          field setAccessible true
 
-        val value = (field get room).asInstanceOf[RoomPropertyValue]
-        val filterValue = filterOption.value.asInstanceOf[value.type]
+          val value = (field get room).asInstanceOf[RoomPropertyValue]
+          val filterValue = filterOption.value.asInstanceOf[value.type]
 
-        field setAccessible false
+          field setAccessible false
 
-        filterOption.strategy evaluate (value, filterValue)
-      } catch {
-        // A room is dropped if it doesn't contain the specified field to be used in the filter
-        case _: NoSuchFieldException => false
-      }
-    })
-  }).toSet
+          filterOption.strategy evaluate(value, filterValue)
+        } catch {
+          // A room is dropped if it doesn't contain the specified field to be used in the filter
+          case _: NoSuchFieldException => false
+        }
+      })
+    }).toSet
 
-  override def availableRooms: List[Room] = roomsByType.values.flatMap(_.keys).toList
+  override def availableRooms: Seq[Room] = roomsByType.values.flatMap(_.keys).toSeq
 
   override def createRoom(roomType: String, roomOptions: Option[RoomProperty]): Room = {
     this.handleRoomCreation(roomType, roomOptions)
@@ -142,15 +148,14 @@ case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
 
   private def handleRoomCreation(roomType: String, roomOptions: Option[RoomProperty]): Room = {
     val roomMap = this.roomsByType(roomType)
-    val newId = (roomMap.size + 1).toString
     val roomFactory = this.roomTypesHandlers(roomType)
-    val newRoom = roomFactory(newId)
+    val newRoom = roomFactory(UUID.randomUUID.toString)
     val newRoomActor = actorSystem actorOf RoomActor(newRoom)
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
     newRoom
   }
 
   override def handleClientConnection(roomId: RoomId): Option[ClientConnectionHandler] = {
-    Some(Flow.fromFunction(_ => TextMessage("foo")))//TODO: get web socket handler
+    Some(Flow.fromFunction(_ => TextMessage("foo"))) //TODO: get web socket handler
   }
 }
