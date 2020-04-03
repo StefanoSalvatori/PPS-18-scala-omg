@@ -8,7 +8,7 @@ import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.wordspec.AnyWordSpecLike
-import client.MessageDictionary._
+import client.utils.MessageDictionary._
 import client.room.ClientRoom.ClientRoom
 import common.Routes
 import org.scalatest.matchers.should.Matchers
@@ -81,7 +81,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       Thread sleep 1000
       (coreClient ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])
-        reply.asInstanceOf[JoinedRooms].rooms.size shouldEqual 1
+        reply.asInstanceOf[JoinedRooms].rooms should have size 1
       })
     }
   }

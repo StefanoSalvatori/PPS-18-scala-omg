@@ -1,6 +1,6 @@
 package server.room
 
-import common.CommonRoom.Room
+import common.SharedRoom.Room
 
 trait Server
 

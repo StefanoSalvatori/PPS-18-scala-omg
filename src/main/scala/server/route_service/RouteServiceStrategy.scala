@@ -1,7 +1,7 @@
 package server.route_service
 
-import common.CommonRoom.{Room, RoomId}
-import common.{RoomJsonSupport, RoomProperty}
+import common.SharedRoom.{Room, RoomId}
+import common.{FilterOptions, RoomJsonSupport, RoomProperty}
 import server.route_service.RoomHandler.ClientConnectionHandler
 
 trait RouteServiceStrategy {
@@ -12,7 +12,7 @@ trait RouteServiceStrategy {
    * @param roomOptions options for room filtering
    * @return a list of rooms filtered with the room options
    */
-  def onGetAllRooms(roomOptions: Option[RoomProperty]): Seq[Room]
+  def onGetAllRooms(roomOptions: Option[FilterOptions]): Seq[Room]
 
   /**
    * Handle request for getting all rooms of specific type
@@ -57,8 +57,9 @@ trait RouteServiceStrategy {
 trait RoomHandlerService {
   val roomHandler: RoomHandler = RoomHandler()
 }
+
 trait RoomHandling extends RouteServiceStrategy with RoomHandlerService with RoomJsonSupport {
-  override def onGetAllRooms(roomOptions: Option[RoomProperty]): Seq[Room] =
+  override def onGetAllRooms(roomOptions: Option[FilterOptions]): Seq[Room] =
     this.roomHandler.availableRooms
 
   override def onGetRoomType(roomType: String, roomOptions: Option[RoomProperty]): Seq[Room] =

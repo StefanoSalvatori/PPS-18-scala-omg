@@ -23,7 +23,7 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
   private val httpClient = context.system actorOf HttpClient(serverUri, self)
   private var joinedRooms: Set[ClientRoom] = Set()
 
-  import MessageDictionary._
+  import client.utils.MessageDictionary._
 
   val onReceive: Receive = {
     case CreatePublicRoom(roomType, _) =>
@@ -38,7 +38,9 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
         case Success(room) =>
           joinedRooms = joinedRooms + room
           resTo ! room
-        case Failure(exception) => Future.failed(exception)
+        case Failure(exception) =>
+          println("AA")
+          Future.failed(exception)
       }
 
     case GetAvailableRooms(roomType) =>

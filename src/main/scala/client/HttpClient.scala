@@ -25,7 +25,7 @@ class HttpClientImpl(private val serverUri: String, private val coreClient: Acto
 
   implicit val jsonStreamingSupport: JsonEntityStreamingSupport = EntityStreamingSupport.json()
 
-  import MessageDictionary._
+  import utils.MessageDictionary._
   private val onReceive: PartialFunction[Any, Unit] = {
 
     case CreatePublicRoom(roomType, _) =>
