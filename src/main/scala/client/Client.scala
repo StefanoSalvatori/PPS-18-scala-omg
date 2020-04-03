@@ -1,11 +1,9 @@
 package client
 
 import akka.pattern.ask
-
 import common.actors.ApplicationActorSystem
-
 import client.MessageDictionary._
-import client.room.ClientRoom.ClientRoom
+import client.room.ClientRoom
 import common.CommonRoom.{RoomId, RoomType}
 
 import scala.concurrent.duration._

@@ -3,11 +3,11 @@ package client
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import client.room.ClientRoom.ClientRoom
+import client.room.ClientRoom
+import common.CommonRoom.Room
 import common.{HttpRequests, RoomJsonSupport}
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
 sealed trait CoreClient extends BasicActor
 
@@ -33,12 +33,10 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
 
       (for {
         response <- createRoomFuture
-        room <- Unmarshal(response).to[ClientRoom]
-      } yield room) onComplete {
-        case Success(room) =>
-          joinedRooms = joinedRooms + room
-          resTo ! room
-        case Failure(exception) => Future.failed(exception)
+        room <- Unmarshal(response).to[Room]
+      } yield ClientRoom(serverUri, room.roomId)) foreach { room =>
+        joinedRooms = joinedRooms + room
+        resTo ! room
       }
 
     case GetAvailableRooms(roomType) =>
@@ -49,32 +47,30 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
 
       (for {
         response <- getRoomsFuture
-        rooms <- Unmarshal(response).to[Seq[ClientRoom]]
-      } yield rooms) onComplete {
-        case Success(rooms) => resTo ! rooms
-        case Failure(exception) => Future.failed(exception)
+        rooms <- Unmarshal(response).to[Seq[Room]]
+      } yield rooms) foreach {
+        resTo ! _
       }
 
     case Join(roomType, _) =>
-      val resTo = sender
+      val replyTo = sender
 
       val getRoomsFuture: Future[HttpResponse] = Http() singleRequest
         HttpRequests.getRoomsByType(serverUri)(roomType)
 
       (for {
         response <- getRoomsFuture
-        rooms <- Unmarshal(response).to[Seq[ClientRoom]]
-        joinedRoom <-  rooms.head.join()
-      } yield joinedRoom) onComplete {
-        case Success(r) => resTo ! r
-        case Failure(ex) => Future.failed(ex)
-      }
+        rooms <- Unmarshal(response).to[Seq[Room]]
+        clientRoom =  ClientRoom(serverUri, rooms.head.roomId)
+        _ <- clientRoom.join()
+      } yield clientRoom) foreach { replyTo ! _ }
 
-    case JoinOrCreate(roomType, _) =>
+    case JoinOrCreate(roomType, _) => //TODO: implement
 
-    case JoinById(roomId) =>
+    case JoinById(roomId)=> //TODO: implement
 
-    case NewJoinedRoom(room) =>
+
+    case NewJoinedRoom(room)  =>
       if (joinedRooms map (_ roomId) contains room.roomId) {
         logger debug s"Room ${room.roomId} was already joined!"
       } else {

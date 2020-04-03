@@ -1,98 +1,87 @@
 package client.room
 
-import akka.{Done, NotUsed}
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import akka.http.scaladsl.model.ws.{Message, TextMessage}
-import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import akka.stream.{CompletionStrategy, OverflowStrategy}
+import akka.Done
+import akka.pattern.ask
+import akka.util.Timeout
 import common.CommonRoom.{Room, RoomId}
 import common.actors.ApplicationActorSystem
-import akka.util.Timeout
-import org.reactivestreams.Publisher
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import common.actors.ApplicationActorSystem._
+
+trait ClientRoom extends Room {
+
+
+  val serverUri: String
+
+  /**
+   * Open web socket with server room and try to join
+   * @return success if this room can be joined fail if the socket can be opened or the room can't be joined
+   */
+  def join(): Future[Unit]
+
+
+  /**
+   * Leave this room server side
+   *
+   * @return success if this room can be left fail otherwise
+   */
+  def leave(): Unit
+
+  /**
+   * Send a message to the server room
+   *
+   * @param msg the message to send
+   */
+  def send(msg: String): Unit
+
+
+  /**
+   * Callback that handle a message received from the server room
+   *
+   * @param callback callback to handle the message
+   */
+  def onMessageReceived(callback: String => Unit): Unit
+
+  //TODO: implement this
+  //def onStateChanged
+
+}
 
 object ClientRoom {
-  implicit val timeout: Timeout = 5 seconds
-
-  case class ConnectedToServer(actorRef: ActorRef)
-
-  case class MessageFromServer(msg: Any)
-
-  case class JoinRoom(roomId: RoomId)
-
-
-  trait ClientRoom extends Room {
-
-    def join(): Future[ClientRoom]
-
-    def leave(): Future[Done]
-
-    def send(msg: Any): Future[Done]
-
-    def onMessage(callback: String => Unit): Any
-  }
-
-  object ClientRoom {
-    def apply(roomId: RoomId): ClientRoom = ClientRoomImpl(roomId)
-  }
-
-
-  case class ClientRoomImpl(roomId: RoomId) extends ClientRoom {
-    private val buffSize = 100
-    val clientRoomActor = actorSystem.actorOf(Props(classOf[ClientRoomActor], roomId))
-
-    private def initServerSource: (ActorRef, Publisher[TextMessage.Strict]) =
-      Source.actorRef({ case Done => CompletionStrategy.draining },
-        PartialFunction.empty, buffSize, OverflowStrategy.dropHead)
-        .map(msg => TextMessage.Strict(msg))
-        .toMat(Sink.asPublisher(false))(Keep.both).run()
-
-    private def sink(): Sink[Message, NotUsed] = Flow[Message].map {
-      case TextMessage.Strict(msg) =>
-        // Incoming message from ws
-        clientRoomActor ! MessageFromServer(msg)
-    }.to(Sink.onComplete(_ => println("sink complete")))
-
-    override def join(): Future[ClientRoom] = {
-      /*val (actorRef: ActorRef, publisher: mutable.Publisher[TextMessage.Strict]) = initServerSource
-      clientRoomActor ! ConnectedToServer(actorRef)
-      val wsReq = HttpRequests.connectToRoom(serverUri)(roomId)
-      val flow = Flow.fromSinkAndSource(sink(), Source.fromPublisher(publisher))
-      val (res, _) = Http() singleWebSocketRequest(wsReq, flow)
-      for {
-        _ <- res
-        _ <- clientRoomActor ? JoinRoom(this.roomId)
-      } yield this*/
-      Future.successful(this)
-    }
-
-
-    override def leave(): Future[Done] = ???
-
-    override def send(msg: Any): Future[Done] = ???
-
-    override def onMessage(callback: String => Unit): Any = ???
-
-
-  }
-
-  private class ClientRoomActor(roomId: RoomId) extends Actor with ActorLogging {
-    private var serverRef: ActorRef = _
-
-    override def receive: Receive = {
-      case ConnectedToServer(ref) => serverRef = ref
-      case MessageFromServer(msg) => msg match {
-        case "join" => println("join OK!")
-      }
-      case JoinRoom =>
-        serverRef ! "join"
-    }
-  }
+  def apply(serverUri: String, roomId: RoomId): ClientRoom = ClientRoomImpl(serverUri, roomId)
 
 
 }
+
+import common.actors.ApplicationActorSystem._
+case class ClientRoomImpl(serverUri: String, roomId: RoomId) extends ClientRoom {
+  private implicit val timeout : Timeout = 5 seconds
+
+  private val socketHandler = SocketHandler(serverUri.replace("http://", ""), roomId)
+
+  override def join(): Future[Unit] = {
+    //open socket,
+    // if successful try to join
+    for {
+      _ <- socketHandler.openSocket()
+      _ <- socketHandler.join()
+    } yield {
+      Future.successful()
+    }
+  }
+
+  //TODO: should we check if this room is joined?
+  override def leave(): Unit =  socketHandler.leave()
+
+  //TODO: should we check if this room is joined?
+  override def send(msg: String): Unit = socketHandler.sendMessage(msg)
+
+  //TODO: should we check if this room is joined?
+  override def onMessageReceived(callback: String => Unit): Unit = this.socketHandler.onMessageReceived(callback)
+}
+
+
+
 
 

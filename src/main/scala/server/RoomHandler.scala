@@ -68,7 +68,8 @@ object RoomHandler {
   def apply(): RoomHandler = RoomHandlerImpl()
 }
 
-case class RoomHandlerImpl() extends RoomHandler with ApplicationActorSystem {
+import common.actors.ApplicationActorSystem._
+case class RoomHandlerImpl() extends RoomHandler  {
 
   var roomTypesHandlers: Map[String, String => ServerRoom] = Map.empty
 
