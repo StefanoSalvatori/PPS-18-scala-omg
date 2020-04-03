@@ -12,9 +12,9 @@ import org.reactivestreams.Publisher
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import common.actors.ApplicationActorSystem._
 
-
-object ClientRoom extends ApplicationActorSystem {
+object ClientRoom {
   implicit val timeout: Timeout = 5 seconds
 
   case class ConnectedToServer(actorRef: ActorRef)
@@ -40,7 +40,7 @@ object ClientRoom extends ApplicationActorSystem {
   }
 
 
-  case class ClientRoomImpl(roomId: RoomId) extends ClientRoom with ApplicationActorSystem {
+  case class ClientRoomImpl(roomId: RoomId) extends ClientRoom {
     private val buffSize = 100
     val clientRoomActor = actorSystem.actorOf(Props(classOf[ClientRoomActor], roomId))
 

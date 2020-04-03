@@ -83,7 +83,7 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
       serverActor ! StopServer
       expectMsg(Stopped)
 
-      Await.ready(Http(system).shutdownAllConnectionPools(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
+      // Await.ready(Http(system).shutdownAllConnectionPools(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
       //Now requests fail
       makeGetRequestAt(s"$ROUTES_BASE_PATH")
       expectMsgType[RequestFailed](REQUEST_FAIL_TIMEOUT)

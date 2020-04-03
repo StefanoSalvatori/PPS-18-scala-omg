@@ -1,7 +1,6 @@
 package server.room
 
 import akka.actor.ActorRef
-import common.actors.ApplicationActorSystem
 
 /**
  * Minimal interface for a client communication channel. It must have an id to identify it and a send method to
@@ -11,6 +10,10 @@ trait Client {
   val id: String
 
   def send[T](msg: T)
+
+  override def equals(obj: Any): Boolean = obj != null && obj.isInstanceOf[Client] && obj.asInstanceOf[Client].id == this.id
+
+  override def hashCode(): Int = super.hashCode()
 }
 
 object Client {
@@ -30,8 +33,7 @@ object Client {
  * @param id          the id of the client
  * @param clientActor the actor that will receive the messages
  */
-private class ClientImpl(override val id: String, private val clientActor: ActorRef) extends Client with
-  ApplicationActorSystem {
+private class ClientImpl(override val id: String, private val clientActor: ActorRef) extends Client {
   override def send[T](msg: T): Unit = this.clientActor ! msg
 }
 

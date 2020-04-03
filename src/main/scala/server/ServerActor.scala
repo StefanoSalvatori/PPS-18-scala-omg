@@ -46,7 +46,7 @@ class ServerActor(private val terminationDeadline: FiniteDuration) extends Actor
 
   override def receive: Receive = {
     case StartServer(host, port, routes) =>
-      val source = Http().bind(host, port)
+      val source = Http(this.actorSystem).bind(host, port)
       val serverStartedFuture = source.to(Sink.foreach(_ handleWith routes)).run()
 
       import akka.pattern.pipe
@@ -75,7 +75,9 @@ class ServerActor(private val terminationDeadline: FiniteDuration) extends Actor
     case StopServer =>
       import akka.pattern.pipe
       binding.terminate(this.terminationDeadline)
-      binding.whenTerminated map (_ => ServerStopped) pipeTo self
+      binding.whenTerminated
+        .flatMap(_ => Http(this.actorSystem).shutdownAllConnectionPools())
+        .map(_ => ServerStopped) pipeTo self
       context.become(serverStopping(binding, sender))
   }
 

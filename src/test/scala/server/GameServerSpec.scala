@@ -14,14 +14,13 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.{implicitConversions, postfixOps}
+import common.actors.ApplicationActorSystem._
 
 class GameServerSpec extends AnyFlatSpec
   with Matchers
   with ScalatestRouteTest
   with BeforeAndAfter
-  with BeforeAndAfterAll
-  with TestConfig
-  with ApplicationActorSystem {
+  with TestConfig {
 
   private val BASE_PATH = Routes.publicRooms
   private val MAX_WAIT_REQUESTS = 5 seconds
@@ -44,8 +43,6 @@ class GameServerSpec extends AnyFlatSpec
   private val server: GameServer = GameServer(HOST, PORT, ADDITIONAL_TEST_ROUTES)
 
   behavior of "Game Server facade"
-
-  override def afterAll(): Unit = terminateActorSystem()
 
 
   after {

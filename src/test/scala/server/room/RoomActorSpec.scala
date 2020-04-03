@@ -59,11 +59,10 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       assert(!room.connectedClients.contains(FAKE_CLIENT_1))
     }
 
-    //TODO: check this tests
-    /*"respond with ClientNotAuthorized when receives a message from a client that hasn't join the room" in {
-      roomActorRef ! Message(FAKE_CLIENT_2, "test-message")
+    "respond with ClientNotAuthorized when receives a message from a client that hasn't join the room" in {
+      roomActor ! Msg(FAKE_CLIENT_2, "test-message")
       expectMsg(ClientNotAuthorized)
-    }*/
+    }
 
     /*"send a message to a specific client when receives Tell" in {
       roomActorRef ! Join(FAKE_CLIENT_1, testActor)

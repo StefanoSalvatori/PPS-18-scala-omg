@@ -2,14 +2,13 @@ package server.examples
 
 import server.GameServer
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.ExecutionContext
 import scala.io.StdIn
 import scala.util.{Failure, Success}
 
 object GameServerCreation extends App {
 
-  implicit val executor: ExecutionContextExecutor = ExecutionContext.global
-
+  implicit val executor: ExecutionContext = ExecutionContext.global
   val HOST = "localhost"
   val PORT = 8080
 
@@ -26,6 +25,10 @@ object GameServerCreation extends App {
       println("press any key to shutdown...")
       StdIn.readLine()
       gameServer.shutdown()
+      StdIn.readLine("press any key to start...")
+      gameServer.start()
+      StdIn.readLine("starting...")
+
     case Failure(exception) => println(s"Startup failed: $exception")
 
   }
