@@ -2,14 +2,11 @@ package client
 
 import common._
 import common.BasicRoomPropertyValueConversions._
-
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class RoomFilterSpec extends AnyFlatSpec
-  with Matchers
-  with BeforeAndAfter {
+class RoomFilterSpec extends AnyFlatSpec with Matchers with BeforeAndAfter {
 
   private val testPropertyName = "A"
   private val testPropertyValue = 1
@@ -43,14 +40,14 @@ class RoomFilterSpec extends AnyFlatSpec
 
   "A filter created using just" should "have only the specified element" in {
     val just = FilterOptions just testProperty > 1
-    just.options.size shouldEqual 1
+    just.options should have size 1
     checkFilterOptionCorrectness(just.options.head)(testProperty.name, GreaterStrategy(), 1)
   }
 
   "A concatenation of filter clauses " should "create a filter with all such clauses" in {
     val filter = testProperty =!= 1 andThen testProperty2 =:= "aba" andThen testProperty3 =:= true
     val options = filter.options
-    options.size shouldEqual 3
+    options should have size 3
     checkFilterOptionCorrectness(options.head)(testProperty.name, NotEqualStrategy(), 1)
     checkFilterOptionCorrectness(options(1))(testProperty2.name, EqualStrategy(), "aba")
     checkFilterOptionCorrectness(options(2))(testProperty3.name, EqualStrategy(), true)
@@ -58,7 +55,7 @@ class RoomFilterSpec extends AnyFlatSpec
 
   "A custom filter created using just" should "contain just the specified element" in {
     val just = FilterOptions just myProperty > MyRoomPropertyValue("cde", 3)
-    just.options.size shouldEqual 1
+    just.options should have size 1
     checkFilterOptionCorrectness(just.options.head)(myProperty.name, GreaterStrategy(), MyRoomPropertyValue("cde", 3))
   }
 
@@ -66,7 +63,7 @@ class RoomFilterSpec extends AnyFlatSpec
 
     val filter = FilterOptions just myProperty > myTestProperty andThen myProperty =:= myTestProperty2
     val options = filter.options
-    options.size shouldEqual 2
+    options should have size 2
     checkFilterOptionCorrectness(options.head)(myProperty.name, GreaterStrategy(), myTestProperty)
     checkFilterOptionCorrectness(options(1))(myProperty.name, EqualStrategy(), myTestProperty2)
   }
@@ -74,7 +71,7 @@ class RoomFilterSpec extends AnyFlatSpec
   "Filters" should "indifferently mix simple and custom values" in {
     val filter = FilterOptions just myProperty =:= myTestProperty andThen testProperty =!= 2
     val options = filter.options
-    options.size shouldEqual 2
+    options should have size 2
     checkFilterOptionCorrectness(options.head)(myProperty.name,EqualStrategy(), myTestProperty)
     checkFilterOptionCorrectness(options(1))(testProperty.name, NotEqualStrategy(), 2)
   }

@@ -2,7 +2,7 @@ package common
 
 import akka.http.scaladsl.model.ws.WebSocketRequest
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
-import common.CommonRoom.{RoomId, RoomType}
+import common.SharedRoom.{RoomId, RoomType}
 
 object Routes {
 

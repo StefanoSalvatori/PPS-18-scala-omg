@@ -1,15 +1,16 @@
 package client
 
-import akka.actor.ActorSystem
 import akka.pattern.ask
+
+import common.actors.ApplicationActorSystem
+
 import client.MessageDictionary._
-import client.room.ClientRoom
+import client.room.ClientRoom.ClientRoom
 import common.CommonRoom.{RoomId, RoomType}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
 
 
 sealed trait Client {
@@ -55,7 +56,14 @@ sealed trait Client {
    * @param roomType type of room to get
    * @return List all available rooms to connect of the given type
    */
-  def getAvailableRoomsByType(roomType: String, roomOption: Any): Future[Seq[ClientRoom]]
+  def getAvailableRoomsByType(roomType: String): Future[Seq[ClientRoom]]
+
+  /**
+   *
+   * @param filterOptions options that will be used to filter the rooms
+   * @return rooms that satisfy the constraints specified in the filter
+   */
+  def getAvailableRooms(filterOptions: FilterOptions): Future[Seq[ClientRoom]]
 
   def joinedRooms(): Set[ClientRoom]
 
@@ -66,15 +74,15 @@ object Client {
   def apply(serverAddress: String, serverPort: Int): ClientImpl = new ClientImpl(serverAddress, serverPort)
 }
 
-class ClientImpl(private val serverAddress: String,
-                 private val serverPort: Int) extends Client {
+class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
 
   private val requestTimeout = 5 // Seconds
 
   import akka.util.Timeout
 
   implicit val timeout: Timeout = requestTimeout seconds
-  private val serverUri = "http://" + serverAddress + ":" + serverPort
+
+  private val serverUri = Routes.uri(serverAddress, serverPort)
 
 
   private implicit val actorSystem: ActorSystem = ActorSystem()
@@ -83,8 +91,10 @@ class ClientImpl(private val serverAddress: String,
 
 
   override def joinedRooms(): Set[ClientRoom] =
-    Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].joinedRooms
+    Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].rooms
 
+  override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
+    (coreClient ? CreatePublicRoom(roomType, roomOption)).mapTo[ClientRoom]
   override def shutdown(): Unit = this.actorSystem.terminate()
 
   override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] = {

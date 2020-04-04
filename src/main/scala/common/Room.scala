@@ -1,6 +1,6 @@
 package common
 
-object CommonRoom {
+object SharedRoom {
 
   type RoomId = String
   type RoomType = String
@@ -12,7 +12,6 @@ object CommonRoom {
 
   trait Room {
     val roomId: RoomId
-    // val roomType: String
   }
 
 
