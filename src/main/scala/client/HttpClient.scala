@@ -23,12 +23,11 @@ class HttpClientImpl(private val serverUri: String, private val coreClient: Acto
 
   private val http = Http()
 
-
   private val onReceive: PartialFunction[Any, Unit] = {
 
-    case HttpPostRoom(roomType, _) =>
+    case HttpPostRoom(roomType, properties) =>
       val replyTo = sender
-      val createRoomFuture: Future[HttpResponse] = http singleRequest HttpRequests.postRoom(serverUri)(roomType)
+      val createRoomFuture: Future[HttpResponse] = http singleRequest HttpRequests.postRoom(serverUri)(roomType, properties)
       (for {
         response <- createRoomFuture
         room <- Unmarshal(response).to[Room]
@@ -37,9 +36,9 @@ class HttpClientImpl(private val serverUri: String, private val coreClient: Acto
         case Failure(ex) => coreClient.tell(FailResponse(ex), replyTo)
       }
 
-    case HttpGetRooms(roomType, _) =>
+    case HttpGetRooms(roomType, filterOptions) =>
       val replyTo = sender
-      val getRoomsFuture: Future[HttpResponse] = http singleRequest HttpRequests.getRoomsByType(serverUri)(roomType)
+      val getRoomsFuture: Future[HttpResponse] = http singleRequest HttpRequests.getRoomsByType(serverUri)(roomType, filterOptions)
       (for {
         response <- getRoomsFuture
         rooms <- Unmarshal(response).to[Seq[Room]]
@@ -48,7 +47,6 @@ class HttpClientImpl(private val serverUri: String, private val coreClient: Acto
         case Failure(ex) => coreClient.tell(FailResponse(ex), replyTo)
       }
   }
-
 
   override def receive: Receive = onReceive orElse fallbackReceive
 }

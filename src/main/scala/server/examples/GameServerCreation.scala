@@ -35,6 +35,4 @@ object GameServerCreation extends App {
   }
 
   gameServer defineRoom("test_room", id => ServerRoom(id))
-
-
 }

@@ -21,7 +21,7 @@ trait RoomHandler {
    * @return
    * A set of rooms that satisfy the filters
    */
-  def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty()): Seq[Room]
+  def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[Room]
 
   /**
    * Create a new room of specific type with properties
@@ -38,7 +38,7 @@ trait RoomHandler {
    * @param roomType rooms type
    * @return the list of rooms of given type
    */
-  def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty()): Seq[Room]
+  def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[Room]
 
   /**
    * Get specific room with type and id
@@ -78,7 +78,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
   //type2 -> (id->roomActor3), (id2, roomActor4) ...
   var roomsByType: Map[String, Map[Room, ActorRef]] = Map.empty
 
-  override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty()): Seq[Room] =
+  override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[Room] =
     roomsByType.values.flatMap(_ keys).filter(room => {
 
       // Given a room, check if such room satisfies all filter constraints
@@ -127,7 +127,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       .map(option => RoomSocketFlow(option._2, RoomProtocolSerializer).createFlow())
   }
 
-  override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty()): Seq[Room] =
+  override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[Room] =
     this.roomsByType.get(roomType) match {
       case Some(value) => value.keys.toSeq
       case None => Seq.empty

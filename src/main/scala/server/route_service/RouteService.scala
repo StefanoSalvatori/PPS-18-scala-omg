@@ -17,11 +17,10 @@ trait RouteService {
 
   /**
    * Add a route for a new type of rooms.
-   *
    * @param roomTypeName room type name used as the route name
-   * @param roomFactory  a factory to create rooms of that type
+   * @param roomFactory a factory to create rooms of that type
    */
-  def addRouteForRoomType(roomTypeName: String, roomFactory: String => ServerRoom)
+  def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom)
 }
 
 object RouteService {
@@ -54,7 +53,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
       }
     }
   }
-
 
   /**
    * Handle web socket connection on path /[[common.Routes#connectionRoute]]/{roomId}
@@ -92,7 +90,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
       }
     }
 
-
   /**
    * GET rooms/{type}
    */
@@ -107,6 +104,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
         complete(rooms)
       }
     }
+
 
 
   /**
@@ -139,24 +137,19 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
 
   /**
    * PUT rooms/{type}
-   * *
-   * private def putRoomsByTypeRoute(roomType: String): Route =
-   * put {
-   * entity(as[FilterOptions]) { filterOptions =>
-   * val rooms = this.roomHandler.getOrCreate(roomType, filterOptions)
-   * complete(rooms) //return a list containing only the created room if no room is available
-   * } ~ {
+
+  private def putRoomsByTypeRoute(roomType: String): Route =
+    put {
+      entity(as[FilterOptions]) { filterOptions =>
+        val rooms = this.roomHandler.getOrCreate(roomType, filterOptions)
+        complete(rooms) //return a list containing only the created room if no room is available
+      } ~ {
+        //if payload is not parsable as room options we just accept the request as with empty room options
+        val rooms = this.roomHandler.getOrCreate(roomType)
+        complete(rooms)
+      }
+    }
    */
-  /*
-  if payload is not parsable as room options we just accept the request as
-  with empty room options
-  *
-  val rooms = this.roomHandler.getOrCreate(roomType)
-  * complete (rooms)
-  * }
-*
-}
-*/
 }
 
 
