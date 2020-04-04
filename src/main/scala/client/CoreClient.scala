@@ -4,8 +4,9 @@ import akka.actor.{ActorRef, Stash}
 import akka.pattern.ask
 import akka.util.Timeout
 import client.room.ClientRoom
-import common.CommonRoom.{Room, RoomId}
+import client.utils.MessageDictionary._
 import common.RoomJsonSupport
+import common.SharedRoom.{Room, RoomId}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -27,7 +28,9 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
   private val httpClient = context.system actorOf HttpClient(serverUri, self)
   private var joinedRooms: Set[ClientRoom] = Set()
 
-  import MessageDictionary._
+  override def receive: Receive = onReceive orElse fallbackReceive
+
+  def waitRoomsToJoin: Receive = onWaitRoomsToJoin orElse fallbackReceive
 
   val onReceive: Receive = {
 
@@ -38,7 +41,6 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
     case CreatePublicRoom(roomType, roomOptions) =>
       context.become(this.onWaitRoomsToJoin)
       this.httpClient forward HttpPostRoom(roomType, roomOptions)
-
 
     case GetAvailableRooms(roomType, roomOptions) =>
       this.httpClient forward HttpGetRooms(roomType, roomOptions)
@@ -60,6 +62,10 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
       sender ! JoinedRooms(this.joinedRooms)
   }
 
+
+  /**
+   * Behavior to handle response from HttpClientActor
+   */
   val onWaitRoomsToJoin: Receive = {
 
     case CreatePublicRoom(_, _) => stash
@@ -70,7 +76,6 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
       context.become(onReceive)
 
     case RoomSequenceResponse(rooms) =>
-
       val replyTo = sender
       rooms.find(!this.roomAlreadyJoined(_)) match {
         case Some(room) => tryJoinRoom(ClientRoom(serverUri, room.roomId), sender)
@@ -96,11 +101,7 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
       case Failure(ex) => replyTo ! Failure(ex)
     }
 
-  override def receive: Receive = onReceive orElse fallbackReceive
 
-  def waitRoomsToJoin: Receive = onWaitRoomsToJoin orElse fallbackReceive
 
   private def roomAlreadyJoined(room: Room): Boolean = this.joinedRooms.map(_.roomId).contains(room.roomId)
-
-  private def roomAlreadyJoined(roomId: RoomId): Boolean = this.joinedRooms.map(_.roomId).contains(roomId)
 }

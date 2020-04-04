@@ -4,7 +4,8 @@ import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.unmarshalling._
 import client.room.ClientRoom
-import common.CommonRoom.Room
+import client.utils.MessageDictionary._
+import common.SharedRoom.Room
 import common.{HttpRequests, RoomJsonSupport}
 
 import scala.concurrent.Future
@@ -22,7 +23,6 @@ class HttpClientImpl(private val serverUri: String, private val coreClient: Acto
 
   private val http = Http()
 
-  import MessageDictionary._
 
   private val onReceive: PartialFunction[Any, Unit] = {
 

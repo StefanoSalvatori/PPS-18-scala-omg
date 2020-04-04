@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.Flow
-import common.CommonRoom.{Room, RoomId}
+import common.SharedRoom.{Room, RoomId}
 import common.{FilterOptions, RoomProperty, RoomPropertyValue}
 import server.room.{RoomActor, ServerRoom}
 
@@ -112,7 +112,6 @@ case class RoomHandlerImpl(private implicit val actorSystem: ActorSystem) extend
   }
 
   override def handleClientConnection(roomId: RoomId): Option[Flow[Message, Message, Any]] = {
-
     //TODO: implement this method
     Some(Flow.fromFunction(_ => TextMessage("foo")))
   }

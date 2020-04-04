@@ -1,16 +1,17 @@
 package client
 
+import akka.actor.ActorSystem
 import akka.pattern.ask
-
 import common.actors.ApplicationActorSystem
-
-import client.MessageDictionary._
-import client.room.ClientRoom.ClientRoom
-import common.CommonRoom.{RoomId, RoomType}
+import client.room.ClientRoom
+import client.utils.MessageDictionary.{CreatePublicRoom, GetAvailableRoomsByType, GetJoinedRooms, Join, JoinById, JoinedRooms}
+import common.{FilterOptions, RoomProperty, Routes}
+import common.SharedRoom.{RoomId, RoomType}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
 
 sealed trait Client {
@@ -19,29 +20,30 @@ sealed trait Client {
    * Creates a new public room the join
    *
    * @param roomType   type of room to create
-   * @param roomOption options
+   * @param roomProperties options
    * @return a future with the joined room
    */
-  def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom]
+  def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): Future[ClientRoom]
 
   /**
    * Join an existing room or create a new one, by provided roomType and options
    *
    * @param roomType   type of room to join
-   * @param roomOption filtering options
+   * @param filterOption options to filter rooms for join
+   * @param roomProperties property for room creation
    * @return a future with the joined room
    */
-  def joinOrCreate(roomType: RoomType, roomOption: Any): Future[ClientRoom]
+  def joinOrCreate(roomType: RoomType, filterOption: FilterOptions, roomProperties: Set[RoomProperty]): Future[ClientRoom]
 
   /**
    * Joins an existing room by provided roomType and options.
    * Fails if no room of such type exists
    *
    * @param roomType   type of room to join
-   * @param roomOption filtering options
+   * @param filterOption filtering options
    * @return a future containing the joined room
    */
-  def join(roomType: RoomType, roomOption: Any): Future[ClientRoom]
+  def join(roomType: RoomType, filterOption: FilterOptions): Future[ClientRoom]
 
   /**
    * Joins an existing room by its roomId.
@@ -54,16 +56,11 @@ sealed trait Client {
 
   /**
    * @param roomType type of room to get
+   * @param filterOptions options that will be used to filter the rooms
    * @return List all available rooms to connect of the given type
    */
-  def getAvailableRoomsByType(roomType: String): Future[Seq[ClientRoom]]
+  def getAvailableRooms(roomType: String, filterOptions: FilterOptions): Future[Seq[ClientRoom]]
 
-  /**
-   *
-   * @param filterOptions options that will be used to filter the rooms
-   * @return rooms that satisfy the constraints specified in the filter
-   */
-  def getAvailableRooms(filterOptions: FilterOptions): Future[Seq[ClientRoom]]
 
   def joinedRooms(): Set[ClientRoom]
 
@@ -91,27 +88,25 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
 
   override def joinedRooms(): Set[ClientRoom] =
-    Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].rooms
+    Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].joinedRooms
 
-  override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
-    (coreClient ? CreatePublicRoom(roomType, roomOption)).mapTo[ClientRoom]
   override def shutdown(): Unit = this.actorSystem.terminate()
 
-  override def createPublicRoom(roomType: RoomType, roomOption: Any): Future[ClientRoom] = {
-    (coreClient ? CreatePublicRoom(roomType, roomOption)) flatMap {
+  override def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): Future[ClientRoom] = {
+    (coreClient ? CreatePublicRoom(roomType, roomProperties)) flatMap {
       case Success(room) => Future.successful(room.asInstanceOf[ClientRoom])
       case Failure(ex) => Future.failed(ex)
     }
   }
 
-  override def joinOrCreate(roomType: RoomType, roomOption: Any): Future[ClientRoom] = {
-    this.join(roomType, roomOption) fallbackTo {
-      this.createPublicRoom(roomType, roomOption)
+  override def joinOrCreate(roomType: RoomType, filterOption: FilterOptions, roomProperties: Set[RoomProperty]): Future[ClientRoom] = {
+    this.join(roomType, filterOption) fallbackTo {
+      this.createPublicRoom(roomType, roomProperties)
     }
   }
 
-  override def join(roomType: RoomType, roomOption: Any): Future[ClientRoom] =
-    coreClient ? Join(roomType, roomOption) flatMap {
+  override def join(roomType: RoomType, filterOption: FilterOptions): Future[ClientRoom] =
+    coreClient ? Join(roomType, filterOption) flatMap {
       case Success(room) => Future.successful(room.asInstanceOf[ClientRoom])
       case Failure(ex) => Future.failed(ex)
     }
@@ -122,9 +117,10 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       case Failure(ex) => Future.failed(ex)
     }
 
-  override def getAvailableRoomsByType(roomType: String, roomOption: Any): Future[Seq[ClientRoom]] =
-    (coreClient ? GetAvailableRooms(roomType, roomOption)) flatMap {
+  override def getAvailableRooms(roomType: String, filterOption: FilterOptions): Future[Seq[ClientRoom]] =
+    (coreClient ? GetAvailableRoomsByType(roomType, filterOption)) flatMap {
       case Success(room) => Future.successful(room.asInstanceOf[Seq[ClientRoom]])
       case Failure(ex) => Future.failed(ex)
     }
+
 }

@@ -1,18 +1,19 @@
-package client
+package client.utils
 
-import akka.actor.ActorRef
 import client.room.ClientRoom
-import common.CommonRoom.{Room, RoomId, RoomType}
+import common.{FilterOptions, RoomProperty}
+import common.SharedRoom.{Room, RoomId, RoomType}
 
 object MessageDictionary {
 
-  case class CreatePublicRoom(roomType: RoomType, roomOption: Any)
+  case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty])
 
-  case class Join(roomType: RoomType, roomOption: Any)
+  case class Join(roomType: RoomType, roomOption: FilterOptions)
 
   case class JoinById(roomType: RoomId)
 
-  case class GetAvailableRooms(roomType: RoomType, roomOption: Any)
+  case class GetAvailableRooms(roomType: RoomType, roomOption: FilterOptions)
+
 
   case class GetJoinedRooms()
 
@@ -25,12 +26,16 @@ object MessageDictionary {
   case class FailResponse(ex: Throwable)
 
 
+  /**
+   * Create a room and respond with RoomResponse(Room) or FailResponse on failure
+   */
+  case class HttpPostRoom(roomType: RoomType, roomOption: Set[RoomProperty])
 
 
-
-  case class HttpPostRoom(roomType: RoomType, roomOption: Any)
-
-  case class HttpGetRooms(roomType: RoomType, roomOption: Any)
+  /**
+   * Get rooms and respond with RoomSequenceResponse(Seq[Room]) or FailResponse on failure
+   */
+  case class HttpGetRooms(roomType: RoomType, roomOption: FilterOptions)
 
 
 

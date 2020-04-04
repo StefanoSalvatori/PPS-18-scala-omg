@@ -2,8 +2,8 @@ package client.room
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import common.CommonRoom.{Room, RoomId}
 import common.Routes
+import common.SharedRoom.{Room, RoomId}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
