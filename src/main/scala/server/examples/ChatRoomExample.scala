@@ -1,5 +1,6 @@
 package server.examples
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import common.actors.ApplicationActorSystem
@@ -23,8 +24,7 @@ class ChatRoom(override val roomId: String) extends ServerRoom {
 
 
 object ChatRoomExample extends App {
-  import common.actors.ApplicationActorSystem._
-
+  implicit val actorSystem: ActorSystem = ActorSystem()
   val HOST: String = "localhost"
   val PORT: Int = 8080
   val ESCAPE_TEXT = "quit"
@@ -38,7 +38,7 @@ object ChatRoomExample extends App {
     Http().singleRequest(HttpRequest(HttpMethods.POST, uri = s"http://$HOST:$PORT/rooms/$ROOM_PATH"))
   }
   Await.ready(gameServer.shutdown(), 10 seconds)
-  Await.ready(terminateActorSystem(), 10 seconds)
+  // Await.ready(terminateActorSystem(), 10 seconds)
   System.exit(0)
 
 }

@@ -26,7 +26,7 @@ object ServerActor {
   sealed trait ServerResponse
   case object Started extends ServerResponse
   case object Stopped extends ServerResponse
-  case class Failure(exception: Throwable) extends ServerResponse
+  case class ServerFailure(exception: Throwable) extends ServerResponse
 
   case class Error(msg: String) extends ServerResponse
   object ServerAlreadyRunning extends Error("Server already running")
@@ -64,7 +64,7 @@ class ServerActor(private val terminationDeadline: FiniteDuration) extends Actor
     case _: StartServer => sender ! ServerIsStarting
     case StopServer => stash()
     case Status.Failure(exception: Exception) =>
-      replyTo ! ServerActor.Failure(exception)
+      replyTo ! ServerActor.ServerFailure(exception)
       context.become(receive)
 
   }
@@ -89,7 +89,7 @@ class ServerActor(private val terminationDeadline: FiniteDuration) extends Actor
     case StopServer => sender ! ServerIsStopping
     case _: StartServer => stash()
     case Status.Failure(exception: Exception) =>
-      replyTo ! ServerActor.Failure(exception)
+      replyTo ! ServerActor.ServerFailure(exception)
       context.become(serverRunning(binding))
   }
 }

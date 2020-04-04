@@ -22,24 +22,10 @@ object Routes {
   /**
    * Route for web socket connection to a room
    *
-   * @param roomId
+   * @param roomId room id
    * @return
    */
   def webSocketConnection(roomId: String): String = connectionRoute + "/" + roomId
 }
 
-object HttpRequests {
 
-  def getRoomsByType(serverUri: String)(roomType: RoomType): HttpRequest = HttpRequest(
-    method = HttpMethods.GET,
-    uri = serverUri + "/" + Routes.roomsByType(roomType)
-  )
-
-  def postRoom(serverUri: String)(roomType: RoomType): HttpRequest = HttpRequest(
-    method = HttpMethods.POST,
-    uri = serverUri + "/" + Routes.roomsByType(roomType)
-  )
-
-  def connectToRoom(serverUri: String)(roomId: RoomId): WebSocketRequest =
-    WebSocketRequest("ws://" + serverUri + "/" + Routes.webSocketConnection(roomId))
-}

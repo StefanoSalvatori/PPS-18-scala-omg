@@ -1,7 +1,7 @@
 package common
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import client.room.ClientRoom.ClientRoom
+import client.room.ClientRoom
 import common.SharedRoom.{Room, RoomId}
 import spray.json.{DefaultJsonProtocol, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
 
@@ -24,14 +24,6 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit val clientRoomJsonFormat: RootJsonFormat[ClientRoom] = new RootJsonFormat[ClientRoom] {
-    def write(a: ClientRoom): JsValue = JsString(a.roomId)
-
-    def read(value: JsValue): ClientRoom =  value match {
-      case JsString(roomId) =>  ClientRoom(roomId)
-      case _ => deserializationError("String id expected")
-    }
-  }
 
   // ____________________________________________________________________________________________________________________
 

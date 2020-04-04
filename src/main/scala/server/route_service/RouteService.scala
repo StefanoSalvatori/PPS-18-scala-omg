@@ -1,38 +1,52 @@
 package server.route_service
 
-import akka.http.scaladsl.server.Directives.{complete, get, put, _}
+import akka.actor.ActorSystem
+import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.LazyLogging
 import common.{FilterOptions, RoomJsonSupport, RoomProperty, Routes}
+import server.RoomHandler
 import server.room.ServerRoom
 
 trait RouteService {
+  /**
+   * Main route
+   */
   val route: Route
-  var roomTypes: Set[String]
 
+
+  /**
+   * Add a route for a new type of rooms.
+   * @param roomTypeName room type name used as the route name
+   * @param roomFactory a factory to create rooms of that type
+   */
   def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom)
 }
 
 object RouteService {
-  def apply(): RouteService = {
-    RouteServiceImpl()
+  def apply()(implicit actorSystem:ActorSystem): RouteService = {
+    new RouteServiceImpl()
   }
+
 }
 
-case class RouteServiceImpl() extends RouteService with RoomJsonSupport with RoomHandling with LazyLogging {
-  this: RoomHandlerService =>
 
-  var roomTypes: Set[String] = Set.empty
+class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogging {
 
+  private var roomTypes: Set[String] = Set.empty
+  private val roomHandler = RoomHandler()
 
-  val restHttpRoute = pathPrefix(Routes.publicRooms) {
+  /**
+   * rest api for rooms.
+   */
+  def restHttpRoute: Route = pathPrefix(Routes.publicRooms) {
     pathEnd {
       getAllRoomsRoute
     } ~ pathPrefix(Segment) { roomType: String =>
       if (this.roomTypes.contains(roomType)) {
         pathEnd {
           getRoomsByTypeRoute(roomType) ~
-            putRoomsByTypeRoute(roomType) ~
+            //putRoomsByTypeRoute(roomType) ~
             postRoomsByTypeRoute(roomType)
         } ~ pathPrefix(Segment) { roomId =>
           getRoomByTypeAndId(roomType, roomId)
@@ -45,16 +59,19 @@ case class RouteServiceImpl() extends RouteService with RoomJsonSupport with Roo
 
 
   /**
-   * Handle web socket connection on path /connection/{roomId}
+   * Handle web socket connection on path /[[common.Routes#connectionRoute]]/{roomId}
    */
-  val webSocketRoute: Route =  pathPrefix(Routes.connectionRoute / Segment) { roomId =>
+  def webSocketRoute: Route =  pathPrefix(Routes.connectionRoute / Segment) { roomId =>
     get {
-        onWebSocketConnection(roomId) match {
+        this.roomHandler.handleClientConnection(roomId) match {
           case Some(handler) =>  handleWebSocketMessages(handler)
           case None => reject
         }
       }
   }
+
+
+
 
   val route: Route = restHttpRoute ~ webSocketRoute
 
@@ -69,12 +86,12 @@ case class RouteServiceImpl() extends RouteService with RoomJsonSupport with Roo
    */
   private def getAllRoomsRoute: Route =
     get {
-      entity(as[FilterOptions]) { roomOptions =>
-        val rooms = onGetAllRooms(Some(roomOptions))
+      entity(as[FilterOptions]) { filterOptions =>
+        val rooms = this.roomHandler.getAvailableRooms(filterOptions)
         complete(rooms)
       } ~ {
-        //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = onGetAllRooms(Option.empty)
+        //if payload is not parsable as room options we just accept the request as with empty filter options
+        val rooms = this.roomHandler.getAvailableRooms()
         complete(rooms)
       }
     }
@@ -85,42 +102,29 @@ case class RouteServiceImpl() extends RouteService with RoomJsonSupport with Roo
    */
   private def getRoomsByTypeRoute(roomType: String): Route =
     get {
-      entity(as[RoomProperty]) { roomOptions =>
-        val rooms = onGetRoomType(roomType, Some(roomOptions))
+      entity(as[FilterOptions]) { filterOptions =>
+        val rooms = this.roomHandler.getRoomsByType(roomType, filterOptions)
         complete(rooms)
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = onGetRoomType(roomType, Option.empty)
+        val rooms = this.roomHandler.getRoomsByType(roomType)
         complete(rooms)
       }
     }
 
-  /**
-   * PUT rooms/{type}
-   */
-  private def putRoomsByTypeRoute(roomType: String): Route =
-    put {
-      entity(as[RoomProperty]) { roomOptions =>
-        val rooms = onPutRoomType(roomType, Some(roomOptions))
-        complete(rooms) //return a list containing only the created room if no room is available
-      } ~ {
-        //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = onPutRoomType(roomType, Option.empty)
-        complete(rooms)
-      }
-    }
+
 
   /**
    * POST rooms/{type}
    */
   private def postRoomsByTypeRoute(roomType: String): Route =
     post {
-      entity(as[RoomProperty]) { roomOptions =>
-        val room = onPostRoomType(roomType, Some(roomOptions))
+      entity(as[Set[RoomProperty]]) { roomProperties =>
+        val room = this.roomHandler.createRoom(roomType, roomProperties)
         complete(room)
       } ~ {
         //if payload is not parsable as room options we just accept the request as with empty room options
-        val room = onPostRoomType(roomType, Option.empty)
+        val room = this.roomHandler.createRoom(roomType)
         complete(room)
       }
     }
@@ -131,13 +135,30 @@ case class RouteServiceImpl() extends RouteService with RoomJsonSupport with Roo
    */
   private def getRoomByTypeAndId(roomType: String, roomId: String): Route =
     get {
-      onGetRoomTypeId(roomType, roomId) match {
+      this.roomHandler.getRoomByTypeAndId(roomType, roomId) match {
         case Some(room) => complete(room)
         case None => reject //TODO: how to handle this? Wrong id in rooms/{type}/{id}
       }
     }
 
 
+  /**
+   * PUT rooms/{type}
+
+  private def putRoomsByTypeRoute(roomType: String): Route =
+    put {
+      entity(as[FilterOptions]) { filterOptions =>
+        val rooms = this.roomHandler.getOrCreate(roomType, filterOptions)
+        complete(rooms) //return a list containing only the created room if no room is available
+      } ~ {
+        //if payload is not parsable as room options we just accept the request as with empty room options
+        val rooms = this.roomHandler.getOrCreate(roomType)
+        complete(rooms)
+      }
+    }
+   */
 }
+
+
 
 

@@ -1,5 +1,6 @@
 package server
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
@@ -66,7 +67,7 @@ trait GameServer {
 object GameServer {
 
 
-  implicit val ACTOR_REQUEST_TIMEOUT: Timeout = Timeout(5 seconds)
+  implicit val ACTOR_REQUEST_TIMEOUT: Timeout = 20 seconds
   val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
 
 
@@ -83,7 +84,8 @@ object GameServer {
    * @param existingRoutes (optional) additional routes that will be used by the server
    * @return an instance if a [[server.GameServer]]
    */
-  def apply(host: String, port: Int, existingRoutes: Route = reject): GameServer = new GameServerImpl(host, port, existingRoutes)
+  def apply(host: String, port: Int, existingRoutes: Route = reject): GameServer =
+    new GameServerImpl(host, port, existingRoutes)
 
 }
 
@@ -101,12 +103,13 @@ private class GameServerImpl(override val host: String,
 
   import GameServer._
   import akka.pattern.ask
-  import common.actors.ApplicationActorSystem._
-
-  private val serverActor = actorSystem actorOf ServerActor(SERVER_TERMINATION_DEADLINE)
-  private val routeService = RouteService()
 
 
+  private implicit val gameServerActorSystem = ActorSystem()
+  private implicit val executor = gameServerActorSystem.dispatcher
+  private val serverActor = gameServerActorSystem actorOf ServerActor(SERVER_TERMINATION_DEADLINE)
+
+  private val routeService: RouteService = RouteService()
   private var onStart: () => Unit = () => {}
   private var onShutdown: () => Unit = () => {}
 
@@ -120,7 +123,7 @@ private class GameServerImpl(override val host: String,
       .flatMap {
         case Started => this.onStart(); Future.successful()
         case Error(msg) => Future.failed(new IllegalStateException(msg))
-        case Failure(exception) => Future.failed(exception)
+        case ServerFailure(exception) => Future.failed(exception)
         case _ => Future.failed(new IllegalStateException())
       }
   }
@@ -131,7 +134,7 @@ private class GameServerImpl(override val host: String,
       .flatMap {
         case Stopped => this.onShutdown(); Future.successful()
         case Error(msg) => Future.failed(new IllegalStateException(msg))
-        case Failure(exception) => Future.failed(exception)
+        case ServerFailure(exception) => Future.failed(exception)
         case _ => Future.failed(new IllegalStateException())
       }
   }

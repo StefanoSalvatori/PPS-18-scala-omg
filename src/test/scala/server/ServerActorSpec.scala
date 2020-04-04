@@ -54,7 +54,7 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
     "fail to start the server if the port is already binded" in {
       val bind = Await.result(Http().bind(HOST,PORT).to(Sink.ignore).run(), 5 seconds)
       serverActor ! StartServer(HOST, PORT, ROUTES)
-      expectMsgType[Failure]
+      expectMsgType[ServerFailure]
       Await.ready(bind.unbind(), 5 seconds)
 
     }
