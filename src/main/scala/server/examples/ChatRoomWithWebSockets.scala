@@ -6,14 +6,16 @@ import akka.http.scaladsl.model.ws.{Message, TextMessage, WebSocketRequest}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import client.Client
+import common.Routes
 import common.communication.{CommunicationProtocol, RoomProtocolSerializer}
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import server.GameServer
+import server.examples.rooms.ChatRoom
 
 import scala.concurrent.{Await, Future}
 import scala.io.StdIn
 
-object TestWebSocket extends App {
+object ChatRoomWithWebSockets extends App {
   implicit val actorSystem: ActorSystem = ActorSystem()
 
   val HOST: String = "localhost"
@@ -28,8 +30,10 @@ object TestWebSocket extends App {
   Await.ready(gameServer.start(), 10 seconds)
   val room = Await.result(client.createPublicRoom(ROOM_PATH, Set.empty), 10 seconds)
 
-  val webSocketRequest = WebSocketRequest(s"ws://$HOST:$PORT/connection/${room.roomId}")
+  val webSocketRequest = WebSocketRequest(s"ws://$HOST:$PORT/${Routes.connectionRoute}/${room.roomId}")
   val webSocketFlow = Http().webSocketClientFlow(webSocketRequest)
+
+  // Create a queue that streams messages through a websocket
   val queue = Source.queue[Message](Int.MaxValue, OverflowStrategy.dropTail)
     .viaMat(webSocketFlow)(Keep.left)
     .toMat(Sink.foreach(msg => {
@@ -39,18 +43,17 @@ object TestWebSocket extends App {
       } else {
         println("Received malformed message")
       }
-    }))(Keep.left)
-    .run()
+    }))(Keep.left).run()
 
+  //join chatroom
   this.joinRoom()
   //Start chat
-  var msg = ""
+  var msg = "Write 'quit' to exit"
   do {
-    msg = StdIn.readLine("\n")
+    msg = StdIn.readLine()
     this.sendToRoom(msg)
   } while (msg != ESCAPE_TEXT)
 
-  Http().shutdownAllConnectionPools()
   Await.ready(gameServer.stop(), 10 seconds)
   Await.ready(gameServer.terminate(), 10 seconds)
   this.actorSystem.terminate()
@@ -58,7 +61,6 @@ object TestWebSocket extends App {
 
   private def sendToRoom(message: String): Unit = {
     this.queue.offer(RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(CommunicationProtocol.MessageRoom, message)))
-
   }
 
   private def joinRoom() = {

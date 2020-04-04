@@ -24,12 +24,12 @@ import scala.util.Success
  * @param roomActor the actor that will receive the messages
  */
 case class RoomSocketFlow(private val roomActor: ActorRef,
-                          private val parser: SocketSerializer[RoomProtocolMessage]) extends SocketFlow {
+                          private val parser: SocketSerializer[RoomProtocolMessage])
+                         (implicit materializer: Materializer) extends SocketFlow {
 
 
   def createFlow(overflowStrategy: OverflowStrategy = OverflowStrategy.dropHead,
-                 bufferSize: Int = DEFAULT_BUFFER_SIZE)
-                (implicit materializer: Materializer): Flow[Message, Message, NotUsed]
+                 bufferSize: Int = DEFAULT_BUFFER_SIZE): Flow[Message, Message, NotUsed]
   = {
     //Output (from room to client)
     val (socketActor, publisher) = Source.actorRef(
@@ -46,12 +46,8 @@ case class RoomSocketFlow(private val roomActor: ActorRef,
     val sink: Sink[Message, Any] = Flow[Message]
       .map {
         this.parser.parseFromSocket(_) match {
-          case Success(RoomProtocolMessage(JoinRoom, _)) =>
-            println("JOIN")
-            roomActor ! Join(client)
-          case Success(RoomProtocolMessage(LeaveRoom, _)) =>
-            println("LEAVE")
-            roomActor ! Leave(client)
+          case Success(RoomProtocolMessage(JoinRoom, _)) => roomActor ! Join(client)
+          case Success(RoomProtocolMessage(LeaveRoom, _)) => roomActor ! Leave(client)
           case Success(RoomProtocolMessage(MessageRoom, payload)) => roomActor ! Msg(client, payload)
         }
       }

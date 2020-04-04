@@ -4,22 +4,11 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import server.GameServer
+import server.examples.rooms.ChatRoom
 import server.room._
 
 import scala.concurrent.Await
 import scala.io.StdIn
-
-class ChatRoom(override val roomId: String) extends ServerRoom {
-  override def onCreate(): Unit = println("Room Created")
-
-  override def onClose(): Unit = println("Room Closed")
-
-  override def onJoin(client: Client): Unit = this.broadcast(s"${client.id} Connected")
-
-  override def onLeave(client: Client): Unit = this.broadcast(s"${client.id} Leaved")
-
-  override def onMessageReceived[M](client: Client, message: M): Unit = this.broadcast(message)
-}
 
 
 object ChatRoomExample extends App {

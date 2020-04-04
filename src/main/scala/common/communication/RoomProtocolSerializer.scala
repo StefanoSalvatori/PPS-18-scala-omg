@@ -33,7 +33,7 @@ object RoomProtocolSerializer extends SocketSerializer[RoomProtocolMessage] {
 
   private def parseMessage(msg: String): Try[RoomProtocolMessage] = {
     try {
-      msg.split(COMMAND_SEPARATOR).toList match {
+      msg.split(COMMAND_SEPARATOR, 2).toList match {
         case List(code) => Success(RoomProtocolMessage(this.stringToCode(code)))
         case List(code, payload) => Success(RoomProtocolMessage(this.stringToCode(code), payload))
       }

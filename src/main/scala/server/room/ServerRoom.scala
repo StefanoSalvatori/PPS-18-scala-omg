@@ -18,7 +18,6 @@ trait ServerRoom extends Room {
    */
   def addClient(client: Client): Unit = {
     this.clients = client +: this.clients
-    println(this.clients)
     this.onJoin(client)
   }
 
@@ -29,7 +28,6 @@ trait ServerRoom extends Room {
    */
   def removeClient(client: Client): Unit = {
     this.clients = this.clients.filter(_.id != client.id)
-    println(this.clients)
     this.onLeave(client)
   }
 

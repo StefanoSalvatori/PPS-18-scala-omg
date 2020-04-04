@@ -16,7 +16,6 @@ trait SocketFlow {
 
 
   def createFlow(overflowStrategy: OverflowStrategy = DEFAULT_OVERFLOW_STRATEGY,
-                 bufferSize: Int = DEFAULT_BUFFER_SIZE)
-                (implicit materializer: Materializer): Flow[Message, Message, Any]
+                 bufferSize: Int = DEFAULT_BUFFER_SIZE): Flow[Message, Message, Any]
 
 }
