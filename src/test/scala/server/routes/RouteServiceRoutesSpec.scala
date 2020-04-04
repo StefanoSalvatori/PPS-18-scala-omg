@@ -3,7 +3,7 @@ package server.routes
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.util.ByteString
-import common.CommonRoom.Room
+import common.SharedRoom.Room
 import common.{RoomJsonSupport, Routes}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec

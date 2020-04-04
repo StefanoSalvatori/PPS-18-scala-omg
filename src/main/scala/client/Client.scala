@@ -2,11 +2,10 @@ package client
 
 import akka.actor.ActorSystem
 import akka.pattern.ask
-import common.actors.ApplicationActorSystem
 import client.room.ClientRoom
-import client.utils.MessageDictionary.{CreatePublicRoom, GetAvailableRoomsByType, GetJoinedRooms, Join, JoinById, JoinedRooms}
-import common.{FilterOptions, RoomProperty, Routes}
+import client.utils.MessageDictionary._
 import common.SharedRoom.{RoomId, RoomType}
+import common.{FilterOptions, RoomProperty, Routes}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -59,7 +58,7 @@ sealed trait Client {
    * @param filterOptions options that will be used to filter the rooms
    * @return List all available rooms to connect of the given type
    */
-  def getAvailableRooms(roomType: String, filterOptions: FilterOptions): Future[Seq[ClientRoom]]
+  def getAvailableRoomsByType(roomType: String, filterOptions: FilterOptions): Future[Seq[ClientRoom]]
 
 
   def joinedRooms(): Set[ClientRoom]
@@ -105,8 +104,8 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     }
   }
 
-  override def join(roomType: RoomType, filterOption: FilterOptions): Future[ClientRoom] =
-    coreClient ? Join(roomType, filterOption) flatMap {
+  override def join(roomType: RoomType, roomOption: FilterOptions): Future[ClientRoom] =
+    (coreClient ? Join(roomType, roomOption)) flatMap {
       case Success(room) => Future.successful(room.asInstanceOf[ClientRoom])
       case Failure(ex) => Future.failed(ex)
     }
@@ -117,8 +116,8 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       case Failure(ex) => Future.failed(ex)
     }
 
-  override def getAvailableRooms(roomType: String, filterOption: FilterOptions): Future[Seq[ClientRoom]] =
-    (coreClient ? GetAvailableRoomsByType(roomType, filterOption)) flatMap {
+  override def getAvailableRoomsByType(roomType: String, filterOption: FilterOptions): Future[Seq[ClientRoom]] =
+    (coreClient ? GetAvailableRooms(roomType, filterOption)) flatMap {
       case Success(room) => Future.successful(room.asInstanceOf[Seq[ClientRoom]])
       case Failure(ex) => Future.failed(ex)
     }

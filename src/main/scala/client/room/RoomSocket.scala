@@ -25,16 +25,15 @@ trait RoomSocket extends WebSocket[String] {
 }
 
 object RoomSocket {
-  def apply(socketUri: String)(implicit actorSystem: ActorSystem): RoomSocket = new RoomSocketImpl(socketUri)
+  def apply(socketUri: String): RoomSocket = new RoomSocketImpl(socketUri)
 }
 
 /**
  * Handle web socket connection
  */
-class RoomSocketImpl(override val socketUri: String)(private implicit val actorSystem: ActorSystem)
-  extends BasicWebSocket(socketUri) with RoomSocket {
+class RoomSocketImpl(override val socketUri: String) extends BasicWebSocket(socketUri) with RoomSocket {
 
-  private implicit val executor: ExecutionContext = actorSystem.dispatcher
+  private implicit val executor: ExecutionContext = ExecutionContext.global
   private var joinFuture = Promise.successful()
 
   //incoming

@@ -7,6 +7,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.ws.{Message, TextMessage, WebSocketRequest, WebSocketUpgradeResponse}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
+import common.actors.ApplicationActorSystem._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -20,24 +21,23 @@ trait WebSocket[T] {
 
   def onMessageReceived(callback: T => Unit)
 
-
   //TODO: implement
   //def closeSocket(): Unit
 
 }
 
 object WebSocket {
-  def apply(socketUri: String)(implicit actorSystem: ActorSystem): WebSocket[String] = new BasicWebSocket(socketUri)
+  def apply(socketUri: String): WebSocket[String] = new BasicWebSocket(socketUri)
 }
 
 /**
  * Handle web socket connection flow
  */
-class BasicWebSocket(val socketUri: String)
-                    (private implicit val actorSystem: ActorSystem) extends WebSocket[String] {
+class BasicWebSocket(val socketUri: String) extends WebSocket[String] {
 
-  private implicit val executor: ExecutionContext = actorSystem.dispatcher
+  private implicit val executor: ExecutionContext = ExecutionContext.global
   private val BuffSize = 200 //TODO: test best value
+
   protected var messageReceivedCallback: String => Unit = x => {}
 
   //incoming
@@ -45,6 +45,7 @@ class BasicWebSocket(val socketUri: String)
     Flow[Message]
       .map { case TextMessage.Strict(value) => messageReceivedCallback(value) }
       .to(Sink.onComplete(_ => println("sink complete")))
+
 
   //outgoing
   protected val (sourceRef, publisher) =

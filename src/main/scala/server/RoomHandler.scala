@@ -8,6 +8,7 @@ import akka.stream.scaladsl.Flow
 import common.SharedRoom.{Room, RoomId}
 import common.{FilterOptions, RoomProperty, RoomPropertyValue}
 import server.room.{RoomActor, ServerRoom}
+import common.actors.ApplicationActorSystem._
 
 trait RoomHandler {
 
@@ -64,9 +65,9 @@ trait RoomHandler {
 }
 
 object RoomHandler {
-  def apply(implicit actorSystem: ActorSystem): RoomHandler = RoomHandlerImpl()
+  def apply(): RoomHandler = RoomHandlerImpl()
 }
-case class RoomHandlerImpl(private implicit val actorSystem: ActorSystem) extends RoomHandler  {
+case class RoomHandlerImpl() extends RoomHandler  {
 
   var roomTypesHandlers: Map[String, String => ServerRoom] = Map.empty
 

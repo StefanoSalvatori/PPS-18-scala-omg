@@ -31,10 +31,10 @@ object RouteService {
 }
 
 
-class RouteServiceImpl(private implicit val actorSystem: ActorSystem) extends RouteService with RoomJsonSupport with LazyLogging {
+class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogging {
 
   private var roomTypes: Set[String] = Set.empty
-  private val roomHandler = RoomHandler(actorSystem)
+  private val roomHandler = RoomHandler()
 
   /**
    * rest api for rooms.

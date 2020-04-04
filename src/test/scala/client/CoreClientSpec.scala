@@ -8,10 +8,9 @@ import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.wordspec.AnyWordSpecLike
-import client.MessageDictionary._
 import client.room.ClientRoom
-import common.CommonRoom.Room
-import common.{Routes, TestConfig}
+import client.utils.MessageDictionary._
+import common.{FilterOptions, Routes, TestConfig}
 import org.scalatest.matchers.should.Matchers
 import server.GameServer
 import server.room.ServerRoom
@@ -52,8 +51,8 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     gameServer.defineRoom(ROOM_TYPE_NAME, ServerRoom(_))
     Await.ready(gameServer.start(), 5 seconds)
 
-    coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, "")
-    coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, "")
+    coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)
+    coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)
   }
 
   "Regarding joined rooms, a core client" must {
@@ -65,13 +64,13 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "add a room to joined room if such room was not previously joined" in {
-      coreClient ! Join(ROOM_TYPE_NAME, "")
+      coreClient ! Join(ROOM_TYPE_NAME, FilterOptions.empty())
       (coreClient ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])
         reply.asInstanceOf[JoinedRooms].joinedRooms should have size 1
       })
 
-      coreClient ! Join(ROOM_TYPE_NAME, "")
+      coreClient ! Join(ROOM_TYPE_NAME, FilterOptions.empty())
       (coreClient ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])
         reply.asInstanceOf[JoinedRooms].joinedRooms should have size 2
@@ -79,14 +78,14 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "automatically join a created room" in {
-      coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, "")
+      coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)
       (coreClient ? GetJoinedRooms).onComplete(reply => {
         reply.asInstanceOf[JoinedRooms].joinedRooms should have size 1
       })
     }
 
     "not add an already joined room" in {
-      val createRoomFuture = (coreClient ? CreatePublicRoom(ROOM_TYPE_NAME, "")) flatMap {
+      val createRoomFuture = (coreClient ? CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)) flatMap {
         case Success(room) => Future.successful(room.asInstanceOf[ClientRoom])
         case Failure(ex) => Future.failed(ex)
       }
@@ -101,7 +100,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   "When the client creates a new public room, the core client" must {
     "add the new room to the set of joined rooms" in {
-      coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, "")
+      coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)
       Thread sleep 1000
       (coreClient ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])

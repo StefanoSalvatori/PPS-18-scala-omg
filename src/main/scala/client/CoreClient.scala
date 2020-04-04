@@ -32,6 +32,7 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
 
   def waitRoomsToJoin: Receive = onWaitRoomsToJoin orElse fallbackReceive
 
+
   val onReceive: Receive = {
 
     case RoomSequenceResponse(rooms) => sender ! Success(rooms)
@@ -78,7 +79,7 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
     case RoomSequenceResponse(rooms) =>
       val replyTo = sender
       rooms.find(!this.roomAlreadyJoined(_)) match {
-        case Some(room) => tryJoinRoom(ClientRoom(serverUri, room.roomId), sender)
+        case Some(room) => tryJoinRoomAndReply(ClientRoom(serverUri, room.roomId), sender)
         case None => replyTo ! Failure(new Exception("No rooms to join"))
       }
       unstashAll()
@@ -86,22 +87,26 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
 
 
     case RoomResponse(room) =>
-      tryJoinRoom(ClientRoom(serverUri, room.roomId), sender)
+      tryJoinRoomAndReply(ClientRoom(serverUri, room.roomId), sender)
       unstashAll()
       context.become(onReceive)
 
 
   }
 
-  private def tryJoinRoom(clientRoom: ClientRoom, replyTo: ActorRef) =
+
+  /**
+   * Try to join a given room.
+   * If the given room was correctly join adds that room to the set of join rooms and reply success
+   * else reply Failure
+   */
+  private def tryJoinRoomAndReply(clientRoom: ClientRoom, replyTo: ActorRef) =
     clientRoom.join() onComplete {
       case Success(_) =>
         this.joinedRooms = this.joinedRooms + clientRoom
         replyTo ! Success(clientRoom)
       case Failure(ex) => replyTo ! Failure(ex)
     }
-
-
 
   private def roomAlreadyJoined(room: Room): Boolean = this.joinedRooms.map(_.roomId).contains(room.roomId)
 }
