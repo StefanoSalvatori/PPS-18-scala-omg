@@ -2,25 +2,25 @@ package server.routes
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
+import akka.testkit.TestKit
 import akka.util.ByteString
 import common.SharedRoom.Room
 import common.{RoomJsonSupport, Routes}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import server.RoomHandler
 import server.room.ServerRoom
 import server.route_service.RouteService
 
 import scala.concurrent.ExecutionContextExecutor
 
 
-
-
 class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with RouteCommonTestOptions
   with BeforeAndAfter with RoomJsonSupport {
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
-  private val routeService = RouteService()
+  private val routeService = RouteService(RoomHandler())
 
   private val route = routeService.route
 
@@ -30,6 +30,10 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
   before {
     //ensure to have at least one room-type
     routeService.addRouteForRoomType(TEST_ROOM_TYPE, ServerRoom(_))
+  }
+
+  override def afterAll(): Unit = {
+    TestKit.shutdownActorSystem(system)
   }
 
   it should " enable the addition of routes for new rooms type" in {
@@ -80,8 +84,6 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
       handled shouldBe true
     }
   }
-
-
 
 
   /// --- POST rooms/{type}
@@ -136,7 +138,6 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
   }
 
    */
-
 
 
   private def createRoom(): Room = {

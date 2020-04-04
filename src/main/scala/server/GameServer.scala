@@ -54,11 +54,11 @@ trait GameServer {
   def onStart(callback: => Unit)
 
   /**
-   * Define what to do on server shutdown
+   * Define what to do on server stop
    *
    * @param callback the function to call on shutdown
    */
-  def onShutdown(callback: => Unit)
+  def onStop(callback: => Unit)
 
 
   /**
@@ -137,7 +137,7 @@ private class GameServerImpl(override val host: String,
 
   override def onStart(callback: => Unit): Unit = this.onStart = () => callback
 
-  override def onShutdown(callback: => Unit): Unit = this.onShutdown = () => callback
+  override def onStop(callback: => Unit): Unit = this.onShutdown = () => callback
 
   override def start(): Future[Unit] = {
     (serverActor ? StartServer(host, port))

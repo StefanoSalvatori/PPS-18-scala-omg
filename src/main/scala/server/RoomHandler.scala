@@ -6,9 +6,10 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.Flow
 import common.SharedRoom.{Room, RoomId}
+import common.communication.RoomProtocolSerializer
 import common.{FilterOptions, RoomProperty, RoomPropertyValue}
+import server.room.socket.RoomSocketFlow
 import server.room.{RoomActor, ServerRoom}
-import common.actors.ApplicationActorSystem._
 
 trait RoomHandler {
 
@@ -49,6 +50,7 @@ trait RoomHandler {
 
   /**
    * Define a new room type that will be used in room creation.
+   *
    * @param roomType    the name of the room's type
    * @param roomFactory the factory to create a room of given type from an id
    */
@@ -65,9 +67,10 @@ trait RoomHandler {
 }
 
 object RoomHandler {
-  def apply(): RoomHandler = RoomHandlerImpl()
+  def apply()(implicit actorSystem: ActorSystem): RoomHandler = RoomHandlerImpl()
 }
-case class RoomHandlerImpl() extends RoomHandler  {
+
+case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandler {
 
   var roomTypesHandlers: Map[String, String => ServerRoom] = Map.empty
 
@@ -112,9 +115,16 @@ case class RoomHandlerImpl() extends RoomHandler  {
     this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
   }
 
+  /**
+   * Creates the socket flow from the client to the room. Messages received from the socket are parsed with
+   * a [[common.communication.RoomProtocolSerializer]] so they must be [[common.communication.CommunicationProtocol.RoomProtocolMessage]]
+   *
+   * @param roomId the id of the room the client connects to
+   * @return the connection handler if such room id exists
+   */
   override def handleClientConnection(roomId: RoomId): Option[Flow[Message, Message, Any]] = {
-    //TODO: implement this method
-    Some(Flow.fromFunction(_ => TextMessage("foo")))
+    this.roomsByType.flatMap(_._2).find(_._1.roomId == roomId)
+      .map(option => RoomSocketFlow(option._2, RoomProtocolSerializer).createFlow())
   }
 
   override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty()): Seq[Room] =

@@ -19,10 +19,10 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
 
 
   private val client1TestProbe = TestProbe()
-  private val FAKE_CLIENT_1 = Client.fromActor(UUID.randomUUID.toString, client1TestProbe.ref)
+  private val FAKE_CLIENT_1 = Client.asActor(UUID.randomUUID.toString, client1TestProbe.ref)
 
   private val client2TestProbe = TestProbe()
-  private val FAKE_CLIENT_2 = Client.fromActor(UUID.randomUUID.toString, client2TestProbe.ref)
+  private val FAKE_CLIENT_2 = Client.asActor(UUID.randomUUID.toString, client2TestProbe.ref)
 
 
   var room: ServerRoom = ServerRoom(UUID.randomUUID().toString)

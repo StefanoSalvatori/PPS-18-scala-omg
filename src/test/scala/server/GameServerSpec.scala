@@ -91,7 +91,7 @@ class GameServerSpec extends AnyFlatSpec
   }
 
 
-  it should "stop the server when shutdown() is called" in {
+  it should "stop the server when stop() is called" in {
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
     assertThrows[Exception] {
@@ -99,7 +99,7 @@ class GameServerSpec extends AnyFlatSpec
     }
   }
 
-  it should "throw an IllegalStateException when shutdown() is called before start()" in {
+  it should "throw an IllegalStateException when stop() is called before start()" in {
     assertThrows[IllegalStateException] {
       Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
     }
@@ -114,7 +114,7 @@ class GameServerSpec extends AnyFlatSpec
 
   }
 
-  it should "restart calling start() after shutdown()" in {
+  it should "restart calling start() after stop()" in {
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
@@ -135,10 +135,10 @@ class GameServerSpec extends AnyFlatSpec
 
   }
 
-  it should "allow to specify behaviour during shutdown" in {
+  it should "allow to specify behaviour during stop" in {
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     var flag = false
-    this.server.onShutdown {
+    this.server.onStop {
       flag = true
     }
     Await.result(this.server.stop(), MAX_WAIT_SERVER_STARTUP)

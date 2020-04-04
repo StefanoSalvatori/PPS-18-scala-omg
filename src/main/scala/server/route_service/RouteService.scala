@@ -17,24 +17,22 @@ trait RouteService {
 
   /**
    * Add a route for a new type of rooms.
+   *
    * @param roomTypeName room type name used as the route name
-   * @param roomFactory a factory to create rooms of that type
+   * @param roomFactory  a factory to create rooms of that type
    */
-  def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom)
+  def addRouteForRoomType(roomTypeName: String, roomFactory: String => ServerRoom)
 }
 
 object RouteService {
-  def apply()(implicit actorSystem:ActorSystem): RouteService = {
-    new RouteServiceImpl()
-  }
+  def apply(roomHandler: RoomHandler): RouteService = new RouteServiceImpl(roomHandler)
 
 }
 
 
-class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogging {
+class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteService with RoomJsonSupport with LazyLogging {
 
   private var roomTypes: Set[String] = Set.empty
-  private val roomHandler = RoomHandler()
 
   /**
    * rest api for rooms.
@@ -61,22 +59,20 @@ class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogg
   /**
    * Handle web socket connection on path /[[common.Routes#connectionRoute]]/{roomId}
    */
-  def webSocketRoute: Route =  pathPrefix(Routes.connectionRoute / Segment) { roomId =>
+  def webSocketRoute: Route = pathPrefix(Routes.connectionRoute / Segment) { roomId =>
     get {
-        this.roomHandler.handleClientConnection(roomId) match {
-          case Some(handler) =>  handleWebSocketMessages(handler)
-          case None => reject
-        }
+      this.roomHandler.handleClientConnection(roomId) match {
+        case Some(handler) => handleWebSocketMessages(handler)
+        case None => reject
       }
+    }
   }
-
-
 
 
   val route: Route = restHttpRoute ~ webSocketRoute
 
 
-  def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom): Unit = {
+  def addRouteForRoomType(roomTypeName: String, roomFactory: String => ServerRoom): Unit = {
     this.roomTypes = this.roomTypes + roomTypeName
     this.roomHandler.defineRoomType(roomTypeName, roomFactory)
   }
@@ -113,7 +109,6 @@ class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogg
     }
 
 
-
   /**
    * POST rooms/{type}
    */
@@ -144,19 +139,24 @@ class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogg
 
   /**
    * PUT rooms/{type}
-
-  private def putRoomsByTypeRoute(roomType: String): Route =
-    put {
-      entity(as[FilterOptions]) { filterOptions =>
-        val rooms = this.roomHandler.getOrCreate(roomType, filterOptions)
-        complete(rooms) //return a list containing only the created room if no room is available
-      } ~ {
-        //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = this.roomHandler.getOrCreate(roomType)
-        complete(rooms)
-      }
-    }
+   * *
+   * private def putRoomsByTypeRoute(roomType: String): Route =
+   * put {
+   * entity(as[FilterOptions]) { filterOptions =>
+   * val rooms = this.roomHandler.getOrCreate(roomType, filterOptions)
+   * complete(rooms) //return a list containing only the created room if no room is available
+   * } ~ {
    */
+  /*
+  if payload is not parsable as room options we just accept the request as
+  with empty room options
+  *
+  val rooms = this.roomHandler.getOrCreate(roomType)
+  * complete (rooms)
+  * }
+*
+}
+*/
 }
 
 

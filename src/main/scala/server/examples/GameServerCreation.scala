@@ -17,7 +17,7 @@ object GameServerCreation extends App {
   gameServer onStart {
     println("GAMESERVER STARTED")
   }
-  gameServer onShutdown {
+  gameServer onStop {
     println("GAMESERVER IS DOWN :-(")
   }
 

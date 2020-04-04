@@ -1,6 +1,7 @@
 package server.room
 
 import common.SharedRoom.Room
+import common.communication.CommunicationProtocol.{Broadcast, RoomProtocolMessage, Tell}
 
 trait Server
 
@@ -17,6 +18,7 @@ trait ServerRoom extends Room {
    */
   def addClient(client: Client): Unit = {
     this.clients = client +: this.clients
+    println(this.clients)
     this.onJoin(client)
   }
 
@@ -27,6 +29,7 @@ trait ServerRoom extends Room {
    */
   def removeClient(client: Client): Unit = {
     this.clients = this.clients.filter(_.id != client.id)
+    println(this.clients)
     this.onLeave(client)
   }
 
@@ -51,7 +54,8 @@ trait ServerRoom extends Room {
    * @param message the message to send
    * @tparam M the type of the message
    */
-  def tell[M](client: Client, message: M): Unit = this.clients.filter(_.id == client.id).foreach(_.send(message))
+  def tell[M](client: Client, message: M): Unit =
+    this.clients.filter(_.id == client.id).foreach(_.send(RoomProtocolMessage(Tell, message.toString)))
 
   /**
    * Broadcast a message to all clients connected
@@ -59,7 +63,8 @@ trait ServerRoom extends Room {
    * @param message the message to send
    * @tparam M he type of the message
    */
-  def broadcast[M](message: M): Unit = this.clients.foreach(_.send(message))
+  def broadcast[M](message: M): Unit =
+    this.clients.foreach(_.send(RoomProtocolMessage(Broadcast, message.toString)))
 
   /**
    * Close this room
@@ -97,7 +102,7 @@ trait ServerRoom extends Room {
   /**
    * Called when the room receives a message
    *
-   * @param client the client that sent the message
+   * @param client  the client that sent the message
    * @param message the message received
    * @tparam M the type of the message
    */
