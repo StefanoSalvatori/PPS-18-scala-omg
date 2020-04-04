@@ -3,7 +3,6 @@ package server.examples
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
-import common.actors.ApplicationActorSystem
 import server.GameServer
 import server.room._
 
@@ -37,8 +36,8 @@ object ChatRoomExample extends App {
   while (StdIn.readLine(s"press any key to create chatRoom; type '$ESCAPE_TEXT' to exit \n") != ESCAPE_TEXT) {
     Http().singleRequest(HttpRequest(HttpMethods.POST, uri = s"http://$HOST:$PORT/rooms/$ROOM_PATH"))
   }
-  Await.ready(gameServer.shutdown(), 10 seconds)
-  // Await.ready(terminateActorSystem(), 10 seconds)
-  System.exit(0)
+  Await.ready(gameServer.stop(), 10 seconds)
+  gameServer.terminate()
+
 
 }

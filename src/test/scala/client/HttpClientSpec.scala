@@ -39,7 +39,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   }
 
   override def afterAll: Unit = {
-    Await.ready(gameServer.shutdown(), SERVER_SHUTDOWN_AWAIT_TIME)
+    Await.ready(gameServer.terminate(), SERVER_SHUTDOWN_AWAIT_TIME)
     TestKit.shutdownActorSystem(system)
   }
 

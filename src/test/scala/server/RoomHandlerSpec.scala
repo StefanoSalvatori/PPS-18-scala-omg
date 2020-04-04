@@ -1,6 +1,7 @@
 package server
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.testkit.TestKit
 import common.{BooleanRoomPropertyValue, FilterOptions, IntRoomPropertyValue, RoomProperty, StringRoomPropertyValue}
 import common.SharedRoom.RoomId
 import org.scalatest.flatspec.AnyFlatSpec
@@ -20,9 +21,13 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     val c: BooleanRoomPropertyValue = true
 
     override def onCreate(): Unit = {}
+
     override def onClose(): Unit = {}
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {}
+
     override def onMessageReceived[M](client: Client, message: M): Unit = {}
   }
   class MyRoom2(override val roomId: RoomId) extends ServerRoom() {
@@ -32,9 +37,13 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     val b: StringRoomPropertyValue = "a"
 
     override def onCreate(): Unit = {}
+
     override def onClose(): Unit = {}
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {}
+
     override def onMessageReceived[M](client: Client, message: M): Unit = {}
   }
   val myRoomType = "myRoomType"
@@ -44,6 +53,10 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
 
   before {
     roomHandler = RoomHandler()
+  }
+
+  override def afterAll(): Unit = {
+    TestKit.shutdownActorSystem(system)
   }
 
   behavior of "a RoomHandler"
@@ -72,15 +85,15 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
 
   "An empty filter" should "not affect any room" in {
     roomHandler defineRoomType(myRoomType, id => new MyRoom(id))
-    roomHandler createRoom(myRoomType)
+    roomHandler createRoom (myRoomType)
     roomHandler.getAvailableRooms() should have size 1
     val filteredRooms = roomHandler.getAvailableRooms()
     filteredRooms should have size 1
-    }
+  }
 
   "If no room can pass the filter, it" should "return an empty set" in {
     roomHandler defineRoomType(myRoomType, id => new MyRoom(id))
-    roomHandler createRoom(myRoomType)
+    roomHandler createRoom (myRoomType)
     val testProperty = RoomProperty("a", 0)
     val filter = FilterOptions just testProperty =:= 10
     val filteredRooms = roomHandler.getAvailableRooms(filter)
@@ -116,7 +129,7 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     filteredRooms should have size 1
 
     val filter2 = FilterOptions just testProperty > 3
-    val filteredRooms2  = roomHandler.getAvailableRooms(filter2)
+    val filteredRooms2 = roomHandler.getAvailableRooms(filter2)
     filteredRooms2 should have size 0
   }
 }

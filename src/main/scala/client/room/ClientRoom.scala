@@ -5,7 +5,7 @@ import akka.util.Timeout
 import common.Routes
 import common.SharedRoom.{Room, RoomId}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 
 trait ClientRoom extends Room {
@@ -49,13 +49,14 @@ trait ClientRoom extends Room {
 }
 
 object ClientRoom {
-  def apply(serverUri: String, roomId: RoomId): ClientRoom = ClientRoomImpl(serverUri, roomId)
+  def apply(serverUri: String, roomId: RoomId)(implicit actorSystem: ActorSystem): ClientRoom = ClientRoomImpl(serverUri, roomId)
 
 }
 
-case class ClientRoomImpl(serverUri: String, roomId: RoomId) extends ClientRoom {
+case class ClientRoomImpl(serverUri: String, roomId: RoomId)
+                         (implicit actorSystem: ActorSystem) extends ClientRoom {
   private implicit val timeout: Timeout = 5 seconds
-  private implicit val executionContext = ExecutionContext.global
+  private implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
   private val roomSocket = RoomSocket(Routes.webSocketConnection(roomId))
 
   override def join(): Future[Unit] = {

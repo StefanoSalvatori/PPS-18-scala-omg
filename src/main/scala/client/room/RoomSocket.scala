@@ -1,5 +1,6 @@
 package client.room
 
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.{Flow, Sink}
@@ -13,6 +14,7 @@ trait RoomSocket extends WebSocket[String] {
 
   /**
    * Send a join message and wait for a response from the server
+   *
    * @return a future that succeed if the room can be joined
    */
   def sendJoin(): Future[Unit]
@@ -25,28 +27,26 @@ trait RoomSocket extends WebSocket[String] {
 }
 
 object RoomSocket {
-  def apply(socketUri: String): RoomSocket = new RoomSocketImpl(socketUri)
+  def apply(socketUri: String)(implicit actorSystem: ActorSystem): RoomSocket = new RoomSocketImpl(socketUri)(actorSystem)
 }
 
 /**
  * Handle web socket connection
  */
-class RoomSocketImpl(override val socketUri: String) extends BasicWebSocket(socketUri) with RoomSocket {
+class RoomSocketImpl(override val socketUri: String)
+                    (implicit actorSystem: ActorSystem) extends BasicWebSocket(socketUri) with RoomSocket {
 
   private implicit val executor: ExecutionContext = ExecutionContext.global
   private var joinFuture = Promise.successful()
 
   //incoming
-  override protected val sink  = Flow[Message]
+  override protected val sink: Sink[Message, NotUsed] = Flow[Message]
     .map {
       //TODO: this should match some protocol messages
       case TextMessage.Strict("join") => joinFuture.success()
       case TextMessage.Strict("joinFail") => joinFuture.failure(new Exception("Unable to join"))
-
-
       case TextMessage.Strict(value) => messageReceivedCallback(value)
     }.to(Sink.onComplete(_ => println("complete")))
-
 
 
   override def sendJoin(): Future[Unit] = {
@@ -56,6 +56,7 @@ class RoomSocketImpl(override val socketUri: String) extends BasicWebSocket(sock
     joinFuture.future
 
   }
+
   override def sendLeave(): Unit = this.sendMessage("leave") //TODO: close the socket
 
 

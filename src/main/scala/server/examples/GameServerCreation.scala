@@ -25,7 +25,7 @@ object GameServerCreation extends App {
     case Success(_) =>
       println("press any key to shutdown...")
       StdIn.readLine()
-      gameServer.shutdown()
+      gameServer.stop()
       StdIn.readLine("press any key to start...")
       gameServer.start()
       StdIn.readLine("starting...")
@@ -34,7 +34,7 @@ object GameServerCreation extends App {
 
   }
 
-  gameServer defineRoom ("test_room", id => ServerRoom(id))
+  gameServer defineRoom("test_room", id => ServerRoom(id))
 
 
 }

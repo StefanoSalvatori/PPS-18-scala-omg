@@ -1,13 +1,12 @@
 package client.room
 
-import akka.{Done, NotUsed}
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.ws.{Message, TextMessage, WebSocketRequest, WebSocketUpgradeResponse}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import common.actors.ApplicationActorSystem._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,13 +26,14 @@ trait WebSocket[T] {
 }
 
 object WebSocket {
-  def apply(socketUri: String): WebSocket[String] = new BasicWebSocket(socketUri)
+  def apply(socketUri: String)(implicit actorSystem: ActorSystem): WebSocket[String] = new BasicWebSocket(socketUri)
 }
 
 /**
  * Handle web socket connection flow
  */
-class BasicWebSocket(val socketUri: String) extends WebSocket[String] {
+class BasicWebSocket(val socketUri: String)(implicit actorSystem: ActorSystem) extends WebSocket[String] {
+
 
   private implicit val executor: ExecutionContext = ExecutionContext.global
   private val BuffSize = 200 //TODO: test best value
@@ -70,7 +70,7 @@ class BasicWebSocket(val socketUri: String) extends WebSocket[String] {
 
   override def onMessageReceived(callback: String => Unit): Unit = messageReceivedCallback = callback
 
-  private def checkOpenSuccess(upgradeResponse: WebSocketUpgradeResponse) = {
+  private def checkOpenSuccess(upgradeResponse: WebSocketUpgradeResponse): Unit = {
     // status code 101 (Switching Protocols) indicates that server support WebSockets
     if (upgradeResponse.response.status != StatusCodes.SwitchingProtocols) {
       throw new Exception(s"Connection failed: ${upgradeResponse.response.status}")
