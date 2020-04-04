@@ -4,7 +4,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import common.BasicRoomPropertyValueConversions._
-import spray.json.JsValue
+import spray.json.RootJsonFormat
 
 class JsonSerializationSpec extends AnyFlatSpec with Matchers with BeforeAndAfter with RoomJsonSupport {
 
@@ -12,83 +12,94 @@ class JsonSerializationSpec extends AnyFlatSpec with Matchers with BeforeAndAfte
 
   "Integer room property values" must "be correctly JSON encoded and decoded" in {
     val testInt: IntRoomPropertyValue = 1
-    checkJsonEncoding(testInt, intRoomPropertyJsonFormat write, intRoomPropertyJsonFormat read)
+    checkCorrectJsonEncoding(testInt)
   }
 
   "String room property values" must "be correctly JSON encoded and decoded" in {
     val testString: StringRoomPropertyValue = "abc"
-    checkJsonEncoding(testString, stringRoomPropertyJsonFormat write, stringRoomPropertyJsonFormat read)
+    checkCorrectJsonEncoding(testString)
   }
 
   "Boolean room property values" must "be correctly JSON encoded and decoded" in {
     val testBool: BooleanRoomPropertyValue = true
-    checkJsonEncoding(testBool, booleanRoomPropertyJsonFormat write, booleanRoomPropertyJsonFormat read)
+    checkCorrectJsonEncoding(testBool)
   }
 
   behavior of "room property"
 
   "Room property with int values" must "be correctly JSON encoded and decoded" in {
     val intProp = RoomProperty("A", 1)
-    checkJsonEncoding(intProp, roomPropertyJsonFormat write, roomPropertyJsonFormat read)
+    checkCorrectJsonEncoding(intProp)
   }
 
   "Room property with string values" must "be correctly JSON encoded and decoded" in {
     val stringProp = RoomProperty("A", "abc")
-    checkJsonEncoding(stringProp, roomPropertyJsonFormat write, roomPropertyJsonFormat read)
+    checkCorrectJsonEncoding(stringProp)
   }
 
   "Room property with boolean values" must "be correctly JSON encoded and decoded" in {
     val boolProp = RoomProperty("A", true)
-    checkJsonEncoding(boolProp, roomPropertyJsonFormat write, roomPropertyJsonFormat read)
+    checkCorrectJsonEncoding(boolProp)
+  }
+
+  "A set of room property" must "be correctly JSON encoded and decoded" in {
+    val empty: Set[RoomProperty] = Set.empty
+    checkCorrectJsonEncoding(empty)
+    val prop = RoomProperty("A", 1)
+    val justOne = Set(prop)
+    checkCorrectJsonEncoding(justOne)
+    val prop2 = RoomProperty("B", true)
+    val set = Set(prop, prop2)
+    checkCorrectJsonEncoding(set)
   }
 
   behavior of "filter strategy"
 
   "Equal strategy" must "be correctly JSON encoded and decoded" in {
-    checkJsonEncoding(EqualStrategy(), equalStrategyJsonFormat write, equalStrategyJsonFormat read)
+    checkCorrectJsonEncoding(EqualStrategy())
   }
 
   "Not equal strategy" must "be correctly JSON encoded and decoded" in {
-    checkJsonEncoding(NotEqualStrategy(), notEqualStrategyJsonFormat write, notEqualStrategyJsonFormat read)
+    checkCorrectJsonEncoding(NotEqualStrategy())
   }
 
   "Greater strategy" must "be correctly JSON encoded and decoded" in {
-    checkJsonEncoding(GreaterStrategy(), greaterStrategyJsonFormat write, greaterStrategyJsonFormat read)
+    checkCorrectJsonEncoding(GreaterStrategy())
   }
 
   "Lower strategy" must "be correctly JSON encoded and decoded" in {
-    checkJsonEncoding(LowerStrategy(), lowerStrategyJsonFormat write, lowerStrategyJsonFormat read)
+    checkCorrectJsonEncoding(LowerStrategy())
   }
 
   behavior of "filter options"
 
   "A single filter option" must "be correctly JSON encoded and decoded" in {
     val p1 = RoomProperty("A", 3) > 1
-    checkJsonEncoding(p1, filterOptionJsonFormat write, filterOptionJsonFormat read)
+    checkCorrectJsonEncoding(p1)
     val p2 = RoomProperty("A", "abc") =!= "abc"
-    checkJsonEncoding(p2, filterOptionJsonFormat write, filterOptionJsonFormat read)
+    checkCorrectJsonEncoding(p2)
     val p3 = RoomProperty("A", false) =:= false
-    checkJsonEncoding(p3, filterOptionJsonFormat write, filterOptionJsonFormat read)
+    checkCorrectJsonEncoding(p3)
   }
 
-  "An epty filter" must "be correctly JSON encoded and decoded" in {
-    val empty = FilterOptions.empty()
-    checkJsonEncoding(empty, filterOptionsJsonFormat write, filterOptionsJsonFormat read)
+  "An empty filter" must "be correctly JSON encoded and decoded" in {
+    val empty = FilterOptions.empty
+    checkCorrectJsonEncoding(empty)
   }
 
   "A filter with just one item" must "be correctly JSON encoded and decoded" in {
     val just = FilterOptions just RoomProperty("A", 1) < 2
-    checkJsonEncoding(just, filterOptionsJsonFormat write, filterOptionsJsonFormat read)
+    checkCorrectJsonEncoding(just)
   }
 
   "A generic filter" must "be correctly JSON encoded and decoded" in {
     val filter = FilterOptions just RoomProperty("A", 1) < 2 andThen RoomProperty("B", true) =:= true
-    checkJsonEncoding(filter, filterOptionsJsonFormat write, filterOptionsJsonFormat read)
+    checkCorrectJsonEncoding(filter)
   }
 
-  private def checkJsonEncoding[T](value: T, encode: T => JsValue, decode: JsValue => T) = {
-    val encoded = encode(value)
-    val decoded = decode(encoded)
+  private def checkCorrectJsonEncoding[T](value: T)(implicit jsonFormatter: RootJsonFormat[T]) = {
+    val encoded = jsonFormatter write value
+    val decoded = jsonFormatter read encoded
     decoded shouldEqual value
   }
 }

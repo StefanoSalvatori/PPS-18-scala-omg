@@ -57,7 +57,6 @@ class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogg
     }
   }
 
-
   /**
    * Handle web socket connection on path /[[common.Routes#connectionRoute]]/{roomId}
    */
@@ -70,11 +69,7 @@ class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogg
       }
   }
 
-
-
-
   val route: Route = restHttpRoute ~ webSocketRoute
-
 
   def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom): Unit = {
     this.roomTypes = this.roomTypes + roomTypeName
@@ -95,7 +90,6 @@ class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogg
         complete(rooms)
       }
     }
-
 
   /**
    * GET rooms/{type}

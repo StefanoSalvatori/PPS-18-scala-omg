@@ -64,13 +64,13 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "add a room to joined room if such room was not previously joined" in {
-      coreClient ! Join(ROOM_TYPE_NAME, FilterOptions.empty())
+      coreClient ! Join(ROOM_TYPE_NAME, FilterOptions.empty)
       (coreClient ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])
         reply.asInstanceOf[JoinedRooms].joinedRooms should have size 1
       })
 
-      coreClient ! Join(ROOM_TYPE_NAME, FilterOptions.empty())
+      coreClient ! Join(ROOM_TYPE_NAME, FilterOptions.empty)
       (coreClient ? GetJoinedRooms).onComplete(reply => {
         expectMsgClass(classOf[JoinedRooms])
         reply.asInstanceOf[JoinedRooms].joinedRooms should have size 2
