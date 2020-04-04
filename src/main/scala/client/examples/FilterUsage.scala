@@ -13,7 +13,7 @@ object FilterUsage extends App {
   // Create simple filter option
   val simple = prop1 =!= 2
   // Create filter options, i.e. concatenation of clauses
-  val empty = FilterOptions.empty() // Empty filter
+  val empty = FilterOptions.empty // Empty filter
   val short = FilterOptions just prop1 > 2 // Filter with 1 clause
   val filters = FilterOptions just prop1 > 2 andThen prop2 =!= "asc" andThen simple // Filter with more concatenated clauses
   val combined = short ++ filters ++ empty // Combine more filters in one single filter (union of the clauses)

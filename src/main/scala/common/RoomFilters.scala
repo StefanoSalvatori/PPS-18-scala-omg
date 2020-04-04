@@ -47,7 +47,7 @@ case class FilterOption(optionName: String, strategy: FilterStrategy, value: Roo
 
 object FilterOptions {
   def just(filter: FilterOption): FilterOptions = FilterOptions(Seq(filter))
-  def empty(): FilterOptions = FilterOptions(Seq())
+  def empty: FilterOptions = FilterOptions(Seq())
 }
 
 case class FilterOptions(options: Seq[FilterOption]) {

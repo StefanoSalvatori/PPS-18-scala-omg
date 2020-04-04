@@ -13,7 +13,7 @@ object ClientStub extends App {
 
   client createPublicRoom ("test_room", Set.empty) andThen {
     case Success(_) =>
-      client.getAvailableRoomsByType("test_room", FilterOptions.empty()) onComplete {
+      client.getAvailableRoomsByType("test_room", FilterOptions.empty) onComplete {
         case Success(rooms) => println("GET: " + rooms)
       }
   } onComplete {
