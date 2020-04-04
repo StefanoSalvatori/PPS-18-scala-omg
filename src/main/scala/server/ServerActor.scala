@@ -1,9 +1,14 @@
 package server
 
+import akka.Done
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, Stash, Status}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Sink
+import common.RoomProperty
+import server.room.ServerRoom
+import server.route_service.RouteService
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.{FiniteDuration, _}
@@ -16,7 +21,7 @@ object ServerActor {
   sealed trait ServerEvent
 
   sealed trait Command extends ServerEvent
-  case class StartServer(host: String, port: Int, routes: Route) extends Command
+  case class StartServer(host: String, port: Int) extends Command
   case object StopServer extends Command
 
   private sealed trait InternalMessage extends ServerEvent
@@ -34,18 +39,20 @@ object ServerActor {
   object ServerAlreadyStopped extends Error("Server already stopped")
   object ServerIsStopping extends Error("Server is stopping")
 
-  def apply(terminationDeadline: FiniteDuration = DEFAULT_DEADLINE): Props = Props(classOf[ServerActor], terminationDeadline)
+  def apply(terminationDeadline: FiniteDuration = DEFAULT_DEADLINE, additionalRoutes: Route): Props =
+    Props(classOf[ServerActor], terminationDeadline, additionalRoutes)
 }
 
-class ServerActor(private val terminationDeadline: FiniteDuration) extends Actor with ActorLogging with Stash {
+class ServerActor(private val terminationDeadline: FiniteDuration,
+                  private val routes: Route) extends Actor with ActorLogging with Stash {
 
   import server.ServerActor._
-
   implicit val actorSystem: ActorSystem = context.system
   implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
 
+
   override def receive: Receive = {
-    case StartServer(host, port, routes) =>
+    case StartServer(host, port) =>
       val source = Http(this.actorSystem).bind(host, port)
       val serverStartedFuture = source.to(Sink.foreach(_ handleWith routes)).run()
 
@@ -66,7 +73,6 @@ class ServerActor(private val terminationDeadline: FiniteDuration) extends Actor
     case Status.Failure(exception: Exception) =>
       replyTo ! ServerActor.ServerFailure(exception)
       context.become(receive)
-
   }
 
   def serverRunning(binding: Http.ServerBinding): Receive = {
@@ -92,4 +98,5 @@ class ServerActor(private val terminationDeadline: FiniteDuration) extends Actor
       replyTo ! ServerActor.ServerFailure(exception)
       context.become(serverRunning(binding))
   }
+
 }

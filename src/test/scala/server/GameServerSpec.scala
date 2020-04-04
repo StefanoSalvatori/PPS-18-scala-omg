@@ -1,15 +1,19 @@
 package server
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Sink
-import common.actors.ApplicationActorSystem._
-import common.{Routes, TestConfig}
+import akka.testkit.TestKit
+import common.SharedRoom.Room
+import common.{RoomJsonSupport, Routes, TestConfig}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import server.room.ServerRoom
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -19,9 +23,11 @@ class GameServerSpec extends AnyFlatSpec
   with Matchers
   with ScalatestRouteTest
   with BeforeAndAfter
+  with RoomJsonSupport
   with TestConfig {
 
-  private val BASE_PATH = Routes.publicRooms
+  implicit val actorSystem: ActorSystem = ActorSystem()
+
   private val MAX_WAIT_REQUESTS = 5 seconds
   private val MAX_WAIT_CONNECTION_POOL_SHUTDOWN = 15 seconds
 
@@ -45,8 +51,13 @@ class GameServerSpec extends AnyFlatSpec
 
 
   after {
+    Await.result(Http().shutdownAllConnectionPools(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
+  }
 
-    Await.result(Http(actorSystem).shutdownAllConnectionPools(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
+
+  override def afterAll(): Unit = {
+    Await.ready(this.server.terminate(), MAX_WAIT_SERVER_SHUTDOWN)
+    TestKit.shutdownActorSystem(system)
   }
 
   it should "allow the creation of a server with a specified address and port" in {
@@ -75,42 +86,42 @@ class GameServerSpec extends AnyFlatSpec
     val res = Await.result(this.makeEmptyRequest(), MAX_WAIT_SERVER_STARTUP)
     assert(res.isResponse())
     res.discardEntityBytes()
-    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
 
   }
 
 
   it should "stop the server when shutdown() is called" in {
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
     assertThrows[Exception] {
-      Await.result(this.makeEmptyRequestAt(BASE_PATH), MAX_WAIT_REQUESTS)
+      Await.result(this.makeEmptyRequestAt(Routes.publicRooms), MAX_WAIT_REQUESTS)
     }
   }
 
   it should "throw an IllegalStateException when shutdown() is called before start()" in {
     assertThrows[IllegalStateException] {
-      Await.result(this.server.shutdown(), MAX_WAIT_SERVER_SHUTDOWN)
+      Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
     }
   }
 
-  it should s"respond to requests received at $BASE_PATH" in {
+  it should s"respond to requests received at ${Routes.publicRooms}" in {
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    val response = Await.result(this.makeEmptyRequestAt(BASE_PATH), MAX_WAIT_REQUESTS)
+    val response = Await.result(this.makeEmptyRequestAt(Routes.publicRooms), MAX_WAIT_REQUESTS)
     assert(response.status equals StatusCodes.OK)
     response.discardEntityBytes()
-    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
 
   }
 
   it should "restart calling start() after shutdown()" in {
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     val res = Await.result(this.makeEmptyRequest(), MAX_WAIT_SERVER_STARTUP)
     assert(res.isResponse())
 
-    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
 
 
   }
@@ -120,7 +131,7 @@ class GameServerSpec extends AnyFlatSpec
     assertThrows[IllegalStateException] {
       Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     }
-    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.stop(), MAX_WAIT_SERVER_STARTUP)
 
   }
 
@@ -130,7 +141,7 @@ class GameServerSpec extends AnyFlatSpec
     this.server.onShutdown {
       flag = true
     }
-    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.stop(), MAX_WAIT_SERVER_STARTUP)
     flag shouldBe true
   }
 
@@ -142,7 +153,7 @@ class GameServerSpec extends AnyFlatSpec
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     flag shouldBe true
 
-    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
 
   }
 
@@ -151,7 +162,19 @@ class GameServerSpec extends AnyFlatSpec
     val response = Await.result(this.makeEmptyRequestAt(ADDITIONAL_PATH), MAX_WAIT_REQUESTS)
     response.status shouldBe StatusCodes.OK
     response.discardEntityBytes()
-    Await.result(this.server.shutdown(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
+
+  }
+
+  it should "create rooms" in {
+    this.server.defineRoom("test", ServerRoom(_))
+    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    this.server.createRoom("test")
+    val httpResult = Await.result(makeEmptyRequestAt(Routes.publicRooms), MAX_WAIT_REQUESTS)
+    val roomsList = Await.result(Unmarshal(httpResult).to[Seq[Room]], MAX_WAIT_REQUESTS)
+    roomsList should have size 1
+    Await.result(this.server.stop(), MAX_WAIT_SERVER_STARTUP)
+
 
   }
 
@@ -161,7 +184,7 @@ class GameServerSpec extends AnyFlatSpec
   }
 
   private def makeEmptyRequestAt(path: String): Future[HttpResponse] = {
-    Http(actorSystem).singleRequest(HttpRequest(uri = s"http://$HOST:$PORT/$path"))
+    Http().singleRequest(HttpRequest(uri = s"http://$HOST:$PORT/$path"))
   }
 
 }
