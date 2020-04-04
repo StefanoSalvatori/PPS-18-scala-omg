@@ -26,7 +26,7 @@ class RoomFilterSpec extends AnyFlatSpec with Matchers with BeforeAndAfter {
   }
 
   "An empty filter" should "have no elements" in {
-    val empty = FilterOptions.empty()
+    val empty = FilterOptions.empty
     assert(empty.options.isEmpty)
   }
 
