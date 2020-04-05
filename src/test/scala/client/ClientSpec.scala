@@ -55,6 +55,14 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "create public rooms" in {
+    val roomList1 = Await.result(client getAvailableRoomsByType(ROOM_TYPE_NAME, FilterOptions.empty()), DefaultTimeout)
+    roomList1 should have size 0
+    val r = Await.result(client createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
+    val roomList2 = Await.result(client getAvailableRoomsByType(ROOM_TYPE_NAME, FilterOptions.empty()), DefaultTimeout)
+    roomList2 should have size 1
+  }
+
+  it should "create public room and get such rooms asking the available rooms" in {
     val r = Await.result(client createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
     val roomList = Await.result(client getAvailableRoomsByType(ROOM_TYPE_NAME, FilterOptions.empty()), DefaultTimeout)
     roomList should have size 1
@@ -118,8 +126,9 @@ class ClientSpec extends AnyFlatSpec
   }
 
   /*it should "be able to join an existing room" in {
-    val room = Await.result(client createPublicRoom(ROOM_TYPE_NAME, ""), 5 seconds)
-    val joined = Await.result(client join(ROOM_TYPE_NAME, ""), 5 seconds)
+    val room = Await.result(client createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
+    println(room.roomId)
+    val joined = Await.result(client join(ROOM_TYPE_NAME, FilterOptions.empty()), DefaultTimeout)
     assert(room.roomId == joined.roomId)
   }*/
 

@@ -2,21 +2,21 @@ package client
 
 import java.util.concurrent.TimeUnit
 
-import akka.pattern.ask
 import akka.actor.{ActorRef, ActorSystem}
+import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit}
-import com.typesafe.config.ConfigFactory
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import org.scalatest.wordspec.AnyWordSpecLike
 import client.room.ClientRoom
 import client.utils.MessageDictionary._
+import com.typesafe.config.ConfigFactory
 import common.{FilterOptions, Routes, TestConfig}
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.ServerRoom
 
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}
 
 class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
@@ -29,7 +29,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   private val serverAddress = "localhost"
   private val serverPort = CORE_CLIENT_SPEC_SERVER_PORT
-  private val serverUri = Routes.uri(serverAddress, serverPort)
+  private val serverUri = Routes.httpUri(serverAddress, serverPort)
 
   private val ROOM_TYPE_NAME: String = "test_room"
 
@@ -51,8 +51,8 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     gameServer.defineRoom(ROOM_TYPE_NAME, ServerRoom(_))
     Await.ready(gameServer.start(), 5 seconds)
 
-    coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)
-    coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)
+    Await.ready(coreClient ? CreatePublicRoom(ROOM_TYPE_NAME, Set.empty), 5 seconds)
+    Await.ready(coreClient ? CreatePublicRoom(ROOM_TYPE_NAME, Set.empty), 5 seconds)
   }
 
   "Regarding joined rooms, a core client" must {
@@ -85,16 +85,12 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "not add an already joined room" in {
-      val createRoomFuture = (coreClient ? CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)) flatMap {
-        case Success(room) => Future.successful(room.asInstanceOf[ClientRoom])
-        case Failure(ex) => Future.failed(ex)
-      }
-      val room = Await.result(createRoomFuture, 5 seconds)
+      coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)
+      val room = expectMsgType[Success[ClientRoom]]
 
-      Await.result((coreClient ? JoinById(room.roomId)), 5 seconds) match {
-        case Failure(_) => succeed
-        case _ => fail
-      }
+      coreClient ! JoinById(room.value.roomId)
+      expectMsgType[Failure[Exception]]
+
     }
   }
 

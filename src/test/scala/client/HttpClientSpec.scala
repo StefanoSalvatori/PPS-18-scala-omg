@@ -4,7 +4,8 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
-import common.{Routes, TestConfig}
+import common.SharedRoom.Room
+import common.{FilterOptions, Routes, TestConfig}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer
@@ -21,7 +22,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   private val serverAddress = "localhost"
   private val serverPort = HTTP_CLIENT_SPEC_SERVER_PORT
-  private val serverUri = Routes.uri(serverAddress, serverPort)
+  private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
 
   private val ROOM_TYPE_NAME: String = "test_room"
   private val SERVER_LAUNCH_AWAIT_TIME = 10 seconds
@@ -32,9 +33,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   override def beforeAll: Unit = {
     gameServer = GameServer(serverAddress, serverPort)
-
     gameServer.defineRoom(ROOM_TYPE_NAME, id => ServerRoom(id))
-
     Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
   }
 
@@ -45,13 +44,19 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   "An Http client actor" must {
 
-    val probe = TestProbe()
-    val httpTestActor: ActorRef = system actorOf HttpClient(serverUri, probe.ref)
+    val httpTestActor: ActorRef = system actorOf HttpClient(httpServerUri)
 
-    //TODO: check this test
-    /*"when asked to create a new public room, return the new room" in {
-      httpTestActor ! CreatePublicRoom(ROOM_TYPE_NAME)
-      probe expectMsgClass classOf[NewJoinedRoom]
-    }*/
+
+    "when asked to post a room, return the new room" in {
+      httpTestActor ! HttpPostRoom(ROOM_TYPE_NAME, Set.empty)
+      val r = expectMsgType[RoomResponse]
+      assert(r.room.isInstanceOf[Room])
+    }
+
+    "when asked to get a rooms, return a set of rooms" in {
+      httpTestActor ! HttpGetRooms(ROOM_TYPE_NAME, FilterOptions.empty())
+      val r = expectMsgType[RoomSequenceResponse]
+      assert(r.rooms.isInstanceOf[Seq[Room]])
+    }
   }
 }

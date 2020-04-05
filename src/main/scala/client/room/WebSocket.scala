@@ -1,7 +1,7 @@
 package client.room
 
 import akka.{Done, NotUsed}
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.ws.{Message, TextMessage, WebSocketRequest, WebSocketUpgradeResponse}
@@ -27,13 +27,13 @@ trait WebSocket[T] {
 }
 
 object WebSocket {
-  def apply(socketUri: String): WebSocket[String] = new BasicWebSocket(socketUri)
+  def apply(receiver: ActorRef, socketUri: String): WebSocket[String] = new BasicWebSocket(receiver, socketUri)
 }
 
 /**
  * Handle web socket connection flow
  */
-class BasicWebSocket(val socketUri: String) extends WebSocket[String] {
+class BasicWebSocket(val receiver: ActorRef, val socketUri: String) extends WebSocket[String] {
 
   private implicit val executor: ExecutionContext = ExecutionContext.global
   private val BuffSize = 200 //TODO: test best value
@@ -42,9 +42,7 @@ class BasicWebSocket(val socketUri: String) extends WebSocket[String] {
 
   //incoming
   protected val sink: Sink[Message, NotUsed] =
-    Flow[Message]
-      .map { case TextMessage.Strict(value) => messageReceivedCallback(value) }
-      .to(Sink.onComplete(_ => println("sink complete")))
+    Sink.actorRef(receiver, PartialFunction.empty, PartialFunction.empty)
 
 
   //outgoing
@@ -66,7 +64,6 @@ class BasicWebSocket(val socketUri: String) extends WebSocket[String] {
   }
 
   override def sendMessage(msg: String): Unit = this.sourceRef ! msg
-
 
   override def onMessageReceived(callback: String => Unit): Unit = messageReceivedCallback = callback
 

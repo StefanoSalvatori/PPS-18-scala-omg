@@ -3,7 +3,6 @@ package server.examples
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
-import common.actors.ApplicationActorSystem
 import server.GameServer
 import server.room._
 

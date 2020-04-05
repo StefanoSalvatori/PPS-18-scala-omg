@@ -17,8 +17,11 @@ object Routes {
 
   def roomByTypeAndId(roomType: String, roomId: String): String = roomsByType(roomType) + "/" + roomId
 
-  def uri(address: String, port: Int): String = "http://" + address + ":" + port
+  def httpUri(address: String, port: Int): String = "http://" + address + ":" + port
 
+  def wsUri(address: String, port: Int): String = "ws://" + address + ":" + port
+
+  def wsUri(httpUri: String): String = httpUri.replace("http", "ws")
   /**
    * Route for web socket connection to a room
    *

@@ -61,6 +61,9 @@ sealed trait Client {
   def getAvailableRoomsByType(roomType: String, filterOptions: FilterOptions): Future[Seq[ClientRoom]]
 
 
+  /**
+   * @return the set of currently joined rooms
+   */
   def joinedRooms(): Set[ClientRoom]
 
   def shutdown(): Unit
@@ -78,7 +81,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   implicit val timeout: Timeout = requestTimeout seconds
 
-  private val serverUri = Routes.uri(serverAddress, serverPort)
+  private val serverUri = Routes.httpUri(serverAddress, serverPort)
 
 
   private implicit val actorSystem: ActorSystem = ActorSystem()

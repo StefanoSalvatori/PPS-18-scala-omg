@@ -1,8 +1,9 @@
 package client.room
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.{Flow, Sink}
+import common.actors.ApplicationActorSystem._
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
@@ -25,27 +26,17 @@ trait RoomSocket extends WebSocket[String] {
 }
 
 object RoomSocket {
-  def apply(socketUri: String): RoomSocket = new RoomSocketImpl(socketUri)
+  def apply(receiver: ActorRef, socketUri: String): RoomSocket = new RoomSocketImpl(receiver, socketUri)
 }
 
 /**
  * Handle web socket connection
  */
-class RoomSocketImpl(override val socketUri: String) extends BasicWebSocket(socketUri) with RoomSocket {
+class RoomSocketImpl(override val receiver: ActorRef,
+                     override val socketUri: String) extends BasicWebSocket(receiver, socketUri) with RoomSocket {
 
   private implicit val executor: ExecutionContext = ExecutionContext.global
   private var joinFuture = Promise.successful()
-
-  //incoming
-  override protected val sink  = Flow[Message]
-    .map {
-      //TODO: this should match some protocol messages
-      case TextMessage.Strict("join") => joinFuture.success()
-      case TextMessage.Strict("joinFail") => joinFuture.failure(new Exception("Unable to join"))
-
-
-      case TextMessage.Strict(value) => messageReceivedCallback(value)
-    }.to(Sink.onComplete(_ => println("complete")))
 
 
 
