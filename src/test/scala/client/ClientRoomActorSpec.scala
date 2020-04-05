@@ -19,7 +19,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.Success
 
-class ClientActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
+class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with ImplicitSender
   with AnyWordSpecLike
   with Matchers
@@ -28,7 +28,7 @@ class ClientActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.
   with TestConfig {
 
   private val serverAddress = "localhost"
-  private val serverPort = CORE_CLIENT_SPEC_SERVER_PORT
+  private val serverPort = CLIENT_ROOM_ACTOR_SPEC_SERVER_PORT
   private val serverUri = Routes.httpUri(serverAddress, serverPort)
 
   private val ROOM_TYPE_NAME: String = "test_room"

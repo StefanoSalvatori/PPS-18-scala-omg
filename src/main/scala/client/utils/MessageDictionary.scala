@@ -47,7 +47,7 @@ object MessageDictionary {
   /**
    * Perform a web socket request to open a connection to server side room with the gicen id.
    * If the connection is successful respond with message [[HttpSocketSuccess]] otherwise [[HttpSocketFail]]
-   * @param roomId
+   * @param roomId id of the room to connect to
    */
   case class HttpSocketRequest(roomId: RoomId)
 

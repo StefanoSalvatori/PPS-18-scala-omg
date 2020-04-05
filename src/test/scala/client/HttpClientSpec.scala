@@ -5,7 +5,7 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.SharedRoom.Room
-import common.{FilterOptions, Routes, TestConfig}
+import common.{FilterOptions, RoomProperty, Routes, TestConfig}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer
@@ -59,7 +59,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "when asked to get a rooms, return a set of rooms" in {
-      httpTestActor ! HttpGetRooms(ROOM_TYPE_NAME, FilterOptions.empty())
+      httpTestActor ! HttpGetRooms(ROOM_TYPE_NAME, FilterOptions.empty)
 
       expectMsgPF() {
         case RoomSequenceResponse(rooms) =>  assert(rooms.isInstanceOf[Seq[Room]])
@@ -68,10 +68,10 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "when asked to open a web socket, return an actor ref related to that socket" in {
-      httpTestActor ! HttpGetRooms(ROOM_TYPE_NAME, FilterOptions.empty())
-      val room = expectMsgType[Room]
+      httpTestActor ! HttpPostRoom(ROOM_TYPE_NAME, Set.empty)
+      val roomRes = expectMsgType[RoomResponse]
 
-      httpTestActor ! HttpSocketRequest(room.roomId)
+      httpTestActor ! HttpSocketRequest(roomRes.room.roomId)
 
       expectMsgPF() {
         case HttpSocketSuccess(ref) =>  assert(ref.isInstanceOf[ActorRef])

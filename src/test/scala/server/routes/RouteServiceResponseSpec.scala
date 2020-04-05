@@ -40,36 +40,36 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers with ScalatestR
 
 
   it should "respond with a list of available rooms on GET request on path 'rooms'" in {
-    makeRequestWithEmptyFilter(HttpMethods.GET)(ROOMS) ~> route ~> check {
+    makeRequestWithEmptyPayload(HttpMethods.GET)(ROOMS) ~> route ~> check {
       responseAs[Seq[Room]]
     }
   }
 
 
   it should "respond with a list of available rooms on GET request on path 'rooms/{type}' " in {
-    makeRequestWithEmptyFilter(HttpMethods.GET)(ROOMS_WITH_TYPE) ~> route ~> check {
+    makeRequestWithEmptyPayload(HttpMethods.GET)(ROOMS_WITH_TYPE) ~> route ~> check {
       responseAs[Seq[Room]]
     }
   }
 
 
   it should "respond with a room that was created on POST request on path 'rooms/{type}' " in {
-    makeRequestWithEmptyFilter(HttpMethods.POST)(ROOMS_WITH_TYPE) ~> route ~> check {
+    makeRequestWithEmptyPayload(HttpMethods.POST)(ROOMS_WITH_TYPE) ~> route ~> check {
       responseAs[Room]
     }
   }
 
   it should "respond with an empty sequence if no rooms have been created " in {
-    makeRequestWithEmptyFilter(HttpMethods.GET)(ROOMS_WITH_TYPE) ~> route ~> check {
+    makeRequestWithEmptyPayload(HttpMethods.GET)(ROOMS_WITH_TYPE) ~> route ~> check {
       responseAs[Seq[Room]] shouldBe empty
     }
   }
 
   it should "respond with all the rooms of the requested type on GET request on path 'rooms/{type}' " in {
-    makeRequestWithEmptyFilter(HttpMethods.POST)(ROOMS_WITH_TYPE) ~> route ~> check {}
-    makeRequestWithEmptyFilter(HttpMethods.POST)(ROOMS_WITH_TYPE) ~> route ~> check {}
+    makeRequestWithEmptyPayload(HttpMethods.POST)(ROOMS_WITH_TYPE) ~> route ~> check {}
+    makeRequestWithEmptyPayload(HttpMethods.POST)(ROOMS_WITH_TYPE) ~> route ~> check {}
 
-    makeRequestWithEmptyFilter(HttpMethods.GET)(ROOMS_WITH_TYPE) ~> route ~> check {
+    makeRequestWithEmptyPayload(HttpMethods.GET)(ROOMS_WITH_TYPE) ~> route ~> check {
       responseAs[Seq[Room]] should have size 2
     }
   }

@@ -2,7 +2,7 @@ package server.routes
 
 import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpRequest, MediaTypes}
 import akka.util.ByteString
-import common.Routes
+import common.{HttpRequests, RoomProperty, Routes}
 
 trait RouteCommonTestOptions {
   val TEST_ROOM_TYPE = "test-room"
@@ -12,6 +12,9 @@ trait RouteCommonTestOptions {
   val TEST_ROOM_OPT_JSON: ByteString = ByteString("")
 
 
-  def makeRequestWithEmptyFilter(method: HttpMethod)(uri: String): HttpRequest = HttpRequest(
+  def makeRequestWithEmptyPayload(method: HttpMethod)(uri: String): HttpRequest = HttpRequest(
     uri = uri, method = method, entity = HttpEntity(MediaTypes.`application/json`, TEST_ROOM_OPT_JSON))
+
+  def makePostWithProperties(roomProperties: Set[RoomProperty]): HttpRequest =
+    HttpRequests.postRoom("")(TEST_ROOM_TYPE, roomProperties)
 }

@@ -2,7 +2,8 @@ package server.route_service
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives.{complete, get, _}
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{Directive1, Route}
+import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
 import com.typesafe.scalalogging.LazyLogging
 import common.{FilterOptions, RoomJsonSupport, RoomProperty, Routes}
 import server.RoomHandler
@@ -133,6 +134,8 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
         case None => reject //TODO: how to handle this? Wrong id in rooms/{type}/{id}
       }
     }
+
+
 
 
   /**

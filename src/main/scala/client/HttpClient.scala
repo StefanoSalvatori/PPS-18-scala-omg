@@ -34,9 +34,10 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
 
   private val onReceive: Receive = {
 
-    case HttpPostRoom(roomType, _) =>
+    case HttpPostRoom(roomType, roomProperties) =>
       val replyTo = sender
-      val createRoomFuture: Future[HttpResponse] = http singleRequest HttpRequests.postRoom(httpServerUri)(roomType)
+      val createRoomFuture: Future[HttpResponse] =
+        http singleRequest HttpRequests.postRoom(httpServerUri)(roomType, roomProperties)
       (for {
         response <- createRoomFuture
         room <- Unmarshal(response).to[Room]
@@ -45,9 +46,10 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
         case Failure(ex) => replyTo ! FailResponse(ex)
       }
 
-    case HttpGetRooms(roomType, _) =>
+    case HttpGetRooms(roomType, filterOptions) =>
       val replyTo = sender
-      val getRoomsFuture: Future[HttpResponse] = http singleRequest HttpRequests.getRoomsByType(httpServerUri)(roomType)
+      val getRoomsFuture: Future[HttpResponse] =
+        http singleRequest HttpRequests.getRoomsByType(httpServerUri)(roomType, filterOptions)
       (for {
         response <- getRoomsFuture
         rooms <- Unmarshal(response).to[Seq[Room]]

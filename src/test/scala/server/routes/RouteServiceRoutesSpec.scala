@@ -5,7 +5,7 @@ import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.testkit.TestKit
 import akka.util.ByteString
 import common.SharedRoom.Room
-import common.{RoomJsonSupport, Routes}
+import common.{IntRoomPropertyValue, RoomJsonSupport, RoomProperty, Routes}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -60,7 +60,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
   /// GET rooms
   it should "handle GET request on path 'rooms' with room options as payload" in {
-    makeRequestWithEmptyFilter(HttpMethods.GET)(ROOMS) ~> route ~> check {
+    makeRequestWithEmptyPayload(HttpMethods.GET)(ROOMS) ~> route ~> check {
       handled shouldBe true
     }
   }
@@ -74,7 +74,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
   /// GET rooms/{type}
   it should "handle GET request on path 'rooms/{type}' with room options as payload " in {
-    makeRequestWithEmptyFilter(HttpMethods.GET)(ROOMS_WITH_TYPE) ~> route ~> check {
+    makeRequestWithEmptyPayload(HttpMethods.GET)(ROOMS_WITH_TYPE) ~> route ~> check {
       handled shouldBe true
     }
   }
@@ -88,7 +88,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
 
   /// --- POST rooms/{type}
   it should "handle POST request on path 'rooms/{type}' with room options as payload" in {
-    makeRequestWithEmptyFilter(HttpMethods.POST)(ROOMS_WITH_TYPE) ~> route ~> check {
+    makeRequestWithEmptyPayload(HttpMethods.POST)(ROOMS_WITH_TYPE) ~> route ~> check {
       handled shouldBe true
     }
   }
@@ -99,6 +99,25 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
       handled shouldBe true
     }
   }
+
+  /*it should "create rooms with properties after a single POST request with payload" in {
+    val testProperty = RoomProperty("A", IntRoomPropertyValue(1))
+    val postReq = makePostWithProperties(Set(testProperty))
+    println(postReq)
+    postReq  ~> route ~> check {
+      Get(ROOMS_WITH_TYPE) ~> route ~> check {
+        responseAs[Seq[Room]] should have size 1
+      }
+    }
+  }*/
+
+  /*it should "create only one room after a single POST request" in {
+   makePostWithProperties(Set(RoomProperty("A", IntRoomPropertyValue(1))))~> route ~> check {
+      Get(ROOMS_WITH_TYPE) ~> route ~> check {
+        responseAs[Seq[Room]] should have size 1
+      }
+    }
+  }*/
 
 
   /// GET rooms/{type}/{id}
@@ -111,7 +130,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec with Matchers with ScalatestRou
   }
 
   /// --- Web socket  ---
-  it should "handle web socket request on path 'connection/?id={id}'" in {
+  it should "handle web socket request on path 'connection/{id}'" in {
     val room = createRoom()
     val wsClient = WSProbe()
     WS("/" + Routes.connectionRoute + "/" + room.roomId, wsClient.flow) ~> route ~>

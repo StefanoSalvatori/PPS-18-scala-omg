@@ -13,6 +13,10 @@ object ClientRoomActor {
     Props(classOf[ClientRoomActor], coreClient, serverUri, roomId)
 }
 
+/**
+ * Handles the connection with the server side room.
+ * Notify the coreClient if a room was left
+ */
 case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, roomId: RoomId) extends BasicActor {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
   private var onMessageCallback: String => Unit = x => {}
