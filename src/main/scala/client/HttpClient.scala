@@ -42,7 +42,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
         response <- createRoomFuture
         room <- Unmarshal(response).to[Room]
       } yield room) onComplete {
-        case Success(value) => replyTo ! RoomResponse(value)
+        case Success(value) => replyTo ! HttpRoomResponse(value)
         case Failure(ex) => replyTo ! FailResponse(ex)
       }
 
@@ -54,7 +54,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
         response <- getRoomsFuture
         rooms <- Unmarshal(response).to[Seq[Room]]
       } yield rooms) onComplete {
-        case Success(value) => replyTo ! RoomSequenceResponse(value)
+        case Success(value) => replyTo ! HttpRoomSequenceResponse(value)
         case Failure(ex) => replyTo ! FailResponse(ex)
       }
 
@@ -75,8 +75,6 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
 
       upgradeResponse pipeTo self
       context.become(waitSocketResponse(sender, sourceRef))
-
-
   }
 
 
@@ -85,7 +83,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
       replyTo ! HttpSocketSuccess(outRef)
       context.unbecome()
 
-    case InvalidUpgradeResponse(res, cause) =>
+    case InvalidUpgradeResponse(_, cause) =>
       replyTo ! HttpSocketFail(cause)
       context.unbecome()
 

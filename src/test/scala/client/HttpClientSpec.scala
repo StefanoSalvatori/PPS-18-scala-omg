@@ -51,7 +51,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       httpTestActor ! HttpPostRoom(ROOM_TYPE_NAME, Set.empty)
 
       expectMsgPF() {
-        case RoomResponse(room) =>
+        case HttpRoomResponse(room) =>
           assert(room.isInstanceOf[Room])
         case FailResponse(_) =>
       }
@@ -62,14 +62,14 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       httpTestActor ! HttpGetRooms(ROOM_TYPE_NAME, FilterOptions.empty)
 
       expectMsgPF() {
-        case RoomSequenceResponse(rooms) =>  assert(rooms.isInstanceOf[Seq[Room]])
+        case HttpRoomSequenceResponse(rooms) =>  assert(rooms.isInstanceOf[Seq[Room]])
         case FailResponse(_) =>
       }
     }
 
     "when asked to open a web socket, return an actor ref related to that socket" in {
       httpTestActor ! HttpPostRoom(ROOM_TYPE_NAME, Set.empty)
-      val roomRes = expectMsgType[RoomResponse]
+      val roomRes = expectMsgType[HttpRoomResponse]
 
       httpTestActor ! HttpSocketRequest(roomRes.room.roomId)
 

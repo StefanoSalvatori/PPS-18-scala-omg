@@ -37,9 +37,6 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
 
   val onReceive: Receive = {
 
-    case RoomSequenceResponse(rooms) =>
-      sender ! Success(rooms.map(r => ClientRoom(self, serverUri, r.roomId)))
-
     case FailResponse(ex) => sender ! Failure(ex)
 
     case CreatePublicRoom(roomType, roomOptions) =>
@@ -48,7 +45,7 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
 
     case GetAvailableRooms(roomType, roomOptions) =>
       (this.httpClient ? HttpGetRooms(roomType, roomOptions)).map {
-        case RoomSequenceResponse(rooms) => Success(rooms.map(r => ClientRoom(self, serverUri, r.roomId)))
+        case HttpRoomSequenceResponse(rooms) => Success(rooms.map(r => ClientRoom(self, serverUri, r.roomId)))
         case FailResponse(ex) => Failure(ex)
       } pipeTo sender
 
@@ -58,23 +55,24 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
 
     case JoinById(roomId) =>
       val replyTo = sender
-      println("join by id")
-      println(this.joinedRooms)
       this.joinedRooms.find(_.roomId == roomId) match {
         case Some(_) =>
           replyTo ! Failure(new Exception("Room already joined"))
         case None =>
           context.become(this.waitRoomsToJoin(replyTo))
-          self ! RoomResponse(Room(roomId))
+          self ! HttpRoomResponse(Room(roomId))
       }
 
     case GetJoinedRooms =>
       sender ! JoinedRooms(this.joinedRooms)
 
-    case RoomLeaved(roomId) =>
+    case ClientRoomLeaved(roomId) =>
       this.joinedRooms.find(_.roomId == roomId) foreach {
         elem => this.joinedRooms = this.joinedRooms - elem
       }
+
+    case ClientRoomJoined(clientRoom) =>
+      this.joinedRooms = this.joinedRooms + clientRoom
   }
 
 
@@ -88,21 +86,19 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
       replyTo ! Failure(ex)
       unstashAll()
 
-    case RoomSequenceResponse(rooms) =>
+    case HttpRoomSequenceResponse(rooms) =>
       context.become(onReceive)
       rooms.find(!this.roomAlreadyJoined(_)) match {
         case Some(room) =>
-          val roomActor = system actorOf ClientRoomActor(self, serverUri, room.roomId)
-          tryJoinRoomAndReply(ClientRoom(roomActor, serverUri, room.roomId), replyTo)
+          tryJoinRoomAndReply(ClientRoom(self, serverUri, room.roomId), replyTo)
         case None => replyTo ! Failure(new Exception("No rooms to join"))
       }
       unstashAll()
 
 
-    case RoomResponse(room) =>
+    case HttpRoomResponse(room) =>
       context.become(onReceive)
-      val roomActor = system actorOf ClientRoomActor(self, serverUri, room.roomId)
-      tryJoinRoomAndReply(ClientRoom(roomActor, serverUri, room.roomId), replyTo)
+      tryJoinRoomAndReply(ClientRoom(self, serverUri, room.roomId), replyTo)
       unstashAll()
 
     case _ => stash
@@ -118,9 +114,7 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
    */
   private def tryJoinRoomAndReply(clientRoom: ClientRoom, replyTo: ActorRef): Unit =
     clientRoom.join() onComplete {
-      case Success(_) =>
-        this.joinedRooms = this.joinedRooms + clientRoom
-        replyTo ! Success(clientRoom)
+      case Success(_) => replyTo ! Success(clientRoom)
       case Failure(ex) => replyTo ! Failure(ex)
     }
 

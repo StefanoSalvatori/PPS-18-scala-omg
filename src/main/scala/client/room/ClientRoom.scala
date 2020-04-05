@@ -53,26 +53,33 @@ trait ClientRoom extends Room {
 }
 
 object ClientRoom {
-  def apply(innerActor: ActorRef, serverUri: String, roomId: RoomId): ClientRoom = ClientRoomImpl(innerActor, serverUri, roomId)
+  def apply(coreClient: ActorRef, httpServerUri: String, roomId: RoomId)(implicit system: ActorSystem): ClientRoom =
+    ClientRoomImpl(coreClient, httpServerUri, roomId)
 
 }
 
-case class ClientRoomImpl(innerActor: ActorRef, serverUri: String, roomId: RoomId) extends ClientRoom {
+case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: RoomId)
+                         (implicit val system: ActorSystem)
+  extends ClientRoom {
   private implicit val timeout: Timeout = 5 seconds
   private implicit val executionContext = ExecutionContext.global
+  private implicit var innerActor: Option[ActorRef] = None
 
-
-  override def join(): Future[Any] =
-    (innerActor ? JoinRoom(roomId)) flatMap {
+  override def join(): Future[Any] = {
+    val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
+    this.innerActor = Some(ref)
+    (ref ? JoinRoom(roomId)) flatMap {
       case Success(_) => Future.successful()
       case Failure(ex) => Future.failed(ex)
     }
+  }
 
-  override def leave(): Unit = innerActor ! LeaveRoom()
 
-  override def send(msg: String): Unit = innerActor ! SendMsg(msg)
+  override def leave(): Unit = innerActor.foreach(_ ! LeaveRoom())
 
-  override def onMessageReceived(callback: String => Unit): Unit = innerActor ! OnMsg(callback)
+  override def send(msg: String): Unit = innerActor.foreach(_ ! SendMsg(msg))
+
+  override def onMessageReceived(callback: String => Unit): Unit = innerActor.foreach(_ ! OnMsg(callback))
 }
 
 

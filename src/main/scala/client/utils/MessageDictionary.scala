@@ -22,11 +22,13 @@ object MessageDictionary {
 
   case class JoinedRooms(joinedRooms: Set[ClientRoom])
 
-  case class RoomLeaved(roomId: RoomId)
+  case class ClientRoomLeaved(roomId: RoomId)
 
-  case class RoomResponse(room: Room)
+  case class ClientRoomJoined(room: ClientRoom)
 
-  case class RoomSequenceResponse(rooms: Seq[Room])
+  case class HttpRoomResponse(room: Room)
+
+  case class HttpRoomSequenceResponse(rooms: Seq[Room])
 
   case class FailResponse(ex: Throwable)
 
@@ -34,13 +36,13 @@ object MessageDictionary {
   //HttpClient
 
   /**
-   * Create a room and respond with [[RoomResponse]] on success or [[FailResponse]] on failure
+   * Create a room and respond with [[HttpRoomResponse]] on success or [[FailResponse]] on failure
    */
   case class HttpPostRoom(roomType: RoomType, roomOption: Set[RoomProperty])
 
 
   /**
-   * Get rooms and respond with [[RoomSequenceResponse]] or [[FailResponse]]  on failure
+   * Get rooms and respond with [[HttpRoomSequenceResponse]] or [[FailResponse]]  on failure
    */
   case class HttpGetRooms(roomType: RoomType, roomOption: FilterOptions)
 
@@ -66,6 +68,11 @@ object MessageDictionary {
 
 
   //ClientRoomActor
+
+  case class GetClientRoom(joined: Boolean)
+
+  case class ClientRoomResponse(clientRoom: ClientRoom)
+
   case class JoinRoom(webSocketUri: String)
 
   case class LeaveRoom()

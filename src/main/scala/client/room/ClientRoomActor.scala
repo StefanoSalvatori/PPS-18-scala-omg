@@ -9,15 +9,15 @@ import common.SharedRoom.RoomId
 import scala.util.{Failure, Success}
 
 object ClientRoomActor {
-  def apply(coreClient: ActorRef, serverUri: String, roomId: RoomId): Props =
-    Props(classOf[ClientRoomActor], coreClient, serverUri, roomId)
+  def apply(coreClient: ActorRef, serverUri: String, room: ClientRoom): Props =
+    Props(classOf[ClientRoomActor], coreClient, serverUri, room)
 }
 
 /**
  * Handles the connection with the server side room.
- * Notify the coreClient if a room was left
+ * Notify the coreClient if the associated room was left or joined
  */
-case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, roomId: RoomId) extends BasicActor {
+case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends BasicActor {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
   private var onMessageCallback: String => Unit = x => {}
 
@@ -26,6 +26,13 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, roomId: 
   def socketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = onSocketOpened(outRef, replyTo) orElse fallbackReceive
   def roomJoined(outRef: ActorRef): Receive = onRoomJoined(outRef) orElse fallbackReceive
 
+
+  def onReceive: Receive = {
+    case JoinRoom(roomId: RoomId) =>
+      coreClient ! ClientRoomJoined(room)//TODO: delete this
+      httpClient ! HttpSocketRequest(roomId)
+      context.become(waitSocketResponse(sender))
+  }
 
   def onWaitSocketResponse(replyTo: ActorRef): Receive = {
     case HttpSocketFail(code) => replyTo ! Failure(new Exception(code.toString))
@@ -41,6 +48,7 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, roomId: 
   def onSocketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
     case TextMessage.Strict("join ok") =>
       context.become(roomJoined(outRef))
+      coreClient ! ClientRoomJoined(room)
       replyTo ! Success()
     case TextMessage.Strict("join fail") =>
       replyTo ! Failure(new Exception("Can't join"))
@@ -55,7 +63,7 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, roomId: 
   def onRoomJoined(outRef: ActorRef): Receive = {
     case LeaveRoom() =>
       self ! SendMsg("leave")
-      coreClient ! RoomLeaved(roomId)
+      coreClient ! ClientRoomLeaved(room.roomId)
       context.become(receive)
     case SendMsg(msg) =>
       outRef ! msg
@@ -65,11 +73,7 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, roomId: 
     case OnMsg(callback) => onMessageCallback = callback
   }
 
-  def onReceive: Receive = {
-    case JoinRoom(roomId: RoomId) =>
-      httpClient ! HttpSocketRequest(roomId)
-      context.become(waitSocketResponse(sender))
-  }
+
 
 
 }

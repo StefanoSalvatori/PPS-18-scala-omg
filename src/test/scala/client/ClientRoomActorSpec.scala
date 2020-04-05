@@ -54,7 +54,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
 
     coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)
     val room = expectMsgType[Success[ClientRoom]]
-    clientRoomActor = system actorOf ClientRoomActor(coreClient, serverUri, room.value.roomId)
+    clientRoomActor = system actorOf ClientRoomActor(coreClient, serverUri, room.value)
 
   }
 
