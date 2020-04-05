@@ -24,17 +24,14 @@ trait RouteService {
 }
 
 object RouteService {
-  def apply()(implicit actorSystem:ActorSystem): RouteService = {
-    new RouteServiceImpl()
-  }
+  def apply(roomHandler: RoomHandler): RouteService = new RouteServiceImpl(roomHandler)
 
 }
 
 
-class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogging {
+class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteService with RoomJsonSupport with LazyLogging {
 
   private var roomTypes: Set[String] = Set.empty
-  private val roomHandler = RoomHandler()
 
   /**
    * rest api for rooms.
@@ -57,26 +54,23 @@ class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogg
     }
   }
 
-
   /**
    * Handle web socket connection on path /[[common.Routes#connectionRoute]]/{roomId}
    */
-  def webSocketRoute: Route =  pathPrefix(Routes.connectionRoute / Segment) { roomId =>
+  def webSocketRoute: Route = pathPrefix(Routes.connectionRoute / Segment) { roomId =>
     get {
-        this.roomHandler.handleClientConnection(roomId) match {
-          case Some(handler) =>  handleWebSocketMessages(handler)
-          case None => reject
-        }
+      this.roomHandler.handleClientConnection(roomId) match {
+        case Some(handler) => handleWebSocketMessages(handler)
+        case None => reject
       }
+    }
   }
-
-
 
 
   val route: Route = restHttpRoute ~ webSocketRoute
 
 
-  def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom): Unit = {
+  def addRouteForRoomType(roomTypeName: String, roomFactory: String => ServerRoom): Unit = {
     this.roomTypes = this.roomTypes + roomTypeName
     this.roomHandler.defineRoomType(roomTypeName, roomFactory)
   }
@@ -95,7 +89,6 @@ class RouteServiceImpl() extends RouteService with RoomJsonSupport with LazyLogg
         complete(rooms)
       }
     }
-
 
   /**
    * GET rooms/{type}

@@ -2,7 +2,7 @@ package common
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import common.SharedRoom.{Room, RoomId}
-import spray.json.{DefaultJsonProtocol, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
+import spray.json.{DefaultJsonProtocol, JsArray, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
 
 trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
@@ -54,6 +54,14 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   // Room property
   implicit val roomPropertyJsonFormat: RootJsonFormat[RoomProperty] = jsonFormat2(RoomProperty)
+  implicit val roomPropertySetJsonFormat: RootJsonFormat[Set[RoomProperty]] = new RootJsonFormat[Set[RoomProperty]] {
+    override def write(obj: Set[RoomProperty]): JsValue = obj.map(roomPropertyJsonFormat write).toJson
+
+    override def read(json: JsValue): Set[RoomProperty] = json match {
+      case JsArray(elements) => elements.map(_.convertTo[RoomProperty]).toSet
+      case _ => deserializationError("Room property set deserialization error")
+    }
+  }
 
   // Filter Strategy
   implicit val equalStrategyJsonFormat: RootJsonFormat[EqualStrategy] = createStrategyJsonFormat(EqualStrategy())

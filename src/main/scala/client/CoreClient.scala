@@ -116,7 +116,7 @@ class CoreClientImpl(private val serverUri: String) extends CoreClient with Room
    * If the given room was correctly join adds that room to the set of join rooms and reply success
    * else reply Failure
    */
-  private def tryJoinRoomAndReply(clientRoom: ClientRoom, replyTo: ActorRef) =
+  private def tryJoinRoomAndReply(clientRoom: ClientRoom, replyTo: ActorRef): Unit =
     clientRoom.join() onComplete {
       case Success(_) =>
         this.joinedRooms = this.joinedRooms + clientRoom

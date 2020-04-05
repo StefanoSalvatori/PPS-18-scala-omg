@@ -24,7 +24,7 @@ object Client {
    * @param actor the actor that will receive the messages
    * @return the client instance
    */
-  def fromActor(id: String, actor: ActorRef): Client = new ClientImpl(id, actor)
+  def asActor(id: String, actor: ActorRef): Client = new ClientImpl(id, actor)
 }
 
 /**

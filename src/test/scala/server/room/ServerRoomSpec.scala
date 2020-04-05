@@ -2,6 +2,7 @@ package server.room
 
 import java.util.UUID
 
+import common.communication.CommunicationProtocol.{Broadcast, RoomProtocolMessage, Tell}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -45,17 +46,17 @@ class ServerRoomSpec extends AnyWordSpecLike
       assert(serverRoom.connectedClients.isEmpty)
     }
 
-    "send specific messages to clients" in {
+    "send specific messages to clients using the room protocol" in {
       serverRoom.addClient(testClient)
       serverRoom.tell(testClient, "Hello")
-      testClient.lastMessagedReceived shouldBe Option("Hello")
+      testClient.lastMessagedReceived shouldBe Option(RoomProtocolMessage(Tell, "Hello"))
     }
 
-    "send broadcast messages to all clients connected" in {
+    "send broadcast messages to all clients connected using the room protocol" in {
       serverRoom.addClient(testClient2)
       serverRoom.broadcast("Hello Everybody")
-      testClient.lastMessagedReceived shouldBe Option("Hello Everybody")
-      testClient2.lastMessagedReceived shouldBe Option("Hello Everybody")
+      testClient.lastMessagedReceived shouldBe Option(RoomProtocolMessage(Broadcast, "Hello Everybody"))
+      testClient2.lastMessagedReceived shouldBe Option(RoomProtocolMessage(Broadcast, "Hello Everybody"))
     }
 
   }

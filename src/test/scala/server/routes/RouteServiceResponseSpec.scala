@@ -2,11 +2,13 @@ package server.routes
 
 import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.testkit.TestKit
 import common.RoomJsonSupport
 import common.SharedRoom.Room
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import server.RoomHandler
 import server.room.ServerRoom
 import server.route_service.RouteService
 
@@ -18,18 +20,22 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers with ScalatestR
 
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
-  private var routeService = RouteService()
+  private var routeService = RouteService(RoomHandler())
   private var route = routeService.route
 
 
   behavior of "Route Service routing with room handling"
 
   before {
-    routeService = RouteService()
+    routeService = RouteService(RoomHandler())
     route = routeService.route
 
     //define two room type for test
     routeService.addRouteForRoomType(TEST_ROOM_TYPE, ServerRoom(_))
+  }
+
+  override def afterAll(): Unit = {
+    TestKit.shutdownActorSystem(system)
   }
 
 
@@ -67,8 +73,6 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers with ScalatestR
       responseAs[Seq[Room]] should have size 2
     }
   }
-
-
 
 
   /*it should "return a room on GET request on path 'rooms/{type}/{id}' " in {

@@ -11,5 +11,5 @@ class ChatRoom(override val roomId: String) extends ServerRoom {
 
   override def onLeave(client: Client): Unit = this.broadcast(s"${client.id} Leaved")
 
-  override def onMessageReceived[M](client: Client, message: M): Unit = this.broadcast(message)
+  override def onMessageReceived[M](client: Client, message: M): Unit = this.broadcast(s"${client.id}: $message")
 }
