@@ -9,7 +9,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
 import common.SharedRoom.Room
-import common.{RoomJsonSupport, Routes, TestConfig}
+import common.{FilterOptions, HttpRequests, RoomJsonSupport, Routes, TestConfig}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -95,7 +95,7 @@ class GameServerSpec extends AnyFlatSpec
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
     assertThrows[Exception] {
-      Await.result(this.makeEmptyRequestAt(Routes.publicRooms), MAX_WAIT_REQUESTS)
+      Await.result(this.makeEmptyRequestAtRooms, MAX_WAIT_REQUESTS)
     }
   }
 
@@ -105,9 +105,9 @@ class GameServerSpec extends AnyFlatSpec
     }
   }
 
-  it should s"respond to requests received at ${Routes.publicRooms}" in {
+  it should s"respond to requests received at ${Routes.rooms}" in {
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    val response = Await.result(this.makeEmptyRequestAt(Routes.publicRooms), MAX_WAIT_REQUESTS)
+    val response = Await.result(this.makeEmptyRequestAtRooms, MAX_WAIT_REQUESTS)
     assert(response.status equals StatusCodes.OK)
     response.discardEntityBytes()
     Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
@@ -159,7 +159,7 @@ class GameServerSpec extends AnyFlatSpec
 
   it should "use the additional routes passed as parameter" in {
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    val response = Await.result(this.makeEmptyRequestAt(ADDITIONAL_PATH), MAX_WAIT_REQUESTS)
+    val response = Await.result(this.makeEmptyRequestAtPath(ADDITIONAL_PATH), MAX_WAIT_REQUESTS)
     response.status shouldBe StatusCodes.OK
     response.discardEntityBytes()
     Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
@@ -170,7 +170,7 @@ class GameServerSpec extends AnyFlatSpec
     this.server.defineRoom("test", ServerRoom(_))
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     this.server.createRoom("test")
-    val httpResult = Await.result(makeEmptyRequestAt(Routes.publicRooms), MAX_WAIT_REQUESTS)
+    val httpResult = Await.result(makeEmptyRequestAtRooms, MAX_WAIT_REQUESTS)
     val roomsList = Await.result(Unmarshal(httpResult).to[Seq[Room]], MAX_WAIT_REQUESTS)
     roomsList should have size 1
     Await.result(this.server.stop(), MAX_WAIT_SERVER_STARTUP)
@@ -180,11 +180,18 @@ class GameServerSpec extends AnyFlatSpec
 
 
   private def makeEmptyRequest(): Future[HttpResponse] = {
-    this.makeEmptyRequestAt("")
+    this.makeEmptyRequestAtRooms
   }
 
-  private def makeEmptyRequestAt(path: String): Future[HttpResponse] = {
-    Http().singleRequest(HttpRequest(uri = s"http://$HOST:$PORT/$path"))
+  private def makeEmptyRequestAtRooms: Future[HttpResponse] = {
+    Http().singleRequest(HttpRequests.getRooms(Routes.httpUri(HOST, PORT))(FilterOptions.empty))
   }
 
+  private def makeEmptyRequestAtRoomsWithType(roomType: String): Future[HttpResponse] = {
+    Http().singleRequest(HttpRequests.getRoomsByType(Routes.httpUri(HOST, PORT))(roomType, FilterOptions.empty))
+  }
+
+  private def makeEmptyRequestAtPath(path: String): Future[HttpResponse] = {
+    Http().singleRequest(HttpRequest(uri = Routes.httpUri(HOST,PORT) + "/" + path))
+  }
 }

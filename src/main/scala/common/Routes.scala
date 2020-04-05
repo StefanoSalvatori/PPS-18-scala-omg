@@ -6,14 +6,14 @@ import common.SharedRoom.{RoomId, RoomType}
 
 object Routes {
 
-  def publicRooms: String = "rooms"
+  def rooms: String = "rooms"
 
   /**
    * @return route name for web socket connection with a room
    */
   def connectionRoute: String = "connection"
 
-  def roomsByType(roomType: String): String = publicRooms + "/" + roomType
+  def roomsByType(roomType: String): String = rooms + "/" + roomType
 
   def roomByTypeAndId(roomType: String, roomId: String): String = roomsByType(roomType) + "/" + roomId
 

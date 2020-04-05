@@ -1,20 +1,34 @@
 package server.routes
 
-import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpRequest, MediaTypes}
+import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes}
 import akka.util.ByteString
-import common.{HttpRequests, RoomProperty, Routes}
+import common.SharedRoom.Room
+import common.{FilterOptions, HttpRequests, RoomJsonSupport, RoomProperty, Routes}
 
-trait RouteCommonTestOptions {
-  val TEST_ROOM_TYPE = "test-room"
-  val ROOMS: String = "/" + Routes.publicRooms
-  val ROOMS_WITH_TYPE: String = "/" + Routes.roomsByType(TEST_ROOM_TYPE)
-  val ROOMS_WITH_TYPE_AND_ID: String = "/" + Routes.roomByTypeAndId(TEST_ROOM_TYPE, "a0")
-  val TEST_ROOM_OPT_JSON: ByteString = ByteString("")
+trait RouteCommonTestOptions extends RoomJsonSupport {
+  val TestRoomType = "test-room"
+  val RoomWithType: String = "/" + Routes.roomsByType(TestRoomType)
+
+  def getRoomsWithEmptyFilters: HttpRequest = {
+    HttpRequests.getRooms("")(FilterOptions.empty)
+  }
+
+  def getRoomsByTypeWithFilters(filters: FilterOptions): HttpRequest = {
+    HttpRequests.getRoomsByType("")(TestRoomType, filters)
+  }
+
+  def postRoomWithProperties(properties: Set[RoomProperty]): HttpRequest = {
+    HttpRequests.postRoom("")(TestRoomType, properties)
+  }
 
 
-  def makeRequestWithEmptyPayload(method: HttpMethod)(uri: String): HttpRequest = HttpRequest(
-    uri = uri, method = method, entity = HttpEntity(MediaTypes.`application/json`, TEST_ROOM_OPT_JSON))
+  def getRoomsByTypeWithEmptyFilters: HttpRequest = {
+    getRoomsByTypeWithFilters(FilterOptions.empty)
+  }
 
-  def makePostWithProperties(roomProperties: Set[RoomProperty]): HttpRequest =
-    HttpRequests.postRoom("")(TEST_ROOM_TYPE, roomProperties)
+  def postRoomWithEmptyProperties: HttpRequest = {
+    postRoomWithProperties(Set.empty)
+  }
+
+
 }

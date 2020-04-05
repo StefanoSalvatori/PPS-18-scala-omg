@@ -66,8 +66,8 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
   }
 
   it should "create a new room on createRoom()" in {
-    this.roomHandler.defineRoomType(TEST_ROOM_TYPE, ServerRoom(_))
-    this.roomHandler.createRoom(TEST_ROOM_TYPE)
+    this.roomHandler.defineRoomType(TestRoomType, ServerRoom(_))
+    this.roomHandler.createRoom(TestRoomType)
     this.roomHandler.getAvailableRooms() should have size 1
   }
 
