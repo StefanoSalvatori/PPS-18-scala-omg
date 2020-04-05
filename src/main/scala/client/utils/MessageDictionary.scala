@@ -8,6 +8,8 @@ import common.SharedRoom.{Room, RoomId, RoomType}
 
 object MessageDictionary {
 
+  //CoreClient
+
   case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty])
 
   case class Join(roomType: RoomType, roomOption: FilterOptions)
@@ -20,7 +22,6 @@ object MessageDictionary {
 
   case class JoinedRooms(joinedRooms: Set[ClientRoom])
 
-
   case class RoomLeaved(roomId: RoomId)
 
   case class RoomResponse(room: Room)
@@ -29,20 +30,42 @@ object MessageDictionary {
 
   case class FailResponse(ex: Throwable)
 
+
+  //HttpClient
+
   /**
-   * Create a room and respond with RoomResponse(Room) or FailResponse on failure
+   * Create a room and respond with [[RoomResponse]] on success or [[FailResponse]] on failure
    */
   case class HttpPostRoom(roomType: RoomType, roomOption: Set[RoomProperty])
 
 
   /**
-   * Get rooms and respond with RoomSequenceResponse(Seq[Room]) or FailResponse on failure
+   * Get rooms and respond with [[RoomSequenceResponse]] or [[FailResponse]]  on failure
    */
   case class HttpGetRooms(roomType: RoomType, roomOption: FilterOptions)
 
-  case class HttpSocket(roomId: RoomId)
+  /**
+   * Perform a web socket request to open a connection to server side room with the gicen id.
+   * If the connection is successful respond with message [[HttpSocketSuccess]] otherwise [[HttpSocketFail]]
+   * @param roomId
+   */
+  case class HttpSocketRequest(roomId: RoomId)
+
+  /**
+   * Successful response of an [[HttpSocketRequest]].
+   * Contains an actor ref.
+   * @param outRef Sending messages to this actor means sending them in the socket
+   */
+  case class HttpSocketSuccess(outRef: ActorRef)
+
+  /**
+   * Failure response of an [[HttpSocketRequest]].
+   * @param cause what caused the failure
+   */
+  case class HttpSocketFail(cause: String)
 
 
+  //ClientRoomActor
   case class JoinRoom(webSocketUri: String)
 
   case class LeaveRoom()
@@ -51,11 +74,7 @@ object MessageDictionary {
 
   case class OnMsg(callback: String => Unit)
 
-  case class HttpSocketRequest(roomId: RoomId)
 
-  case class HttpSocketSuccess(outRef: ActorRef)
-
-  case class HttpSocketFail(cause: String)
 
   case class UnknownMessageReply()
 }

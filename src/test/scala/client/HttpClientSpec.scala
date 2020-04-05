@@ -49,14 +49,34 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
     "when asked to post a room, return the new room" in {
       httpTestActor ! HttpPostRoom(ROOM_TYPE_NAME, Set.empty)
-      val r = expectMsgType[RoomResponse]
-      assert(r.room.isInstanceOf[Room])
+
+      expectMsgPF() {
+        case RoomResponse(room) =>
+          assert(room.isInstanceOf[Room])
+        case FailResponse(_) =>
+      }
+
     }
 
     "when asked to get a rooms, return a set of rooms" in {
       httpTestActor ! HttpGetRooms(ROOM_TYPE_NAME, FilterOptions.empty())
-      val r = expectMsgType[RoomSequenceResponse]
-      assert(r.rooms.isInstanceOf[Seq[Room]])
+
+      expectMsgPF() {
+        case RoomSequenceResponse(rooms) =>  assert(rooms.isInstanceOf[Seq[Room]])
+        case FailResponse(_) =>
+      }
+    }
+
+    "when asked to open a web socket, return an actor ref related to that socket" in {
+      httpTestActor ! HttpGetRooms(ROOM_TYPE_NAME, FilterOptions.empty())
+      val room = expectMsgType[Room]
+
+      httpTestActor ! HttpSocketRequest(room.roomId)
+
+      expectMsgPF() {
+        case HttpSocketSuccess(ref) =>  assert(ref.isInstanceOf[ActorRef])
+        case HttpSocketFail(_) =>
+      }
     }
   }
 }

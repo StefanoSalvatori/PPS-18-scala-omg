@@ -75,60 +75,8 @@ case class ClientRoomImpl(innerActor: ActorRef, serverUri: String, roomId: RoomI
   override def onMessageReceived(callback: String => Unit): Unit = innerActor ! OnMsg(callback)
 }
 
-object ClientRoomActor {
-  def apply(coreClient: ActorRef, serverUri: String, roomId: RoomId): Props =
-    Props(classOf[ClientRoomActor], coreClient, serverUri, roomId)
-}
-
-case class ClientRoomActor(coreClient: ActorRef, serverUri: String, roomId: RoomId) extends BasicActor {
-  private val httpClient = context.system actorOf HttpClient(serverUri)
-  private var onMessageCallback: String => Unit = x => {}
-
-  def waitSocketResponse(replyTo: ActorRef): Receive = {
-    case HttpSocketFail(code) => replyTo ! Failure(new Exception(code.toString))
-    case HttpSocketSuccess(outRef) =>
-      /*context.become(socketOpened(outRef, replyTo))
-      self ! SendMsg("join")*/ //TODO: protocol join
-      replyTo ! Success()
-      context.become(roomJoined(outRef))
-
-    case OnMsg(callback) => onMessageCallback = callback
-  }
-
-  def socketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
-    case TextMessage.Strict("join ok") =>
-      context.become(roomJoined(outRef))
-      replyTo ! Success()
-    case TextMessage.Strict("join fail") =>
-      replyTo ! Failure(new Exception("Can't join"))
-
-    case TextMessage.Strict(_) =>
-      context.become(roomJoined(outRef))
-      replyTo ! Success()
-
-    case OnMsg(callback) => onMessageCallback = callback
-  }
-
-  def roomJoined(outRef: ActorRef): Receive = {
-    case LeaveRoom() =>
-      self ! SendMsg("leave")
-      coreClient ! RoomLeaved(roomId)
-      context.become(receive)
-    case SendMsg(msg) =>
-      outRef ! msg
-    case TextMessage.Strict(msg) =>
-      onMessageCallback(msg)
-
-    case OnMsg(callback) => onMessageCallback = callback
-  }
-
-  override def receive: Receive = {
-    case JoinRoom(roomId: RoomId) =>
-      httpClient ! HttpSocketRequest(roomId)
-      context.become(waitSocketResponse(sender))
 
 
-  }
-}
+
 
 

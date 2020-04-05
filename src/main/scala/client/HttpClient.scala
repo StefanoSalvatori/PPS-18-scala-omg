@@ -27,6 +27,10 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
 
   private val http = Http()
 
+  override def receive: Receive = onReceive orElse fallbackReceive
+
+  def waitSocketResponse(replyTo: ActorRef, outRef: ActorRef): Receive =
+    onWaitSocketResponse(replyTo, outRef) orElse fallbackReceive
 
   private val onReceive: Receive = {
 
@@ -85,10 +89,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
 
   }
 
-  override def receive: Receive = onReceive orElse fallbackReceive
 
-  def waitSocketResponse(replyTo: ActorRef, outRef: ActorRef): Receive =
-    onWaitSocketResponse(replyTo, outRef) orElse fallbackReceive
 }
 
 
