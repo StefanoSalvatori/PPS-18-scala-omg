@@ -1,50 +1,69 @@
 package common.communication
 
+import java.text.ParseException
+import java.util.UUID
+
 import akka.http.scaladsl.model.ws.TextMessage
 import common.communication.CommunicationProtocol._
 import org.scalatest.flatspec.AnyFlatSpec
+import ProtocolMessageType._
 
 class RoomProtocolSerializerSpec extends AnyFlatSpec {
+  private val separator = RoomProtocolSerializer.SEPARATOR
 
 
   behavior of "Room Protocol Serializer"
 
-  it should "map action codes to unique strings" in {
-    val uniqueValues = RoomProtocolSerializer.codeToString.values.toSet
-    assert(uniqueValues.size == RoomProtocolSerializer.codeToString.keys.size)
+  it should "assign unique string codes to protocol message types" in {
+    val messageTypes = ProtocolMessageType.values.toList
+    val stringCodes = messageTypes.map(t => RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(t)))
+    assert(stringCodes.size == stringCodes.toSet.size)
   }
 
-  it should s"write messages to sockets in the format 'action${RoomProtocolSerializer.COMMAND_SEPARATOR}payload'" in {
-    val messageToSend = RoomProtocolMessage(MessageRoom, "Hello")
+
+  it should s"write messages to sockets in the format 'code{separator}sessionId{separator}payload'" in {
+    val sessionId = UUID.randomUUID.toString
+    val messageToSend = RoomProtocolMessage(MessageRoom, sessionId, "Hello")
     val written = RoomProtocolSerializer.writeToSocket(messageToSend)
-    val expected =
-      TextMessage.Strict(RoomProtocolSerializer.codeToString(MessageRoom) + RoomProtocolSerializer.COMMAND_SEPARATOR + "Hello")
+    val expected = TextMessage.Strict(
+      MessageRoom.id.toString + separator + sessionId + separator + "Hello")
     assert(written == expected)
 
   }
 
-  it should "parse text messages with no payload received from a socket" in {
-    val messageToReceive = TextMessage.Strict(s"0${RoomProtocolSerializer.COMMAND_SEPARATOR}")
-    val expected = RoomProtocolMessage(RoomProtocolSerializer.stringToCode("0"))
+  it should "correctly parse text messages with no payload and no sessionId received from a socket" in {
+    val joinOkCode = JoinOk.id.toString
+    val messageToReceive = TextMessage.Strict(s"$joinOkCode$separator")
+    val expected = RoomProtocolMessage(JoinOk)
     assert(RoomProtocolSerializer.parseFromSocket(messageToReceive).get == expected)
 
   }
 
-  it should "parse text messages with payload received from a socket" in {
-    val messageToReceive = TextMessage.Strict(s"1${RoomProtocolSerializer.COMMAND_SEPARATOR}Payload")
-    val expected = RoomProtocolMessage(RoomProtocolSerializer.stringToCode("1"), "Payload")
+  it should "correctly parse text messages with payload and sessionId received from a socket" in {
+    val leaveRoomCode = LeaveRoom.id.toString
+    val sessionId = UUID.randomUUID.toString
+    val messageToReceive =
+      TextMessage.Strict(s"$leaveRoomCode$separator$sessionId${separator}Payload")
+    val expected = RoomProtocolMessage(LeaveRoom, sessionId, "Payload")
     assert(RoomProtocolSerializer.parseFromSocket(messageToReceive).get == expected)
-
   }
 
   it should "fail to parse malformed messages" in {
     val messageToReceive = TextMessage.Strict("foo")
-    assert(RoomProtocolSerializer.parseFromSocket(messageToReceive).isFailure)
+    val parseResult = RoomProtocolSerializer.parseFromSocket(messageToReceive)
+    assert(parseResult.isFailure)
+    assertThrows[ParseException] {
+      parseResult.get
+    }
   }
 
-  it should "fail to parse messages with an unknown type" in {
-    val messageToReceive = TextMessage.Strict(s"97${RoomProtocolSerializer.COMMAND_SEPARATOR}Payload")
-    assert(RoomProtocolSerializer.parseFromSocket(messageToReceive).isFailure)
+  it should "fail with NoSuchElementException parsing messages with an unknown type" in {
+    val messageToReceive = TextMessage.Strict(s"97${separator}Payload")
+    val parseResult = RoomProtocolSerializer.parseFromSocket(messageToReceive)
+    assert(parseResult.isFailure)
+    assertThrows[NoSuchElementException] {
+      parseResult.get
+    }
   }
 
 }

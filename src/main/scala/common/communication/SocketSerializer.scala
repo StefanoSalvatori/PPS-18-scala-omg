@@ -15,7 +15,7 @@ trait SocketSerializer[T] {
    * Parse an incoming message from a socket
    *
    * @param msg the msg to parse
-   * @return the corresponding [[common.communication.CommunicationProtocol.RoomProtocolMessage]]
+   * @return the corresponding class of Generic type [[T]]
    */
   def parseFromSocket(msg: Message): Try[T]
 

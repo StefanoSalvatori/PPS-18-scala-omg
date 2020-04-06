@@ -1,5 +1,7 @@
 package common
 
+case class R[T](name: String, value: T)
+
 case class RoomProperty(name: String, value: RoomPropertyValue) extends FilterStrategies
 
 object BasicRoomPropertyValueConversions {
