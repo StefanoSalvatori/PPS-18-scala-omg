@@ -60,11 +60,11 @@ object ChatRoomWithWebSockets extends App {
   System.exit(0)
 
   private def sendToRoom(message: String): Unit = {
-    this.queue.offer(RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(ProtocolMessageType.MessageRoom, message)))
+    this.queue.offer(RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(ProtocolMessageType.MessageRoom, message)))
   }
 
   private def joinRoom() = {
-    queue.offer(RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(ProtocolMessageType.JoinRoom)))
+    queue.offer(RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(ProtocolMessageType.JoinRoom)))
 
 
   }

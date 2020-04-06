@@ -59,13 +59,14 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
       }
 
     case HttpSocketRequest(roomId) =>
-      val sink: Sink[Message, NotUsed] = Sink.actorRef(sender, PartialFunction.empty, PartialFunction.empty)
+      val sink: Sink[Message, NotUsed] =
+        Sink.actorRef(sender, PartialFunction.empty, PartialFunction.empty)
 
       val (sourceRef, publisher) =
         Source.actorRef(
           PartialFunction.empty, PartialFunction.empty, Int.MaxValue, OverflowStrategy.dropTail)
-          .map(TextMessage.Strict)
           .toMat(Sink.asPublisher(false))(Keep.both).run()
+
       val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + Routes.webSocketConnection(roomId)
       val flow = Http() webSocketClientFlow (WebSocketRequest(wsSocketUri))
       val ((_, upgradeResponse), _) = Source.fromPublisher(publisher)

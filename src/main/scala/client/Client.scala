@@ -7,18 +7,18 @@ import client.utils.MessageDictionary._
 import common.SharedRoom.{RoomId, RoomType}
 import common.{FilterOptions, RoomProperty, Routes}
 
+import scala.concurrent
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
-
+import scala.util.{Failure, Success, Try}
 
 sealed trait Client {
 
   /**
    * Creates a new public room the join
    *
-   * @param roomType   type of room to create
+   * @param roomType       type of room to create
    * @param roomProperties options
    * @return a future with the joined room
    */
@@ -27,8 +27,8 @@ sealed trait Client {
   /**
    * Join an existing room or create a new one, by provided roomType and options
    *
-   * @param roomType   type of room to join
-   * @param filterOption options to filter rooms for join
+   * @param roomType       type of room to join
+   * @param filterOption   options to filter rooms for join
    * @param roomProperties property for room creation
    * @return a future with the joined room
    */
@@ -38,7 +38,7 @@ sealed trait Client {
    * Joins an existing room by provided roomType and options.
    * Fails if no room of such type exists
    *
-   * @param roomType   type of room to join
+   * @param roomType     type of room to join
    * @param filterOption filtering options
    * @return a future containing the joined room
    */
@@ -54,7 +54,7 @@ sealed trait Client {
 
 
   /**
-   * @param roomType type of room to get
+   * @param roomType      type of room to get
    * @param filterOptions options that will be used to filter the rooms
    * @return List all available rooms to connect of the given type
    */
@@ -81,23 +81,30 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   implicit val timeout: Timeout = requestTimeout seconds
 
-  private val serverUri = Routes.httpUri(serverAddress, serverPort)
+  private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
 
 
   private implicit val actorSystem: ActorSystem = ActorSystem()
   private implicit val executor = actorSystem.dispatcher
-  private val coreClient = actorSystem actorOf CoreClient(serverUri)
+  private val coreClient = actorSystem actorOf CoreClient(httpServerUri)
 
+  override def joinedRooms(): Set[ClientRoom] = {
+    Await.result(coreClient ? GetJoinedRooms, 5 seconds).asInstanceOf[JoinedRooms].joinedRooms
+  }
 
-  override def joinedRooms(): Set[ClientRoom] =
-    Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].joinedRooms
 
   override def shutdown(): Unit = this.actorSystem.terminate()
 
+
   override def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): Future[ClientRoom] = {
-    (coreClient ? CreatePublicRoom(roomType, roomProperties)) flatMap {
-      case Success(room) => Future.successful(room.asInstanceOf[ClientRoom])
-      case Failure(ex) => Future.failed(ex)
+    for {
+      room <- coreClient ? CreatePublicRoom(roomType, roomProperties)
+      clientRoomTry = room.asInstanceOf[Try[ClientRoom]]
+      if clientRoomTry.isSuccess
+      clientRoom = clientRoomTry.get
+      _ <- clientRoom.join()
+    } yield {
+      clientRoom
     }
   }
 
@@ -108,16 +115,26 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   }
 
   override def join(roomType: RoomType, roomOption: FilterOptions): Future[ClientRoom] =
-    (coreClient ? Join(roomType, roomOption)) flatMap {
-      case Success(room) => Future.successful(room.asInstanceOf[ClientRoom])
-      case Failure(ex) => Future.failed(ex)
+    for {
+      rooms <- getAvailableRoomsByType(roomType, roomOption)
+      if rooms.nonEmpty
+      toJoinRoom = rooms.head
+      _ <- toJoinRoom.join()
+    } yield {
+      toJoinRoom
     }
 
-  override def joinById(roomId: RoomId): Future[ClientRoom] =
-    (coreClient ? JoinById(roomId)) flatMap {
-      case Success(room) => Future.successful(room.asInstanceOf[ClientRoom])
-      case Failure(ex) => Future.failed(ex)
+
+  override def joinById(roomId: RoomId): Future[ClientRoom] = {
+    if (this.joinedRooms().exists(_.roomId == roomId)) {
+      Future.failed(new Exception("Room already joined"))
+    } else {
+      val clientRoom = ClientRoom(coreClient, httpServerUri, roomId)
+      clientRoom.join().map(_ => clientRoom)
     }
+
+
+  }
 
   override def getAvailableRoomsByType(roomType: String, filterOption: FilterOptions): Future[Seq[ClientRoom]] =
     (coreClient ? GetAvailableRooms(roomType, filterOption)) flatMap {

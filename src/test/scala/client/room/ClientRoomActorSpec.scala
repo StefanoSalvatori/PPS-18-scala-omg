@@ -1,11 +1,10 @@
-package client
+package client.room
 
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit}
-import client.room.{ClientRoom, ClientRoomActor}
+import client.CoreClient
 import client.utils.MessageDictionary.CreatePublicRoom
 import com.typesafe.config.ConfigFactory
 import common.{Routes, TestConfig}
@@ -57,5 +56,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
     clientRoomActor = system actorOf ClientRoomActor(coreClient, serverUri, room.value)
 
   }
+
+  //TODO: TEST
 
 }

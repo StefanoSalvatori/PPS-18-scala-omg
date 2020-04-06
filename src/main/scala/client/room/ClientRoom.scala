@@ -1,6 +1,6 @@
 package client.room
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
 import akka.util.Timeout
 import client.utils.MessageDictionary._
@@ -30,7 +30,7 @@ trait ClientRoom extends Room {
    *
    * @return success if this room can be left fail otherwise
    */
-  def leave(): Unit
+  def leave(): Future[Any]
 
   /**
    * Send a message to the server room
@@ -66,20 +66,45 @@ case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: R
   private implicit var innerActor: Option[ActorRef] = None
 
   override def join(): Future[Any] = {
-    val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
-    this.innerActor = Some(ref)
-    (ref ? JoinRoom(roomId)) flatMap {
+    val ref = this.spawnInnerActor()
+    (ref ? SendJoin(roomId)) flatMap {
       case Success(_) => Future.successful()
-      case Failure(ex) => Future.failed(ex)
+      case Failure(ex) =>
+        this.killInnerActor()
+        Future.failed(ex)
     }
   }
 
 
-  override def leave(): Unit = innerActor.foreach(_ ! LeaveRoom())
+  override def leave(): Future[Any] =
+    innerActor match {
+      case Some(value) =>
+        value ? SendLeave flatMap {
+          case Success(_) => Future.successful()
+          case Failure(ex) => Future.failed(ex)
+        }
+      case None => Future.failed(new Exception("You must join a room before leaving"))
+    }
 
-  override def send(msg: String): Unit = innerActor.foreach(_ ! SendMsg(msg))
+
+  override def send(msg: String): Unit =
+    innerActor.foreach(_ ! SendStrictMessage(msg))
 
   override def onMessageReceived(callback: String => Unit): Unit = innerActor.foreach(_ ! OnMsg(callback))
+
+  private def spawnInnerActor(): ActorRef = {
+    val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
+    this.innerActor = Some(ref)
+    ref
+  }
+
+  private def killInnerActor(): Unit = {
+    this.innerActor match {
+      case Some(value) => value ! PoisonPill
+    }
+  }
+
+
 }
 
 
