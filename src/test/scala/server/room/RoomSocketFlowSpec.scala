@@ -6,13 +6,13 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Sink, Source}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
-import common.communication.CommunicationProtocol.{JoinRoom, LeaveRoom, RoomProtocolMessage}
+import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.communication.RoomProtocolSerializer
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.room.socket.RoomSocketFlow
-
+import common.communication.CommunicationProtocol.ProtocolMessageType._
 import scala.concurrent.duration._
 import scala.concurrent.Await
 

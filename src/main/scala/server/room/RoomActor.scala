@@ -1,6 +1,7 @@
 package server.room
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, Props}
+import common.communication.CommunicationProtocol.ProtocolMessageType._
 
 object RoomActor {
   sealed trait RoomCommand
@@ -11,9 +12,7 @@ object RoomActor {
   case class Msg[T](client: Client, payload: T) extends RoomCommand
 
   sealed trait RoomResponse
-  case object JoinOk extends RoomResponse
   case object ClientLeaved extends RoomResponse
-  case object ClientNotAuthorized extends RoomResponse
 
   def apply(serverRoom: ServerRoom): Props = Props(classOf[RoomActor], serverRoom)
 
@@ -51,6 +50,7 @@ class RoomActor(private val serverRoom: ServerRoom) extends Actor with ActorLogg
       if (this.serverRoom.clientAuthorized(client)) {
         this.serverRoom.onMessageReceived(client, payload)
       } else {
+        client.send(ClientNotAuthorized)
         sender ! ClientNotAuthorized
       }
   }

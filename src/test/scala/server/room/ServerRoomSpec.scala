@@ -1,8 +1,8 @@
 package server.room
 
 import java.util.UUID
-
-import common.communication.CommunicationProtocol.{Broadcast, RoomProtocolMessage, Tell}
+import common.communication.CommunicationProtocol.ProtocolMessageType._
+import common.communication.CommunicationProtocol.RoomProtocolMessage
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}

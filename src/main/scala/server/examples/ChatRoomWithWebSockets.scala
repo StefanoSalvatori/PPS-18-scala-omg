@@ -2,17 +2,17 @@ package server.examples
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.ws.{Message, TextMessage, WebSocketRequest}
+import akka.http.scaladsl.model.ws.{Message, WebSocketRequest}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import client.Client
 import common.Routes
-import common.communication.{CommunicationProtocol, RoomProtocolSerializer}
-import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
+import common.communication.RoomProtocolSerializer
 import server.GameServer
 import server.examples.rooms.ChatRoom
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import scala.io.StdIn
 
 object ChatRoomWithWebSockets extends App {
@@ -60,11 +60,11 @@ object ChatRoomWithWebSockets extends App {
   System.exit(0)
 
   private def sendToRoom(message: String): Unit = {
-    this.queue.offer(RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(CommunicationProtocol.MessageRoom, message)))
+    this.queue.offer(RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(ProtocolMessageType.MessageRoom, message)))
   }
 
   private def joinRoom() = {
-    queue.offer(RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(CommunicationProtocol.JoinRoom)))
+    queue.offer(RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(ProtocolMessageType.JoinRoom)))
 
 
   }

@@ -7,7 +7,7 @@ import akka.actor.ActorRef
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.stream.{Materializer, OverflowStrategy}
-import common.communication.CommunicationProtocol.{JoinRoom, LeaveRoom, MessageRoom, RoomProtocolMessage}
+import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.communication.SocketSerializer
 import server.communication.SocketFlow
 import server.room.Client
@@ -46,9 +46,12 @@ case class RoomSocketFlow(private val roomActor: ActorRef,
     val sink: Sink[Message, Any] = Flow[Message]
       .map {
         this.parser.parseFromSocket(_) match {
-          case Success(RoomProtocolMessage(JoinRoom, _)) => roomActor ! Join(client)
-          case Success(RoomProtocolMessage(LeaveRoom, _)) => roomActor ! Leave(client)
-          case Success(RoomProtocolMessage(MessageRoom, payload)) => roomActor ! Msg(client, payload)
+          case Success(RoomProtocolMessage(ProtocolMessageType.JoinRoom, _, _)) =>
+            roomActor ! Join(client)
+          case Success(RoomProtocolMessage(ProtocolMessageType.LeaveRoom, _, _)) =>
+            roomActor ! Leave(client)
+          case Success(RoomProtocolMessage(ProtocolMessageType.MessageRoom, _, payload)) =>
+            roomActor ! Msg(client, payload)
         }
       }
       .to(Sink.onComplete(_ => {}))
