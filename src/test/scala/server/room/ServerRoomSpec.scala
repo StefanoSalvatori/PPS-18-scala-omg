@@ -49,14 +49,20 @@ class ServerRoomSpec extends AnyWordSpecLike
     "send specific messages to clients using the room protocol" in {
       serverRoom.addClient(testClient)
       serverRoom.tell(testClient, "Hello")
-      testClient.lastMessagedReceived shouldBe Option(RoomProtocolMessage(Tell, "Hello"))
+      val received = testClient.lastMessagedReceived.get.asInstanceOf[RoomProtocolMessage]
+      received.messageType shouldBe Tell
+      received.payload shouldBe "Hello"
     }
 
     "send broadcast messages to all clients connected using the room protocol" in {
       serverRoom.addClient(testClient2)
       serverRoom.broadcast("Hello Everybody")
-      testClient.lastMessagedReceived shouldBe Option(RoomProtocolMessage(Broadcast, "Hello Everybody"))
-      testClient2.lastMessagedReceived shouldBe Option(RoomProtocolMessage(Broadcast, "Hello Everybody"))
+      val receivedFrom1 = testClient.lastMessagedReceived.get.asInstanceOf[RoomProtocolMessage]
+      receivedFrom1.messageType shouldBe Broadcast
+      receivedFrom1.payload shouldBe "Hello Everybody"
+      val receivedFrom2 = testClient.lastMessagedReceived.get.asInstanceOf[RoomProtocolMessage]
+      receivedFrom2.messageType shouldBe Broadcast
+      receivedFrom2.payload shouldBe "Hello Everybody"
     }
 
   }
