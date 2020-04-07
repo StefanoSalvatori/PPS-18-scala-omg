@@ -2,7 +2,7 @@ package client.room
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
-import akka.util.Timeout
+import akka.util.{ByteString, Timeout}
 import client.utils.MessageDictionary._
 import common.Routes
 import common.SharedRoom.{Room, RoomId}
@@ -90,7 +90,9 @@ case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: R
   override def send(msg: String): Unit =
     innerActor.foreach(_ ! SendStrictMessage(msg))
 
-  override def onMessageReceived(callback: String => Unit): Unit = innerActor.foreach(_ ! OnMsg(callback))
+
+  override def onMessageReceived(callback: String => Unit): Unit =
+    innerActor.foreach(_ ! OnMsg(callback))
 
   private def spawnInnerActor(): ActorRef = {
     val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
