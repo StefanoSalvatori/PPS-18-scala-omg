@@ -125,17 +125,13 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       case None => Seq.empty
     }
 
-
   private def handleRoomCreation(roomType: String, roomProperties: Set[RoomProperty]): Room = {
     val roomMap = this.roomsByType(roomType)
     val roomFactory = this.roomTypesHandlers(roomType)
     val newRoom = roomFactory(generateUniqueRandomId())
     val newRoomActor = actorSystem actorOf RoomActor(newRoom)
-    newRoom setProperties roomProperties
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
-
-    println(newRoom)
-
+    newRoom setProperties roomProperties
     newRoom
   }
 

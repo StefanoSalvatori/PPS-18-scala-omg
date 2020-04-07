@@ -22,4 +22,15 @@ object FilterUsage extends App {
   println(short.options)
   println(filters.options)
   println(combined.options)
+
+  // Given a room, use its properties in filters
+  import common.SharedRoom._
+  class MyRoom(override val roomId: String) extends Room {
+    val a: Int = 3
+    val b: String = "svv"
+    val c: Boolean = true
+  }
+  val room = new MyRoom("id")
+
+  val filter = FilterOptions just room.propertyOf("a") > 1
 }

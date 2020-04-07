@@ -2,7 +2,7 @@ package server
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
-import common.{FilterOptions, IntRoomPropertyValue, RoomProperty, StringRoomPropertyValue}
+import common.{FilterOptions, RoomProperty}
 import common.SharedRoom.RoomId
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -27,8 +27,8 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
   }
   class MyRoom2(override val roomId: RoomId) extends ServerRoom() {
 
-    val a = 1
-    val b = "a"
+    val a: Int = 1
+    val b: String = "a"
 
     override def onCreate(): Unit = {}
     override def onClose(): Unit = {}

@@ -34,7 +34,5 @@ object GameServerCreation extends App {
 
   }
 
-  //gameServer defineRoom("test_room", id => ServerRoom(id))
-  import server.RoomProva
-  gameServer defineRoom("prova", id => RoomProva(id))
+  gameServer defineRoom("test_room", id => ServerRoom(id))
 }
