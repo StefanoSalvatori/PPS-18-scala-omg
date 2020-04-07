@@ -2,7 +2,7 @@ package client
 
 import akka.actor.ActorSystem
 import akka.pattern.ask
-import client.room.ClientRoom
+import client.room.{ClientRoom, ClientRoomImpl}
 import client.utils.MessageDictionary._
 import common.SharedRoom.{RoomId, RoomType}
 import common.{FilterOptions, RoomProperty, Routes}
@@ -107,12 +107,12 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       clientRoom
     }
   }
-
   override def joinOrCreate(roomType: RoomType, filterOption: FilterOptions, roomProperties: Set[RoomProperty]): Future[ClientRoom] = {
-    this.join(roomType, filterOption) fallbackTo {
-      this.createPublicRoom(roomType, roomProperties)
+    this.join(roomType, filterOption) recoverWith {
+      case _: Exception => this.createPublicRoom(roomType, roomProperties)
     }
   }
+
 
   override def join(roomType: RoomType, roomOption: FilterOptions): Future[ClientRoom] =
     for {
@@ -123,7 +123,6 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     } yield {
       toJoinRoom
     }
-
 
   override def joinById(roomId: RoomId): Future[ClientRoom] = {
     if (this.joinedRooms().exists(_.roomId == roomId)) {
