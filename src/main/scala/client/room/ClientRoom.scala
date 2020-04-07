@@ -1,24 +1,28 @@
 package client.room
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
+import akka.http.scaladsl.model.ws.TextMessage
 import akka.util.Timeout
+import client.utils.MessageDictionary._
 import common.Routes
 import common.SharedRoom.{Room, RoomId}
+import akka.pattern.ask
+import akka.pattern.pipe
+import client.{BasicActor, HttpClient}
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 trait ClientRoom extends Room {
 
-
-  val serverUri: String
 
   /**
    * Open web socket with server room and try to join
    *
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
-  def join(): Future[Unit]
+  def join(): Future[Any]
 
 
   /**
@@ -26,7 +30,7 @@ trait ClientRoom extends Room {
    *
    * @return success if this room can be left fail otherwise
    */
-  def leave(): Unit
+  def leave(): Future[Any]
 
   /**
    * Send a message to the server room
@@ -49,36 +53,60 @@ trait ClientRoom extends Room {
 }
 
 object ClientRoom {
-  def apply(serverUri: String, roomId: RoomId)(implicit actorSystem: ActorSystem): ClientRoom = ClientRoomImpl(serverUri, roomId)
+  def apply(coreClient: ActorRef, httpServerUri: String, roomId: RoomId)(implicit system: ActorSystem): ClientRoom =
+    ClientRoomImpl(coreClient, httpServerUri, roomId)
 
 }
 
-case class ClientRoomImpl(serverUri: String, roomId: RoomId)
-                         (implicit actorSystem: ActorSystem) extends ClientRoom {
+case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: RoomId)
+                         (implicit val system: ActorSystem)
+  extends ClientRoom {
   private implicit val timeout: Timeout = 5 seconds
-  private implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
-  private val roomSocket = RoomSocket(Routes.webSocketConnection(roomId))
+  private implicit val executionContext = ExecutionContext.global
+  private implicit var innerActor: Option[ActorRef] = None
 
-  override def join(): Future[Unit] = {
-    //open socket,
-    // if successful try to join
-    /*for {
-      _ <- roomSocket.openSocket()
-      _ <- roomSocket.sendJoin()
-    } yield { }*/
-
-    Future.successful()
+  override def join(): Future[Any] = {
+    val ref = this.spawnInnerActor()
+    (ref ? SendJoin(roomId)) flatMap {
+      case Success(_) => Future.successful()
+      case Failure(ex) =>
+        this.killInnerActor()
+        Future.failed(ex)
+    }
   }
 
-  //TODO: should we check if this room is joined?
-  override def leave(): Unit = this.roomSocket.sendLeave()
 
-  //TODO: should we check if this room is joined?
-  override def send(msg: String): Unit = this.roomSocket.sendMessage(msg)
+  override def leave(): Future[Any] =
+    innerActor match {
+      case Some(value) =>
+        value ? SendLeave flatMap {
+          case Success(_) => Future.successful()
+          case Failure(ex) => Future.failed(ex)
+        }
+      case None => Future.failed(new Exception("You must join a room before leaving"))
+    }
 
-  //TODO: should we check if this room is joined?
-  override def onMessageReceived(callback: String => Unit): Unit = this.roomSocket.onMessageReceived(callback)
+
+  override def send(msg: String): Unit =
+    innerActor.foreach(_ ! SendStrictMessage(msg))
+
+  override def onMessageReceived(callback: String => Unit): Unit = innerActor.foreach(_ ! OnMsg(callback))
+
+  private def spawnInnerActor(): ActorRef = {
+    val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
+    this.innerActor = Some(ref)
+    ref
+  }
+
+  private def killInnerActor(): Unit = {
+    this.innerActor match {
+      case Some(value) => value ! PoisonPill
+    }
+  }
+
+
 }
+
 
 
 

@@ -16,7 +16,7 @@ class RoomProtocolSerializerSpec extends AnyFlatSpec {
 
   it should "assign unique string codes to protocol message types" in {
     val messageTypes = ProtocolMessageType.values.toList
-    val stringCodes = messageTypes.map(t => RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(t)))
+    val stringCodes = messageTypes.map(t => RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(t)))
     assert(stringCodes.size == stringCodes.toSet.size)
   }
 
@@ -24,7 +24,7 @@ class RoomProtocolSerializerSpec extends AnyFlatSpec {
   it should s"write messages to sockets in the format 'code{separator}sessionId{separator}payload'" in {
     val sessionId = UUID.randomUUID.toString
     val messageToSend = RoomProtocolMessage(MessageRoom, sessionId, "Hello")
-    val written = RoomProtocolSerializer.writeToSocket(messageToSend)
+    val written = RoomProtocolSerializer.prepareToSocket(messageToSend)
     val expected = TextMessage.Strict(
       MessageRoom.id.toString + separator + sessionId + separator + "Hello")
     assert(written == expected)

@@ -24,7 +24,7 @@ object RoomProtocolSerializer extends SocketSerializer[RoomProtocolMessage] {
     case msg => Failure(new ParseException(msg.toString, -1))
   }
 
-  override def writeToSocket(msg: RoomProtocolMessage): Message = {
+  override def prepareToSocket(msg: RoomProtocolMessage): Message = {
     TextMessage.Strict(msg.messageType.id.toString + SEPARATOR + msg.sessionId + SEPARATOR + msg.payload)
   }
 

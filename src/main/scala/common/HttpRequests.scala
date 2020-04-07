@@ -11,6 +11,12 @@ object HttpRequests extends RoomJsonSupport {
   implicit private def payloadContentCreator[T](value: T)(implicit jsonFormatter: RootJsonFormat[T]): String =
     jsonFormatter write value toString
 
+
+  def getRooms(serverUri: String)(filterOptions: FilterOptions): HttpRequest = HttpRequest(
+    method = HttpMethods.GET,
+    uri = serverUri + "/" + Routes.rooms,
+    entity = HttpEntity(defaultContentType, filterOptions)
+  )
   def getRoomsByType(serverUri: String)(roomType: RoomType, filterOptions: FilterOptions): HttpRequest = HttpRequest(
     method = HttpMethods.GET,
     uri = serverUri + "/" + Routes.roomsByType(roomType),
@@ -23,7 +29,8 @@ object HttpRequests extends RoomJsonSupport {
     entity = HttpEntity(defaultContentType, properties)
   )
 
-  def postRoom(serverUri: String)(roomType: RoomType, properties: Set[RoomProperty]): HttpRequest = HttpRequest(
+  def postRoom(serverUri: String)(roomType: RoomType, properties: Set[RoomProperty]): HttpRequest =
+    HttpRequest(
     method = HttpMethods.POST,
     uri = serverUri + "/" + Routes.roomsByType(roomType),
     entity = HttpEntity(defaultContentType, properties)

@@ -44,7 +44,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
 
   "A RoomSocket" should {
     "forward room protocol messages from clients to room actors" in {
-      val joinMessage = Source.single(RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(JoinRoom)))
+      val joinMessage = Source.single(RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
       flow.runWith(joinMessage, Sink.ignore)
       flow.watchTermination()((_, f) => {
         Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)
@@ -54,8 +54,8 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
 
     "make sure that messages from the same socket are linked to the same client" in {
       val joinAndLeave = Source.fromIterator(() => Seq(
-        RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(JoinRoom)),
-        RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(LeaveRoom))
+        RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)),
+        RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(LeaveRoom))
       ).iterator)
       flow.runWith(joinAndLeave, Sink.ignore)
       flow.watchTermination()((_, f) => {
@@ -65,7 +65,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
     }
 
     "make sure that messages from different sockets are linked to different clients" in {
-      val join = Source.single(RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(JoinRoom)))
+      val join = Source.single(RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
       flow.runWith(join, Sink.ignore)
       flow.watchTermination()((_, f) => {
         Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)
@@ -73,7 +73,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
       })
 
       //Create a different client
-      val leave = Source.single(RoomProtocolSerializer.writeToSocket(RoomProtocolMessage(JoinRoom)))
+      val leave = Source.single(RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
       flow.runWith(leave, Sink.ignore)
       flow.watchTermination()((_, f) => {
         Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)

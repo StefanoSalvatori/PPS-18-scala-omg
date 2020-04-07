@@ -2,7 +2,8 @@ package server.route_service
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives.{complete, get, _}
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{Directive1, Route}
+import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
 import com.typesafe.scalalogging.LazyLogging
 import common.{FilterOptions, RoomJsonSupport, RoomProperty, Routes}
 import server.RoomHandler
@@ -36,7 +37,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
   /**
    * rest api for rooms.
    */
-  def restHttpRoute: Route = pathPrefix(Routes.publicRooms) {
+  def restHttpRoute: Route = pathPrefix(Routes.rooms) {
     pathEnd {
       getAllRoomsRoute
     } ~ pathPrefix(Segment) { roomType: String =>
@@ -83,10 +84,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
       entity(as[FilterOptions]) { filterOptions =>
         val rooms = this.roomHandler.getAvailableRooms(filterOptions)
         complete(rooms)
-      } ~ {
-        //if payload is not parsable as room options we just accept the request as with empty filter options
-        val rooms = this.roomHandler.getAvailableRooms()
-        complete(rooms)
       }
     }
 
@@ -97,10 +94,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
     get {
       entity(as[FilterOptions]) { filterOptions =>
         val rooms = this.roomHandler.getRoomsByType(roomType, filterOptions)
-        complete(rooms)
-      } ~ {
-        //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = this.roomHandler.getRoomsByType(roomType)
         complete(rooms)
       }
     }
@@ -114,10 +107,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
     post {
       entity(as[Set[RoomProperty]]) { roomProperties =>
         val room = this.roomHandler.createRoom(roomType, roomProperties)
-        complete(room)
-      } ~ {
-        //if payload is not parsable as room options we just accept the request as with empty room options
-        val room = this.roomHandler.createRoom(roomType)
         complete(room)
       }
     }
@@ -133,6 +122,8 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
         case None => reject //TODO: how to handle this? Wrong id in rooms/{type}/{id}
       }
     }
+
+
 
 
   /**

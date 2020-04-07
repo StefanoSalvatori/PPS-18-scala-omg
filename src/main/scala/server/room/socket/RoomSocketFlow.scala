@@ -36,7 +36,7 @@ case class RoomSocketFlow(private val roomActor: ActorRef,
       PartialFunction.empty,
       PartialFunction.empty,
       bufferSize, overflowStrategy)
-      .map(this.parser.writeToSocket)
+      .map(this.parser.prepareToSocket)
       .toMat(Sink.asPublisher(false))(Keep.both).run()
 
     //Link this socket to the client

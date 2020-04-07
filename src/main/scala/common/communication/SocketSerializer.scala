@@ -21,12 +21,12 @@ trait SocketSerializer[T] {
 
 
   /**
-   * Write a socket message in the socket
+   * Prepare the message to be sent through a socket
    *
    * @param msg the protocol message to write
    * @return the corresponding socket message
    */
-  def writeToSocket(msg: T): Message
+  def prepareToSocket(msg: T): Message
 
 }
 

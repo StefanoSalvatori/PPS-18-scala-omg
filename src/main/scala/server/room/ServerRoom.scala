@@ -18,6 +18,7 @@ trait ServerRoom extends Room {
    */
   def addClient(client: Client): Unit = {
     this.clients = client +: this.clients
+    client.send(RoomProtocolMessage(ProtocolMessageType.JoinOk, client.id))
     this.onJoin(client)
   }
 
