@@ -11,51 +11,54 @@ object SharedRoom {
     val state: T
   }
 
-  import java.lang.reflect.Field
   trait Room extends LazyLogging {
 
     val roomId: RoomId
 
-    /**
-     * Get a field of the room from its name
-     *
-     * @param fieldName the name of the room property
-     * @return the field representing such property
-     */
-    private def fieldFrom(fieldName: String): Field = {
-      this.getClass getDeclaredField fieldName
-    }
+    import java.lang.reflect.Field
+    def valueOf(filedName: String): Any =
+      operationOnField(filedName)(field => field get this)
 
-    def valueOf(fieldName: String): RoomPropertyValue = {
-      val field = this fieldFrom fieldName
-      field setAccessible true
-      val value = (field get this).asInstanceOf[RoomPropertyValue]
-      field setAccessible false
-      value
-    }
+    def `valueOf~AsProperty` (fieldName: String): RoomPropertyValue =
+      operationOnField(fieldName)(field => Room.valueToRoomPropertyValue(field get this))
 
-    def setProperties(properties: Set[RoomProperty]): Unit = properties.map(tupleFromProperty).foreach(property => {
+    def setProperties(properties: Set[RoomProperty]): Unit = properties.map(Room.tupleFromProperty).foreach(property => {
       try {
-        val field = this fieldFrom property._1
-        field setAccessible true
-        field set(this, property._2)
-        field setAccessible false
+        operationOnField(property._1)(f => f set (this, property._2))
       } catch {
         case _: NoSuchFieldException =>
-          logger debug s"Impossible to set property: No such property ${property._1} in the room."
+          logger debug s"Impossible to set property '${property._1}': No such property in the room."
       }
     })
 
-    private def tupleFromProperty[_](property: RoomProperty): (String, _) = (property.name, property.value match {
-      case _: IntRoomPropertyValue => property.value.asInstanceOf[IntRoomPropertyValue].value
-      case _: StringRoomPropertyValue => property.value.asInstanceOf[StringRoomPropertyValue].value
-      case _: BooleanRoomPropertyValue => property.value.asInstanceOf[BooleanRoomPropertyValue].value
-    })
+    private def operationOnField[T](fieldName: String)(f: Field => T): T = {
+      val field = this fieldFrom fieldName
+      field setAccessible true
+      val result = f(field)
+      field setAccessible false
+      result
+    }
+
+    private def fieldFrom(fieldName: String): Field = {
+      this.getClass getDeclaredField fieldName
+    }
   }
 
   object Room {
     def apply(id: RoomId): Room = new Room {
       override val roomId: RoomId = id
+    }
+
+    def tupleFromProperty[_](property: RoomProperty): (String, _) = (property.name, property.value match {
+      case _: IntRoomPropertyValue => property.value.asInstanceOf[IntRoomPropertyValue].value
+      case _: StringRoomPropertyValue => property.value.asInstanceOf[StringRoomPropertyValue].value
+      case _: BooleanRoomPropertyValue => property.value.asInstanceOf[BooleanRoomPropertyValue].value
+    })
+
+    def valueToRoomPropertyValue[T](value: T): RoomPropertyValue = value match {
+      case v: Int => IntRoomPropertyValue(v)
+      case v: String => StringRoomPropertyValue(v)
+      case v: Boolean => BooleanRoomPropertyValue(v)
     }
   }
 }

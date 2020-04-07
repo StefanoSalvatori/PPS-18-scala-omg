@@ -83,7 +83,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       // Given a room, check if such room satisfies all filter constraints
       filterOptions.options forall { filterOption =>
         try {
-          val propertyValue = room valueOf filterOption.optionName
+          val propertyValue = room `valueOf~AsProperty` filterOption.optionName
           val filterValue = filterOption.value.asInstanceOf[propertyValue.type]
           filterOption.strategy evaluate(propertyValue, filterValue)
         } catch {
@@ -131,7 +131,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     val roomFactory = this.roomTypesHandlers(roomType)
     val newRoom = roomFactory(generateUniqueRandomId())
     val newRoomActor = actorSystem actorOf RoomActor(newRoom)
-//    newRoom setProperties roomProperties
+    newRoom setProperties roomProperties
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
 
     println(newRoom)

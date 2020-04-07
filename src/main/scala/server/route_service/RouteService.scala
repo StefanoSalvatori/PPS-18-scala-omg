@@ -5,6 +5,7 @@ import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
 import com.typesafe.scalalogging.LazyLogging
+import common.SharedRoom.Room
 import common.{FilterOptions, RoomJsonSupport, RoomProperty, Routes}
 import server.RoomHandler
 import server.room.ServerRoom
