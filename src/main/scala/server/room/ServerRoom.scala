@@ -5,8 +5,9 @@ import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProt
 
 trait Server
 
-
 trait ServerRoom extends Room {
+
+  private var password: String = ""
 
   private var clients: Seq[Client] = Seq.empty
   this.onCreate()
@@ -105,8 +106,6 @@ trait ServerRoom extends Room {
    * @tparam M the type of the message
    */
   def onMessageReceived[M](client: Client, message: M)
-
-
 }
 
 object ServerRoom {
