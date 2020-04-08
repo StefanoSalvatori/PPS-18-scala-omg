@@ -2,12 +2,12 @@ package server
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
-import common.{FilterOptions, RoomProperty}
-import common.SharedRoom.RoomId
+import common.room.SharedRoom.RoomId
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import server.room.{Client, ServerRoom}
-import common.BasicRoomPropertyValueConversions._
+import common.room.BasicRoomPropertyValueConversions._
+import common.room.{FilterOptions, RoomProperty}
 import org.scalatest.BeforeAndAfter
 import server.routes.RouteCommonTestOptions
 
@@ -15,9 +15,9 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
 
   class MyRoom(override val roomId: RoomId) extends ServerRoom() {
 
-    val a: Int = 1
-    val b: String = "a"
-    val c: Boolean = true
+    var a: Int = 1
+    var b: String = "a"
+    var c: Boolean = true
 
     override def onCreate(): Unit = {}
     override def onClose(): Unit = {}
@@ -107,7 +107,7 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     filteredRooms2 should have size 1
   }
 
-  "Correct filter strategies " must "be applied to rooms' properties" in {
+  "Correct filter strategies" must "be applied to rooms' properties" in {
     val testProperty = RoomProperty("a", 1)
     val testProperty2 = RoomProperty("b", "a")
     val testProperty3 = RoomProperty("c", true)

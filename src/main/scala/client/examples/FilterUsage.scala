@@ -1,15 +1,15 @@
 package client.examples
 
+import common.room
+
 object FilterUsage extends App {
 
   // Filters on basic room option values: Int, String, Boolean
-  import common.BasicRoomPropertyValueConversions._ // Implicit conversions Int -> IntRoomPropertyValue etc.
-  import common.RoomProperty
-  val prop1 = RoomProperty("A", 3) // Int room option
-  val prop2 = RoomProperty("B", "svv") // String room option
-  val prop3 = RoomProperty("C", true) // Boolean room option
-
-  import common.FilterOptions
+  import common.room.BasicRoomPropertyValueConversions._
+  import common.room.{FilterOptions, RoomProperty} // Implicit conversions Int -> IntRoomPropertyValue etc.
+  val prop1 = room.RoomProperty("A", 3) // Int room option
+  val prop2 = room.RoomProperty("B", "svv") // String room option
+  val prop3 = room.RoomProperty("C", true) // Boolean room option
   // Create simple filter option
   val simple = prop1 =!= 2
   // Create filter options, i.e. concatenation of clauses
@@ -24,6 +24,7 @@ object FilterUsage extends App {
   println(combined.options)
 
   // Given a room, use its properties in filters
+  /*
   import common.SharedRoom._
   class MyRoom(override val roomId: String) extends Room {
     val a: Int = 3
@@ -33,4 +34,5 @@ object FilterUsage extends App {
   val room = new MyRoom("id")
 
   val filter = FilterOptions just room.propertyOf("a") > 1
+  */
 }

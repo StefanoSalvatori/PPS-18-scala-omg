@@ -3,7 +3,8 @@ package common
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import common.BasicRoomPropertyValueConversions._
+import common.room.BasicRoomPropertyValueConversions._
+import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, EqualStrategy, FilterOptions, GreaterStrategy, IntRoomPropertyValue, LowerStrategy, NotEqualStrategy, RoomJsonSupport, RoomProperty, StringRoomPropertyValue}
 import spray.json.RootJsonFormat
 
 class JsonSerializationSpec extends AnyFlatSpec with Matchers with BeforeAndAfter with RoomJsonSupport {

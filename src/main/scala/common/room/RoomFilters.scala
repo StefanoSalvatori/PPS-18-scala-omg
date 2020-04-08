@@ -1,4 +1,4 @@
-package common
+package common.room
 
 trait FilterStrategy {
   protected def basicStrategy(x: RoomPropertyValue, y: RoomPropertyValue): Int = x compare y.asInstanceOf[x.type]

@@ -8,7 +8,8 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import client.room.{ClientRoom, ClientRoomActor}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
-import common.{FilterOptions, Routes, TestConfig}
+import common.TestConfig
+import common.http.Routes
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}

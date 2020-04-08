@@ -4,14 +4,16 @@ import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCode
 import akka.http.scaladsl.model.ws.Message
 import client.room.ClientRoom
-import common.{FilterOptions, RoomProperty}
-import common.SharedRoom.{Room, RoomId, RoomType}
+import common.room.SharedRoom.{Room, RoomId, RoomPassword, RoomType}
+import common.room.{FilterOptions, RoomProperty}
 
 object MessageDictionary {
 
   //CoreClient
 
   case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty])
+
+  case class CreatePrivateRoom(roomType: RoomType, roomOption: Set[RoomProperty], password: RoomPassword)
 
   case class GetAvailableRooms(roomType: RoomType, roomOption: FilterOptions)
 

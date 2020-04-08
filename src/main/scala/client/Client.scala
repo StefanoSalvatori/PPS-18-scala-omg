@@ -4,12 +4,12 @@ import akka.actor.ActorSystem
 import akka.pattern.ask
 import client.room.ClientRoom
 import client.utils.MessageDictionary._
-import common.SharedRoom.{RoomId, RoomType}
-import common.{FilterOptions, RoomProperty, Routes}
+import common.http.Routes
+import common.room.SharedRoom.{RoomId, RoomPassword, RoomType}
+import common.room.{FilterOptions, RoomProperty}
 
-import scala.concurrent
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
@@ -23,6 +23,14 @@ sealed trait Client {
    * @return a future with the joined room
    */
   def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): Future[ClientRoom]
+
+  /**
+   * Create a private room.
+   * @param roomType type of the room to create
+   * @param roomProperties room options to set as starting ones
+   * @param password password required for clients to join the room
+   */
+  def createPrivateRoom(roomType: RoomType, roomProperties: Set[RoomProperty], password: RoomPassword): Future[ClientRoom]
 
   /**
    * Join an existing room or create a new one, by provided roomType and options
@@ -85,20 +93,30 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
 
   private implicit val actorSystem: ActorSystem = ActorSystem()
-  private implicit val executor = actorSystem.dispatcher
+  private implicit val executor: ExecutionContextExecutor = actorSystem.dispatcher
   private val coreClient = actorSystem actorOf CoreClient(httpServerUri)
 
   override def joinedRooms(): Set[ClientRoom] = {
     Await.result(coreClient ? GetJoinedRooms, 5 seconds).asInstanceOf[JoinedRooms].joinedRooms
   }
 
-
   override def shutdown(): Unit = this.actorSystem.terminate()
-
 
   override def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): Future[ClientRoom] = {
     for {
       room <- coreClient ? CreatePublicRoom(roomType, roomProperties)
+      clientRoomTry = room.asInstanceOf[Try[ClientRoom]]
+      if clientRoomTry.isSuccess
+      clientRoom = clientRoomTry.get
+      _ <- clientRoom.join()
+    } yield {
+      clientRoom
+    }
+  }
+
+  override def createPrivateRoom(roomType: RoomType, roomProperties: Set[RoomProperty], password: RoomPassword): Future[ClientRoom] = {
+    for {
+      room <- coreClient ? CreatePrivateRoom(roomType, roomProperties, password)
       clientRoomTry = room.asInstanceOf[Try[ClientRoom]]
       if clientRoomTry.isSuccess
       clientRoom = clientRoomTry.get

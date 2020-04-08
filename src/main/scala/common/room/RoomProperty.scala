@@ -1,4 +1,4 @@
-package common
+package common.room
 
 case class RoomProperty(name: String, value: RoomPropertyValue) extends FilterStrategies
 

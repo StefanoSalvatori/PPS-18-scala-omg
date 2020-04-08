@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.model.ws.Message
 import client.utils.MessageDictionary._
 import client.{BasicActor, HttpClient}
-import common.SharedRoom.RoomId
+import common.room.SharedRoom.RoomId
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.communication.{RoomProtocolSerializer, SocketSerializer}

@@ -8,8 +8,10 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
-import common.SharedRoom.Room
-import common.{FilterOptions, HttpRequests, RoomJsonSupport, Routes, TestConfig}
+import common.http.{HttpRequests, Routes}
+import common.room.SharedRoom.Room
+import common.room.{FilterOptions, RoomJsonSupport}
+import common.TestConfig
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

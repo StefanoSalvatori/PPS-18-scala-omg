@@ -5,9 +5,10 @@ import java.util.UUID
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
-import common.SharedRoom.{Room, RoomId}
+import common.room.SharedRoom.{Room, RoomId}
 import common.communication.RoomProtocolSerializer
-import common.{FilterOptions, RoomProperty}
+import common.room.{FilterOptions, RoomProperty}
+import common.room.StringRoomPropertyValue
 import server.room.socket.RoomSocketFlow
 import server.room.{RoomActor, ServerRoom}
 
@@ -76,7 +77,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
 
   //type1 ->  (id->roomActor1), (id2, roomActor2) ...
   //type2 -> (id->roomActor3), (id2, roomActor4) ...
-  var roomsByType: Map[String, Map[Room, ActorRef]] = Map.empty
+  var roomsByType: Map[String, Map[ServerRoom, ActorRef]] = Map.empty
 
   override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[Room] =
     roomsByType.values.flatMap(_ keys).filter(room =>
@@ -131,7 +132,16 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     val newRoom = roomFactory(generateUniqueRandomId())
     val newRoomActor = actorSystem actorOf RoomActor(newRoom)
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
-    newRoom setProperties roomProperties
+    if (roomProperties.map(_ name) contains Room.roomPasswordPropertyName) {
+      val splitProperties = roomProperties.groupBy(_.name == Room.roomPasswordPropertyName)
+      val password = splitProperties(true)
+      val properties = splitProperties(false)
+      println(password + " " + properties)
+      newRoom setProperties properties
+      newRoom makePrivate password.map(_.value).head.asInstanceOf[StringRoomPropertyValue].value
+    } else {
+      newRoom setProperties roomProperties
+    }
     newRoom
   }
 

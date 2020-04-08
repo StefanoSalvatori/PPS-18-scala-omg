@@ -2,8 +2,10 @@ package server.routes
 
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.testkit.TestKit
-import common.SharedRoom.Room
+import common.room.SharedRoom.Room
 import common._
+import common.http.{HttpRequests, Routes}
+import common.room.{FilterOptions, IntRoomPropertyValue, RoomJsonSupport, RoomProperty}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -11,8 +13,7 @@ import server.RoomHandler
 import server.room.ServerRoom
 import server.route_service.RouteService
 // Filters on basic room option values: Int, String, Boolean
-import common.BasicRoomPropertyValueConversions._
-import common.RoomProperty
+import common.room.BasicRoomPropertyValueConversions._
 
 import scala.concurrent.ExecutionContextExecutor
 
