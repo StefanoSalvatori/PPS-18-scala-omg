@@ -8,13 +8,11 @@ import common.communication.CommunicationProtocol._
 import scala.util.{Failure, Success, Try}
 
 /**
- * A simple object that can write and read room protocol messages.
+ * A simple object that can write and read room protocol messages as text strings.
  * <br>
  * It handles them as text strings in the form <em>action{separator}sessionId{separator}payload</em>
  */
-object RoomProtocolSerializer extends SocketSerializer[RoomProtocolMessage] {
-
-  import ProtocolMessageType._
+object TextProtocolSerializer extends SocketSerializer[RoomProtocolMessage] {
   val SEPARATOR = ":"
   private val ProtocolFieldsCount = 3
 
@@ -31,9 +29,8 @@ object RoomProtocolSerializer extends SocketSerializer[RoomProtocolMessage] {
   private def parseMessage(msg: String): Try[RoomProtocolMessage] = {
     try {
       msg.split(SEPARATOR, ProtocolFieldsCount).toList match {
-        case List(code) => Success(RoomProtocolMessage(ProtocolMessageType(code.toInt)))
-        case List(code, sessionId) => Success(RoomProtocolMessage(ProtocolMessageType(code.toInt), sessionId))
-        case List(code, sessionId, payload) => Success(RoomProtocolMessage(ProtocolMessageType(code.toInt), sessionId, payload))
+        case List(code, sessionId, payload) =>
+          Success(RoomProtocolMessage(ProtocolMessageType(code.toInt), sessionId, payload))
       }
     } catch {
       case e: NoSuchElementException => Failure(e)

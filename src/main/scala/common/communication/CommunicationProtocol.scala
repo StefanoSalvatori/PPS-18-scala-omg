@@ -18,9 +18,8 @@ object CommunicationProtocol {
     val ClientNotAuthorized: ProtocolMessageType = Value(4) // scalastyle:ignore magic.number
     val Broadcast: ProtocolMessageType = Value(5) // scalastyle:ignore magic.number
     val Tell: ProtocolMessageType = Value(6) // scalastyle:ignore magic.number
-
+    val StateUpdate: ProtocolMessageType = Value(7) // scalastyle:ignore magic.number
   }
-
 
   /**
    * The message that clients and rooms will send through the socket
@@ -29,7 +28,8 @@ object CommunicationProtocol {
    * @param payload     an optional payload
    */
   //TODO: generify this functions so that we can also pass different type of payloads other than strings
-  case class RoomProtocolMessage(messageType: ProtocolMessageType, sessionId: String = "", payload: String = "")
-
+  @SerialVersionUID(1234L) // scalastyle:ignore magic.number
+  case class RoomProtocolMessage(messageType: ProtocolMessageType, sessionId: String = "", payload: java.io.Serializable = "")
+    extends java.io.Serializable
 }
 

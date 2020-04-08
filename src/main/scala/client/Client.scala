@@ -9,7 +9,7 @@ import common.{FilterOptions, RoomProperty, Routes}
 
 import scala.concurrent
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
@@ -85,7 +85,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
 
   private implicit val actorSystem: ActorSystem = ActorSystem()
-  private implicit val executor = actorSystem.dispatcher
+  private implicit val executor: ExecutionContextExecutor = actorSystem.dispatcher
   private val coreClient = actorSystem actorOf CoreClient(httpServerUri)
 
   override def joinedRooms(): Set[ClientRoom] = {
@@ -109,8 +109,8 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   }
 
   override def joinOrCreate(roomType: RoomType, filterOption: FilterOptions, roomProperties: Set[RoomProperty]): Future[ClientRoom] = {
-    this.join(roomType, filterOption) fallbackTo {
-      this.createPublicRoom(roomType, roomProperties)
+    this.join(roomType, filterOption) recoverWith {
+      case _: Exception => this.createPublicRoom(roomType, roomProperties)
     }
   }
 

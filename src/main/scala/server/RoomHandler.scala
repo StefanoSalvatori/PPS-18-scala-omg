@@ -3,10 +3,10 @@ package server
 import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.http.scaladsl.model.ws.{Message, TextMessage}
+import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
 import common.SharedRoom.{Room, RoomId}
-import common.communication.RoomProtocolSerializer
+import common.communication.BinaryProtocolSerializer
 import common.{FilterOptions, RoomProperty, RoomPropertyValue}
 import server.room.socket.RoomSocketFlow
 import server.room.{RoomActor, ServerRoom}
@@ -117,14 +117,14 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
 
   /**
    * Creates the socket flow from the client to the room. Messages received from the socket are parsed with
-   * a [[common.communication.RoomProtocolSerializer]] so they must be [[common.communication.CommunicationProtocol.RoomProtocolMessage]]
+   * a [[common.communication.TextProtocolSerializer]] so they must be [[common.communication.CommunicationProtocol.RoomProtocolMessage]]
    *
    * @param roomId the id of the room the client connects to
    * @return the connection handler if such room id exists
    */
   override def handleClientConnection(roomId: RoomId): Option[Flow[Message, Message, Any]] = {
     this.roomsByType.flatMap(_._2).find(_._1.roomId == roomId)
-      .map(option => RoomSocketFlow(option._2, RoomProtocolSerializer).createFlow())
+      .map(option => RoomSocketFlow(option._2, BinaryProtocolSerializer).createFlow())
   }
 
   override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[Room] =
@@ -138,6 +138,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     val roomMap = this.roomsByType(roomType)
     val roomFactory = this.roomTypesHandlers(roomType)
     val newRoom = roomFactory(generateUniqueRandomId())
+    println(newRoom)
     val newRoomActor = actorSystem actorOf RoomActor(newRoom)
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
     newRoom

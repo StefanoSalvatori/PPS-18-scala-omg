@@ -8,7 +8,7 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import client.Client
 import common.Routes
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
-import common.communication.RoomProtocolSerializer
+import common.communication.TextProtocolSerializer
 import server.GameServer
 import server.examples.rooms.ChatRoom
 
@@ -37,7 +37,7 @@ object ChatRoomWithWebSockets extends App {
   val queue = Source.queue[Message](Int.MaxValue, OverflowStrategy.dropTail)
     .viaMat(webSocketFlow)(Keep.left)
     .toMat(Sink.foreach(msg => {
-      val protocolReceived = RoomProtocolSerializer.parseFromSocket(msg)
+      val protocolReceived = TextProtocolSerializer.parseFromSocket(msg)
       if (protocolReceived.isSuccess) {
         println(protocolReceived.get.payload)
       } else {
@@ -60,11 +60,11 @@ object ChatRoomWithWebSockets extends App {
   System.exit(0)
 
   private def sendToRoom(message: String): Unit = {
-    this.queue.offer(RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(ProtocolMessageType.MessageRoom, message)))
+    this.queue.offer(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(ProtocolMessageType.MessageRoom, message)))
   }
 
   private def joinRoom() = {
-    queue.offer(RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(ProtocolMessageType.JoinRoom)))
+    queue.offer(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(ProtocolMessageType.JoinRoom)))
 
 
   }

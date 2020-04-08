@@ -8,15 +8,17 @@ import common.communication.CommunicationProtocol._
 import org.scalatest.flatspec.AnyFlatSpec
 import ProtocolMessageType._
 
-class RoomProtocolSerializerSpec extends AnyFlatSpec {
-  private val separator = RoomProtocolSerializer.SEPARATOR
+class TextProtocolSerializerSpec extends AnyFlatSpec {
+
+  private val serializer: TextProtocolSerializer.type = TextProtocolSerializer
+  private val separator = serializer.SEPARATOR
 
 
-  behavior of "Room Protocol Serializer"
+  behavior of "Room Protocol Text Serializer"
 
   it should "assign unique string codes to protocol message types" in {
     val messageTypes = ProtocolMessageType.values.toList
-    val stringCodes = messageTypes.map(t => RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(t)))
+    val stringCodes = messageTypes.map(t => serializer.prepareToSocket(RoomProtocolMessage(t)))
     assert(stringCodes.size == stringCodes.toSet.size)
   }
 
@@ -24,7 +26,7 @@ class RoomProtocolSerializerSpec extends AnyFlatSpec {
   it should s"write messages to sockets in the format 'code{separator}sessionId{separator}payload'" in {
     val sessionId = UUID.randomUUID.toString
     val messageToSend = RoomProtocolMessage(MessageRoom, sessionId, "Hello")
-    val written = RoomProtocolSerializer.prepareToSocket(messageToSend)
+    val written = serializer.prepareToSocket(messageToSend)
     val expected = TextMessage.Strict(
       MessageRoom.id.toString + separator + sessionId + separator + "Hello")
     assert(written == expected)
@@ -33,9 +35,9 @@ class RoomProtocolSerializerSpec extends AnyFlatSpec {
 
   it should "correctly parse text messages with no payload and no sessionId received from a socket" in {
     val joinOkCode = JoinOk.id.toString
-    val messageToReceive = TextMessage.Strict(s"$joinOkCode$separator")
+    val messageToReceive = TextMessage.Strict(s"$joinOkCode$separator$separator")
     val expected = RoomProtocolMessage(JoinOk)
-    assert(RoomProtocolSerializer.parseFromSocket(messageToReceive).get == expected)
+    assert(serializer.parseFromSocket(messageToReceive).get == expected)
 
   }
 
@@ -45,12 +47,12 @@ class RoomProtocolSerializerSpec extends AnyFlatSpec {
     val messageToReceive =
       TextMessage.Strict(s"$leaveRoomCode$separator$sessionId${separator}Payload")
     val expected = RoomProtocolMessage(LeaveRoom, sessionId, "Payload")
-    assert(RoomProtocolSerializer.parseFromSocket(messageToReceive).get == expected)
+    assert(serializer.parseFromSocket(messageToReceive).get == expected)
   }
 
   it should "fail to parse malformed messages" in {
     val messageToReceive = TextMessage.Strict("foo")
-    val parseResult = RoomProtocolSerializer.parseFromSocket(messageToReceive)
+    val parseResult = serializer.parseFromSocket(messageToReceive)
     assert(parseResult.isFailure)
     assertThrows[ParseException] {
       parseResult.get
@@ -58,8 +60,8 @@ class RoomProtocolSerializerSpec extends AnyFlatSpec {
   }
 
   it should "fail with NoSuchElementException parsing messages with an unknown type" in {
-    val messageToReceive = TextMessage.Strict(s"97${separator}Payload")
-    val parseResult = RoomProtocolSerializer.parseFromSocket(messageToReceive)
+    val messageToReceive = TextMessage.Strict(s"97${separator}id${separator}Payload")
+    val parseResult = serializer.parseFromSocket(messageToReceive)
     assert(parseResult.isFailure)
     assertThrows[NoSuchElementException] {
       parseResult.get
