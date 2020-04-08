@@ -6,8 +6,9 @@ import common.communication.CommunicationProtocol.ProtocolMessageType._
 
 trait Server
 
-
 trait ServerRoom extends Room {
+
+  private var password: String = ""
 
   private var clients: Seq[Client] = Seq.empty
 

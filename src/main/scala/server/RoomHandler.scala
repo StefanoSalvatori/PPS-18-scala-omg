@@ -79,27 +79,19 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
   var roomsByType: Map[String, Map[Room, ActorRef]] = Map.empty
 
   override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[Room] =
-    roomsByType.values.flatMap(_ keys).filter(room => {
-
+    roomsByType.values.flatMap(_ keys).filter(room =>
       // Given a room, check if such room satisfies all filter constraints
-      filterOptions.options.forall(filterOption => {
+      filterOptions.options forall { filterOption =>
         try {
-          val field = room.getClass getDeclaredField filterOption.optionName
-
-          field setAccessible true
-
-          val value = (field get room).asInstanceOf[RoomPropertyValue]
-          val filterValue = filterOption.value.asInstanceOf[value.type]
-
-          field setAccessible false
-
-          filterOption.strategy evaluate(value, filterValue)
+          val propertyValue = room `valueOf~AsProperty` filterOption.optionName
+          val filterValue = filterOption.value.asInstanceOf[propertyValue.type]
+          filterOption.strategy evaluate(propertyValue, filterValue)
         } catch {
           // A room is dropped if it doesn't contain the specified field to be used in the filter
           case _: NoSuchFieldException => false
         }
-      })
-    }).toSeq
+      }
+    ).toSeq
 
 
   override def createRoom(roomType: String, roomProperties: Set[RoomProperty]): Room = {
@@ -117,7 +109,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
 
   /**
    * Creates the socket flow from the client to the room. Messages received from the socket are parsed with
-   * a [[common.communication.TextProtocolSerializer]] so they must be [[common.communication.CommunicationProtocol.RoomProtocolMessage]]
+   * a [[common.communication.BinaryProtocolSerializer]] so they must be [[common.communication.CommunicationProtocol.RoomProtocolMessage]]
    *
    * @param roomId the id of the room the client connects to
    * @return the connection handler if such room id exists
@@ -133,18 +125,16 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       case None => Seq.empty
     }
 
-
   private def handleRoomCreation(roomType: String, roomProperties: Set[RoomProperty]): Room = {
     val roomMap = this.roomsByType(roomType)
     val roomFactory = this.roomTypesHandlers(roomType)
     val newRoom = roomFactory(generateUniqueRandomId())
-    println(newRoom)
     val newRoomActor = actorSystem actorOf RoomActor(newRoom)
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
+    newRoom setProperties roomProperties
     newRoom
   }
 
   private def generateUniqueRandomId(): RoomId = UUID.randomUUID.toString
-
 
 }

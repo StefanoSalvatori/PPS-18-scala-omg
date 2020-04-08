@@ -30,6 +30,7 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val intRoomPropertyJsonFormat: RootJsonFormat[IntRoomPropertyValue] = jsonFormat1(IntRoomPropertyValue)
   implicit val stringRoomPropertyJsonFormat: RootJsonFormat[StringRoomPropertyValue] = jsonFormat1(StringRoomPropertyValue)
   implicit val booleanRoomPropertyJsonFormat: RootJsonFormat[BooleanRoomPropertyValue] = jsonFormat1(BooleanRoomPropertyValue)
+  implicit val doubleRoomPropertyJsonFormat: RootJsonFormat[DoubleRoomPropertyValue] = jsonFormat1(DoubleRoomPropertyValue)
 
   implicit val roomPropertyValueJsonFormat: RootJsonFormat[RoomPropertyValue] = new RootJsonFormat[RoomPropertyValue] {
 
@@ -37,13 +38,19 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       case p: IntRoomPropertyValue => intRoomPropertyJsonFormat write p
       case p: StringRoomPropertyValue => stringRoomPropertyJsonFormat write p
       case p: BooleanRoomPropertyValue => booleanRoomPropertyJsonFormat write p
+      case p: DoubleRoomPropertyValue => doubleRoomPropertyJsonFormat write p
     }))
 
     def read(value: JsValue): RoomPropertyValue = value match {
       case json: JsObject =>
         val value = json.fields("value").asJsObject
         value.fields("value") match {
-          case _: JsNumber => value.convertTo[IntRoomPropertyValue]
+          case runtimeValue: JsNumber =>
+            if (runtimeValue.toString contains ".") {
+              value.convertTo[DoubleRoomPropertyValue]
+            } else {
+              value.convertTo[IntRoomPropertyValue]
+            }
           case _: JsString => value.convertTo[StringRoomPropertyValue]
           case _: JsBoolean => value.convertTo[BooleanRoomPropertyValue]
           case _ => deserializationError("Unknown room property value")
