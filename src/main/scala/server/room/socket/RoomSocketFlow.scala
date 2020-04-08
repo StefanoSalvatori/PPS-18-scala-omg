@@ -32,10 +32,7 @@ case class RoomSocketFlow(private val roomActor: ActorRef,
                  bufferSize: Int = DEFAULT_BUFFER_SIZE): Flow[Message, Message, NotUsed]
   = {
     //Output (from room to client)
-    val (socketActor, publisher) = Source.actorRef(
-      PartialFunction.empty,
-      PartialFunction.empty,
-      bufferSize, overflowStrategy)
+    val (socketActor, publisher) = Source.actorRef(PartialFunction.empty, PartialFunction.empty, bufferSize, overflowStrategy)
       .map(this.parser.prepareToSocket)
       .toMat(Sink.asPublisher(false))(Keep.both).run()
 
