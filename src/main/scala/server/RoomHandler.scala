@@ -134,9 +134,9 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
     if (roomProperties.map(_ name) contains Room.roomPasswordPropertyName) {
       val splitProperties = roomProperties.groupBy(_.name == Room.roomPasswordPropertyName)
+      println(splitProperties)
       val password = splitProperties(true)
-      val properties = splitProperties(false)
-      println(password + " " + properties)
+      val properties = splitProperties.getOrElse(false, Set.empty[RoomProperty])
       newRoom setProperties properties
       newRoom makePrivate password.map(_.value).head.asInstanceOf[StringRoomPropertyValue].value
     } else {

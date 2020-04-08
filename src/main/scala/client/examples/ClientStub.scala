@@ -22,7 +22,7 @@ object ClientStub extends App {
   }
   */
 
-  client createPrivateRoom("test_room", p, "abc") onComplete {
+  client createPrivateRoom("test_room", Set.empty[RoomProperty], "abc") onComplete {
     case Success(res) => println("POST: " + res)
   }
   /*
