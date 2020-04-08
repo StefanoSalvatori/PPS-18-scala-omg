@@ -20,8 +20,10 @@ class MatchRoom(override val roomId: String) extends ServerRoom {
   override def onClose(): Unit = println("match room  " + roomId + " closed ")
 
   override def onJoin(client: Client): Unit = {
+    //start the game as soon as we reach max players
     if (reachedMaxPlayers) {
-      //this.lock()
+      //TODO: lock the room
+      //notify connected clients that the game started
       this.broadcast("start")
     } else {
       println(s"client ${client.id} joined")
@@ -34,6 +36,8 @@ class MatchRoom(override val roomId: String) extends ServerRoom {
 
   override def onMessageReceived[M](client: Client, message: M): Unit = {
     gameState = gameState.+:((client, message.toString))
+
+    //check result as soon as we receive the last player move
     if (receivedAllMoves) {
       val players = gameState.map(_._1)
       val moves = gameState.map(_._2)
@@ -51,7 +55,7 @@ class MatchRoom(override val roomId: String) extends ServerRoom {
           this.broadcast("draw")
       }
 
-      //this.closeRoom()
+      //TODO: close the room
     }
 
     println(s"${client.id}: $message")
@@ -64,6 +68,9 @@ class MatchRoom(override val roomId: String) extends ServerRoom {
 
 }
 
+/**
+ * Rock paper scissor logic implemented in prolog
+ */
 case class RockPaperScissor() {
   private val TheoryPath = "src/main/scala/examples/rock_paper_scissor/server/resources/rock_scissor_paper.prolog"
   private val TermResult = "Z"
@@ -77,9 +84,4 @@ case class RockPaperScissor() {
   def result(p1: String, p2: String): String = {
     engine.solve(goal(p1, p2)).getTerm(TermResult).toString
   }
-}
-
-object Test extends App {
-  val game = RockPaperScissor()
-  println(game.result("paper", "paper"))
 }

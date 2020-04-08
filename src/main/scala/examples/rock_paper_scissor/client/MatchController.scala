@@ -9,7 +9,7 @@ import javafx.{fxml => jfxf}
 import javafx.{scene => jfxs}
 
 
-class BattleController {
+class MatchController {
   @jfxf.FXML var labelWaitingPlayer: Label = _
   @jfxf.FXML var gridPaneButtons: GridPane = _
   private var room: ClientRoom = _

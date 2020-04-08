@@ -24,9 +24,9 @@ class HomeController {
 
   private def goToMatchScene(room: ClientRoom) = {
     Platform.runLater {
-      val loader = new jfxf.FXMLLoader(getClass.getResource("./resources/battle.fxml"))
+      val loader = new jfxf.FXMLLoader(getClass.getResource("./resources/match.fxml"))
       val root: jfxs.Parent = loader.load()
-      loader.getController[BattleController]().init(room)
+      loader.getController[MatchController]().init(room)
       this.btnNewGame.getScene.setRoot(root)
     }
 
