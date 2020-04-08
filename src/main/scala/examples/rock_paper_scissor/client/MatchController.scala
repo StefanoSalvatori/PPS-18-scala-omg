@@ -36,7 +36,7 @@ class MatchController {
         Platform.runLater {
           val loader = new jfxf.FXMLLoader(getClass.getResource("./resources/game_end.fxml"))
           val root: jfxs.Parent = loader.load()
-          loader.getController[GameEndController]().init(msg)
+          loader.getController[GameEndController]().init(msg.toString)
           this.splitPaneButtons.getScene.setRoot(root)
         }
 

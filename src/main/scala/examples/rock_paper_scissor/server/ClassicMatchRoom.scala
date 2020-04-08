@@ -36,7 +36,7 @@ class ClassicMatchRoom(override val roomId: String) extends ServerRoom {
 
   override def onLeave(client: Client): Unit = println("client+ " + client.id + " left ")
 
-  override def onMessageReceived[M](client: Client, message: M): Unit = {
+  override def onMessageReceived(client: Client, message: Any) = {
     if (checkMove(message.toString)) {
       gameState = gameState.+:((client, message.toString))
 
@@ -64,9 +64,7 @@ class ClassicMatchRoom(override val roomId: String) extends ServerRoom {
     }
 
 
-    println(s"${
-      client.id
-    }: $message")
+    println(s"${client.id }: $message")
   }
 
   private def checkMove(move: String) = this.availableMoves.contains(move)
@@ -95,7 +93,7 @@ case class RockPaperScissor() {
   engine.setTheory(theory)
 
 
-  private def goal(p1: String, p2: String) = s"win(${p1},${p2},$TermResult)."
+  private def goal(p1: String, p2: String) = s"win($p1,$p2,$TermResult)."
 
   def result(p1: String, p2: String): String = {
     engine.solve(goal(p1, p2)).getTerm(TermResult).toString

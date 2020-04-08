@@ -1,6 +1,6 @@
 package client.room
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.{ActorRef, Props, Stash}
 import akka.http.scaladsl.model.ws.Message
 import client.utils.MessageDictionary._
 import client.{BasicActor, HttpClient}
@@ -9,6 +9,7 @@ import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.communication.{BinaryProtocolSerializer, SocketSerializer}
 
+import scala.collection.immutable.Queue
 import scala.util.{Failure, Success}
 
 object ClientRoomActor {
@@ -20,9 +21,9 @@ object ClientRoomActor {
  * Handles the connection with the server side room.
  * Notify the coreClient if the associated room was left or joined
  */
-case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends BasicActor {
+case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends BasicActor with Stash {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
-  private var onMessageCallback: Any => Unit = x => {}
+  private var onMessageCallback: Option[Any with java.io.Serializable => Unit] = None
   private val parser: SocketSerializer[RoomProtocolMessage] = BinaryProtocolSerializer
 
   override def receive: Receive = onReceive orElse fallbackReceive
@@ -45,52 +46,79 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: Cl
     case HttpSocketSuccess(outRef) =>
       context.become(socketOpened(outRef, replyTo))
       self ! SendProtocolMessage(parser.prepareToSocket(RoomProtocolMessage(JoinRoom)))
-    case OnMsg(callback) => onMessageCallback = callback
+
+
+    case OnMsg(callback) =>
+      onMessageCallback = Some(callback)
+      unstashAll()
   }
 
 
   def onSocketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
+
     case msg: Message => parseMessage(msg)
+
     case RoomProtocolMessage(ProtocolMessageType.JoinOk, _, _) =>
       context.become(roomJoined(outRef))
       coreClient ! ClientRoomActorJoined(self)
       replyTo ! Success()
+
     case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
       replyTo ! Failure(new Exception("Can't join"))
-    case RoomProtocolMessage(ProtocolMessageType.Tell, _, payload) =>
-      this.onMessageCallback(payload)
-    case RoomProtocolMessage(ProtocolMessageType.Broadcast, _, payload) =>
-      this.onMessageCallback(payload)
+
+
+
     case SendProtocolMessage(msg) =>
       outRef ! msg
-    case OnMsg(callback) => onMessageCallback = callback
+
+    case OnMsg(callback) => onMessageCallback = Some(callback)
   }
 
   def onRoomJoined(outRef: ActorRef): Receive = {
+
     case msg: Message => parseMessage(msg)
+
+
     case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
-    case RoomProtocolMessage(ProtocolMessageType.Tell, _, payload) =>
-      this.onMessageCallback(payload)
-    case RoomProtocolMessage(ProtocolMessageType.Broadcast, _, payload) =>
-      this.onMessageCallback(payload)
+
+    case RoomProtocolMessage(ProtocolMessageType.Tell, _, payload) => handleMessageReceived(payload)
+
+    case RoomProtocolMessage(ProtocolMessageType.Broadcast, _, payload) => handleMessageReceived(payload)
+
     case SendLeave =>
       self ! SendProtocolMessage(parser.prepareToSocket(RoomProtocolMessage(LeaveRoom)))
       coreClient ! ClientRoomActorLeaved(self)
       sender ! Success()
       context.become(receive)
-    case SendStrictMessage(msg: Any) =>
+
+    case SendStrictMessage(msg: String) =>
       self ! SendProtocolMessage(parser.prepareToSocket(RoomProtocolMessage(MessageRoom, "", msg)))
+
     case SendProtocolMessage(msg) =>
       outRef ! msg
-    case OnMsg(callback) => onMessageCallback = callback
+
+
+    case OnMsg(callback) =>
+      onMessageCallback = Some(callback)
+      unstashAll()
+
     case RetrieveClientRoom => sender ! ClientRoomResponse(this.room)
   }
 
-  private def parseMessage(msg: Message): Unit = {
+  private def parseMessage(msg: Message) = {
     this.parser.parseFromSocket(msg) match {
       case Success(x) => self ! x
     }
-
   }
+
+  private def handleMessageReceived(msg: Any with java.io.Serializable) = {
+    //stash messages if callback is not defined
+    //They will be handled as soon as the callback is defined
+    this.onMessageCallback match {
+      case Some(callback) => callback(msg)
+      case None => stash()
+    }
+  }
+
 
 }
