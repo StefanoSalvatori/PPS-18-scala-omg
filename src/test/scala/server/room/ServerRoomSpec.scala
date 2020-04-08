@@ -38,7 +38,7 @@ class ServerRoomSpec extends AnyWordSpecLike
     override def onClose(): Unit = { }
     override def onJoin(client: Client): Unit = { }
     override def onLeave(client: Client): Unit = { }
-    override def onMessageReceived[M](client: Client, message: M): Unit = { }
+    override def onMessageReceived(client: Client, message: Any): Unit = { }
   }
 
   "A server room" should {

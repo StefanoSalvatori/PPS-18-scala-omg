@@ -151,7 +151,7 @@ trait ServerRoom extends Room with PrivateRoomSupport {
    * @param client  the client that sent the message
    * @param message the message received
    */
-  def onMessageReceived[M](client: Client, message: M)
+  def onMessageReceived(client: Client, message: Any)
 
   private def operationOnField[T](fieldName: String)(f: Function[Field,T]): T = {
     val field = this fieldFrom fieldName
@@ -199,6 +199,6 @@ private class BasicServerRoom(override val roomId: String) extends ServerRoom {
   override def onClose(): Unit = {}
   override def onJoin(client: Client): Unit = {}
   override def onLeave(client: Client): Unit = {}
-  override def onMessageReceived[M](client: Client, message: M): Unit = {}
+  override def onMessageReceived(client: Client, message: Any): Unit = {}
 }
 
