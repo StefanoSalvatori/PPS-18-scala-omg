@@ -22,7 +22,7 @@ object ClientRoomActor {
  */
 case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends BasicActor {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
-  private var onMessageCallback: Any => Unit = _ => {}
+  private var onMessageCallback: Any => Unit = x => {}
   private val parser: SocketSerializer[RoomProtocolMessage] = BinaryProtocolSerializer
 
   override def receive: Receive = onReceive orElse fallbackReceive
