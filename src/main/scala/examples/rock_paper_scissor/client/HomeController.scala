@@ -4,6 +4,7 @@ import client.Client
 import client.room.ClientRoom
 import common.FilterOptions
 import javafx.scene.control.{Button, Label}
+import javafx.scene.layout.VBox
 import javafx.{event => jfxEvent, fxml => jfxf, scene => jfxs}
 import scalafx.application.Platform
 
@@ -18,29 +19,42 @@ class HomeController {
   @jfxf.FXML var btnExit: Button = _
   @jfxf.FXML var labelWaitingPlayer: Label = _
   @jfxf.FXML var  labelStatus: Label = _
+  @jfxf.FXML var vboxMenuButtons: VBox = _
 
   private val client: Client = Client(Host, Port)
 
 
-  private def goToMatchScene(room: ClientRoom) = {
+  private def goToMatchScene(room: ClientRoom, gameMode: String) = {
     Platform.runLater {
       val loader = new jfxf.FXMLLoader(getClass.getResource("./resources/match.fxml"))
       val root: jfxs.Parent = loader.load()
-      loader.getController[MatchController]().init(room)
+      loader.getController[MatchController]().init(room, gameMode)
       this.btnNewGame.getScene.setRoot(root)
     }
 
   }
 
   @jfxf.FXML
-  def handleNewGameButtonPress(event: jfxEvent.ActionEvent): Unit = {
-    this.btnNewGame.setDisable(true)
-    this.btnExit.setDisable(true)
-    this.labelStatus.setText("joining room...")
+  def handleClassicGameButtonPress(event: jfxEvent.ActionEvent): Unit = {
+    this.vboxMenuButtons.setDisable(true)
+    this.labelStatus.setText("joining classic room...")
+
+    //use client api to join a room. If no one is available create one and wait another player
+    client.joinOrCreate("classic", FilterOptions.empty, Set.empty) onComplete {
+      case Success(room) => goToMatchScene(room, "classic")
+      case Failure(_) => println("client room creation failed")
+    }
+  }
+
+  @jfxf.FXML
+  def handleAdvancedGameButtonPress(event: jfxEvent.ActionEvent): Unit = {
+    this.vboxMenuButtons.setDisable(true)
+
+    this.labelStatus.setText("joining advanced room...")
 
     //use client api to join a room. If no one is availabe create one and wait another player
-    client.joinOrCreate("match", FilterOptions.empty, Set.empty) onComplete {
-      case Success(room) => goToMatchScene(room)
+    client.joinOrCreate("advanced", FilterOptions.empty, Set.empty) onComplete {
+      case Success(room) => goToMatchScene(room, "advanced")
       case Failure(_) => println("client room creation failed")
     }
   }

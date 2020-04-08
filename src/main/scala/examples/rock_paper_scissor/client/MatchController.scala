@@ -1,7 +1,7 @@
 package examples.rock_paper_scissor.client
 
 import client.room.ClientRoom
-import javafx.scene.control.Label
+import javafx.scene.control.{Label, SplitPane}
 import javafx.scene.layout.GridPane
 import javafx.{event => jfxEvent, fxml => jfxf}
 import scalafx.application.Platform
@@ -11,17 +11,24 @@ import javafx.{scene => jfxs}
 
 class MatchController {
   @jfxf.FXML var labelWaitingPlayer: Label = _
-  @jfxf.FXML var gridPaneButtons: GridPane = _
+  @jfxf.FXML var splitPaneButtons: SplitPane = _
+  @jfxf.FXML var gridPaneAdvancedMoves: GridPane = _
+
   private var room: ClientRoom = _
 
-  def init(room: ClientRoom): Unit = {
+  def init(room: ClientRoom, gameType: String): Unit = {
+    this.splitPaneButtons.setVisible(false)
+    gameType match {
+      case "classic" => this.gridPaneAdvancedMoves.setDisable(true)
+      case "advanced"=> this.gridPaneAdvancedMoves.setDisable(false)
+    }
     this.room = room
     room.onMessageReceived {
       //ready to play
       case "start" =>
         Platform.runLater {
           this.labelWaitingPlayer.setText("Play!")
-          this.gridPaneButtons.setVisible(true)
+          this.splitPaneButtons.setVisible(true)
         }
 
       //game result: win, lose or draw
@@ -30,7 +37,7 @@ class MatchController {
           val loader = new jfxf.FXMLLoader(getClass.getResource("./resources/game_end.fxml"))
           val root: jfxs.Parent = loader.load()
           loader.getController[GameEndController]().init(msg)
-          this.gridPaneButtons.getScene.setRoot(root)
+          this.splitPaneButtons.getScene.setRoot(root)
         }
 
     }
@@ -52,11 +59,21 @@ class MatchController {
     makeMove("scissor")
   }
 
+  @jfxf.FXML
+  def handleLizardButtonPress(event: jfxEvent.ActionEvent): Unit = {
+    makeMove("lizard")
+  }
+
+  @jfxf.FXML
+  def handleSpockButtonPress(event: jfxEvent.ActionEvent): Unit = {
+    makeMove("spock")
+  }
+
   private def makeMove(move: String): Unit = {
     room.send(move)
     Platform.runLater {
       this.labelWaitingPlayer.setText("You played -> " + move)
-      this.gridPaneButtons.setDisable(true)
+      this.splitPaneButtons.setDisable(true)
     }
   }
 

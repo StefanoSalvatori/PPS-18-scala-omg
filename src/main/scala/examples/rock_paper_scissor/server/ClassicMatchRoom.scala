@@ -6,12 +6,14 @@ import alice.tuprolog.{Prolog, Theory}
 import server.room.{Client, ServerRoom}
 
 
-
-class MatchRoom(override val roomId: String) extends ServerRoom {
+class ClassicMatchRoom(override val roomId: String) extends ServerRoom {
 
   private val MaxPlayers = 2
   private var gameState: Seq[(Client, String)] = Seq.empty
   private val gameLogic = RockPaperScissor()
+
+  def availableMoves: Set[String] = Set("rock", "paper", "scissor")
+
 
   override def onCreate(): Unit = {
     println("battle room  " + roomId + " created ")
@@ -25,41 +27,49 @@ class MatchRoom(override val roomId: String) extends ServerRoom {
       //TODO: lock the room
       //notify connected clients that the game started
       this.broadcast("start")
-    } else {
-      println(s"client ${client.id} joined")
-
     }
+
+    println(s"client ${client.id} joined")
+
   }
 
 
   override def onLeave(client: Client): Unit = println("client+ " + client.id + " left ")
 
   override def onMessageReceived[M](client: Client, message: M): Unit = {
-    gameState = gameState.+:((client, message.toString))
+    if (checkMove(message.toString)) {
+      gameState = gameState.+:((client, message.toString))
 
-    //check result as soon as we receive the last player move
-    if (receivedAllMoves) {
-      val players = gameState.map(_._1)
-      val moves = gameState.map(_._2)
-      val PlayerOneMove: String = moves.head
-      val PlayerTwoMove: String = moves(1)
-      val result = gameLogic.result(PlayerOneMove, PlayerTwoMove)
-      result match {
-        case PlayerOneMove =>
-          this.tell(players.head, "win")
-          this.tell(players(1), "lose")
-        case PlayerTwoMove =>
-          this.tell(players.head, "lose")
-          this.tell(players(1), "win")
-        case _ =>
-          this.broadcast("draw")
+      //check result as soon as we receive the last player move
+      if (receivedAllMoves) {
+        val players = gameState.map(_._1)
+        val moves = gameState.map(_._2)
+        val PlayerOneMove: String = moves.head
+        val PlayerTwoMove: String = moves(1)
+        val result = gameLogic.result(PlayerOneMove, PlayerTwoMove)
+        result match {
+          case PlayerOneMove =>
+            this.tell(players.head, "win")
+            this.tell(players(1), "lose")
+          case PlayerTwoMove =>
+            this.tell(players.head, "lose")
+            this.tell(players(1), "win")
+          case _ =>
+            this.broadcast("draw")
+        }
+
+        //TODO: close the room
       }
 
-      //TODO: close the room
     }
 
-    println(s"${client.id}: $message")
+
+    println(s"${
+      client.id
+    }: $message")
   }
+
+  private def checkMove(move: String) = this.availableMoves.contains(move)
 
 
   private def reachedMaxPlayers = this.connectedClients.size == MaxPlayers
@@ -67,6 +77,12 @@ class MatchRoom(override val roomId: String) extends ServerRoom {
   private def receivedAllMoves = gameState.size == MaxPlayers
 
 }
+
+
+class AdvancedMatchRoom(override val roomId: String) extends ClassicMatchRoom(roomId) {
+  override def availableMoves: Set[String] = Set("rock", "paper", "scissor", "lizard", "spock")
+}
+
 
 /**
  * Rock paper scissor logic implemented in prolog

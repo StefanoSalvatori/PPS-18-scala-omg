@@ -1,10 +1,9 @@
 package examples.rock_paper_scissor.server
 
+
 import server.GameServer
-import server.room.{Client, ServerRoom}
 
 import scala.concurrent.ExecutionContext
-import scala.io.StdIn
 import scala.util.{Failure, Success}
 
 
@@ -18,7 +17,8 @@ object Server extends App {
   val gameServer = GameServer(Host, Port)
 
   //define a room type to host matches
-  gameServer defineRoom("match", id => new MatchRoom(id))
+  gameServer defineRoom("classic", id => new ClassicMatchRoom(id))
+  gameServer defineRoom("advanced", id => new AdvancedMatchRoom(id))
 
   gameServer.start() onComplete {
     case Success(_) => println(s"Server started at $Host:$Port")

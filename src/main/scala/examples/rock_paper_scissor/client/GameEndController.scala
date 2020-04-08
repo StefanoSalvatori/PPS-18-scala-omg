@@ -12,9 +12,12 @@ class GameEndController {
 
   def init(gameState: String): Unit = {
     gameState match {
-      case "win" => Platform.runLater { labelGameResult.setText("You Win!") }
-      case "lose" => Platform.runLater { labelGameResult.setText("You Lose!") }
-      case "draw" => Platform.runLater { labelGameResult.setText("Draw!") }
+      case "win" =>
+        Platform.runLater { labelGameResult.setText("You Win!") }
+      case "lose" =>
+        Platform.runLater { labelGameResult.setText("You Lose!") }
+      case "draw" =>
+        Platform.runLater { labelGameResult.setText("Draw!") }
     }
   }
 
