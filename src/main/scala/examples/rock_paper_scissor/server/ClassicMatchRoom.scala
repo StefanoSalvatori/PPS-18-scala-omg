@@ -36,7 +36,7 @@ class ClassicMatchRoom(override val roomId: String) extends ServerRoom {
 
   override def onLeave(client: Client): Unit = println("client+ " + client.id + " left ")
 
-  override def onMessageReceived(client: Client, message: Any) = {
+  override def onMessageReceived(client: Client, message: Any): Unit = {
     if (checkMove(message.toString)) {
       gameState = gameState.+:((client, message.toString))
 
