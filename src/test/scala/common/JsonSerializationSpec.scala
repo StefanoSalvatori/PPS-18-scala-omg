@@ -25,6 +25,14 @@ class JsonSerializationSpec extends AnyFlatSpec with Matchers with BeforeAndAfte
     checkCorrectJsonEncoding(testBool)
   }
 
+  "Double room property values" must "be correctly JSON encoded and decoded" in {
+    val testDouble: DoubleRoomPropertyValue = 0.1
+    checkCorrectJsonEncoding(testDouble)
+    // The property is correctly handled if the value is specified using dot (ex 1.0) or not (ex 1)
+    val testDouble2: DoubleRoomPropertyValue = DoubleRoomPropertyValue(1)
+    checkCorrectJsonEncoding(testDouble2)
+  }
+
   behavior of "room property"
 
   "Room property with int values" must "be correctly JSON encoded and decoded" in {

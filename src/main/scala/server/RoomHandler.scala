@@ -3,11 +3,11 @@ package server
 import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.http.scaladsl.model.ws.{Message, TextMessage}
+import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
 import common.SharedRoom.{Room, RoomId}
 import common.communication.RoomProtocolSerializer
-import common.{FilterOptions, RoomProperty, RoomPropertyValue}
+import common.{FilterOptions, RoomProperty}
 import server.room.socket.RoomSocketFlow
 import server.room.{RoomActor, ServerRoom}
 
@@ -79,27 +79,19 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
   var roomsByType: Map[String, Map[Room, ActorRef]] = Map.empty
 
   override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[Room] =
-    roomsByType.values.flatMap(_ keys).filter(room => {
-
+    roomsByType.values.flatMap(_ keys).filter(room =>
       // Given a room, check if such room satisfies all filter constraints
-      filterOptions.options.forall(filterOption => {
+      filterOptions.options forall { filterOption =>
         try {
-          val field = room.getClass getDeclaredField filterOption.optionName
-
-          field setAccessible true
-
-          val value = (field get room).asInstanceOf[RoomPropertyValue]
-          val filterValue = filterOption.value.asInstanceOf[value.type]
-
-          field setAccessible false
-
-          filterOption.strategy evaluate(value, filterValue)
+          val propertyValue = room `valueOf~AsProperty` filterOption.optionName
+          val filterValue = filterOption.value.asInstanceOf[propertyValue.type]
+          filterOption.strategy evaluate(propertyValue, filterValue)
         } catch {
           // A room is dropped if it doesn't contain the specified field to be used in the filter
           case _: NoSuchFieldException => false
         }
-      })
-    }).toSeq
+      }
+    ).toSeq
 
 
   override def createRoom(roomType: String, roomProperties: Set[RoomProperty]): Room = {
@@ -133,17 +125,15 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       case None => Seq.empty
     }
 
-
   private def handleRoomCreation(roomType: String, roomProperties: Set[RoomProperty]): Room = {
     val roomMap = this.roomsByType(roomType)
     val roomFactory = this.roomTypesHandlers(roomType)
     val newRoom = roomFactory(generateUniqueRandomId())
     val newRoomActor = actorSystem actorOf RoomActor(newRoom)
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
+    newRoom setProperties roomProperties
     newRoom
   }
 
   private def generateUniqueRandomId(): RoomId = UUID.randomUUID.toString
-
-
 }
