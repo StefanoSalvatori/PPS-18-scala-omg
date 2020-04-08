@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<BorderPane maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0"
+            xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="examples.rock_paper_scissor.client.HomeController">
+
+    <center>
+        <VBox alignment="CENTER" spacing="20">
+            <Button contentDisplay="CENTER" mnemonicParsing="false" onAction="#handleNewGameButtonPress" text="New game"
+            fx:id="btnNewGame">
+                <font>
+                    <Font size="23.0"/>
+                </font>
+                <cursor>
+                    <Cursor fx:constant="HAND"/>
+                </cursor>
+            </Button>
+
+            <Button contentDisplay="CENTER" mnemonicParsing="false" onAction="#handleExitButtonPress" text="Exit"
+                    fx:id="btnExit">
+                <font>
+                    <Font size="23.0"/>
+                </font>
+                <cursor>
+                    <Cursor fx:constant="HAND"/>
+                </cursor>
+            </Button>
+
+        </VBox>
+
+
+    </center>
+    <bottom>
+        <Label fx:id="labelStatus" text="" BorderPane.alignment="CENTER"/>
+    </bottom>
+
+</BorderPane>

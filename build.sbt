@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
   "ch.qos.logback" % "logback-classic" % "1.2.3")
 
-
+libraryDependencies += "it.unibo.alice.tuprolog" % "tuprolog" % "3.1"
 
 // Add dependency on ScalaFX library
 libraryDependencies += "org.scalafx" %% "scalafx" % "12.0.2-R18"

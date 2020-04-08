@@ -112,8 +112,8 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: Cl
   }
 
   private def handleMessageReceived(msg: String) = {
-    //stash messages if callback is not defines
-    //They will be handles as soon as the callback is defined
+    //stash messages if callback is not defined
+    //They will be handled as soon as the callback is defined
     this.onMessageCallback match {
       case Some(callback) => callback(msg)
       case None => stash()
