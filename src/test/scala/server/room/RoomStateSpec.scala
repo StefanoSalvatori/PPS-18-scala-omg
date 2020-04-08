@@ -58,16 +58,15 @@ class RoomStateSpec extends AnyWordSpecLike
     room.close()
   }
 
-
   "A room with state" should {
-    "should not start sending updates before startUpdate() is called" in {
+    "not start sending updates before startUpdate() is called" in {
       lastReceivedMessageOf(client1).messageType shouldBe JoinOk
       Thread.sleep(UpdateRate + DeltaUpdate) //wait state update
       lastReceivedMessageOf(client1).messageType shouldBe JoinOk
 
     }
 
-    "should send the room state to clients with a StateUpdate message type" in {
+    "send the room state to clients with a StateUpdate message type" in {
       room.startStateUpdate()
       Thread.sleep(UpdateRate + DeltaUpdate) //wait state update
       lastReceivedMessageOf(client1).messageType shouldBe StateUpdate
