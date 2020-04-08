@@ -7,7 +7,7 @@ import client.{BasicActor, HttpClient}
 import common.room.SharedRoom.RoomId
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
-import common.communication.{RoomProtocolSerializer, SocketSerializer}
+import common.communication.{BinaryProtocolSerializer, SocketSerializer}
 
 import scala.util.{Failure, Success}
 
@@ -22,8 +22,8 @@ object ClientRoomActor {
  */
 case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends BasicActor {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
-  private var onMessageCallback: String => Unit = x => {}
-  private val parser: SocketSerializer[RoomProtocolMessage] = RoomProtocolSerializer
+  private var onMessageCallback: Any => Unit = x => {}
+  private val parser: SocketSerializer[RoomProtocolMessage] = BinaryProtocolSerializer
 
   override def receive: Receive = onReceive orElse fallbackReceive
 
@@ -45,69 +45,48 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: Cl
     case HttpSocketSuccess(outRef) =>
       context.become(socketOpened(outRef, replyTo))
       self ! SendProtocolMessage(parser.prepareToSocket(RoomProtocolMessage(JoinRoom)))
-
-
     case OnMsg(callback) => onMessageCallback = callback
   }
 
 
   def onSocketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
-
     case msg: Message => parseMessage(msg)
-
     case RoomProtocolMessage(ProtocolMessageType.JoinOk, _, _) =>
       context.become(roomJoined(outRef))
       coreClient ! ClientRoomActorJoined(self)
       replyTo ! Success()
-
     case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
       replyTo ! Failure(new Exception("Can't join"))
-
-
     case RoomProtocolMessage(ProtocolMessageType.Tell, _, payload) =>
       this.onMessageCallback(payload)
-
     case RoomProtocolMessage(ProtocolMessageType.Broadcast, _, payload) =>
       this.onMessageCallback(payload)
-
     case SendProtocolMessage(msg) =>
       outRef ! msg
-
     case OnMsg(callback) => onMessageCallback = callback
   }
 
   def onRoomJoined(outRef: ActorRef): Receive = {
-
     case msg: Message => parseMessage(msg)
-
-
     case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
-
     case RoomProtocolMessage(ProtocolMessageType.Tell, _, payload) =>
       this.onMessageCallback(payload)
-
     case RoomProtocolMessage(ProtocolMessageType.Broadcast, _, payload) =>
       this.onMessageCallback(payload)
-
     case SendLeave =>
       self ! SendProtocolMessage(parser.prepareToSocket(RoomProtocolMessage(LeaveRoom)))
       coreClient ! ClientRoomActorLeaved(self)
       sender ! Success()
       context.become(receive)
-
-    case SendStrictMessage(msg: String) =>
+    case SendStrictMessage(msg: Any) =>
       self ! SendProtocolMessage(parser.prepareToSocket(RoomProtocolMessage(MessageRoom, "", msg)))
-
     case SendProtocolMessage(msg) =>
       outRef ! msg
-
-
     case OnMsg(callback) => onMessageCallback = callback
-
     case RetrieveClientRoom => sender ! ClientRoomResponse(this.room)
   }
 
-  private def parseMessage(msg: Message) = {
+  private def parseMessage(msg: Message): Unit = {
     this.parser.parseFromSocket(msg) match {
       case Success(x) => self ! x
     }

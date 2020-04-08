@@ -127,8 +127,8 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   }
 
   override def joinOrCreate(roomType: RoomType, filterOption: FilterOptions, roomProperties: Set[RoomProperty]): Future[ClientRoom] = {
-    this.join(roomType, filterOption) fallbackTo {
-      this.createPublicRoom(roomType, roomProperties)
+    this.join(roomType, filterOption) recoverWith {
+      case _: Exception => this.createPublicRoom(roomType, roomProperties)
     }
   }
 

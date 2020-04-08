@@ -9,7 +9,7 @@ object RoomActor {
   // case class NotifyAll[T](msg : T) extends RoomCommand
   case class Join(client: Client) extends RoomCommand
   case class Leave(client: Client) extends RoomCommand
-  case class Msg[T](client: Client, payload: T) extends RoomCommand
+  case class Msg(client: Client, payload: Any) extends RoomCommand
 
   sealed trait RoomResponse
   case object ClientLeaved extends RoomResponse
@@ -30,6 +30,7 @@ class RoomActor(private val serverRoom: ServerRoom) extends Actor with ActorLogg
 
   override def preStart(): Unit = {
     super.preStart()
+    // this.serverRoom.onCreate()
   }
 
   override def postStop(): Unit = {

@@ -3,6 +3,7 @@ package server.room
 import common.room.SharedRoom.Room
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, IntRoomPropertyValue, RoomProperty, RoomPropertyValue, StringRoomPropertyValue}
+import common.communication.CommunicationProtocol.ProtocolMessageType._
 
 trait PrivateRoomSupport {
 
@@ -20,7 +21,6 @@ trait Server
 trait ServerRoom extends Room with PrivateRoomSupport {
 
   private var clients: Seq[Client] = Seq.empty
-  this.onCreate()
 
   import java.lang.reflect.Field
 
@@ -61,6 +61,8 @@ trait ServerRoom extends Room with PrivateRoomSupport {
     }
   })
 
+  this.onCreate()
+
   /**
    * Add a client to the room. Triggers the onJoin
    *
@@ -68,7 +70,7 @@ trait ServerRoom extends Room with PrivateRoomSupport {
    */
   def addClient(client: Client): Unit = {
     this.clients = client +: this.clients
-    client.send(RoomProtocolMessage(ProtocolMessageType.JoinOk, client.id))
+    client.send(RoomProtocolMessage(JoinOk, client.id))
     this.onJoin(client)
   }
 
@@ -101,21 +103,17 @@ trait ServerRoom extends Room with PrivateRoomSupport {
    *
    * @param client  the client that will receive the message
    * @param message the message to send
-   * @tparam M the type of the message
    */
-  def tell[M](client: Client, message: M): Unit =
-    this.clients.filter(_.id == client.id).foreach(
-      _.send(RoomProtocolMessage(ProtocolMessageType.Tell, client.id, message.toString)))
+  def tell(client: Client, message: Any with java.io.Serializable): Unit =
+    this.clients.filter(_.id == client.id).foreach(_.send(RoomProtocolMessage(ProtocolMessageType.Tell, client.id, message)))
 
   /**
    * Broadcast a message to all clients connected
    *
    * @param message the message to send
-   * @tparam M he type of the message
    */
-  def broadcast[M](message: M): Unit =
-    this.clients.foreach(client =>
-      client.send(RoomProtocolMessage(ProtocolMessageType.Broadcast, client.id, message.toString)))
+  def broadcast(message: Any with java.io.Serializable): Unit =
+    this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)))
 
   /**
    * Close this room
@@ -152,7 +150,6 @@ trait ServerRoom extends Room with PrivateRoomSupport {
    *
    * @param client  the client that sent the message
    * @param message the message received
-   * @tparam M the type of the message
    */
   def onMessageReceived[M](client: Client, message: M)
 
@@ -199,12 +196,9 @@ object ServerRoom {
 
 private class BasicServerRoom(override val roomId: String) extends ServerRoom {
   override def onCreate(): Unit = {}
-
   override def onClose(): Unit = {}
-
   override def onJoin(client: Client): Unit = {}
-
   override def onLeave(client: Client): Unit = {}
-
   override def onMessageReceived[M](client: Client, message: M): Unit = {}
 }
+

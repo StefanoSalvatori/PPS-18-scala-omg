@@ -7,7 +7,7 @@ import akka.stream.scaladsl.{Sink, Source}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import common.communication.CommunicationProtocol.RoomProtocolMessage
-import common.communication.RoomProtocolSerializer
+import common.communication.TextProtocolSerializer
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -28,7 +28,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
 
   private var room = ServerRoom(UUID.randomUUID.toString)
   private var roomActor = system actorOf RoomActor(room)
-  private var roomSocketFlow = RoomSocketFlow(roomActor, RoomProtocolSerializer)
+  private var roomSocketFlow = RoomSocketFlow(roomActor, TextProtocolSerializer)
   private var flow = roomSocketFlow.createFlow()
 
   override def afterAll(): Unit = {
@@ -38,13 +38,13 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
   before {
     room = ServerRoom(UUID.randomUUID.toString)
     roomActor = system actorOf RoomActor(room)
-    roomSocketFlow = RoomSocketFlow(roomActor, RoomProtocolSerializer)
+    roomSocketFlow = RoomSocketFlow(roomActor, TextProtocolSerializer)
     flow = roomSocketFlow.createFlow()
   }
 
   "A RoomSocket" should {
     "forward room protocol messages from clients to room actors" in {
-      val joinMessage = Source.single(RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
+      val joinMessage = Source.single(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
       flow.runWith(joinMessage, Sink.ignore)
       flow.watchTermination()((_, f) => {
         Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)
@@ -54,8 +54,8 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
 
     "make sure that messages from the same socket are linked to the same client" in {
       val joinAndLeave = Source.fromIterator(() => Seq(
-        RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)),
-        RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(LeaveRoom))
+        TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)),
+        TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(LeaveRoom))
       ).iterator)
       flow.runWith(joinAndLeave, Sink.ignore)
       flow.watchTermination()((_, f) => {
@@ -65,7 +65,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
     }
 
     "make sure that messages from different sockets are linked to different clients" in {
-      val join = Source.single(RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
+      val join = Source.single(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
       flow.runWith(join, Sink.ignore)
       flow.watchTermination()((_, f) => {
         Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)
@@ -73,7 +73,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
       })
 
       //Create a different client
-      val leave = Source.single(RoomProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
+      val leave = Source.single(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
       flow.runWith(leave, Sink.ignore)
       flow.watchTermination()((_, f) => {
         Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)

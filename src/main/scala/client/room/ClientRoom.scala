@@ -1,16 +1,12 @@
 package client.room
 
-import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
-import akka.http.scaladsl.model.ws.TextMessage
+import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.util.Timeout
 import client.utils.MessageDictionary._
 import common.room.SharedRoom.{Room, RoomId}
 import akka.pattern.ask
-import akka.pattern.pipe
-import client.{BasicActor, HttpClient}
-import common.http.Routes
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -37,7 +33,7 @@ trait ClientRoom extends Room {
    *
    * @param msg the message to send
    */
-  def send(msg: String): Unit
+  def send(msg: Any with java.io.Serializable): Unit
 
 
   /**
@@ -45,7 +41,7 @@ trait ClientRoom extends Room {
    *
    * @param callback callback to handle the message
    */
-  def onMessageReceived(callback: String => Unit): Unit
+  def onMessageReceived(callback: Any => Unit): Unit
 
   //TODO: implement this
   //def onStateChanged
@@ -62,7 +58,7 @@ case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: R
                          (implicit val system: ActorSystem)
   extends ClientRoom {
   private implicit val timeout: Timeout = 5 seconds
-  private implicit val executionContext = ExecutionContext.global
+  private implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
   private implicit var innerActor: Option[ActorRef] = None
 
   override def join(): Future[Any] = {
@@ -87,10 +83,11 @@ case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: R
     }
 
 
-  override def send(msg: String): Unit =
+  override def send(msg: Any with java.io.Serializable): Unit =
     innerActor.foreach(_ ! SendStrictMessage(msg))
 
-  override def onMessageReceived(callback: String => Unit): Unit = innerActor.foreach(_ ! OnMsg(callback))
+  override def onMessageReceived(callback: Any => Unit): Unit = innerActor.foreach(_ !
+    OnMsg(callback))
 
   private def spawnInnerActor(): ActorRef = {
     val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)

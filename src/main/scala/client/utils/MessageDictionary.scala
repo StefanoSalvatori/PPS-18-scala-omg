@@ -50,6 +50,7 @@ object MessageDictionary {
   /**
    * Perform a web socket request to open a connection to server side room with the given id.
    * If the connection is successful respond with message [[HttpSocketSuccess]] otherwise [[HttpSocketFail]]
+   *
    * @param roomId id of the room to connect to
    */
   case class HttpSocketRequest(roomId: RoomId)
@@ -57,12 +58,14 @@ object MessageDictionary {
   /**
    * Successful response of an [[HttpSocketRequest]].
    * Contains an actor ref.
+   *
    * @param outRef Sending messages to this actor means sending them in the socket
    */
   case class HttpSocketSuccess(outRef: ActorRef)
 
   /**
    * Failure response of an [[HttpSocketRequest]].
+   *
    * @param cause what caused the failure
    */
   case class HttpSocketFail(cause: String)
@@ -80,11 +83,9 @@ object MessageDictionary {
 
   case class SendProtocolMessage(msg: Message)
 
-  case class SendStrictMessage(msg: String)
+  case class SendStrictMessage(msg: Any with java.io.Serializable)
 
-  case class OnMsg(callback: String => Unit)
-
-
+  case class OnMsg(callback: Any => Unit)
 
   case class UnknownMessageReply()
 }
