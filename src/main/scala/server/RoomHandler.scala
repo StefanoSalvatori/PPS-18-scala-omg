@@ -82,7 +82,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     val serverRoomProperties = ServerRoom.defaultProperties
     val runtimeRoomProperties = serverRoom.properties
     val runtimeOnlyPropertyNames: Set[String] = runtimeRoomProperties.map(_ name) &~ serverRoomProperties.map(_ name)
-    runtimeRoomProperties.filter(property => runtimeOnlyPropertyNames.contains(property name))
+    runtimeRoomProperties.filter(property => runtimeOnlyPropertyNames contains property.name)
       .foreach(sharedRoom addSharedProperty)
     sharedRoom
   }

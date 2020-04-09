@@ -10,9 +10,12 @@ object SharedRoom {
     val state: T
   }
 
-  trait Room {
-
+  trait BasicRoom {
     val roomId: RoomId
+  }
+
+  trait Room extends BasicRoom {
+
     private var _sharedProperties: Set[RoomProperty] = Set()
 
     def sharedProperties: Set[RoomProperty] =  _sharedProperties

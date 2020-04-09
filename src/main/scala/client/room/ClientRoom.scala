@@ -3,7 +3,7 @@ package client.room
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.util.Timeout
 import client.utils.MessageDictionary._
-import common.room.SharedRoom.RoomId
+import common.room.SharedRoom.{BasicRoom, RoomId}
 import akka.pattern.ask
 import common.room.RoomPropertyValue
 
@@ -11,13 +11,7 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-trait ClientRoom {
-
-  /**
-   * Id of the room
-   * @return the id associated to the room
-   */
-  def roomId: RoomId
+trait ClientRoom extends BasicRoom {
 
   /**
    * Properties of the room.

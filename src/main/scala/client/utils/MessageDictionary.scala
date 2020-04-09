@@ -10,9 +10,9 @@ object MessageDictionary {
 
   //CoreClient
 
-  case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty])
-
-  case class CreatePrivateRoom(roomType: RoomType, roomOption: Set[RoomProperty], password: RoomPassword)
+  trait CreateRoomMessage
+  case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty]) extends CreateRoomMessage
+  case class CreatePrivateRoom(roomType: RoomType, roomOption: Set[RoomProperty], password: RoomPassword) extends CreateRoomMessage
 
   case class GetAvailableRooms(roomType: RoomType, roomOption: FilterOptions)
 

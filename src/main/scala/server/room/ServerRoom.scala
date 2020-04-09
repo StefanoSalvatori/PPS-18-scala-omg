@@ -4,7 +4,8 @@ import com.typesafe.scalalogging.LazyLogging
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, IntRoomPropertyValue, RoomProperty, RoomPropertyValue, StringRoomPropertyValue}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.room.SharedRoom.RoomId
+import common.room.SharedRoom.{BasicRoom, RoomId}
+import java.lang.reflect.Field
 
 trait PrivateRoomSupport {
 
@@ -19,27 +20,24 @@ trait PrivateRoomSupport {
 }
 
 trait Server
-trait ServerRoom extends PrivateRoomSupport with LazyLogging {
+trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 
-  val roomId: RoomId
   private var clients: Seq[Client] = Seq.empty
 
   this.onCreate()
 
-  import java.lang.reflect.Field
   /**
    * Getter of all room properties
    * @return a set containing all defined room properties
    */
   def properties: Set[RoomProperty] = {
-    def checkFieldAdmissibleType[T](value: T): Boolean = value match {
+    def checkAdmissibleFieldType[T](value: T): Boolean = value match {
       case _: Int | _: String | _: Boolean | _: Double => true
       case _ => false
     }
-    this.getClass.getDeclaredFields
-      .filter(f => operationOnField(f.getName)(field => checkFieldAdmissibleType(field get this)))
-      .map(field => propertyOf(field.getName))
-      .toSet
+    this.getClass.getDeclaredFields.collect {
+      case f if operationOnField(f.getName)(field => checkAdmissibleFieldType(field get this)) => propertyOf(f.getName)
+    }.toSet
   }
 
   /**
