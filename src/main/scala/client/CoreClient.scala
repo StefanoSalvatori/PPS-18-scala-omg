@@ -6,8 +6,8 @@ import akka.pattern.pipe
 import akka.util.Timeout
 import client.room.{ClientRoom, ClientRoomActor}
 import client.utils.MessageDictionary._
-import common.RoomJsonSupport
-import common.SharedRoom.{Room, RoomId}
+import common.room.SharedRoom.{Room, RoomId}
+import common.room.{RoomJsonSupport, RoomProperty}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -33,7 +33,7 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
 
   def waitHttpResponse(replyTo: ActorRef): Receive = onWaitHttpResponse(replyTo) orElse fallbackReceive
 
-
+  import common.room.BasicRoomPropertyValueConversions._
   val onReceive: Receive = {
 
     case FailResponse(ex) => sender ! Failure(ex)
@@ -41,6 +41,10 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
     case CreatePublicRoom(roomType, roomOptions) =>
       context.become(this.waitHttpResponse(sender))
       this.httpClient ! HttpPostRoom(roomType, roomOptions)
+
+    case CreatePrivateRoom(roomType, roomOptions, password) =>
+      context become this.waitHttpResponse(sender)
+      httpClient ! HttpPostRoom(roomType, roomOptions + RoomProperty(Room.roomPasswordPropertyName, password.toString))
 
     case GetAvailableRooms(roomType, roomOptions) =>
       context.become(this.waitHttpResponse(sender))

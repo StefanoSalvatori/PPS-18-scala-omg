@@ -6,9 +6,10 @@ import akka.http.scaladsl.model.ws.{Message, WebSocketRequest}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import client.Client
-import common.Routes
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
+import common.http.Routes
 import common.communication.TextProtocolSerializer
+
 import server.GameServer
 import server.examples.rooms.ChatRoom
 

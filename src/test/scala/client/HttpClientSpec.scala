@@ -4,8 +4,10 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
-import common.SharedRoom.Room
-import common.{FilterOptions, RoomProperty, Routes, TestConfig}
+import common.room.SharedRoom.Room
+import common.room.FilterOptions
+import common.TestConfig
+import common.http.Routes
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer

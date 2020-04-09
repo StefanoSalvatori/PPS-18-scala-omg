@@ -2,8 +2,9 @@ package server.routes
 
 import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes}
 import akka.util.ByteString
-import common.SharedRoom.Room
-import common.{FilterOptions, HttpRequests, RoomJsonSupport, RoomProperty, Routes}
+import common.room.SharedRoom.Room
+import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
+import common.http.{HttpRequests, Routes}
 
 trait RouteCommonTestOptions extends RoomJsonSupport {
   val TestRoomType = "test-room"
