@@ -6,6 +6,7 @@ import spray.json.{DefaultJsonProtocol, JsArray, JsBoolean, JsNumber, JsObject, 
 
 trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
+  // Room
   implicit val roomIdJsonFormat: RootJsonFormat[RoomId] = new RootJsonFormat[RoomId] {
     def write(a: RoomId): JsValue = JsString(a)
 
@@ -14,17 +15,29 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       case _ => deserializationError("id expected")
     }
   }
-  implicit val simpleRoomJsonFormat: RootJsonFormat[Room] = new RootJsonFormat[Room] {
-    def write(a: Room): JsValue = JsString(a.roomId)
+
+  implicit val sharedRoomJsonFormat: RootJsonFormat[Room] = new RootJsonFormat[Room] {
+
+    private val idJsonPropertyName = "id"
+    private val propertiesJsonPropertyName  ="properties"
+
+    def write(a: Room): JsValue = JsObject(
+      idJsonPropertyName -> JsString(a.roomId),
+      propertiesJsonPropertyName -> roomPropertySetJsonFormat.write(a.sharedProperties)
+    )
 
     def read(value: JsValue): Room = value match {
-      case JsString(roomId) => Room(roomId)
-      case _ => deserializationError("String id expected")
+      case JsObject(json) =>
+        json(idJsonPropertyName) match {
+          case s: JsString =>
+            val room = Room(s.value)
+            json(propertiesJsonPropertyName).convertTo[Set[RoomProperty]].foreach(room addSharedProperty)
+            room
+          case _ => deserializationError("Error while reading shared room id")
+        }
+      case _ => deserializationError("Error while reading shared room")
     }
   }
-
-
-  // ____________________________________________________________________________________________________________________
 
   // Room property values
   implicit val intRoomPropertyJsonFormat: RootJsonFormat[IntRoomPropertyValue] = jsonFormat1(IntRoomPropertyValue)
@@ -34,7 +47,9 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val roomPropertyValueJsonFormat: RootJsonFormat[RoomPropertyValue] = new RootJsonFormat[RoomPropertyValue] {
 
-    def write(v: RoomPropertyValue): JsValue = JsObject("value" -> (v match {
+    private val valueJsPropertyName = "value"
+
+    def write(v: RoomPropertyValue): JsValue = JsObject(valueJsPropertyName -> (v match {
       case p: IntRoomPropertyValue => intRoomPropertyJsonFormat write p
       case p: StringRoomPropertyValue => stringRoomPropertyJsonFormat write p
       case p: BooleanRoomPropertyValue => booleanRoomPropertyJsonFormat write p
@@ -43,8 +58,8 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
     def read(value: JsValue): RoomPropertyValue = value match {
       case json: JsObject =>
-        val value = json.fields("value").asJsObject
-        value.fields("value") match {
+        val value = json.fields(valueJsPropertyName).asJsObject
+        value.fields(valueJsPropertyName) match {
           case runtimeValue: JsNumber =>
             if (runtimeValue.toString contains ".") {
               value.convertTo[DoubleRoomPropertyValue]
