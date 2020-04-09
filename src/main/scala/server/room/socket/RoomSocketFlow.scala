@@ -49,9 +49,12 @@ case class RoomSocketFlow(private val roomActor: ActorRef,
             roomActor ! Leave(client)
           case Success(RoomProtocolMessage(ProtocolMessageType.MessageRoom, _, payload)) =>
             roomActor ! Msg(client, payload)
+          case _ =>
         }
       }
-      .to(Sink.onComplete(_ => {}))
+      .to(Sink.onComplete(_ => {
+        roomActor ! Leave(client)
+      }))
 
     Flow.fromSinkAndSourceCoupled(sink, Source.fromPublisher(publisher))
 

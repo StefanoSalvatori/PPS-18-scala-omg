@@ -7,10 +7,6 @@ object SharedRoom {
   type RoomId = String
   type RoomType = String
 
-  trait RoomState[T] {
-    val state: T
-  }
-
   trait Room extends LazyLogging {
 
     val roomId: RoomId
