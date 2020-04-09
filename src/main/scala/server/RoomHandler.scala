@@ -75,6 +75,19 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
 
   var roomTypesHandlers: Map[String, String => ServerRoom] = Map.empty
 
+  implicit val serverRoomToSharedRoom: ServerRoom => Room = serverRoom => {
+    // Create the shared room
+    val sharedRoom = Room(serverRoom.roomId)
+    // Set the shared room properties
+    val serverRoomProperties = ServerRoom.defaultProperties
+    val runtimeRoomProperties = serverRoom.properties
+    val runtimeOnlyPropertyNames: Set[String] = runtimeRoomProperties.map(_ name) &~ serverRoomProperties.map(_ name)
+    runtimeRoomProperties.filter(property => runtimeOnlyPropertyNames.contains(property name))
+      .foreach(sharedRoom addSharedProperty)
+    sharedRoom
+  }
+  implicit val serverRoomSeqToSharedRoomSeq: Seq[ServerRoom] => Seq[Room] = _.map(serverRoomToSharedRoom)
+
   //type1 ->  (id->roomActor1), (id2, roomActor2) ...
   //type2 -> (id->roomActor3), (id2, roomActor4) ...
   var roomsByType: Map[String, Map[ServerRoom, ActorRef]] = Map.empty
@@ -134,7 +147,6 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
     if (roomProperties.map(_ name) contains Room.roomPasswordPropertyName) {
       val splitProperties = roomProperties.groupBy(_.name == Room.roomPasswordPropertyName)
-      println(splitProperties)
       val password = splitProperties(true)
       val properties = splitProperties.getOrElse(false, Set.empty[RoomProperty])
       newRoom setProperties properties

@@ -2,12 +2,11 @@ package client
 
 import akka.actor.{ActorRef, Stash}
 import akka.util.Timeout
-import client.room.{ClientRoom, ClientRoomActor}
+import client.room.ClientRoom
 import client.utils.MessageDictionary._
-import common.room.SharedRoom.{Room, RoomId}
+import common.room.SharedRoom.Room
 import common.room.{RoomJsonSupport, RoomProperty, RoomPropertyValue}
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -102,8 +101,6 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
       unstashAll()
 
     case _ => stash
-
-
   }
 
   /**

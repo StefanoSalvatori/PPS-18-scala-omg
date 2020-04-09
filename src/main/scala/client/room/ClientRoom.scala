@@ -67,8 +67,7 @@ case class ClientRoomImpl(coreClient: ActorRef,
                           httpServerUri: String,
                           override val roomId: RoomId,
                           override val properties: Map[String, RoomPropertyValue])
-                         (implicit val system: ActorSystem)
-  extends ClientRoom {
+                         (implicit val system: ActorSystem) extends ClientRoom {
 
   private implicit val timeout: Timeout = 5 seconds
   private implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
