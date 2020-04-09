@@ -17,8 +17,8 @@ object RoomActor {
   case object ClientLeaved extends RoomResponse
 
   private trait InternalMessage
-  private object CheckRoomState extends InternalMessage
-
+  private case object CheckRoomStateTimer
+  private case object CheckRoomState extends InternalMessage
 
   def apply(serverRoom: ServerRoom, roomHandler: RoomHandler): Props = Props(classOf[RoomActor], serverRoom, roomHandler)
 
@@ -35,11 +35,11 @@ class RoomActor(private val serverRoom: ServerRoom,
   import RoomActor._
   import scala.concurrent.duration._
 
+  implicit val CheckRoomStateRate: FiniteDuration = 50 millis
   implicit val executionContext: ExecutionContextExecutor = this.context.system.dispatcher
 
   override def preStart(): Unit = {
-    // this.timers.startTimerAtFixedRate()
-    this.context.system.scheduler.scheduleWithFixedDelay(Duration.Zero, 50 millis, self, CheckRoomState)
+    this.timers.startTimerAtFixedRate(CheckRoomStateTimer, CheckRoomState, CheckRoomStateRate)
     super.preStart()
     this.serverRoom.onCreate()
   }
