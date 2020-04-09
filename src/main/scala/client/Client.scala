@@ -84,9 +84,7 @@ object Client {
 class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
 
   private val requestTimeout = 5 // Seconds
-
   import akka.util.Timeout
-
   implicit val timeout: Timeout = requestTimeout seconds
 
   private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
@@ -147,7 +145,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     if (this.joinedRooms().exists(_.roomId == roomId)) {
       Future.failed(new Exception("Room already joined"))
     } else {
-      val clientRoom = ClientRoom(coreClient, httpServerUri, roomId)
+      val clientRoom = ClientRoom(coreClient, httpServerUri, roomId, Map())
       clientRoom.join().map(_ => clientRoom)
     }
 

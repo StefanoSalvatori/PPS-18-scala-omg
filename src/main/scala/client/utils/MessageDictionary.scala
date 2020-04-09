@@ -1,7 +1,6 @@
 package client.utils
 
 import akka.actor.ActorRef
-import akka.http.scaladsl.model.StatusCode
 import akka.http.scaladsl.model.ws.Message
 import client.room.ClientRoom
 import common.room.SharedRoom.{Room, RoomId, RoomPassword, RoomType}

@@ -1,7 +1,5 @@
 package common.room
 
-import com.typesafe.scalalogging.LazyLogging
-
 object SharedRoom {
 
   type RoomId = String
@@ -12,14 +10,14 @@ object SharedRoom {
     val state: T
   }
 
-  trait Room extends LazyLogging {
+  trait Room {
 
     val roomId: RoomId
-    private var _properties: Set[RoomProperty] = Set()
+    private var _sharedProperties: Set[RoomProperty] = Set()
 
-    def properties: Set[RoomProperty] =  _properties
+    def sharedProperties: Set[RoomProperty] =  _sharedProperties
 
-    def addProperty(property: RoomProperty): Unit = _properties = _properties + property
+    def addSharedProperty(property: RoomProperty): Unit = _sharedProperties = _sharedProperties + property
   }
 
   object Room {

@@ -3,14 +3,27 @@ package client.room
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.util.Timeout
 import client.utils.MessageDictionary._
-import common.room.SharedRoom.{Room, RoomId}
+import common.room.SharedRoom.RoomId
 import akka.pattern.ask
+import common.room.RoomPropertyValue
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-trait ClientRoom extends Room {
+trait ClientRoom {
+
+  /**
+   * Id of the room
+   * @return the id associated to the room
+   */
+  def roomId: RoomId
+
+  /**
+   * Properties of the room.
+   * @return a map containing property names as keys (name -> value)
+   */
+  def properties: Map[String, RoomPropertyValue]
 
   /**
    * Open web socket with server room and try to join
@@ -45,11 +58,15 @@ trait ClientRoom extends Room {
 }
 
 object ClientRoom {
-  def apply(coreClient: ActorRef, httpServerUri: String, roomId: RoomId)(implicit system: ActorSystem): ClientRoom =
-    ClientRoomImpl(coreClient, httpServerUri, roomId)
+  def apply(coreClient: ActorRef, httpServerUri: String, roomId: RoomId, properties: Map[String, RoomPropertyValue])
+           (implicit system: ActorSystem): ClientRoom =
+    ClientRoomImpl(coreClient, httpServerUri, roomId, properties)
 }
 
-case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: RoomId)
+case class ClientRoomImpl(coreClient: ActorRef,
+                          httpServerUri: String,
+                          override val roomId: RoomId,
+                          override val properties: Map[String, RoomPropertyValue])
                          (implicit val system: ActorSystem)
   extends ClientRoom {
 
@@ -67,7 +84,7 @@ case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: R
     }
   }
 
-   override def leave(): Future[Any] = innerActor match {
+  override def leave(): Future[Any] = innerActor match {
       case Some(value) =>
         value ? SendLeave flatMap {
           case Success(_) => Future.successful()

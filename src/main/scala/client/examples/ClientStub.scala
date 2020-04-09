@@ -22,9 +22,17 @@ object ClientStub extends App {
   }
   */
 
+  client.getAvailableRoomsByType("test_room", FilterOptions.empty) onComplete {
+    case Success(res) => res.head
+  }
+
+
+  /*
   client createPrivateRoom("test_room", Set.empty[RoomProperty], "abc") onComplete {
     case Success(res) => println("POST: " + res)
   }
+  */
+
   /*
   andThen {
     case Success(_) =>

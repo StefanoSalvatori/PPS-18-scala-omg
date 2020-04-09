@@ -1,5 +1,6 @@
 package server.room
 
+import com.typesafe.scalalogging.LazyLogging
 import common.room.SharedRoom.Room
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, IntRoomPropertyValue, RoomProperty, RoomPropertyValue, StringRoomPropertyValue}
@@ -18,7 +19,7 @@ trait PrivateRoomSupport {
 }
 
 trait Server
-trait ServerRoom extends Room with PrivateRoomSupport {
+trait ServerRoom extends Room with PrivateRoomSupport with LazyLogging {
 
   private var clients: Seq[Client] = Seq.empty
 

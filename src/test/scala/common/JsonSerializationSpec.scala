@@ -20,9 +20,9 @@ class JsonSerializationSpec extends AnyFlatSpec with Matchers with BeforeAndAfte
   "Shared rooms" must "be correctly JSON encoded and decoded" in {
     val properties = Set(RoomProperty("A", 1), RoomProperty("B", 2))
     val room = Room("randomId")
-    properties.foreach(room addProperty)
+    properties.foreach(room addSharedProperty)
     checkCorrectJsonEncoding(room,
-      (room: Room, decodedRoom: Room) => room.roomId == decodedRoom.roomId && room.properties == decodedRoom.properties
+      (room: Room, decodedRoom: Room) => room.roomId == decodedRoom.roomId && room.sharedProperties == decodedRoom.sharedProperties
     )
   }
 
