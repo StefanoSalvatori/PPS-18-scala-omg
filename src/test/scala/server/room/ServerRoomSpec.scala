@@ -17,19 +17,27 @@ class ServerRoomSpec extends AnyWordSpecLike
   with BeforeAndAfter
   with BeforeAndAfterAll {
 
-  private val serverRoom = ServerRoom()
-  private val testClient = TestClient(UUID.randomUUID().toString)
-  private val testClient2 = TestClient(UUID.randomUUID().toString)
+  private var serverRoom: ServerRoom = _
+  private var testClient: TestClient = _
+  private var testClient2: TestClient = _
 
   val numOfProperties = 5 // A, B, C, D + roomId
-  val nameA = "a"; val valueA = 1
-  val nameB = "b"; val valueB = "abc"
-  val nameC = "c"; val valueC = false
-  val nameD = "d"; val valueD = 0.1
+  val nameA = "a";
+  val valueA = 1
+  val nameB = "b";
+  val valueB = "abc"
+  val nameC = "c";
+  val valueC = false
+  val nameD = "d";
+  val valueD = 0.1
 
   var testRoom: ServerRoom = _
 
   before {
+    serverRoom = ServerRoom()
+    testClient = TestClient(UUID.randomUUID().toString)
+    testClient2 = TestClient(UUID.randomUUID().toString)
+
     testRoom = new ServerRoom {
       override val roomId: RoomId = "id"
       var a: Int = valueA
@@ -38,9 +46,13 @@ class ServerRoomSpec extends AnyWordSpecLike
       var d: Double = valueD
 
       override def onCreate(): Unit = {}
+
       override def onClose(): Unit = {}
+
       override def onJoin(client: Client): Unit = {}
+
       override def onLeave(client: Client): Unit = {}
+
       override def onMessageReceived(client: Client, message: Any): Unit = {}
     }
   }
@@ -59,6 +71,9 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "remove clients from the room" in {
+      serverRoom.addClient(testClient)
+      serverRoom.addClient(testClient2)
+      assert(serverRoom.connectedClients.size == 2)
       serverRoom.removeClient(testClient2)
       serverRoom.removeClient(testClient)
       assert(serverRoom.connectedClients.isEmpty)
@@ -73,14 +88,27 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "send broadcast messages to all clients connected using the room protocol" in {
+      serverRoom.addClient(testClient)
       serverRoom.addClient(testClient2)
       serverRoom.broadcast("Hello Everybody")
       val receivedFrom1 = testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
       receivedFrom1.messageType shouldBe Broadcast
       receivedFrom1.payload shouldBe "Hello Everybody"
-      val receivedFrom2 = testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
+      val receivedFrom2 = testClient2.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
       receivedFrom2.messageType shouldBe Broadcast
       receivedFrom2.payload shouldBe "Hello Everybody"
+    }
+
+
+    "notify clients when is closed" in {
+      serverRoom.addClient(testClient)
+      serverRoom.addClient(testClient2)
+      serverRoom.close()
+      val receivedFrom1 = testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
+      receivedFrom1.messageType shouldBe RoomClosed
+      val receivedFrom2 = testClient2.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
+      receivedFrom2.messageType shouldBe RoomClosed
+
     }
 
     "return correct values of its properties" in {
@@ -161,7 +189,6 @@ class ServerRoomSpec extends AnyWordSpecLike
       assert(roomProperties contains RoomProperty(nameC, valueC))
       assert(roomProperties contains RoomProperty(nameD, valueD))
     }
-
   }
 
 }
