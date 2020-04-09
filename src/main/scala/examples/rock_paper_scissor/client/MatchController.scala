@@ -10,9 +10,9 @@ import javafx.{scene => jfxs}
 
 
 class MatchController {
-  @jfxf.FXML var labelWaitingPlayer: Label = _
-  @jfxf.FXML var splitPaneButtons: SplitPane = _
-  @jfxf.FXML var gridPaneAdvancedMoves: GridPane = _
+  @jfxf.FXML private var labelWaitingPlayer: Label = _
+  @jfxf.FXML private var splitPaneButtons: SplitPane = _
+  @jfxf.FXML private var gridPaneAdvancedMoves: GridPane = _
 
   private var room: ClientRoom = _
 

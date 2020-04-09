@@ -6,7 +6,7 @@ import alice.tuprolog.{Prolog, Theory}
 import server.room.{Client, ServerRoom}
 
 
-class ClassicMatchRoom(override val roomId: String) extends ServerRoom {
+case class ClassicMatchRoom(override val roomId: String) extends ServerRoom {
 
   private val MaxPlayers = 2
   private var gameState: Seq[(Client, String)] = Seq.empty
@@ -69,7 +69,6 @@ class ClassicMatchRoom(override val roomId: String) extends ServerRoom {
 
   private def checkMove(move: String) = this.availableMoves.contains(move)
 
-
   private def reachedMaxPlayers = this.connectedClients.size == MaxPlayers
 
   private def receivedAllMoves = gameState.size == MaxPlayers
@@ -77,7 +76,7 @@ class ClassicMatchRoom(override val roomId: String) extends ServerRoom {
 }
 
 
-class AdvancedMatchRoom(override val roomId: String) extends ClassicMatchRoom(roomId) {
+case class AdvancedMatchRoom(override val roomId: String) extends ClassicMatchRoom(roomId) {
   override def availableMoves: Set[String] = Set("rock", "paper", "scissor", "lizard", "spock")
 }
 

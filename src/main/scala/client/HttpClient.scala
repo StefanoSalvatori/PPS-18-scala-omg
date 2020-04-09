@@ -7,9 +7,10 @@ import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.unmarshalling._
 import akka.pattern.pipe
 import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import client.utils.MessageDictionary._
 import common.SharedRoom.Room
+import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.{HttpRequests, RoomJsonSupport, Routes}
 
 import scala.concurrent.Future
@@ -58,17 +59,27 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
         case Failure(ex) => replyTo ! FailResponse(ex)
       }
 
-    case HttpSocketRequest(roomId) =>
+    case HttpSocketRequest(roomId, parser) =>
       val sink: Sink[Message, NotUsed] =
-        Sink.actorRef(sender, PartialFunction.empty, PartialFunction.empty)
+        Flow[Message]
+          .map(x => parser.parseFromSocket(x) match {
+            case Failure(_) =>
+            case Success(value) => value
+          })
+          .to(Sink.actorRef(sender, PartialFunction.empty, PartialFunction.empty))
+
 
       val (sourceRef, publisher) =
         Source.actorRef(
-          PartialFunction.empty, PartialFunction.empty, Int.MaxValue, OverflowStrategy.dropTail)
+          PartialFunction.empty, PartialFunction.empty, Int.MaxValue, OverflowStrategy.dropHead)
+          .map((x: RoomProtocolMessage) => {
+            parser.prepareToSocket(x)
+          })
           .toMat(Sink.asPublisher(false))(Keep.both).run()
 
       val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + Routes.webSocketConnection(roomId)
       val flow = Http() webSocketClientFlow (WebSocketRequest(wsSocketUri))
+
       val ((_, upgradeResponse), _) = Source.fromPublisher(publisher)
         .viaMat(flow)(Keep.both)
         .toMat(sink)(Keep.both)

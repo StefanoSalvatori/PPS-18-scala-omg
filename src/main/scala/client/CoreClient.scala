@@ -56,11 +56,11 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
       }
 
 
-    case ClientRoomActorLeaved(actorRef) =>
-      this.joinedRoomsActors = this.joinedRoomsActors - actorRef
+    case ClientRoomActorLeaved =>
+      this.joinedRoomsActors = this.joinedRoomsActors - sender
 
-    case ClientRoomActorJoined(actorRef) =>
-      this.joinedRoomsActors = this.joinedRoomsActors + actorRef
+    case ClientRoomActorJoined=>
+      this.joinedRoomsActors = this.joinedRoomsActors + sender
   }
 
 

@@ -15,11 +15,11 @@ class HomeController {
   private val Host = "localhost"
   private val Port = 8080
 
-  @jfxf.FXML var btnNewGame: Button = _
-  @jfxf.FXML var btnExit: Button = _
-  @jfxf.FXML var labelWaitingPlayer: Label = _
-  @jfxf.FXML var  labelStatus: Label = _
-  @jfxf.FXML var vboxMenuButtons: VBox = _
+  @jfxf.FXML private var btnNewGame: Button = _
+  @jfxf.FXML private var btnExit: Button = _
+  @jfxf.FXML private var labelWaitingPlayer: Label = _
+  @jfxf.FXML private var labelStatus: Label = _
+  @jfxf.FXML private var vboxMenuButtons: VBox = _
 
   private val client: Client = Client(Host, Port)
 

@@ -5,6 +5,7 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.SharedRoom.Room
+import common.communication.BinaryProtocolSerializer
 import common.{FilterOptions, RoomProperty, Routes, TestConfig}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -71,7 +72,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       httpTestActor ! HttpPostRoom(ROOM_TYPE_NAME, Set.empty)
       val roomRes = expectMsgType[HttpRoomResponse]
 
-      httpTestActor ! HttpSocketRequest(roomRes.room.roomId)
+      httpTestActor ! HttpSocketRequest(roomRes.room.roomId, BinaryProtocolSerializer)
 
       expectMsgPF() {
         case HttpSocketSuccess(ref) =>  assert(ref.isInstanceOf[ActorRef])

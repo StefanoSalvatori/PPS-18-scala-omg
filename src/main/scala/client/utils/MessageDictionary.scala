@@ -6,6 +6,8 @@ import akka.http.scaladsl.model.ws.Message
 import client.room.ClientRoom
 import common.{FilterOptions, RoomProperty}
 import common.SharedRoom.{Room, RoomId, RoomType}
+import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.communication.SocketSerializer
 
 object MessageDictionary {
 
@@ -19,9 +21,9 @@ object MessageDictionary {
 
   case class JoinedRooms(joinedRooms: Set[ClientRoom])
 
-  case class ClientRoomActorLeaved(clientRoomActor: ActorRef)
+  case class ClientRoomActorLeaved()
 
-  case class ClientRoomActorJoined(clientRoomActor: ActorRef)
+  case class ClientRoomActorJoined()
 
   case class HttpRoomResponse(room: Room)
 
@@ -50,8 +52,10 @@ object MessageDictionary {
    * If the connection is successful respond with message [[HttpSocketSuccess]] otherwise [[HttpSocketFail]]
    *
    * @param roomId id of the room to connect to
+   * @param parser messages received on the socket will be parsed with this parser before sending them to the
+   *              receiver actor
    */
-  case class HttpSocketRequest(roomId: RoomId)
+  case class HttpSocketRequest[T](roomId: RoomId, parser: SocketSerializer[T])
 
   /**
    * Successful response of an [[HttpSocketRequest]].
@@ -71,19 +75,25 @@ object MessageDictionary {
 
   //ClientRoomActor
 
-  case class GetClientRoom(joined: Boolean)
-
   case class ClientRoomResponse(clientRoom: ClientRoom)
 
   case class SendJoin(roomId: RoomId)
 
   case class SendLeave()
 
-  case class SendProtocolMessage(msg: Message)
+  case class SendProtocolMessage(msg: RoomProtocolMessage)
 
   case class SendStrictMessage(msg: Any with java.io.Serializable)
 
+  /**
+   * Define a callbck that handle a received message from the socket
+   * @param callback the callback that handles the message
+   */
   case class OnMsg(callback: Any => Unit)
 
+
+
+  //common
   case class UnknownMessageReply()
+
 }

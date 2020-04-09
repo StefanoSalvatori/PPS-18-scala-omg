@@ -90,8 +90,7 @@ case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: R
   override def send(msg: Any with java.io.Serializable): Unit =
     innerActor.foreach(_ ! SendStrictMessage(msg))
 
-  override def onMessageReceived(callback: Any => Unit): Unit = innerActor.foreach(_ !
-    OnMsg(callback))
+  override def onMessageReceived(callback: Any => Unit): Unit = innerActor.foreach(_ ! OnMsg(callback))
 
   private def spawnInnerActor(): ActorRef = {
     val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
@@ -102,6 +101,7 @@ case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: R
   private def killInnerActor(): Unit = {
     this.innerActor match {
       case Some(value) => value ! PoisonPill
+      case None =>
     }
   }
 
