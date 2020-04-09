@@ -6,7 +6,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Sink
-import common.RoomProperty
+import common.room.RoomProperty
 import server.room.ServerRoom
 import server.route_service.RouteService
 

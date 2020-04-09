@@ -3,7 +3,8 @@ package client
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import com.typesafe.scalalogging.LazyLogging
-import common.{FilterOptions, RoomJsonSupport, TestConfig}
+import common.room.{FilterOptions, RoomJsonSupport}
+import common.TestConfig
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}

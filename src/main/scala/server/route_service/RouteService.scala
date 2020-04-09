@@ -5,8 +5,9 @@ import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
 import com.typesafe.scalalogging.LazyLogging
-import common.SharedRoom.Room
-import common.{FilterOptions, RoomJsonSupport, RoomProperty, Routes}
+import common.http.Routes
+import common.room.SharedRoom.Room
+import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import server.RoomHandler
 import server.room.ServerRoom
 
@@ -57,7 +58,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
   }
 
   /**
-   * Handle web socket connection on path /[[common.Routes#connectionRoute]]/{roomId}
+   * Handle web socket connection on path /[[Routes#connectionRoute]]/{roomId}
    */
   def webSocketRoute: Route = pathPrefix(Routes.connectionRoute / Segment) { roomId =>
     get {

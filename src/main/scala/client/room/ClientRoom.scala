@@ -1,14 +1,10 @@
 package client.room
 
-import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
-import akka.http.scaladsl.model.ws.TextMessage
+import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.util.Timeout
 import client.utils.MessageDictionary._
-import common.Routes
-import common.SharedRoom.{Room, RoomId}
+import common.room.SharedRoom.{Room, RoomId}
 import akka.pattern.ask
-import akka.pattern.pipe
-import client.{BasicActor, HttpClient}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._

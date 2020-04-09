@@ -1,7 +1,7 @@
-package common
+package common.room
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import common.SharedRoom.{Room, RoomId}
+import common.room.SharedRoom.{Room, RoomId}
 import spray.json.{DefaultJsonProtocol, JsArray, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
 
 trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
