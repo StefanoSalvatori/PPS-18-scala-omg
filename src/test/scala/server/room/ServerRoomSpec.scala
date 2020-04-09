@@ -21,24 +21,28 @@ class ServerRoomSpec extends AnyWordSpecLike
   private val testClient = TestClient(UUID.randomUUID().toString)
   private val testClient2 = TestClient(UUID.randomUUID().toString)
 
-
+  val numOfProperties = 5 // A, B, C, D + roomId
   val nameA = "a"; val valueA = 1
   val nameB = "b"; val valueB = "abc"
   val nameC = "c"; val valueC = false
   val nameD = "d"; val valueD = 0.1
 
-  val testRoom: ServerRoom = new ServerRoom {
-    override val roomId: RoomId = "id"
-    var a: Int = valueA
-    var b: String = valueB
-    var c: Boolean = valueC
-    var d: Double = valueD
+  var testRoom: ServerRoom = _
 
-    override def onCreate(): Unit = { }
-    override def onClose(): Unit = { }
-    override def onJoin(client: Client): Unit = { }
-    override def onLeave(client: Client): Unit = { }
-    override def onMessageReceived(client: Client, message: Any): Unit = { }
+  before {
+    testRoom = new ServerRoom {
+      override val roomId: RoomId = "id"
+      var a: Int = valueA
+      var b: String = valueB
+      var c: Boolean = valueC
+      var d: Double = valueD
+
+      override def onCreate(): Unit = {}
+      override def onClose(): Unit = {}
+      override def onJoin(client: Client): Unit = {}
+      override def onLeave(client: Client): Unit = {}
+      override def onMessageReceived(client: Client, message: Any): Unit = {}
+    }
   }
 
   "A server room" should {
@@ -140,6 +144,24 @@ class ServerRoomSpec extends AnyWordSpecLike
       testRoom.makePublic()
       assert(!testRoom.isPrivate)
     }
+
+    "expose the defined room properties" in {
+      assert(testRoom.properties contains RoomProperty(nameA, valueA))
+      assert(testRoom.properties contains RoomProperty(nameB, valueB))
+      assert(testRoom.properties contains RoomProperty(nameC, valueC))
+      assert(testRoom.properties contains RoomProperty(nameD, valueD))
+    }
+
+    "expose just the correct properties" in {
+      val roomProperties = testRoom.properties
+      val parentProperties = ServerRoom.defaultProperties
+      roomProperties &~ parentProperties should have size numOfProperties
+      assert(roomProperties contains RoomProperty(nameA, valueA))
+      assert(roomProperties contains RoomProperty(nameB, valueB))
+      assert(roomProperties contains RoomProperty(nameC, valueC))
+      assert(roomProperties contains RoomProperty(nameD, valueD))
+    }
+
   }
 
 }

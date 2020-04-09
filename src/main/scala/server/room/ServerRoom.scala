@@ -1,9 +1,11 @@
 package server.room
 
-import common.room.SharedRoom.Room
+import com.typesafe.scalalogging.LazyLogging
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, IntRoomPropertyValue, RoomProperty, RoomPropertyValue, StringRoomPropertyValue}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
+import common.room.SharedRoom.{BasicRoom, RoomId}
+import java.lang.reflect.Field
 
 trait PrivateRoomSupport {
 
@@ -18,11 +20,25 @@ trait PrivateRoomSupport {
 }
 
 trait Server
-trait ServerRoom extends Room with PrivateRoomSupport {
+trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 
   private var clients: Seq[Client] = Seq.empty
 
-  import java.lang.reflect.Field
+  this.onCreate()
+
+  /**
+   * Getter of all room properties
+   * @return a set containing all defined room properties
+   */
+  def properties: Set[RoomProperty] = {
+    def checkAdmissibleFieldType[T](value: T): Boolean = value match {
+      case _: Int | _: String | _: Boolean | _: Double => true
+      case _ => false
+    }
+    this.getClass.getDeclaredFields.collect {
+      case f if operationOnField(f.getName)(field => checkAdmissibleFieldType(field get this)) => propertyOf(f.getName)
+    }.toSet
+  }
 
   /**
    * Getter of the value of a property
@@ -41,7 +57,7 @@ trait ServerRoom extends Room with PrivateRoomSupport {
     operationOnField(propertyName)(field => ServerRoom.valueToRoomPropertyValue(field get this))
 
   /**
-   * Gettor of a room property
+   * Getter of a room property
    * @param propertyName The name of the property
    * @return The selected property
    */
@@ -60,8 +76,6 @@ trait ServerRoom extends Room with PrivateRoomSupport {
         logger debug s"Impossible to set property '${property.name}': No such property in the room."
     }
   })
-
-  this.onCreate()
 
   /**
    * Add a client to the room. Triggers the onJoin
@@ -120,7 +134,6 @@ trait ServerRoom extends Room with PrivateRoomSupport {
    */
   def close(): Unit = this.onClose() //TODO: what to do here?
 
-
   /**
    * Called as soon as the room is created by the server
    */
@@ -177,6 +190,22 @@ object ServerRoom {
    * @return the room
    */
   def apply(id: String): ServerRoom = new BasicServerRoom(id)
+
+  /**
+   * Getter of the default room properties defined in a server room
+   * @return a set containing the names of the defined properties
+   */
+  def defaultProperties: Set[RoomProperty] = {
+    val exampleRoom = new ServerRoom {
+      override val roomId: RoomId = ""
+      override def onCreate(): Unit = { }
+      override def onClose(): Unit = { }
+      override def onJoin(client: Client): Unit = { }
+      override def onLeave(client: Client): Unit = { }
+      override def onMessageReceived(client: Client, message: Any): Unit = { }
+    }
+    exampleRoom.properties
+  }
 
   private def propertyToPair[_](property: RoomProperty): PairRoomProperty[_] =
     PairRoomProperty(property.name, property.value match {

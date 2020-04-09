@@ -84,9 +84,7 @@ object Client {
 class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
 
   private val requestTimeout = 5 // Seconds
-
   import akka.util.Timeout
-
   implicit val timeout: Timeout = requestTimeout seconds
 
   private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
@@ -102,29 +100,11 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   override def shutdown(): Unit = this.actorSystem.terminate()
 
-  override def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): Future[ClientRoom] = {
-    for {
-      room <- coreClient ? CreatePublicRoom(roomType, roomProperties)
-      clientRoomTry = room.asInstanceOf[Try[ClientRoom]]
-      if clientRoomTry.isSuccess
-      clientRoom = clientRoomTry.get
-      _ <- clientRoom.join()
-    } yield {
-      clientRoom
-    }
-  }
+  override def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): Future[ClientRoom] =
+    this createRoom CreatePublicRoom(roomType, roomProperties)
 
-  override def createPrivateRoom(roomType: RoomType, roomProperties: Set[RoomProperty], password: RoomPassword): Future[ClientRoom] = {
-    for {
-      room <- coreClient ? CreatePrivateRoom(roomType, roomProperties, password)
-      clientRoomTry = room.asInstanceOf[Try[ClientRoom]]
-      if clientRoomTry.isSuccess
-      clientRoom = clientRoomTry.get
-      _ <- clientRoom.join()
-    } yield {
-      clientRoom
-    }
-  }
+  override def createPrivateRoom(roomType: RoomType, roomProperties: Set[RoomProperty], password: RoomPassword): Future[ClientRoom] =
+    this createRoom CreatePrivateRoom(roomType, roomProperties, password)
 
   override def joinOrCreate(roomType: RoomType, filterOption: FilterOptions, roomProperties: Set[RoomProperty]): Future[ClientRoom] = {
     this.join(roomType, filterOption) recoverWith {
@@ -147,7 +127,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     if (this.joinedRooms().exists(_.roomId == roomId)) {
       Future.failed(new Exception("Room already joined"))
     } else {
-      val clientRoom = ClientRoom(coreClient, httpServerUri, roomId)
+      val clientRoom = ClientRoom(coreClient, httpServerUri, roomId, Map())
       clientRoom.join().map(_ => clientRoom)
     }
 
@@ -160,4 +140,15 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       case Failure(ex) => Future.failed(ex)
     }
 
+  private def createRoom(message: CreateRoomMessage): Future[ClientRoom] = {
+    for {
+      room <- coreClient ? message
+      clientRoomTry = room.asInstanceOf[Try[ClientRoom]]
+      if clientRoomTry.isSuccess
+      clientRoom = clientRoomTry.get
+      _ <- clientRoom.join()
+    } yield {
+      clientRoom
+    }
+  }
 }

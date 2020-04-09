@@ -2,7 +2,6 @@ package client.examples
 
 import client.Client
 import common.room.BasicRoomPropertyValueConversions._
-import common.room.SharedRoom.Room
 import common.room.{FilterOptions, RoomProperty}
 
 import scala.concurrent.ExecutionContext
@@ -15,16 +14,24 @@ object ClientStub extends App {
   private val serverPort = 8080
 
   val client = Client(serverAddress, serverPort)
-  val p = Set(RoomProperty("a", 1), RoomProperty("b", "qwe"), RoomProperty("c", true), RoomProperty("df", 1))
+  val p = Set(RoomProperty("a", 1), RoomProperty("b", "qwe"))
   /*
   client.getAvailableRoomsByType("test_room", FilterOptions.empty) onComplete {
     case Success(res) => println("GET: " + res)
   }
   */
 
-  client createPrivateRoom("test_room", p, "abc") onComplete {
-    case Success(res) => println("POST: " + res)
+  /*
+  client.getAvailableRoomsByType("test_room", FilterOptions.empty) onComplete {
+    case Success(res) => println(res.head.properties)
   }
+  */
+
+  client createPublicRoom("test_room", p) onComplete {
+    case Success(res) => println("POST: " + res.properties)
+  }
+
+
   /*
   andThen {
     case Success(_) =>
