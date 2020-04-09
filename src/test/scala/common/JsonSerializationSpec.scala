@@ -4,10 +4,27 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import common.room.BasicRoomPropertyValueConversions._
-import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, EqualStrategy, FilterOptions, GreaterStrategy, IntRoomPropertyValue, LowerStrategy, NotEqualStrategy, RoomJsonSupport, RoomProperty, StringRoomPropertyValue}
+import common.room.SharedRoom.{Room, RoomId}
+import common.room._
 import spray.json.RootJsonFormat
 
 class JsonSerializationSpec extends AnyFlatSpec with Matchers with BeforeAndAfter with RoomJsonSupport {
+
+  behavior of "room"
+
+  "RoomId values" must "be correctly JSON encoded and decoded" in {
+    val id: RoomId = "randomId"
+    checkCorrectJsonEncoding(id)
+  }
+
+  "Shared rooms" must "be correctly JSON encoded and decoded" in {
+    val properties = Set(RoomProperty("A", 1), RoomProperty("B", 2))
+    val room = Room("randomId")
+    properties.foreach(room addProperty)
+    checkCorrectJsonEncoding(room,
+      (room: Room, decodedRoom: Room) => room.roomId == decodedRoom.roomId && room.properties == decodedRoom.properties
+    )
+  }
 
   behavior of "room property values"
 
@@ -106,9 +123,11 @@ class JsonSerializationSpec extends AnyFlatSpec with Matchers with BeforeAndAfte
     checkCorrectJsonEncoding(filter)
   }
 
-  private def checkCorrectJsonEncoding[T](value: T)(implicit jsonFormatter: RootJsonFormat[T]) = {
+  private def checkCorrectJsonEncoding[T](value: T,
+                                          comparisonStrategy: (T,T) => Boolean = (value: T, decoded: T) => value == decoded)
+                                         (implicit jsonFormatter: RootJsonFormat[T]) = {
     val encoded = jsonFormatter write value
     val decoded = jsonFormatter read encoded
-    decoded shouldEqual value
+    assert(comparisonStrategy(value, decoded))
   }
 }

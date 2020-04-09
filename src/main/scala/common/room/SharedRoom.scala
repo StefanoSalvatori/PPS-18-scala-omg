@@ -13,7 +13,13 @@ object SharedRoom {
   }
 
   trait Room extends LazyLogging {
+
     val roomId: RoomId
+    private var _properties: Set[RoomProperty] = Set()
+
+    def properties: Set[RoomProperty] =  _properties
+
+    def addProperty(property: RoomProperty): Unit = _properties = _properties + property
   }
 
   object Room {

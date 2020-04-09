@@ -120,7 +120,6 @@ trait ServerRoom extends Room with PrivateRoomSupport {
    */
   def close(): Unit = this.onClose() //TODO: what to do here?
 
-
   /**
    * Called as soon as the room is created by the server
    */
