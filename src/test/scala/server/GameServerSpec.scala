@@ -169,7 +169,7 @@ class GameServerSpec extends AnyFlatSpec
   }
 
   it should "create rooms" in {
-    this.server.defineRoom("test", ServerRoom(_))
+    this.server.defineRoom("test", () => ServerRoom())
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     this.server.createRoom("test")
     val httpResult = Await.result(makeEmptyRequestAtRooms, MAX_WAIT_REQUESTS)

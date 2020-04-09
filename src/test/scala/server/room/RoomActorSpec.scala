@@ -25,12 +25,12 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
   private val FAKE_CLIENT_2 = Client.asActor(UUID.randomUUID.toString, client2TestProbe.ref)
 
 
-  var room: ServerRoom = ServerRoom(UUID.randomUUID().toString)
+  var room: ServerRoom = ServerRoom()
   var roomActor: ActorRef = system actorOf RoomActor(room)
 
 
   before {
-    room = ServerRoom(UUID.randomUUID().toString)
+    room = ServerRoom()
     roomActor = system actorOf RoomActor(room)
   }
 

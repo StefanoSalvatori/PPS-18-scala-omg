@@ -13,27 +13,35 @@ import server.routes.RouteCommonTestOptions
 
 class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with RouteCommonTestOptions with BeforeAndAfter {
 
-  class MyRoom(override val roomId: RoomId) extends ServerRoom() {
+  case class MyRoom() extends ServerRoom {
 
     var a: Int = 1
     var b: String = "a"
     var c: Boolean = true
 
     override def onCreate(): Unit = {}
+
     override def onClose(): Unit = {}
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {}
+
     override def onMessageReceived(client: Client, message: Any): Unit = {}
   }
-  class MyRoom2(override val roomId: RoomId) extends ServerRoom() {
+  case class MyRoom2() extends ServerRoom() {
 
     val a: Int = 1
     val b: String = "a"
 
     override def onCreate(): Unit = {}
+
     override def onClose(): Unit = {}
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {}
+
     override def onMessageReceived(client: Client, message: Any): Unit = {}
   }
   val myRoomType = "myRoomType"
@@ -56,7 +64,7 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
   }
 
   it should "create a new room on createRoom()" in {
-    this.roomHandler.defineRoomType(TestRoomType, ServerRoom(_))
+    this.roomHandler.defineRoomType(TestRoomType, () => ServerRoom())
     this.roomHandler.createRoom(TestRoomType)
     this.roomHandler.getAvailableRooms() should have size 1
   }
@@ -64,8 +72,8 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
   it should "return room of given type calling getRoomsByType() " in {
     val roomType1 = "type1"
     val roomType2 = "type2"
-    this.roomHandler.defineRoomType(roomType1, ServerRoom(_))
-    this.roomHandler.defineRoomType(roomType2, ServerRoom(_))
+    this.roomHandler.defineRoomType(roomType1, () => ServerRoom())
+    this.roomHandler.defineRoomType(roomType2, () => ServerRoom())
     this.roomHandler.createRoom(roomType1)
     this.roomHandler.createRoom(roomType2)
     this.roomHandler.createRoom(roomType2)
@@ -73,8 +81,19 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     this.roomHandler.getRoomsByType(roomType2) should have size 2
   }
 
+  it should "close rooms" in {
+    val roomType1 = "type1"
+    val roomType2 = "type2"
+    this.roomHandler.defineRoomType(roomType1, () => ServerRoom())
+    this.roomHandler.defineRoomType(roomType2, () => ServerRoom())
+    val room = this.roomHandler.createRoom(roomType1)
+    this.roomHandler.closeRoom(room.roomId)
+    assert(!this.roomHandler.getAvailableRooms().exists(_.roomId == room.roomId))
+
+  }
+
   "An empty filter" should "not affect any room" in {
-    roomHandler defineRoomType(myRoomType, id => new MyRoom(id))
+    roomHandler defineRoomType(myRoomType, MyRoom)
     roomHandler createRoom myRoomType
     roomHandler.getAvailableRooms() should have size 1
     val filteredRooms = roomHandler.getAvailableRooms()
@@ -82,7 +101,7 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
   }
 
   "If no room can pass the filter, it" should "return an empty set" in {
-    roomHandler defineRoomType(myRoomType, id => new MyRoom(id))
+    roomHandler defineRoomType(myRoomType, MyRoom)
     roomHandler createRoom myRoomType
     val testProperty = RoomProperty("a", 0)
     val filter = FilterOptions just testProperty =:= 10
@@ -93,8 +112,8 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
   "If a room does not contain a property specified in the filter, such room" should "not be inserted in the result" in {
     val testProperty = RoomProperty("c", true)
     val filter = FilterOptions just testProperty =:= true
-    roomHandler defineRoomType(myRoomType, id => new MyRoom(id))
-    roomHandler defineRoomType(myRoomType2, id => new MyRoom2(id))
+    roomHandler defineRoomType(myRoomType, MyRoom)
+    roomHandler defineRoomType(myRoomType2, MyRoom2)
 
     roomHandler createRoom myRoomType2
     val filteredRooms = roomHandler.getAvailableRooms(filter)
@@ -111,7 +130,7 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     val testProperty = RoomProperty("a", 1)
     val testProperty2 = RoomProperty("b", "a")
     val testProperty3 = RoomProperty("c", true)
-    roomHandler defineRoomType(myRoomType, id => new MyRoom(id))
+    roomHandler defineRoomType(myRoomType, MyRoom)
     roomHandler createRoom myRoomType
 
     val filter = FilterOptions just testProperty < 2 andThen testProperty2 =:= "a" andThen testProperty3 =!= false

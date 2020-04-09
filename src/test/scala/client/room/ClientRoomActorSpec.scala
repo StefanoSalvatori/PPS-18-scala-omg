@@ -49,7 +49,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
   before {
     coreClient = system actorOf CoreClient(serverUri)
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ROOM_TYPE_NAME, ServerRoom(_))
+    gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
     Await.ready(gameServer.start(), 5 seconds)
 
     coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)

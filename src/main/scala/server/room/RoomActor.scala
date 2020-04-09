@@ -35,7 +35,6 @@ class RoomActor(private val serverRoom: ServerRoom) extends Actor with ActorLogg
 
   override def postStop(): Unit = {
     super.postStop()
-    this.serverRoom.close()
   }
 
   override def receive: Receive = {

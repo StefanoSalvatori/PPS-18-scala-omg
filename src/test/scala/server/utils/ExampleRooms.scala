@@ -5,7 +5,7 @@ import server.room.{Client, ServerRoom}
 
 object ExampleRooms {
 
-  class NoPropertyRoom(override val roomId: RoomId) extends ServerRoom {
+  case class NoPropertyRoom() extends ServerRoom {
 
     override def onCreate(): Unit = { }
     override def onClose(): Unit = { }
@@ -15,7 +15,7 @@ object ExampleRooms {
   }
   val noPropertyRoomType = "noProperty"
 
-  class MyRoom(override val roomId: RoomId) extends ServerRoom {
+  case class MyRoom() extends ServerRoom {
 
     val a: Int = 0
     val b: String = "abc"

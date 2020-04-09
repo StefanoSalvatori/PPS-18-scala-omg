@@ -35,7 +35,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
 
   before {
     //ensure to have at least one room-type
-    routeService.addRouteForRoomType(TestRoomType, ServerRoom(_))
+    routeService.addRouteForRoomType(TestRoomType, () => ServerRoom())
   }
 
   override def afterAll(): Unit = {

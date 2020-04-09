@@ -17,7 +17,7 @@ class ServerRoomSpec extends AnyWordSpecLike
   with BeforeAndAfter
   with BeforeAndAfterAll {
 
-  private val serverRoom = ServerRoom(UUID.randomUUID().toString)
+  private val serverRoom = ServerRoom()
   private val testClient = TestClient(UUID.randomUUID().toString)
   private val testClient2 = TestClient(UUID.randomUUID().toString)
 

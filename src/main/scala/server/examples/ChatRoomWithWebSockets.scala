@@ -25,7 +25,7 @@ object ChatRoomWithWebSockets extends App {
   val ROOM_PATH = "chat"
   val gameServer: GameServer = GameServer(HOST, PORT)
   val client = Client(HOST, PORT)
-  gameServer.defineRoom(ROOM_PATH, id => new ChatRoom(id))
+  gameServer.defineRoom(ROOM_PATH, ChatRoom)
 
   import scala.concurrent.duration._
   Await.ready(gameServer.start(), 10 seconds)

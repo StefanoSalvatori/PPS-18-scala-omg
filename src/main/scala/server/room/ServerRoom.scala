@@ -4,8 +4,9 @@ import com.typesafe.scalalogging.LazyLogging
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, IntRoomPropertyValue, RoomProperty, RoomPropertyValue, StringRoomPropertyValue}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.room.SharedRoom.{BasicRoom, RoomId}
+import common.room.SharedRoom.{BasicRoom, Room, RoomId}
 import java.lang.reflect.Field
+import java.util.UUID
 
 trait PrivateRoomSupport {
 
@@ -19,15 +20,16 @@ trait PrivateRoomSupport {
   def makePrivate(newPassword: String): Unit = password = newPassword
 }
 
-trait Server
 trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
+
+  override val roomId: RoomId = UUID.randomUUID.toString
 
   private var clients: Seq[Client] = Seq.empty
 
-  this.onCreate()
 
   /**
    * Getter of all room properties
+   *
    * @return a set containing all defined room properties
    */
   def properties: Set[RoomProperty] = {
@@ -35,6 +37,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
       case _: Int | _: String | _: Boolean | _: Double => true
       case _ => false
     }
+
     this.getClass.getDeclaredFields.collect {
       case f if operationOnField(f.getName)(field => checkAdmissibleFieldType(field get this)) => propertyOf(f.getName)
     }.toSet
@@ -42,6 +45,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 
   /**
    * Getter of the value of a property
+   *
    * @param propertyName The name of the property
    * @return The value of the property, as instance of first class values (int, string, boolean. double)
    */
@@ -50,6 +54,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 
   /**
    * Getter of the value of a property
+   *
    * @param propertyName The name of the property
    * @return The value of the property, expressed as a RoomPropertyValue
    */
@@ -58,6 +63,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 
   /**
    * Getter of a room property
+   *
    * @param propertyName The name of the property
    * @return The selected property
    */
@@ -66,11 +72,12 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 
   /**
    * Setter of room properties
+   *
    * @param properties A set containing the properties to set
    */
   def setProperties(properties: Set[RoomProperty]): Unit = properties.map(ServerRoom.propertyToPair).foreach(property => {
     try {
-      operationOnField(property.name)(f => f set (this, property.value))
+      operationOnField(property.name)(f => f set(this, property.value))
     } catch {
       case _: NoSuchFieldException =>
         logger debug s"Impossible to set property '${property.name}': No such property in the room."
@@ -132,7 +139,11 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   /**
    * Close this room
    */
-  def close(): Unit = this.onClose() //TODO: what to do here?
+  def close(): Unit = {
+    this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.RoomClosed, client.id)))
+    this.onClose()
+  }
+
 
   /**
    * Called as soon as the room is created by the server
@@ -166,7 +177,13 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    */
   def onMessageReceived(client: Client, message: Any)
 
-  private def operationOnField[T](fieldName: String)(f: Function[Field,T]): T = {
+  // We need to override equals so that rooms are compared for their ids
+  override def equals(obj: Any): Boolean =
+    obj != null && obj.isInstanceOf[ServerRoom] && obj.asInstanceOf[ServerRoom].roomId == this.roomId
+
+  override def hashCode(): Int = this.roomId.hashCode
+
+  private def operationOnField[T](fieldName: String)(f: Function[Field, T]): T = {
     val field = this fieldFrom fieldName
     field setAccessible true
     val result = f(field)
@@ -182,27 +199,44 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 private case class PairRoomProperty[T](name: String, value: T)
 
 object ServerRoom {
+  implicit val serverRoomToSharedRoom: ServerRoom => Room = serverRoom => {
+    // Create the shared room
+    val sharedRoom = Room(serverRoom.roomId)
+    // Set the shared room properties
+    val serverRoomProperties = ServerRoom.defaultProperties
+    val runtimeRoomProperties = serverRoom.properties
+    val runtimeOnlyPropertyNames: Set[String] = runtimeRoomProperties.map(_ name) &~ serverRoomProperties.map(_ name)
+    runtimeRoomProperties.filter(property => runtimeOnlyPropertyNames contains property.name)
+      .foreach(sharedRoom addSharedProperty)
+    sharedRoom
+  }
+  implicit val serverRoomSeqToSharedRoomSeq: Seq[ServerRoom] => Seq[Room] = _.map(serverRoomToSharedRoom)
 
   /**
    * Creates a simple server room with an empty behavior.
    *
-   * @param id the id of the room
    * @return the room
    */
-  def apply(id: String): ServerRoom = new BasicServerRoom(id)
+  def apply(): ServerRoom = BasicServerRoom()
 
   /**
    * Getter of the default room properties defined in a server room
+   *
    * @return a set containing the names of the defined properties
    */
   def defaultProperties: Set[RoomProperty] = {
     val exampleRoom = new ServerRoom {
       override val roomId: RoomId = ""
-      override def onCreate(): Unit = { }
-      override def onClose(): Unit = { }
-      override def onJoin(client: Client): Unit = { }
-      override def onLeave(client: Client): Unit = { }
-      override def onMessageReceived(client: Client, message: Any): Unit = { }
+
+      override def onCreate(): Unit = {}
+
+      override def onClose(): Unit = {}
+
+      override def onJoin(client: Client): Unit = {}
+
+      override def onLeave(client: Client): Unit = {}
+
+      override def onMessageReceived(client: Client, message: Any): Unit = {}
     }
     exampleRoom.properties
   }
@@ -223,11 +257,15 @@ object ServerRoom {
   }
 }
 
-private class BasicServerRoom(override val roomId: String) extends ServerRoom {
+private case class BasicServerRoom() extends ServerRoom {
   override def onCreate(): Unit = {}
+
   override def onClose(): Unit = {}
+
   override def onJoin(client: Client): Unit = {}
+
   override def onLeave(client: Client): Unit = {}
+
   override def onMessageReceived(client: Client, message: Any): Unit = {}
 }
 

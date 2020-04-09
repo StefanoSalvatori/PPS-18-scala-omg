@@ -35,7 +35,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   override def beforeAll: Unit = {
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ROOM_TYPE_NAME, id => ServerRoom(id))
+    gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
     Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
   }
 

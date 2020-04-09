@@ -34,7 +34,7 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers
     route = routeService.route
 
     //define two room type for test
-    routeService.addRouteForRoomType(TestRoomType, ServerRoom(_))
+    routeService.addRouteForRoomType(TestRoomType, () => ServerRoom())
   }
 
   override def afterAll(): Unit = {

@@ -23,7 +23,7 @@ trait RouteService {
    * @param roomTypeName room type name used as the route name
    * @param roomFactory a factory to create rooms of that type
    */
-  def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom)
+  def addRouteForRoomType(roomTypeName:String, roomFactory: () => ServerRoom)
 }
 
 object RouteService {
@@ -72,7 +72,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
   val route: Route = restHttpRoute ~ webSocketRoute
 
 
-  def addRouteForRoomType(roomTypeName: String, roomFactory: String => ServerRoom): Unit = {
+  def addRouteForRoomType(roomTypeName: String, roomFactory: () => ServerRoom): Unit = {
     this.roomTypes = this.roomTypes + roomTypeName
     this.roomHandler.defineRoomType(roomTypeName, roomFactory)
   }

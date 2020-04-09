@@ -43,9 +43,9 @@ class ClientSpec extends AnyFlatSpec
 
   before {
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ROOM_TYPE_NAME, ServerRoom(_))
-    gameServer.defineRoom(ExampleRooms.myRoomType, new MyRoom(_))
-    gameServer.defineRoom(ExampleRooms.noPropertyRoomType, new NoPropertyRoom(_))
+    gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
+    gameServer.defineRoom(ExampleRooms.myRoomType, MyRoom)
+    gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
     Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
     logger debug s"Server started at $serverAddress:$serverPort"
 

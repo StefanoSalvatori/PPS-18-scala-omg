@@ -6,10 +6,6 @@ object SharedRoom {
   type RoomType = String
   type RoomPassword = String
 
-  trait RoomState[T] {
-    val state: T
-  }
-
   trait BasicRoom {
     val roomId: RoomId
   }

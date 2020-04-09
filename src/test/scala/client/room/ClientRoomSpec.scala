@@ -48,7 +48,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   before {
     gameServer = GameServer(ServerAddress, ServerPort)
-    gameServer.defineRoom(RoomTypeName, ServerRoom(_))
+    gameServer.defineRoom(RoomTypeName, () => ServerRoom())
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
     logger debug s"Server started at $ServerAddress:$ServerPort"
     coreClient = system actorOf (CoreClient(Routes.httpUri(ServerAddress, ServerPort)))

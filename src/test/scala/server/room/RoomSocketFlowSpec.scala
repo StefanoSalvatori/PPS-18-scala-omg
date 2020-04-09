@@ -26,7 +26,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
 
   private val MAX_AWAIT_SOCKET_MESSAGES = 10 seconds
 
-  private var room = ServerRoom(UUID.randomUUID.toString)
+  private var room = ServerRoom()
   private var roomActor = system actorOf RoomActor(room)
   private var roomSocketFlow = RoomSocketFlow(roomActor, TextProtocolSerializer)
   private var flow = roomSocketFlow.createFlow()
@@ -36,7 +36,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
   }
 
   before {
-    room = ServerRoom(UUID.randomUUID.toString)
+    room = ServerRoom()
     roomActor = system actorOf RoomActor(room)
     roomSocketFlow = RoomSocketFlow(roomActor, TextProtocolSerializer)
     flow = roomSocketFlow.createFlow()
