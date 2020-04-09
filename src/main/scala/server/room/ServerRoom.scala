@@ -17,15 +17,14 @@ trait PrivateRoomSupport {
   def makePrivate(newPassword: String): Unit = password = newPassword
 }
 
-trait Server
 trait ServerRoom extends Room with PrivateRoomSupport {
 
   private var clients: Seq[Client] = Seq.empty
 
   import java.lang.reflect.Field
-
   /**
    * Getter of the value of a property
+   *
    * @param propertyName The name of the property
    * @return The value of the property, as instance of first class values (int, string, boolean. double)
    */
@@ -34,6 +33,7 @@ trait ServerRoom extends Room with PrivateRoomSupport {
 
   /**
    * Getter of the value of a property
+   *
    * @param propertyName The name of the property
    * @return The value of the property, expressed as a RoomPropertyValue
    */
@@ -42,6 +42,7 @@ trait ServerRoom extends Room with PrivateRoomSupport {
 
   /**
    * Gettor of a room property
+   *
    * @param propertyName The name of the property
    * @return The selected property
    */
@@ -50,18 +51,17 @@ trait ServerRoom extends Room with PrivateRoomSupport {
 
   /**
    * Setter of room properties
+   *
    * @param properties A set containing the properties to set
    */
   def setProperties(properties: Set[RoomProperty]): Unit = properties.map(ServerRoom.propertyToPair).foreach(property => {
     try {
-      operationOnField(property.name)(f => f set (this, property.value))
+      operationOnField(property.name)(f => f set(this, property.value))
     } catch {
       case _: NoSuchFieldException =>
         logger debug s"Impossible to set property '${property.name}': No such property in the room."
     }
   })
-
-  this.onCreate()
 
   /**
    * Add a client to the room. Triggers the onJoin
@@ -118,8 +118,10 @@ trait ServerRoom extends Room with PrivateRoomSupport {
   /**
    * Close this room
    */
-  def close(): Unit = this.onClose() //TODO: what to do here?
-
+  def close(): Unit = {
+    this.onClose()
+    this.clients.foreach(c => c.send(RoomProtocolMessage(RoomClosed, c.id)))
+  }
 
   /**
    * Called as soon as the room is created by the server
@@ -153,7 +155,7 @@ trait ServerRoom extends Room with PrivateRoomSupport {
    */
   def onMessageReceived(client: Client, message: Any)
 
-  private def operationOnField[T](fieldName: String)(f: Function[Field,T]): T = {
+  private def operationOnField[T](fieldName: String)(f: Function[Field, T]): T = {
     val field = this fieldFrom fieldName
     field setAccessible true
     val result = f(field)
@@ -196,9 +198,13 @@ object ServerRoom {
 
 private class BasicServerRoom(override val roomId: String) extends ServerRoom {
   override def onCreate(): Unit = {}
+
   override def onClose(): Unit = {}
+
   override def onJoin(client: Client): Unit = {}
+
   override def onLeave(client: Client): Unit = {}
+
   override def onMessageReceived(client: Client, message: Any): Unit = {}
 }
 

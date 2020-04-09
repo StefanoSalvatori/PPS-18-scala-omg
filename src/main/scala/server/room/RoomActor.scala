@@ -30,7 +30,7 @@ class RoomActor(private val serverRoom: ServerRoom) extends Actor with ActorLogg
 
   override def preStart(): Unit = {
     super.preStart()
-    // this.serverRoom.onCreate()
+    this.serverRoom.onCreate()
   }
 
   override def postStop(): Unit = {
@@ -43,16 +43,13 @@ class RoomActor(private val serverRoom: ServerRoom) extends Actor with ActorLogg
     // case NotifyAll(msg) => this.serverRoom.broadcast(msg)
     case Join(client) =>
       this.serverRoom.addClient(client) //TODO: add checks if user can join
-      sender ! JoinOk
     case Leave(client) =>
       this.serverRoom.removeClient(client)
-      sender ! ClientLeaved
     case Msg(client, payload) =>
       if (this.serverRoom.clientAuthorized(client)) {
         this.serverRoom.onMessageReceived(client, payload)
       } else {
         client.send(ClientNotAuthorized)
-        sender ! ClientNotAuthorized
       }
   }
 

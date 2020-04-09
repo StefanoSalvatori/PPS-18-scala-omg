@@ -1,14 +1,9 @@
 package server
 
-import akka.Done
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, Stash, Status}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Sink
-import common.room.RoomProperty
-import server.room.ServerRoom
-import server.route_service.RouteService
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.{FiniteDuration, _}

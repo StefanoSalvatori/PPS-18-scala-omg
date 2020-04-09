@@ -69,7 +69,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
     }
   }
 
-
   val route: Route = restHttpRoute ~ webSocketRoute
 
 
@@ -100,8 +99,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
       }
     }
 
-
-
   /**
    * POST rooms/{type}
    */
@@ -124,9 +121,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
         case None => reject //TODO: how to handle this? Wrong id in rooms/{type}/{id}
       }
     }
-
-
-
 
   /**
    * PUT rooms/{type}

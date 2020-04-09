@@ -94,14 +94,12 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       }
     ).toSeq
 
-
   override def createRoom(roomType: String, roomProperties: Set[RoomProperty]): Room = {
     this.handleRoomCreation(roomType, roomProperties)
   }
 
   override def getRoomByTypeAndId(roomType: String, roomId: RoomId): Option[Room] =
     this.getRoomsByType(roomType).find(_.roomId == roomId)
-
 
   override def defineRoomType(roomTypeName: String, roomFactory: String => ServerRoom): Unit = {
     this.roomsByType = this.roomsByType + (roomTypeName -> Map.empty)
