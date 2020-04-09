@@ -87,7 +87,7 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     this.roomHandler.defineRoomType(roomType1, () => ServerRoom())
     this.roomHandler.defineRoomType(roomType2, () => ServerRoom())
     val room = this.roomHandler.createRoom(roomType1)
-    this.roomHandler.closeRoom(room.roomId)
+    this.roomHandler.removeRoom(room.roomId)
     assert(!this.roomHandler.getAvailableRooms().exists(_.roomId == room.roomId))
 
   }

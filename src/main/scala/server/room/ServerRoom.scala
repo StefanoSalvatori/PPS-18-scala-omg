@@ -1,15 +1,15 @@
 package server.room
 
-import com.typesafe.scalalogging.LazyLogging
-import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
-import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, IntRoomPropertyValue, RoomProperty, RoomPropertyValue, StringRoomPropertyValue}
-import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.room.SharedRoom.{BasicRoom, Room, RoomId}
 import java.lang.reflect.Field
 import java.util.UUID
 
-trait PrivateRoomSupport {
+import com.typesafe.scalalogging.LazyLogging
+import common.communication.CommunicationProtocol.ProtocolMessageType._
+import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
+import common.room.SharedRoom.{BasicRoom, Room, RoomId}
+import common.room._
 
+trait PrivateRoomSupport {
   private val defaultPublicPassword: String = ""
   private var password: String = defaultPublicPassword
 
@@ -23,9 +23,75 @@ trait PrivateRoomSupport {
 trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 
   override val roomId: RoomId = UUID.randomUUID.toString
-
   private var clients: Seq[Client] = Seq.empty
+  private var closed = false
 
+  /**
+   * Add a client to the room. Triggers the onJoin
+   *
+   * @param client the client to add
+   */
+  def addClient(client: Client): Unit = {
+    this.clients = client +: this.clients
+    client.send(RoomProtocolMessage(JoinOk, client.id))
+    this.onJoin(client)
+  }
+
+  /**
+   * Remove a client from the room. Triggers onLeave
+   *
+   * @param client the client that leaved
+   */
+  def removeClient(client: Client): Unit = {
+    this.clients = this.clients.filter(_.id != client.id)
+    this.onLeave(client)
+  }
+
+  /**
+   *
+   * @param client the client to check
+   * @return true if the client is authorized to perform actions on this room
+   */
+  def clientAuthorized(client: Client): Boolean = {
+    this.connectedClients.contains(client)
+  }
+
+  /**
+   * @return the list of connected clients
+   */
+  def connectedClients: Seq[Client] = this.clients
+
+  /**
+   * Send a message to a single client
+   *
+   * @param client  the client that will receive the message
+   * @param message the message to send
+   */
+  def tell(client: Client, message: Any with java.io.Serializable): Unit =
+    this.clients.filter(_.id == client.id).foreach(_.send(RoomProtocolMessage(ProtocolMessageType.Tell, client.id, message)))
+
+  /**
+   * Broadcast a message to all clients connected
+   *
+   * @param message the message to send
+   */
+  def broadcast(message: Any with java.io.Serializable): Unit =
+    this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)))
+
+  /**
+   *
+   * @return true if this room is closed, false otherwise
+   */
+  def isClosed: Boolean = this.closed
+
+  /**
+   * Close this room
+   */
+  def close(): Unit = {
+    this.closed = true
+    this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.RoomClosed, client.id)))
+    this.onClose()
+  }
 
   /**
    * Getter of all room properties
@@ -83,67 +149,6 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
         logger debug s"Impossible to set property '${property.name}': No such property in the room."
     }
   })
-
-  /**
-   * Add a client to the room. Triggers the onJoin
-   *
-   * @param client the client to add
-   */
-  def addClient(client: Client): Unit = {
-    this.clients = client +: this.clients
-    client.send(RoomProtocolMessage(JoinOk, client.id))
-    this.onJoin(client)
-  }
-
-  /**
-   * Remove a client from the room. Triggers onLeave
-   *
-   * @param client the client that leaved
-   */
-  def removeClient(client: Client): Unit = {
-    this.clients = this.clients.filter(_.id != client.id)
-    this.onLeave(client)
-  }
-
-  /**
-   *
-   * @param client the client to check
-   * @return true if the client is authorized to perform actions on this room
-   */
-  def clientAuthorized(client: Client): Boolean = {
-    this.connectedClients.contains(client)
-  }
-
-  /**
-   * @return the list of connected clients
-   */
-  def connectedClients: Seq[Client] = this.clients
-
-  /**
-   * Send a message to a single client
-   *
-   * @param client  the client that will receive the message
-   * @param message the message to send
-   */
-  def tell(client: Client, message: Any with java.io.Serializable): Unit =
-    this.clients.filter(_.id == client.id).foreach(_.send(RoomProtocolMessage(ProtocolMessageType.Tell, client.id, message)))
-
-  /**
-   * Broadcast a message to all clients connected
-   *
-   * @param message the message to send
-   */
-  def broadcast(message: Any with java.io.Serializable): Unit =
-    this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)))
-
-  /**
-   * Close this room
-   */
-  def close(): Unit = {
-    this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.RoomClosed, client.id)))
-    this.onClose()
-  }
-
 
   /**
    * Called as soon as the room is created by the server
@@ -226,8 +231,6 @@ object ServerRoom {
    */
   def defaultProperties: Set[RoomProperty] = {
     val exampleRoom = new ServerRoom {
-      override val roomId: RoomId = ""
-
       override def onCreate(): Unit = {}
 
       override def onClose(): Unit = {}
@@ -257,6 +260,9 @@ object ServerRoom {
   }
 }
 
+/**
+ * A room with empty behavior
+ */
 private case class BasicServerRoom() extends ServerRoom {
   override def onCreate(): Unit = {}
 

@@ -58,11 +58,11 @@ trait RoomHandler {
   def defineRoomType(roomType: String, roomFactory: () => ServerRoom): Unit
 
   /**
-   * Close the room with the id in input
+   * Remove the room with the id in input
    *
-   * @param roomId the id of the room to close
+   * @param roomId the id of the room to remove
    */
-  def closeRoom(roomId: RoomId): Unit
+  def removeRoom(roomId: RoomId): Unit
 
   /**
    * Handle new client web socket connection to a room.
@@ -121,12 +121,10 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       case None => Seq.empty
     }
 
-  override def closeRoom(roomId: RoomId): Unit = {
+  override def removeRoom(roomId: RoomId): Unit = {
     this.roomsByType find (_._2.keys.map(_.roomId) exists (_ == roomId)) foreach (entry => {
       val room = entry._2.find(_._1.roomId == roomId)
       room foreach { r =>
-        r._1.close()
-        r._2 ! PoisonPill
         this.roomsByType = this.roomsByType.updated(entry._1, entry._2 - r._1)
       }
     })
@@ -134,9 +132,8 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
 
   private def handleRoomCreation(roomType: String, roomProperties: Set[RoomProperty]): Room = {
     val roomMap = this.roomsByType(roomType)
-    val roomFactory = this.roomTypesHandlers(roomType)
-    val newRoom = roomFactory()
-    val newRoomActor = actorSystem actorOf RoomActor(newRoom)
+    val newRoom = this.roomTypesHandlers(roomType)()
+    val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
     if (roomProperties.map(_ name) contains Room.roomPasswordPropertyName) {
       val splitProperties = roomProperties.groupBy(_.name == Room.roomPasswordPropertyName)

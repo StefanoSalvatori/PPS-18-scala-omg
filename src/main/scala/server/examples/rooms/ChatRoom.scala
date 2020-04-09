@@ -3,6 +3,7 @@ package server.examples.rooms
 import server.room.{Client, ServerRoom}
 
 case class ChatRoom() extends ServerRoom {
+
   override def onCreate(): Unit = println("Room Created")
 
   override def onClose(): Unit = println("Room Closed")

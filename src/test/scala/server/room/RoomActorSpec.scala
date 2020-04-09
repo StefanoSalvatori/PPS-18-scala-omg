@@ -10,6 +10,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.room.RoomActor._
 import common.communication.CommunicationProtocol.ProtocolMessageType._
+import server.RoomHandler
 class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
   with ImplicitSender
   with Matchers
@@ -25,13 +26,15 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
   private val FAKE_CLIENT_2 = Client.asActor(UUID.randomUUID.toString, client2TestProbe.ref)
 
 
-  var room: ServerRoom = ServerRoom()
-  var roomActor: ActorRef = system actorOf RoomActor(room)
+  var room: ServerRoom = _
+  var roomHandler: RoomHandler = _
+  var roomActor: ActorRef = _
 
 
   before {
     room = ServerRoom()
-    roomActor = system actorOf RoomActor(room)
+    roomHandler = RoomHandler()
+    roomActor = system actorOf RoomActor(room, roomHandler)
   }
 
   after {
@@ -64,24 +67,15 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       expectMsg(ClientNotAuthorized)
     }
 
-    /*"send a message to a specific client when receives Tell" in {
-      roomActorRef ! Join(FAKE_CLIENT_1, testActor)
-      expectMsg(JoinOk)
-      val message = "Hello"
-      roomActorRef ! Tell(FAKE_CLIENT_1, message)
-      expectMsg(message)
-    }*/
+    "stop himself when the room is closed" in {
+      val probe = TestProbe()
+      probe watch roomActor
+      room.close()
+      probe.expectTerminated(roomActor)
 
-    /*"broadcast a message to all client when receives NotifyAll" in {
-      val client2 = TestProbe()
-      roomActorRef ! Join(FAKE_CLIENT_2, client2.ref)
-      client2.expectMsg(JoinOk)
-      val message = "Broadcast"
-      roomActorRef ! NotifyAll(message)
-      expectMsg(message)
-      client2.expectMsg(message)
 
-    }*/
+
+    }
   }
 
 
