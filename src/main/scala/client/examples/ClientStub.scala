@@ -1,7 +1,7 @@
 package client.examples
 
 import client.Client
-import common.room.BasicRoomPropertyValueConversions._
+import common.room.RoomPropertyValueConversions._
 import common.room.{FilterOptions, RoomProperty}
 
 import scala.concurrent.ExecutionContext
@@ -27,9 +27,17 @@ object ClientStub extends App {
   }
   */
 
-  client createPublicRoom("test_room", p) onComplete {
-    case Success(res) => println("POST: " + res.properties)
+  client createPublicRoom "test_room" onComplete {
+    case Success(res) =>
+      println("POST: " + res.properties)
   }
+
+  /*
+  client createPrivateRoom("test_room", password = "pwd") onComplete {
+    case Success(res) =>
+      println("POST: " + res.properties)
+  }
+  */
 
 
   /*

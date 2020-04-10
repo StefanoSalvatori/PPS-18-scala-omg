@@ -40,7 +40,7 @@ class HomeController {
     this.labelStatus.setText("joining classic room...")
 
     //use client api to join a room. If no one is available create one and wait another player
-    client.joinOrCreate("classic", FilterOptions.empty, Set.empty) onComplete {
+    client.joinOrCreate("classic", FilterOptions.empty) onComplete {
       case Success(room) => goToMatchScene(room, "classic")
       case Failure(_) => println("client room creation failed")
     }
