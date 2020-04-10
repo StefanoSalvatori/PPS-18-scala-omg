@@ -1,7 +1,8 @@
 package server.examples
 
+import common.room.SharedRoom.RoomId
 import server.GameServer
-import server.room.ServerRoom
+import server.room.{Client, ServerRoom}
 
 import scala.concurrent.ExecutionContext
 import scala.io.StdIn
@@ -34,5 +35,21 @@ object GameServerCreation extends App {
 
   }
 
-  gameServer defineRoom("test_room", id => ServerRoom(id))
+  case class MyRoom() extends ServerRoom {
+
+    val a: Int = 0
+    val b: String = "abc"
+
+    override def onCreate(): Unit = {}
+
+    override def onClose(): Unit = {}
+
+    override def onJoin(client: Client): Unit = {}
+
+    override def onLeave(client: Client): Unit = {}
+
+    override def onMessageReceived(client: Client, message: Any): Unit = {}
+  }
+
+  gameServer defineRoom("test_room", MyRoom)
 }

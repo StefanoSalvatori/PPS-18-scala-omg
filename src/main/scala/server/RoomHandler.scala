@@ -2,12 +2,13 @@ package server
 
 import java.util.UUID
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
-import common.SharedRoom.{Room, RoomId}
+import common.room.SharedRoom.{Room, RoomId}
+import common.room.{FilterOptions, RoomProperty}
+import common.room.StringRoomPropertyValue
 import common.communication.BinaryProtocolSerializer
-import common.{FilterOptions, RoomProperty, RoomPropertyValue}
 import server.room.socket.RoomSocketFlow
 import server.room.{RoomActor, ServerRoom}
 
@@ -54,8 +55,14 @@ trait RoomHandler {
    * @param roomType    the name of the room's type
    * @param roomFactory the factory to create a room of given type from an id
    */
+  def defineRoomType(roomType: String, roomFactory: () => ServerRoom): Unit
 
-  def defineRoomType(roomType: String, roomFactory: String => ServerRoom)
+  /**
+   * Remove the room with the id in input
+   *
+   * @param roomId the id of the room to remove
+   */
+  def removeRoom(roomId: RoomId): Unit
 
   /**
    * Handle new client web socket connection to a room.
@@ -72,11 +79,9 @@ object RoomHandler {
 
 case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandler {
 
-  var roomTypesHandlers: Map[String, String => ServerRoom] = Map.empty
+  private var roomTypesHandlers: Map[String, () => ServerRoom] = Map.empty
 
-  //type1 ->  (id->roomActor1), (id2, roomActor2) ...
-  //type2 -> (id->roomActor3), (id2, roomActor4) ...
-  var roomsByType: Map[String, Map[Room, ActorRef]] = Map.empty
+  private var roomsByType: Map[String, Map[ServerRoom, ActorRef]] = Map.empty
 
   override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[Room] =
     roomsByType.values.flatMap(_ keys).filter(room =>
@@ -93,7 +98,6 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       }
     ).toSeq
 
-
   override def createRoom(roomType: String, roomProperties: Set[RoomProperty]): Room = {
     this.handleRoomCreation(roomType, roomProperties)
   }
@@ -101,19 +105,11 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
   override def getRoomByTypeAndId(roomType: String, roomId: RoomId): Option[Room] =
     this.getRoomsByType(roomType).find(_.roomId == roomId)
 
-
-  override def defineRoomType(roomTypeName: String, roomFactory: String => ServerRoom): Unit = {
+  override def defineRoomType(roomTypeName: String, roomFactory: () => ServerRoom): Unit = {
     this.roomsByType = this.roomsByType + (roomTypeName -> Map.empty)
     this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
   }
 
-  /**
-   * Creates the socket flow from the client to the room. Messages received from the socket are parsed with
-   * a [[common.communication.BinaryProtocolSerializer]] so they must be [[common.communication.CommunicationProtocol.RoomProtocolMessage]]
-   *
-   * @param roomId the id of the room the client connects to
-   * @return the connection handler if such room id exists
-   */
   override def handleClientConnection(roomId: RoomId): Option[Flow[Message, Message, Any]] = {
     this.roomsByType.flatMap(_._2).find(_._1.roomId == roomId)
       .map(option => RoomSocketFlow(option._2, BinaryProtocolSerializer).createFlow())
@@ -125,16 +121,30 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       case None => Seq.empty
     }
 
-  private def handleRoomCreation(roomType: String, roomProperties: Set[RoomProperty]): Room = {
-    val roomMap = this.roomsByType(roomType)
-    val roomFactory = this.roomTypesHandlers(roomType)
-    val newRoom = roomFactory(generateUniqueRandomId())
-    val newRoomActor = actorSystem actorOf RoomActor(newRoom)
-    this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
-    newRoom setProperties roomProperties
-    newRoom
+  override def removeRoom(roomId: RoomId): Unit = {
+    this.roomsByType find (_._2.keys.map(_.roomId) exists (_ == roomId)) foreach (entry => {
+      val room = entry._2.find(_._1.roomId == roomId)
+      room foreach { r =>
+        this.roomsByType = this.roomsByType.updated(entry._1, entry._2 - r._1)
+      }
+    })
   }
 
-  private def generateUniqueRandomId(): RoomId = UUID.randomUUID.toString
+  private def handleRoomCreation(roomType: String, roomProperties: Set[RoomProperty]): Room = {
+    val roomMap = this.roomsByType(roomType)
+    val newRoom = this.roomTypesHandlers(roomType)()
+    val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
+    this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
+    if (roomProperties.map(_ name) contains Room.roomPasswordPropertyName) {
+      val splitProperties = roomProperties.groupBy(_.name == Room.roomPasswordPropertyName)
+      val password = splitProperties(true)
+      val properties = splitProperties.getOrElse(false, Set.empty[RoomProperty])
+      newRoom setProperties properties
+      newRoom makePrivate password.map(_.value).head.asInstanceOf[StringRoomPropertyValue].value
+    } else {
+      newRoom setProperties roomProperties
+    }
+    newRoom
+  }
 
 }

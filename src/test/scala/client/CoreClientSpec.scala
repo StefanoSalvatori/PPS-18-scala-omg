@@ -8,7 +8,8 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import client.room.{ClientRoom, ClientRoomActor}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
-import common.{FilterOptions, Routes, TestConfig}
+import common.TestConfig
+import common.http.Routes
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -48,7 +49,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   before {
     coreClient = system actorOf CoreClient(serverUri)
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ROOM_TYPE_NAME, ServerRoom(_))
+    gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
     Await.ready(gameServer.start(), 5 seconds)
 
     Await.ready(coreClient ? CreatePublicRoom(ROOM_TYPE_NAME, Set.empty), 5 seconds)
@@ -64,7 +65,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "keep track of joined rooms" in {
-      val rooms = (0 to 2).map(i => ClientRoom(coreClient, "", i.toString))
+      val rooms = (0 to 2).map(i => ClientRoom(coreClient, "", i.toString, Map()))
       val refs = rooms.map(r => system.actorOf(MockClientRoomActor(r)))
 
       refs foreach { t =>

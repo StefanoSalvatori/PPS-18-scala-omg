@@ -7,7 +7,8 @@ import akka.testkit.{ImplicitSender, TestKit}
 import client.CoreClient
 import client.utils.MessageDictionary.CreatePublicRoom
 import com.typesafe.config.ConfigFactory
-import common.{Routes, TestConfig}
+import common.TestConfig
+import common.http.Routes
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -48,7 +49,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
   before {
     coreClient = system actorOf CoreClient(serverUri)
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ROOM_TYPE_NAME, ServerRoom(_))
+    gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
     Await.ready(gameServer.start(), 5 seconds)
 
     coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)

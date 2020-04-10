@@ -1,12 +1,14 @@
 package server.room
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor
+import akka.actor.{Actor, ActorLogging, PoisonPill, Props, Scheduler, Timers}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
+import server.RoomHandler
+
+import scala.concurrent.ExecutionContextExecutor
 
 object RoomActor {
   sealed trait RoomCommand
-  // case class Tell[T](client: Client, msg: T) extends RoomCommand
-  // case class NotifyAll[T](msg : T) extends RoomCommand
   case class Join(client: Client) extends RoomCommand
   case class Leave(client: Client) extends RoomCommand
   case class Msg(client: Client, payload: Any) extends RoomCommand
@@ -14,7 +16,11 @@ object RoomActor {
   sealed trait RoomResponse
   case object ClientLeaved extends RoomResponse
 
-  def apply(serverRoom: ServerRoom): Props = Props(classOf[RoomActor], serverRoom)
+  private trait InternalMessage
+  private case object CheckRoomStateTimer
+  private case object CheckRoomState extends InternalMessage
+
+  def apply(serverRoom: ServerRoom, roomHandler: RoomHandler): Props = Props(classOf[RoomActor], serverRoom, roomHandler)
 
 }
 
@@ -23,24 +29,26 @@ object RoomActor {
  *
  * @param serverRoom the room linked with this actor
  */
-class RoomActor(private val serverRoom: ServerRoom) extends Actor with ActorLogging {
+class RoomActor(private val serverRoom: ServerRoom,
+                private val roomHandler: RoomHandler) extends Actor with ActorLogging with Timers {
 
   import RoomActor._
+  import scala.concurrent.duration._
 
+  implicit val CheckRoomStateRate: FiniteDuration = 50 millis
+  implicit val executionContext: ExecutionContextExecutor = this.context.system.dispatcher
 
   override def preStart(): Unit = {
+    this.timers.startTimerAtFixedRate(CheckRoomStateTimer, CheckRoomState, CheckRoomStateRate)
     super.preStart()
-    // this.serverRoom.onCreate()
+    this.serverRoom.onCreate()
   }
 
   override def postStop(): Unit = {
     super.postStop()
-    this.serverRoom.close()
   }
 
   override def receive: Receive = {
-    // case Tell(client, msg) => this.serverRoom.tell(client, msg)
-    // case NotifyAll(msg) => this.serverRoom.broadcast(msg)
     case Join(client) =>
       this.serverRoom.addClient(client) //TODO: add checks if user can join
       sender ! JoinOk
@@ -54,7 +62,11 @@ class RoomActor(private val serverRoom: ServerRoom) extends Actor with ActorLogg
         client.send(ClientNotAuthorized)
         sender ! ClientNotAuthorized
       }
+    case CheckRoomState =>
+      if (this.serverRoom.isClosed) {
+        this.roomHandler.removeRoom(this.serverRoom.roomId)
+        self ! PoisonPill
+      }
   }
-
 
 }

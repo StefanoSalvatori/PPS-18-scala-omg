@@ -6,9 +6,10 @@ import akka.http.scaladsl.model.ws.{Message, WebSocketRequest}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import client.Client
-import common.Routes
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
+import common.http.Routes
 import common.communication.TextProtocolSerializer
+
 import server.GameServer
 import server.examples.rooms.ChatRoom
 
@@ -24,7 +25,7 @@ object ChatRoomWithWebSockets extends App {
   val ROOM_PATH = "chat"
   val gameServer: GameServer = GameServer(HOST, PORT)
   val client = Client(HOST, PORT)
-  gameServer.defineRoom(ROOM_PATH, id => new ChatRoom(id))
+  gameServer.defineRoom(ROOM_PATH, ChatRoom)
 
   import scala.concurrent.duration._
   Await.ready(gameServer.start(), 10 seconds)

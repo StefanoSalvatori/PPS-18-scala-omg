@@ -5,8 +5,9 @@ import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
 import com.typesafe.scalalogging.LazyLogging
-import common.SharedRoom.Room
-import common.{FilterOptions, RoomJsonSupport, RoomProperty, Routes}
+import common.http.Routes
+import common.room.SharedRoom.Room
+import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import server.RoomHandler
 import server.room.ServerRoom
 
@@ -22,7 +23,7 @@ trait RouteService {
    * @param roomTypeName room type name used as the route name
    * @param roomFactory a factory to create rooms of that type
    */
-  def addRouteForRoomType(roomTypeName:String, roomFactory: String => ServerRoom)
+  def addRouteForRoomType(roomTypeName:String, roomFactory: () => ServerRoom)
 }
 
 object RouteService {
@@ -57,7 +58,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
   }
 
   /**
-   * Handle web socket connection on path /[[common.Routes#connectionRoute]]/{roomId}
+   * Handle web socket connection on path /[[Routes#connectionRoute]]/{roomId}
    */
   def webSocketRoute: Route = pathPrefix(Routes.connectionRoute / Segment) { roomId =>
     get {
@@ -68,11 +69,10 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
     }
   }
 
-
   val route: Route = restHttpRoute ~ webSocketRoute
 
 
-  def addRouteForRoomType(roomTypeName: String, roomFactory: String => ServerRoom): Unit = {
+  def addRouteForRoomType(roomTypeName: String, roomFactory: () => ServerRoom): Unit = {
     this.roomTypes = this.roomTypes + roomTypeName
     this.roomHandler.defineRoomType(roomTypeName, roomFactory)
   }
@@ -99,8 +99,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
       }
     }
 
-
-
   /**
    * POST rooms/{type}
    */
@@ -123,9 +121,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
         case None => reject //TODO: how to handle this? Wrong id in rooms/{type}/{id}
       }
     }
-
-
-
 
   /**
    * PUT rooms/{type}

@@ -6,14 +6,14 @@ import akka.http.scaladsl.model.ws.Message
 import client.room.ClientRoom
 import common.{FilterOptions, RoomProperty}
 import common.SharedRoom.{Room, RoomId, RoomType}
-import common.communication.CommunicationProtocol.RoomProtocolMessage
-import common.communication.SocketSerializer
 
 object MessageDictionary {
 
   //CoreClient
 
-  case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty])
+  trait CreateRoomMessage
+  case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty]) extends CreateRoomMessage
+  case class CreatePrivateRoom(roomType: RoomType, roomOption: Set[RoomProperty], password: RoomPassword) extends CreateRoomMessage
 
   case class GetAvailableRooms(roomType: RoomType, roomOption: FilterOptions)
 
@@ -21,9 +21,9 @@ object MessageDictionary {
 
   case class JoinedRooms(joinedRooms: Set[ClientRoom])
 
-  case class ClientRoomActorLeaved()
+  case class ClientRoomActorLeaved(clientRoomActor: ActorRef)
 
-  case class ClientRoomActorJoined()
+  case class ClientRoomActorJoined(clientRoomActor: ActorRef)
 
   case class HttpRoomResponse(room: Room)
 

@@ -1,21 +1,23 @@
 package client.room
 
-import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
-import akka.http.scaladsl.model.ws.TextMessage
+import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.util.Timeout
 import client.utils.MessageDictionary._
-import common.Routes
-import common.SharedRoom.{Room, RoomId}
+import common.room.SharedRoom.{BasicRoom, RoomId}
 import akka.pattern.ask
-import akka.pattern.pipe
-import client.{BasicActor, HttpClient}
+import common.room.RoomPropertyValue
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-trait ClientRoom extends Room {
+trait ClientRoom extends BasicRoom {
 
+  /**
+   * Properties of the room.
+   * @return a map containing property names as keys (name -> value)
+   */
+  def properties: Map[String, RoomPropertyValue]
 
   /**
    * Open web socket with server room and try to join
@@ -53,14 +55,17 @@ trait ClientRoom extends Room {
 }
 
 object ClientRoom {
-  def apply(coreClient: ActorRef, httpServerUri: String, roomId: RoomId)(implicit system: ActorSystem): ClientRoom =
-    ClientRoomImpl(coreClient, httpServerUri, roomId)
-
+  def apply(coreClient: ActorRef, httpServerUri: String, roomId: RoomId, properties: Map[String, RoomPropertyValue])
+           (implicit system: ActorSystem): ClientRoom =
+    ClientRoomImpl(coreClient, httpServerUri, roomId, properties)
 }
 
-case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: RoomId)
-                         (implicit val system: ActorSystem)
-  extends ClientRoom {
+case class ClientRoomImpl(coreClient: ActorRef,
+                          httpServerUri: String,
+                          override val roomId: RoomId,
+                          override val properties: Map[String, RoomPropertyValue])
+                         (implicit val system: ActorSystem) extends ClientRoom {
+
   private implicit val timeout: Timeout = 5 seconds
   private implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
   private implicit var innerActor: Option[ActorRef] = None
@@ -86,9 +91,7 @@ case class ClientRoomImpl(coreClient: ActorRef, httpServerUri: String, roomId: R
       case None => Future.failed(new Exception("You must join a room before leaving"))
     }
 
-
-  override def send(msg: Any with java.io.Serializable): Unit =
-    innerActor.foreach(_ ! SendStrictMessage(msg))
+  override def send(msg: Any with java.io.Serializable): Unit = innerActor.foreach(_ ! SendStrictMessage(msg))
 
   override def onMessageReceived(callback: Any => Unit): Unit = innerActor.foreach(_ ! OnMsg(callback))
 

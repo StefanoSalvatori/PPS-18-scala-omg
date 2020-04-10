@@ -18,7 +18,7 @@ object ChatRoomExample extends App {
   val ESCAPE_TEXT = "quit"
   val ROOM_PATH = "chat"
   val gameServer: GameServer = GameServer(HOST, PORT)
-  gameServer.defineRoom(ROOM_PATH, id => new ChatRoom(id))
+  gameServer.defineRoom(ROOM_PATH, ChatRoom)
 
   import scala.concurrent.duration._
   Await.ready(gameServer.start(), 10 seconds)

@@ -2,7 +2,8 @@ package server.examples.rooms
 
 import server.room.{Client, ServerRoom}
 
-class ChatRoom(override val roomId: String) extends ServerRoom {
+case class ChatRoom() extends ServerRoom {
+
   override def onCreate(): Unit = println("Room Created")
 
   override def onClose(): Unit = println("Room Closed")

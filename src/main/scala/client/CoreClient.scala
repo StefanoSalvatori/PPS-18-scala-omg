@@ -1,15 +1,12 @@
 package client
 
 import akka.actor.{ActorRef, Stash}
-import akka.pattern.ask
-import akka.pattern.pipe
 import akka.util.Timeout
-import client.room.{ClientRoom, ClientRoomActor}
+import client.room.ClientRoom
 import client.utils.MessageDictionary._
-import common.RoomJsonSupport
-import common.SharedRoom.{Room, RoomId}
+import common.room.SharedRoom.Room
+import common.room.{RoomJsonSupport, RoomProperty, RoomPropertyValue}
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -33,7 +30,7 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
 
   def waitHttpResponse(replyTo: ActorRef): Receive = onWaitHttpResponse(replyTo) orElse fallbackReceive
 
-
+  import common.room.BasicRoomPropertyValueConversions._
   val onReceive: Receive = {
 
     case FailResponse(ex) => sender ! Failure(ex)
@@ -41,6 +38,10 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
     case CreatePublicRoom(roomType, roomOptions) =>
       context.become(this.waitHttpResponse(sender))
       this.httpClient ! HttpPostRoom(roomType, roomOptions)
+
+    case CreatePrivateRoom(roomType, roomOptions, password) =>
+      context become this.waitHttpResponse(sender)
+      httpClient ! HttpPostRoom(roomType, roomOptions + RoomProperty(Room.roomPasswordPropertyName, password.toString))
 
     case GetAvailableRooms(roomType, roomOptions) =>
       context.become(this.waitHttpResponse(sender))
@@ -76,18 +77,30 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
 
     case HttpRoomSequenceResponse(rooms) =>
       context.become(onReceive)
-      replyTo ! Success(rooms.map(r => ClientRoom(self, httpServerUri, r.roomId)))
+      replyTo ! Success(rooms.map(r =>
+        ClientRoom(
+          self,
+          httpServerUri,
+          r.roomId,
+          r.sharedProperties.map(p => (p.name, p.value)).toMap[String, RoomPropertyValue]
+        )
+      ))
       unstashAll()
 
 
     case HttpRoomResponse(room) =>
       context.become(onReceive)
-      replyTo ! Success(ClientRoom(self, httpServerUri, room.roomId))
+      replyTo ! Success(
+        ClientRoom(
+          self,
+          httpServerUri,
+          room.roomId,
+          room.sharedProperties.map(p => (p.name, p.value)).toMap[String, RoomPropertyValue]
+        )
+      )
       unstashAll()
 
     case _ => stash
-
-
   }
 
   /**

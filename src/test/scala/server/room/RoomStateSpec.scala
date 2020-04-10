@@ -5,16 +5,17 @@ import java.util.UUID
 import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.RoomProtocolMessage
+import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.utils.TestClient
-
 class RoomStateSpec extends AnyWordSpecLike
   with Matchers
   with BeforeAndAfter
   with BeforeAndAfterAll
-  with TestConfig {
+  with TestConfig
+  with Eventually {
 
   private val UpdateRate = 100 //milliseconds
   private val DeltaUpdate = 10 //milliseconds
@@ -68,39 +69,31 @@ class RoomStateSpec extends AnyWordSpecLike
 
     "send the room state to clients with a StateUpdate message type" in {
       room.startStateUpdate()
-      Thread.sleep(UpdateRate + DeltaUpdate) //wait state update
-      lastReceivedMessageOf(client1).messageType shouldBe StateUpdate
+      eventually {
+        lastReceivedMessageOf(client1).messageType shouldBe StateUpdate
+      }
     }
 
     "update the clients with the most recent state" in {
       room.startStateUpdate()
-      Thread.sleep(UpdateRate + DeltaUpdate)
-      lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, RoomInitialState)
+      eventually {
+        lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, RoomInitialState)
+      }
       val newState = RoomInitialState + 1
       room.changeState(newState)
-      Thread.sleep(UpdateRate + DeltaUpdate)
-      lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, newState)
-      lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, newState)
+      eventually {
+        lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, newState)
+        lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, newState)
+      }
 
-    }
-
-    "wait the update rate before sending new updates" in {
-      room.startStateUpdate()
-      Thread.sleep(UpdateRate + DeltaUpdate)
-      val newState = RoomInitialState + 1
-      room.changeState(newState)
-      lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, RoomInitialState)
-      lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, RoomInitialState)
-      Thread.sleep(UpdateRate + DeltaUpdate)
-      lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, newState)
-      lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, newState)
     }
 
     "stop sending the state when stopUpdate is called" in {
       room.startStateUpdate()
-      Thread.sleep(UpdateRate + DeltaUpdate)
-      lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, RoomInitialState)
-      lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, RoomInitialState)
+      eventually {
+        lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, RoomInitialState)
+        lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, RoomInitialState)
+      }
       room.stopStateUpdate()
       val newState = RoomInitialState + 1
       room.changeState(newState)
@@ -112,17 +105,19 @@ class RoomStateSpec extends AnyWordSpecLike
 
     "restart sending updates when startUpdate is called after stopUpdate" in {
       room.startStateUpdate()
-      Thread.sleep(UpdateRate + DeltaUpdate)
-      lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, RoomInitialState)
-      lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, RoomInitialState)
+      eventually {
+        lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, RoomInitialState)
+        lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, RoomInitialState)
+      }
       room.stopStateUpdate()
       val newState = RoomInitialState + 1
       room.changeState(newState)
       Thread.sleep(UpdateRate + DeltaUpdate)
       room.startStateUpdate()
-      Thread.sleep(UpdateRate + DeltaUpdate)
-      lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, newState)
-      lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, newState)
+      eventually {
+        lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, newState)
+        lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, newState)
+      }
 
     }
   }

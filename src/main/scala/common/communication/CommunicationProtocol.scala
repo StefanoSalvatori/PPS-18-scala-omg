@@ -8,17 +8,19 @@ object CommunicationProtocol {
     /**
      * Type of messages that clients can send to rooms
      */
-    val JoinRoom: ProtocolMessageType = Value(0)
-    val LeaveRoom: ProtocolMessageType = Value(1)
-    val MessageRoom: ProtocolMessageType = Value(2)
+    val JoinRoom: ProtocolMessageType = Value(0) // scalastyle:ignore magic.number
+    val LeaveRoom: ProtocolMessageType = Value(1) // scalastyle:ignore magic.number
+    val MessageRoom: ProtocolMessageType = Value(2) // scalastyle:ignore magic.number
+    val CloseRoom: ProtocolMessageType = Value(3) // scalastyle:ignore magic.number
     /**
      * Type of messages that rooms can send to clients
      */
-    val JoinOk: ProtocolMessageType = Value(3)
-    val ClientNotAuthorized: ProtocolMessageType = Value(4) // scalastyle:ignore magic.number
-    val Broadcast: ProtocolMessageType = Value(5) // scalastyle:ignore magic.number
-    val Tell: ProtocolMessageType = Value(6) // scalastyle:ignore magic.number
-    val StateUpdate: ProtocolMessageType = Value(7) // scalastyle:ignore magic.number
+    val JoinOk: ProtocolMessageType = Value(4) // scalastyle:ignore magic.number
+    val ClientNotAuthorized: ProtocolMessageType = Value(5) // scalastyle:ignore magic.number
+    val Broadcast: ProtocolMessageType = Value(6) // scalastyle:ignore magic.number
+    val Tell: ProtocolMessageType = Value(7) // scalastyle:ignore magic.number
+    val StateUpdate: ProtocolMessageType = Value(8) // scalastyle:ignore magic.number
+    val RoomClosed: ProtocolMessageType = Value(9) // scalastyle:ignore magic.number
   }
 
   /**

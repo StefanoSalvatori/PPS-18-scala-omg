@@ -3,12 +3,16 @@ package client
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import com.typesafe.scalalogging.LazyLogging
-import common.{FilterOptions, RoomJsonSupport, TestConfig}
+import common.room.{FilterOptions, IntRoomPropertyValue, RoomJsonSupport, RoomProperty, StringRoomPropertyValue}
+import common.TestConfig
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
-import server.room.ServerRoom
+import server.room. ServerRoom
+import server.utils.ExampleRooms
+import server.utils.ExampleRooms.{MyRoom, NoPropertyRoom}
+import common.room.BasicRoomPropertyValueConversions._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
@@ -35,12 +39,13 @@ class ClientSpec extends AnyFlatSpec
   private var gameServer: GameServer = _
   private var client: Client = _
 
-
   behavior of "Client"
 
   before {
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ROOM_TYPE_NAME, ServerRoom(_))
+    gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
+    gameServer.defineRoom(ExampleRooms.myRoomType, MyRoom)
+    gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
     Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
     logger debug s"Server started at $serverAddress:$serverPort"
 
@@ -58,7 +63,6 @@ class ClientSpec extends AnyFlatSpec
     client.joinedRooms shouldBe empty
   }
 
-
   it should "create public rooms" in {
     val roomList1 = Await.result(client getAvailableRoomsByType(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)
     roomList1 should have size 0
@@ -72,7 +76,6 @@ class ClientSpec extends AnyFlatSpec
     val roomList = Await.result(client getAvailableRoomsByType(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)
     roomList should have size 1
   }
-
 
   it should "fail on create public rooms if server is unreachable" in {
     Await.ready(gameServer.stop(), SERVER_SHUTDOWN_AWAIT_TIME)
@@ -89,14 +92,12 @@ class ClientSpec extends AnyFlatSpec
     }
   }
 
-
   it should "get all available rooms of specific type" in {
     Await.result(client createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
     Await.result(client createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
     val roomList = Await.result(client getAvailableRoomsByType(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)
     roomList should have size 2
   }
-
 
   it should "fail on joining a room if server is unreachable" in {
     Await.result(client createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
@@ -105,7 +106,6 @@ class ClientSpec extends AnyFlatSpec
     assertThrows[Exception] {
       Await.result(client join(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)
     }
-
   }
 
   it should "fail on joining a room of a type that does not exists" in {
@@ -125,7 +125,7 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "join a room or create it if it does not exists" in {
-    val room = Await.result(client.joinOrCreate(ROOM_TYPE_NAME, FilterOptions.empty, Set.empty), DefaultTimeout)
+    val room = Await.result(client.joinOrCreate(ROOM_TYPE_NAME, FilterOptions.empty, Set.empty),  DefaultTimeout)
     client joinedRooms() should have size 1
     val roomOnServer = Await.result(client.getAvailableRoomsByType(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)
     assert(roomOnServer.map(_.roomId).contains(room.roomId))
@@ -139,14 +139,19 @@ class ClientSpec extends AnyFlatSpec
 
   it should "create a public room and join such room" in {
     val room = Await.result(client createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
-    assert(client.joinedRooms().exists(_.roomId == room.roomId))
+    assert(client.joinedRooms().exists(_.roomId==room.roomId))
   }
 
   it should "fail on joining an already joined room" in {
     val room = Await.result(client createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
     assertThrows[Exception] {
-      Await.result(client joinById (room.roomId), DefaultTimeout)
+      Await.result(client joinById room.roomId, DefaultTimeout)
     }
+  }
+
+  it should "show no property if no property is defined in the room" in {
+    val room = Await.result(client createPublicRoom (ExampleRooms.noPropertyRoomType, Set.empty), DefaultTimeout)
+    room.properties should have size 0
   }
 
   it should "not create a room if an available room exists " in {
@@ -158,5 +163,18 @@ class ClientSpec extends AnyFlatSpec
     roomsOnServer should have size 1
   }
 
+  it should "show the correct default room properties when properties are not overridden" in {
+    val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, Set.empty), DefaultTimeout)
+    room.properties should have size 2
+    room.properties should contain ("a", IntRoomPropertyValue(0))
+    room.properties should contain ("b", StringRoomPropertyValue("abc"))
+  }
 
+  it should "show the correct room property values when properties are overridden" in {
+    val properties = Set(RoomProperty("a", 1), RoomProperty("b", "qwe"))
+    val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, properties), DefaultTimeout)
+    room.properties should have size 2
+    room.properties should contain ("a", IntRoomPropertyValue(1))
+    room.properties should contain ("b", StringRoomPropertyValue("qwe"))
+  }
 }

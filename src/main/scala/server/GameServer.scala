@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import common.RoomProperty
+import common.room.RoomProperty
 import server.ServerActor._
 import server.room.ServerRoom
 import server.route_service.RouteService
@@ -65,7 +65,7 @@ trait GameServer {
    *
    * @param roomFactory the function to create the room given the room id
    */
-  def defineRoom(roomTypeName: String, roomFactory: String => ServerRoom)
+  def defineRoom(roomTypeName: String, roomFactory: () => ServerRoom)
 
   /**
    * Creates a room of a given type. The type should be defined before calling this method
@@ -161,7 +161,7 @@ private class GameServerImpl(override val host: String,
       }
   }
 
-  override def defineRoom(roomTypeName: String, roomFactory: String => ServerRoom): Unit =
+  override def defineRoom(roomTypeName: String, roomFactory: () => ServerRoom): Unit =
     this.routeService.addRouteForRoomType(roomTypeName, roomFactory)
 
   override def createRoom(roomType: String, properties: Set[RoomProperty] = Set.empty): Unit =

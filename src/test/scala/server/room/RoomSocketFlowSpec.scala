@@ -2,8 +2,9 @@ package server.room
 
 import java.util.UUID
 
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Sink, Source}
+import akka.actor.{ActorRef, ActorSystem}
+import akka.http.scaladsl.model.ws.Message
+import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import common.communication.CommunicationProtocol.RoomProtocolMessage
@@ -13,6 +14,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.room.socket.RoomSocketFlow
 import common.communication.CommunicationProtocol.ProtocolMessageType._
+import server.RoomHandler
+
 import scala.concurrent.duration._
 import scala.concurrent.Await
 
@@ -26,18 +29,18 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
 
   private val MAX_AWAIT_SOCKET_MESSAGES = 10 seconds
 
-  private var room = ServerRoom(UUID.randomUUID.toString)
-  private var roomActor = system actorOf RoomActor(room)
-  private var roomSocketFlow = RoomSocketFlow(roomActor, TextProtocolSerializer)
-  private var flow = roomSocketFlow.createFlow()
+  private var room: ServerRoom = _
+  private var roomActor: ActorRef = _
+  private var roomSocketFlow: RoomSocketFlow = _
+  private var flow: Flow[Message, Message, Any] = _
 
   override def afterAll(): Unit = {
     system.terminate()
   }
 
   before {
-    room = ServerRoom(UUID.randomUUID.toString)
-    roomActor = system actorOf RoomActor(room)
+    room = ServerRoom()
+    roomActor = system actorOf RoomActor(room, RoomHandler())
     roomSocketFlow = RoomSocketFlow(roomActor, TextProtocolSerializer)
     flow = roomSocketFlow.createFlow()
   }

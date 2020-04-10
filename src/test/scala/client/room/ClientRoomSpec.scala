@@ -7,7 +7,7 @@ import client.utils.MessageDictionary.{CreatePublicRoom, GetJoinedRooms, JoinedR
 import client.{Client, CoreClient}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
-import common.{RoomJsonSupport, Routes, TestConfig}
+import common.TestConfig
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -16,6 +16,8 @@ import server.GameServer
 import server.room.ServerRoom
 import akka.pattern.ask
 import akka.util.Timeout
+import common.http.Routes
+import common.room.RoomJsonSupport
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
@@ -46,7 +48,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   before {
     gameServer = GameServer(ServerAddress, ServerPort)
-    gameServer.defineRoom(RoomTypeName, ServerRoom(_))
+    gameServer.defineRoom(RoomTypeName, () => ServerRoom())
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
     logger debug s"Server started at $ServerAddress:$ServerPort"
     coreClient = system actorOf (CoreClient(Routes.httpUri(ServerAddress, ServerPort)))

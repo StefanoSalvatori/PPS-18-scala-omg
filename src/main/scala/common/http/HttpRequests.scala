@@ -1,9 +1,10 @@
-package common
+package common.http
 
 import akka.http.scaladsl.model.ws.WebSocketRequest
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
-import common.SharedRoom.{RoomId, RoomType}
-import spray.json.{JsValue, JsonFormat, JsonReader, JsonWriter, RootJsonFormat}
+import common.room.SharedRoom.{RoomId, RoomType}
+import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
+import spray.json.RootJsonFormat
 
 object HttpRequests extends RoomJsonSupport {
 
@@ -17,6 +18,7 @@ object HttpRequests extends RoomJsonSupport {
     uri = serverUri + "/" + Routes.rooms,
     entity = HttpEntity(defaultContentType, filterOptions)
   )
+
   def getRoomsByType(serverUri: String)(roomType: RoomType, filterOptions: FilterOptions): HttpRequest = HttpRequest(
     method = HttpMethods.GET,
     uri = serverUri + "/" + Routes.roomsByType(roomType),
