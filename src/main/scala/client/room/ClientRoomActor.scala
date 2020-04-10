@@ -45,7 +45,10 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: Cl
   def onWaitSocketResponse(replyTo: ActorRef): Receive = {
     case RoomProtocolMessage => stash()
 
-    case HttpSocketFail(code) => replyTo ! Failure(new Exception(code.toString))
+    case HttpSocketFail(code) =>
+      replyTo ! Failure(new Exception(code.toString))
+      context.become(receive)
+
 
     case HttpSocketSuccess(outRef) =>
       context.become(socketOpened(outRef, replyTo))
