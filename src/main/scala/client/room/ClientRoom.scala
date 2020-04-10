@@ -14,26 +14,11 @@ import scala.util.{Failure, Success}
 trait ClientRoom extends BasicRoom {
 
   /**
-   * Properties of the room.
-   *
-   * @return a map containing property names as keys (name -> value)
-   */
-  def properties: Map[String, Any]
-
-  /**
-   * Getter of the value of a given property
-   * @param propertyName the name of the property
-   * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
-   */
-  def valueOf(propertyName: String): Any
-
-  /**
    * Open web socket with server room and try to join
    *
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
   def join(): Future[Any]
-
 
   /**
    * Leave this room server side
@@ -65,6 +50,19 @@ trait ClientRoom extends BasicRoom {
    */
   def onStateChanged(callback: Any with java.io.Serializable => Unit): Unit
 
+  /**
+   * Properties of the room.
+   *
+   * @return a map containing property names as keys (name -> value)
+   */
+  def properties: Map[String, Any]
+
+  /**
+   * Getter of the value of a given property
+   * @param propertyName the name of the property
+   * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
+   */
+  def valueOf(propertyName: String): Any
 }
 
 object ClientRoom {
@@ -94,7 +92,7 @@ case class ClientRoomImpl(coreClient: ActorRef,
     _properties.map(e => (e._1, runtimeValue(e._2)))
   }
 
-  override def valueOf(propertyName: String): Any = _properties(propertyName)
+  override def valueOf(propertyName: String): Any = RoomPropertyValue runtimeValue _properties(propertyName)
 
   override def join(): Future[Any] = {
     val ref = this.spawnInnerActor()

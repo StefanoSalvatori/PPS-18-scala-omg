@@ -2,13 +2,6 @@ package common.room
 
 case class RoomProperty(name: String, value: RoomPropertyValue) extends FilterStrategies
 
-object RoomPropertyValueConversions {
-  implicit def intToIntProperty(value: Int): IntRoomPropertyValue = IntRoomPropertyValue(value)
-  implicit def stringToStringProperty(value: String): StringRoomPropertyValue = StringRoomPropertyValue(value)
-  implicit def booleanToBooleanProperty(value: Boolean): BooleanRoomPropertyValue = BooleanRoomPropertyValue(value)
-  implicit def DoubleToBooleanProperty(value: Double): DoubleRoomPropertyValue = DoubleRoomPropertyValue(value)
-}
-
 trait RoomPropertyValue { self =>
   def compare(that: self.type): Int
 }
@@ -44,4 +37,11 @@ case class BooleanRoomPropertyValue(value: Boolean) extends RoomPropertyValue {
 
 case class DoubleRoomPropertyValue(value: Double) extends RoomPropertyValue {
   override def compare(that: this.type): Int = this.value compareTo that.value
+}
+
+object RoomPropertyValueConversions {
+  implicit def intToIntProperty(value: Int): IntRoomPropertyValue = IntRoomPropertyValue(value)
+  implicit def stringToStringProperty(value: String): StringRoomPropertyValue = StringRoomPropertyValue(value)
+  implicit def booleanToBooleanProperty(value: Boolean): BooleanRoomPropertyValue = BooleanRoomPropertyValue(value)
+  implicit def DoubleToBooleanProperty(value: Double): DoubleRoomPropertyValue = DoubleRoomPropertyValue(value)
 }

@@ -214,6 +214,9 @@ object ServerRoom {
     val runtimeOnlyPropertyNames: Set[String] = runtimeRoomProperties.map(_ name) &~ serverRoomProperties.map(_ name)
     runtimeRoomProperties.filter(property => runtimeOnlyPropertyNames contains property.name)
       .foreach(sharedRoom addSharedProperty)
+    // Add the public/private state to room properties
+    import common.room.RoomPropertyValueConversions._
+    sharedRoom addSharedProperty RoomProperty(Room.roomPrivateStatePropertyName, serverRoom.isPrivate)
     sharedRoom
   }
   implicit val serverRoomSeqToSharedRoomSeq: Seq[ServerRoom] => Seq[Room] = _.map(serverRoomToSharedRoom)

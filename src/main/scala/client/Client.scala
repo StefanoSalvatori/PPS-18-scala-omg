@@ -22,7 +22,7 @@ sealed trait Client {
    * @param roomProperties options
    * @return a future with the joined room
    */
-  def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): Future[ClientRoom]
+  def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty] = Set.empty): Future[ClientRoom]
 
   /**
    * Create a private room.
@@ -30,7 +30,7 @@ sealed trait Client {
    * @param roomProperties room options to set as starting ones
    * @param password password required for clients to join the room
    */
-  def createPrivateRoom(roomType: RoomType, roomProperties: Set[RoomProperty], password: RoomPassword): Future[ClientRoom]
+  def createPrivateRoom(roomType: RoomType, roomProperties: Set[RoomProperty] = Set.empty, password: RoomPassword): Future[ClientRoom]
 
   /**
    * Join an existing room or create a new one, by provided roomType and options
@@ -40,7 +40,7 @@ sealed trait Client {
    * @param roomProperties property for room creation
    * @return a future with the joined room
    */
-  def joinOrCreate(roomType: RoomType, filterOption: FilterOptions, roomProperties: Set[RoomProperty]): Future[ClientRoom]
+  def joinOrCreate(roomType: RoomType, filterOption: FilterOptions, roomProperties: Set[RoomProperty] = Set.empty): Future[ClientRoom]
 
   /**
    * Joins an existing room by provided roomType and options.
@@ -100,13 +100,13 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   override def shutdown(): Unit = this.actorSystem.terminate()
 
-  override def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): Future[ClientRoom] =
+  override def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty] = Set.empty): Future[ClientRoom] =
     this createRoom CreatePublicRoom(roomType, roomProperties)
 
-  override def createPrivateRoom(roomType: RoomType, roomProperties: Set[RoomProperty], password: RoomPassword): Future[ClientRoom] =
+  override def createPrivateRoom(roomType: RoomType, roomProperties: Set[RoomProperty] = Set.empty, password: RoomPassword): Future[ClientRoom] =
     this createRoom CreatePrivateRoom(roomType, roomProperties, password)
 
-  override def joinOrCreate(roomType: RoomType, filterOption: FilterOptions, roomProperties: Set[RoomProperty]): Future[ClientRoom] = {
+  override def joinOrCreate(roomType: RoomType, filterOption: FilterOptions, roomProperties: Set[RoomProperty] = Set.empty): Future[ClientRoom] = {
     this.join(roomType, filterOption) recoverWith {
       case _: Exception => this.createPublicRoom(roomType, roomProperties)
     }
