@@ -154,6 +154,15 @@ class ClientSpec extends AnyFlatSpec
     room.properties should have size 0
   }
 
+  it should "not create a room if an available room exists " in {
+    val client1 = Client(serverAddress, serverPort)
+    val client2 = Client(serverAddress, serverPort)
+    val room1 = Await.result(client1.createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
+    val room2 = Await.result(client2.joinOrCreate(ROOM_TYPE_NAME, FilterOptions.empty, Set.empty), DefaultTimeout)
+    val roomsOnServer = Await.result(client.getAvailableRoomsByType(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)
+    roomsOnServer should have size 1
+  }
+
   it should "show the correct default room properties when properties are not overridden" in {
     val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, Set.empty), DefaultTimeout)
     room.properties should have size 2

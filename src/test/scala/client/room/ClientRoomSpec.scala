@@ -74,12 +74,5 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       val res = Await.result( (coreClient ? GetJoinedRooms).mapTo[JoinedRooms], DefaultDuration).joinedRooms
       res should have size 0
     }
-
-    "execute a defined callback on message recived from server room" in {
-    }
-
-    "send messages to server room" in {
-    }
-
   }
 }

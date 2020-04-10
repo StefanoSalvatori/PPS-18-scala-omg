@@ -1,17 +1,22 @@
 package client.utils
 
 import akka.actor.ActorRef
+import akka.http.scaladsl.model.StatusCode
 import akka.http.scaladsl.model.ws.Message
 import client.room.ClientRoom
-import common.room.SharedRoom.{Room, RoomId, RoomPassword, RoomType}
+import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.communication.SocketSerializer
 import common.room.{FilterOptions, RoomProperty}
+import common.room.SharedRoom.{Room, RoomId, RoomPassword, RoomType}
 
 object MessageDictionary {
 
   //CoreClient
 
   trait CreateRoomMessage
+
   case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty]) extends CreateRoomMessage
+
   case class CreatePrivateRoom(roomType: RoomType, roomOption: Set[RoomProperty], password: RoomPassword) extends CreateRoomMessage
 
   case class GetAvailableRooms(roomType: RoomType, roomOption: FilterOptions)
@@ -51,8 +56,10 @@ object MessageDictionary {
    * If the connection is successful respond with message [[HttpSocketSuccess]] otherwise [[HttpSocketFail]]
    *
    * @param roomId id of the room to connect to
+   * @param parser messages received on the socket will be parsed with this parser before sending them to the
+   *               receiver actor
    */
-  case class HttpSocketRequest(roomId: RoomId)
+  case class HttpSocketRequest[T](roomId: RoomId, parser: SocketSerializer[T])
 
   /**
    * Successful response of an [[HttpSocketRequest]].
@@ -72,19 +79,31 @@ object MessageDictionary {
 
   //ClientRoomActor
 
-  case class GetClientRoom(joined: Boolean)
-
   case class ClientRoomResponse(clientRoom: ClientRoom)
 
   case class SendJoin(roomId: RoomId)
 
   case class SendLeave()
 
-  case class SendProtocolMessage(msg: Message)
+  case class SendProtocolMessage(msg: RoomProtocolMessage)
 
   case class SendStrictMessage(msg: Any with java.io.Serializable)
 
-  case class OnMsg(callback: Any => Unit)
+  /**
+   * Define a callback that will be execute by the actor after a message received from the socket
+   *
+   * @param callback the callback that handles the message
+   */
+  case class OnMsgCallback(callback: Any => Unit)
 
+  /**
+   * Define a callback that will be execute by the actor after a message
+   * that represent a new game state
+   * @param callback the callback that handles the message
+   */
+  case class OnStateChangedCallback(callback:  Any with java.io.Serializable => Unit)
+
+  //common
   case class UnknownMessageReply()
+
 }

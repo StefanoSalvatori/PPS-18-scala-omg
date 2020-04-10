@@ -15,6 +15,7 @@ trait ClientRoom extends BasicRoom {
 
   /**
    * Properties of the room.
+   *
    * @return a map containing property names as keys (name -> value)
    */
   def properties: Map[String, RoomPropertyValue]
@@ -25,6 +26,7 @@ trait ClientRoom extends BasicRoom {
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
   def join(): Future[Any]
+
 
   /**
    * Leave this room server side
@@ -40,6 +42,7 @@ trait ClientRoom extends BasicRoom {
    */
   def send(msg: Any with java.io.Serializable): Unit
 
+
   /**
    * Callback that handle  message received from the server room
    *
@@ -47,8 +50,14 @@ trait ClientRoom extends BasicRoom {
    */
   def onMessageReceived(callback: Any => Unit): Unit
 
-  //TODO: implement this
-  //def onStateChanged
+
+  /**
+   * Callback that handle message of game state changed received from the server room
+   *
+   * @param callback callback to handle the change of state
+   */
+  def onStateChanged(callback: Any with java.io.Serializable => Unit): Unit
+
 }
 
 object ClientRoom {
@@ -77,7 +86,9 @@ case class ClientRoomImpl(coreClient: ActorRef,
     }
   }
 
-  override def leave(): Future[Any] = innerActor match {
+
+  override def leave(): Future[Any] =
+    innerActor match {
       case Some(value) =>
         value ? SendLeave flatMap {
           case Success(_) => Future.successful()
@@ -88,7 +99,9 @@ case class ClientRoomImpl(coreClient: ActorRef,
 
   override def send(msg: Any with java.io.Serializable): Unit = innerActor.foreach(_ ! SendStrictMessage(msg))
 
-  override def onMessageReceived(callback: Any => Unit): Unit = innerActor.foreach(_ ! OnMsg(callback))
+  override def onMessageReceived(callback: Any => Unit): Unit = innerActor.foreach(_ ! OnMsgCallback(callback))
+
+  override def onStateChanged(callback: Any with java.io.Serializable => Unit): Unit = innerActor.foreach(_ ! OnStateChangedCallback(callback))
 
   private def spawnInnerActor(): ActorRef = {
     val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
@@ -96,9 +109,13 @@ case class ClientRoomImpl(coreClient: ActorRef,
     ref
   }
 
-  private def killInnerActor(): Unit = this.innerActor match {
+  private def killInnerActor(): Unit = {
+    this.innerActor match {
       case Some(value) => value ! PoisonPill
+      case None =>
     }
+  }
+
 }
 
 
