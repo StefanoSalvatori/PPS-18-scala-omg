@@ -46,4 +46,4 @@ object SimpleFilters extends App {
       val filter = room.propertyOf("a") > 0 andThen room.propertyOf("b") =:= "abc"
       println(filter)
   }
-}
+}*/

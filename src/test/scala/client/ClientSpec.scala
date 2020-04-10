@@ -11,7 +11,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.ServerRoom
 import server.utils.ExampleRooms
-import server.utils.ExampleRooms.{MyRoom, NoPropertyRoom}
+import server.utils.ExampleRooms.{ClosableRoomWithState, MyRoom, NoPropertyRoom}
 import common.room.RoomPropertyValueConversions._
 import common.room.SharedRoom.Room
 
