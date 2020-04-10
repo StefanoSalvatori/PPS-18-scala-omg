@@ -4,9 +4,11 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
-import common.SharedRoom.Room
+import common.TestConfig
 import common.communication.BinaryProtocolSerializer
-import common.{FilterOptions, RoomProperty, Routes, TestConfig}
+import common.http.Routes
+import common.room.FilterOptions
+import common.room.SharedRoom.Room
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer
@@ -34,7 +36,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   override def beforeAll: Unit = {
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ROOM_TYPE_NAME, id => ServerRoom(id))
+    gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
     Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
   }
 

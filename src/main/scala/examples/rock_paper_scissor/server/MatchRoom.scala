@@ -5,8 +5,7 @@ import java.io.FileInputStream
 import alice.tuprolog.{Prolog, Theory}
 import server.room.{Client, ServerRoom}
 
-
-case class ClassicMatchRoom(override val roomId: String) extends ServerRoom {
+class ClassicMatchRoom() extends ServerRoom {
 
   private val MaxPlayers = 2
   private var gameState: Seq[(Client, String)] = Seq.empty
@@ -76,7 +75,7 @@ case class ClassicMatchRoom(override val roomId: String) extends ServerRoom {
 }
 
 
-case class AdvancedMatchRoom(override val roomId: String) extends ClassicMatchRoom(roomId) {
+class AdvancedMatchRoom() extends ClassicMatchRoom {
   override def availableMoves: Set[String] = Set("rock", "paper", "scissor", "lizard", "spock")
 }
 

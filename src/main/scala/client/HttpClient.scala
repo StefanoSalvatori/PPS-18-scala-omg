@@ -9,9 +9,10 @@ import akka.pattern.pipe
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import client.utils.MessageDictionary._
-import common.SharedRoom.Room
 import common.communication.CommunicationProtocol.RoomProtocolMessage
-import common.{HttpRequests, RoomJsonSupport, Routes}
+import common.http.{HttpRequests, Routes}
+import common.room.RoomJsonSupport
+import common.room.SharedRoom.Room
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}

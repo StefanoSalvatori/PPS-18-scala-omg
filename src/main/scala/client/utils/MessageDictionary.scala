@@ -4,15 +4,19 @@ import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCode
 import akka.http.scaladsl.model.ws.Message
 import client.room.ClientRoom
-import common.{FilterOptions, RoomProperty}
-import common.SharedRoom.{Room, RoomId, RoomType}
+import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.communication.SocketSerializer
+import common.room.{FilterOptions, RoomProperty}
+import common.room.SharedRoom.{Room, RoomId, RoomPassword, RoomType}
 
 object MessageDictionary {
 
   //CoreClient
 
   trait CreateRoomMessage
+
   case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty]) extends CreateRoomMessage
+
   case class CreatePrivateRoom(roomType: RoomType, roomOption: Set[RoomProperty], password: RoomPassword) extends CreateRoomMessage
 
   case class GetAvailableRooms(roomType: RoomType, roomOption: FilterOptions)
@@ -53,7 +57,7 @@ object MessageDictionary {
    *
    * @param roomId id of the room to connect to
    * @param parser messages received on the socket will be parsed with this parser before sending them to the
-   *              receiver actor
+   *               receiver actor
    */
   case class HttpSocketRequest[T](roomId: RoomId, parser: SocketSerializer[T])
 
@@ -86,12 +90,18 @@ object MessageDictionary {
   case class SendStrictMessage(msg: Any with java.io.Serializable)
 
   /**
-   * Define a callbck that handle a received message from the socket
+   * Define a callback that will be execute by the actor after a message received from the socket
+   *
    * @param callback the callback that handles the message
    */
-  case class OnMsg(callback: Any => Unit)
+  case class OnMsgCallback(callback: Any => Unit)
 
-
+  /**
+   * Define a callback that will be execute by the actor after a message
+   * that represent a new game state
+   * @param callback the callback that handles the message
+   */
+  case class OnStateChangedCallback(callback:  Any with java.io.Serializable => Unit)
 
   //common
   case class UnknownMessageReply()

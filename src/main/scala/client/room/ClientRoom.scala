@@ -15,6 +15,7 @@ trait ClientRoom extends BasicRoom {
 
   /**
    * Properties of the room.
+   *
    * @return a map containing property names as keys (name -> value)
    */
   def properties: Map[String, RoomPropertyValue]
@@ -49,8 +50,13 @@ trait ClientRoom extends BasicRoom {
    */
   def onMessageReceived(callback: Any => Unit): Unit
 
-  //TODO: implement this
-  //def onStateChanged
+
+  /**
+   * Callback that handle message of game state changed received from the server room
+   *
+   * @param callback callback to handle the change of state
+   */
+  def onStateChanged(callback: Any with java.io.Serializable => Unit): Unit
 
 }
 
@@ -93,7 +99,9 @@ case class ClientRoomImpl(coreClient: ActorRef,
 
   override def send(msg: Any with java.io.Serializable): Unit = innerActor.foreach(_ ! SendStrictMessage(msg))
 
-  override def onMessageReceived(callback: Any => Unit): Unit = innerActor.foreach(_ ! OnMsg(callback))
+  override def onMessageReceived(callback: Any => Unit): Unit = innerActor.foreach(_ ! OnMsgCallback(callback))
+
+  override def onStateChanged(callback: Any with java.io.Serializable => Unit): Unit = innerActor.foreach(_ ! OnStateChangedCallback(callback))
 
   private def spawnInnerActor(): ActorRef = {
     val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
@@ -107,7 +115,6 @@ case class ClientRoomImpl(coreClient: ActorRef,
       case None =>
     }
   }
-
 
 }
 

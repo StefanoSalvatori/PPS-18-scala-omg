@@ -2,7 +2,7 @@ package examples.rock_paper_scissor.client
 
 import client.Client
 import client.room.ClientRoom
-import common.FilterOptions
+import common.room.FilterOptions
 import javafx.scene.control.{Button, Label}
 import javafx.scene.layout.VBox
 import javafx.{event => jfxEvent, fxml => jfxf, scene => jfxs}

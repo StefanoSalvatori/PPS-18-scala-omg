@@ -13,21 +13,25 @@ import scala.collection.immutable.Queue
 import scala.util.{Failure, Success}
 
 object ClientRoomActor {
-  def apply(coreClient: ActorRef, serverUri: String, room: ClientRoom): Props =
-    Props(classOf[ClientRoomActor], coreClient, serverUri, room)
+  def apply[S](coreClient: ActorRef, serverUri: String, room: ClientRoom): Props =
+    Props(classOf[ClientRoomActor[S]], coreClient, serverUri, room)
 }
 
 /**
  * Handles the connection with the server side room.
  * Notify the coreClient if the associated room was left or joined
  */
-case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends BasicActor with Stash {
+case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends BasicActor with Stash {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
   private var onMessageCallback: Option[Any with java.io.Serializable => Unit] = None
+  private var onStateChangedCallback: Option[Any with java.io.Serializable => Unit] = None
 
   override def receive: Receive = onReceive orElse fallbackReceive
+
   def waitSocketResponse(replyTo: ActorRef): Receive = onWaitSocketResponse(replyTo) orElse fallbackReceive
+
   def socketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = onSocketOpened(outRef, replyTo) orElse fallbackReceive
+
   def roomJoined(outRef: ActorRef): Receive = onRoomJoined(outRef) orElse fallbackReceive
 
 
@@ -37,8 +41,12 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: Cl
       httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer)
       context.become(waitSocketResponse(sender))
 
-    case OnMsg(callback) =>
+    case OnMsgCallback(callback) =>
       onMessageCallback = Some(callback)
+      unstashAll()
+
+    case OnStateChangedCallback(callback) =>
+      onStateChangedCallback = Some(callback)
       unstashAll()
   }
 
@@ -56,8 +64,12 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: Cl
       self ! SendProtocolMessage(RoomProtocolMessage(JoinRoom))
 
 
-    case OnMsg(callback) =>
+    case OnMsgCallback(callback) =>
       onMessageCallback = Some(callback)
+      unstashAll()
+
+    case OnStateChangedCallback(callback) =>
+      onStateChangedCallback = Some(callback)
       unstashAll()
   }
 
@@ -76,8 +88,12 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: Cl
     case SendProtocolMessage(msg) =>
       outRef ! msg
 
-    case OnMsg(callback) =>
+    case OnMsgCallback(callback) =>
       onMessageCallback = Some(callback)
+      unstashAll()
+
+    case OnStateChangedCallback(callback) =>
+      onStateChangedCallback = Some(callback)
       unstashAll()
   }
 
@@ -88,6 +104,8 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: Cl
     case RoomProtocolMessage(ProtocolMessageType.Tell, _, payload) => handleMessageReceived(payload)
 
     case RoomProtocolMessage(ProtocolMessageType.Broadcast, _, payload) => handleMessageReceived(payload)
+
+    case RoomProtocolMessage(ProtocolMessageType.StateUpdate, _, payload) => handleStateChangedReceived(payload)
 
     case SendLeave =>
       self ! SendProtocolMessage(RoomProtocolMessage(LeaveRoom))
@@ -101,14 +119,16 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: Cl
     case SendProtocolMessage(msg) =>
       outRef ! msg
 
-
-    case OnMsg(callback) =>
+    case OnMsgCallback(callback) =>
       onMessageCallback = Some(callback)
+      unstashAll()
+
+    case OnStateChangedCallback(callback) =>
+      onStateChangedCallback = Some(callback)
       unstashAll()
 
     case RetrieveClientRoom => sender ! ClientRoomResponse(this.room)
   }
-
 
 
   //private utilities
@@ -117,7 +137,16 @@ case class ClientRoomActor(coreClient: ActorRef, httpServerUri: String, room: Cl
     //stash messages if callback is not defined
     //They will be handled as soon as the callback is defined
     this.onMessageCallback match {
-      case Some(callback) =>  callback(msg)
+      case Some(callback) => callback(msg)
+      case None => stash()
+    }
+  }
+
+  private def handleStateChangedReceived(state: Any with java.io.Serializable) = {
+    //stash messages if callback is not defined
+    //They will be handled as soon as the callback is defined
+    this.onStateChangedCallback match {
+      case Some(callback) => callback(state)
       case None => stash()
     }
   }

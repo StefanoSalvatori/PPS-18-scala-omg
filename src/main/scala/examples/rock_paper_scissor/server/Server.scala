@@ -17,8 +17,8 @@ object Server extends App {
   val gameServer = GameServer(Host, Port)
 
   //define room types to host matches
-  gameServer defineRoom("classic", ClassicMatchRoom)
-  gameServer defineRoom("advanced", AdvancedMatchRoom)
+  gameServer defineRoom("classic", () => new ClassicMatchRoom())
+  gameServer defineRoom("advanced", () => new AdvancedMatchRoom())
 
   gameServer.start() onComplete {
     case Success(_) => println(s"Server started at $Host:$Port")
