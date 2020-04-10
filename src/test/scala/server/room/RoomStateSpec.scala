@@ -43,6 +43,8 @@ class RoomStateSpec extends AnyWordSpecLike
   }
 
 
+  import scala.concurrent.duration._
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(1 seconds, 25 millis)
   private var room = RoomWithState()
   private var client1 = TestClient()
   private var client2 = TestClient()
