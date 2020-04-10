@@ -22,7 +22,7 @@ class RoomStateSpec extends AnyWordSpecLike
   private val RoomInitialState: Int = 0
 
   // Room used for testing
-  private case class RoomWithState(override val roomId: String) extends ServerRoom with RoomState[Integer] {
+  private case class RoomWithState() extends ServerRoom with RoomState[Integer] {
     private var internalState = RoomInitialState
     override val updateRate: Int = UpdateRate
 
@@ -43,12 +43,12 @@ class RoomStateSpec extends AnyWordSpecLike
   }
 
 
-  private var room = RoomWithState(UUID.randomUUID.toString)
+  private var room = RoomWithState()
   private var client1 = TestClient()
   private var client2 = TestClient()
 
   before {
-    room = RoomWithState(UUID.randomUUID.toString)
+    room = RoomWithState()
     client1 = TestClient()
     client2 = TestClient()
     room.addClient(client1)

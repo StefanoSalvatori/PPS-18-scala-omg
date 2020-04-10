@@ -13,6 +13,7 @@ greater(spock, scissor).
 greater(lizard, paper).
 greater(paper, spock).
 greater(spock, rock).
+greater(scissor, lizard).
 
 
 isGreater(X, Y) :- move(X), move(Y), greater(X, Y).

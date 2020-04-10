@@ -97,3 +97,4 @@ case class RockPaperScissor() {
     engine.solve(goal(p1, p2)).getTerm(TermResult).toString
   }
 }
+
