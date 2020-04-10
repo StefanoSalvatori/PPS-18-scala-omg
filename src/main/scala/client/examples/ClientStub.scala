@@ -27,15 +27,17 @@ object ClientStub extends App {
   }
   */
 
-  client createPublicRoom("test_room") onComplete {
+  client createPublicRoom "test_room" onComplete {
     case Success(res) =>
       println("POST: " + res.properties)
   }
 
+  /*
   client createPrivateRoom("test_room", password = "pwd") onComplete {
     case Success(res) =>
       println("POST: " + res.properties)
   }
+  */
 
 
   /*

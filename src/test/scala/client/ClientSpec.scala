@@ -42,6 +42,8 @@ class ClientSpec extends AnyFlatSpec
 
   behavior of "Client"
 
+  val testProperties = Set(RoomProperty("a", 1), RoomProperty("b", "qwe"))
+
   before {
     gameServer = GameServer(serverAddress, serverPort)
     gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
@@ -54,7 +56,6 @@ class ClientSpec extends AnyFlatSpec
   }
 
   after {
-    // Await.ready(gameServer.stop(), SERVER_SHUTDOWN_AWAIT_TIME)
     Await.ready(gameServer.terminate(), SERVER_SHUTDOWN_AWAIT_TIME)
   }
 
@@ -171,9 +172,14 @@ class ClientSpec extends AnyFlatSpec
     room.properties should contain ("b", "abc")
   }
 
+  it should "return correct room properties" in {
+    val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, testProperties), DefaultTimeout)
+    room propertyOf "a" shouldEqual RoomProperty("a", 1)
+    room propertyOf "b" shouldEqual RoomProperty("b", "qwe")
+  }
+
   it should "show the correct room property values when properties are overridden" in {
-    val properties = Set(RoomProperty("a", 1), RoomProperty("b", "qwe"))
-    val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, properties), DefaultTimeout)
+    val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, testProperties), DefaultTimeout)
     room.properties should have size 3 // a, b, private
     room.properties should contain ("a", 1)
     room.properties should contain ("b", "qwe")
@@ -181,8 +187,7 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "return correct property values" in {
-    val properties = Set(RoomProperty("a", 1), RoomProperty("b", "qwe"))
-    val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, properties), DefaultTimeout)
+    val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, testProperties), DefaultTimeout)
     room valueOf "a" shouldEqual 1
     room valueOf "b" shouldEqual "qwe"
   }

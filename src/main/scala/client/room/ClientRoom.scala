@@ -5,7 +5,7 @@ import akka.util.Timeout
 import client.utils.MessageDictionary._
 import common.room.SharedRoom.{BasicRoom, RoomId}
 import akka.pattern.ask
-import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, IntRoomPropertyValue, RoomPropertyValue, StringRoomPropertyValue}
+import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, IntRoomPropertyValue, RoomProperty, RoomPropertyValue, StringRoomPropertyValue}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
@@ -63,6 +63,14 @@ trait ClientRoom extends BasicRoom {
    * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
    */
   def valueOf(propertyName: String): Any
+
+  /**
+   * Getter of a room property
+   *
+   * @param propertyName The name of the property
+   * @return The selected property
+   */
+  def propertyOf(propertyName: String): RoomProperty
 }
 
 object ClientRoom {
@@ -81,18 +89,11 @@ case class ClientRoomImpl(coreClient: ActorRef,
   private implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
   private implicit var innerActor: Option[ActorRef] = None
 
-  override def properties: Map[String, Any] = {
-    def runtimeValue(value: RoomPropertyValue): Any = value match {
-      case v: IntRoomPropertyValue => v.value
-      case v: StringRoomPropertyValue => v.value
-      case v: BooleanRoomPropertyValue => v.value
-      case v: DoubleRoomPropertyValue => v.value
-    }
+  override def properties: Map[String, Any] = _properties.map(e => (e._1, RoomPropertyValue valueOf e._2))
 
-    _properties.map(e => (e._1, runtimeValue(e._2)))
-  }
+  override def valueOf(propertyName: String): Any = RoomPropertyValue valueOf _properties(propertyName)
 
-  override def valueOf(propertyName: String): Any = RoomPropertyValue runtimeValue _properties(propertyName)
+  override def propertyOf(propertyName: String): RoomProperty = RoomProperty(propertyName, _properties(propertyName))
 
   override def join(): Future[Any] = {
     val ref = this.spawnInnerActor()
@@ -103,7 +104,6 @@ case class ClientRoomImpl(coreClient: ActorRef,
         Future.failed(ex)
     }
   }
-
 
   override def leave(): Future[Any] =
     innerActor match {

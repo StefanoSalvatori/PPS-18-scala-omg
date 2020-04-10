@@ -105,7 +105,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
     }
 
     this.getClass.getDeclaredFields.collect {
-      case f if operationOnField(f.getName)(field => checkAdmissibleFieldType(field get this)) => propertyOf(f.getName)
+      case f if operationOnField(f.getName)(field => checkAdmissibleFieldType(this --> field)) => propertyOf(f.getName)
     }.toSet
   }
 
@@ -115,7 +115,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
    */
   def valueOf(propertyName: String): Any =
-    operationOnField(propertyName)(field => field get this)
+    operationOnField(propertyName)(this --> _)
 
   /**
    * Getter of the value of a property
@@ -124,7 +124,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    * @return The value of the property, expressed as a RoomPropertyValue
    */
   def `valueOf~AsProperty`(propertyName: String): RoomPropertyValue =
-    operationOnField(propertyName)(field => RoomPropertyValue valueToRoomPropertyValue (field get this))
+    operationOnField(propertyName)(field => RoomPropertyValue propertyValueFrom (this --> field))
 
   /**
    * Getter of a room property
@@ -134,7 +134,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    */
   def propertyOf(propertyName: String): RoomProperty =
     operationOnField(propertyName)(field =>
-      RoomProperty(propertyName, RoomPropertyValue valueToRoomPropertyValue (field get this))
+      RoomProperty(propertyName, RoomPropertyValue propertyValueFrom (this --> field))
     )
 
   /**
@@ -200,6 +200,8 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   private def fieldFrom(fieldName: String): Field = {
     this.getClass getDeclaredField fieldName
   }
+
+  private def -->(field: Field): AnyRef = field get this // Get the value of the field
 }
 
 private case class PairRoomProperty[T](name: String, value: T)
@@ -236,7 +238,7 @@ object ServerRoom {
   def defaultProperties: Set[RoomProperty] = ServerRoom().properties // Create an instance of ServerRoom and get properties
 
   private def propertyToPair[_](property: RoomProperty): PairRoomProperty[_] =
-    PairRoomProperty(property.name, RoomPropertyValue runtimeValue property.value)
+    PairRoomProperty(property.name, RoomPropertyValue valueOf property.value)
 }
 
 /**

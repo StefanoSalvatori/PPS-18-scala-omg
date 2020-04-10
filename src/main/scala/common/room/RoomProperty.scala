@@ -7,7 +7,7 @@ trait RoomPropertyValue { self =>
 }
 
 object RoomPropertyValue {
-  def runtimeValue(propertyValue: RoomPropertyValue): Any = propertyValue match {
+  def valueOf(propertyValue: RoomPropertyValue): Any = propertyValue match {
     case v: IntRoomPropertyValue => v.value
     case v: StringRoomPropertyValue => v.value
     case v: BooleanRoomPropertyValue => v.value
@@ -15,7 +15,7 @@ object RoomPropertyValue {
   }
 
   // Useful when we can't directly instantiate the property value since we don't know the type of the value
-  def valueToRoomPropertyValue[T](value: T): RoomPropertyValue = value match {
+  def propertyValueFrom[T](value: T): RoomPropertyValue = value match {
     case v: Int => IntRoomPropertyValue(v)
     case v: String => StringRoomPropertyValue(v)
     case v: Boolean => BooleanRoomPropertyValue(v)

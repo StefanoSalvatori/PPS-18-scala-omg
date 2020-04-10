@@ -25,20 +25,20 @@ class RoomPropertySpec extends AnyFlatSpec
   }
 
   it should "correctly transform a property value in the corresponding first class value" in {
-    RoomPropertyValue runtimeValue intPropertyValue shouldEqual intValue
-    RoomPropertyValue runtimeValue stringPropertyValue shouldEqual stringValue
-    RoomPropertyValue runtimeValue booleanPropertyValue shouldEqual booleanValue
-    RoomPropertyValue runtimeValue doublePropertyValue shouldEqual doubleValue
+    RoomPropertyValue valueOf intPropertyValue shouldEqual intValue
+    RoomPropertyValue valueOf stringPropertyValue shouldEqual stringValue
+    RoomPropertyValue valueOf booleanPropertyValue shouldEqual booleanValue
+    RoomPropertyValue valueOf doublePropertyValue shouldEqual doubleValue
   }
 
   it should "instantiate the correct property value, starting from an unknown type" in {
     val intValue = 1; val intTest: Any = intValue
-    RoomPropertyValue valueToRoomPropertyValue intTest shouldEqual IntRoomPropertyValue(intValue)
+    RoomPropertyValue propertyValueFrom intTest shouldEqual IntRoomPropertyValue(intValue)
     val stringValue = "abc"; val stringTest: Any = stringValue
-    RoomPropertyValue valueToRoomPropertyValue stringTest shouldEqual StringRoomPropertyValue(stringValue)
+    RoomPropertyValue propertyValueFrom stringTest shouldEqual StringRoomPropertyValue(stringValue)
     val booleanValue = true; val booleanTest: Any = booleanValue
-    RoomPropertyValue valueToRoomPropertyValue booleanTest shouldEqual BooleanRoomPropertyValue(booleanValue)
+    RoomPropertyValue propertyValueFrom booleanTest shouldEqual BooleanRoomPropertyValue(booleanValue)
     val doubleValue = 0.1; val doubleTest: Any = doubleValue
-    RoomPropertyValue valueToRoomPropertyValue doubleTest shouldEqual DoubleRoomPropertyValue(doubleValue)
+    RoomPropertyValue propertyValueFrom doubleTest shouldEqual DoubleRoomPropertyValue(doubleValue)
   }
 }
