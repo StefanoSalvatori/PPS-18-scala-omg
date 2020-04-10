@@ -5,7 +5,7 @@ import akka.util.Timeout
 import client.utils.MessageDictionary._
 import common.room.SharedRoom.{BasicRoom, RoomId}
 import akka.pattern.ask
-import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, IntRoomPropertyValue, RoomProperty, RoomPropertyValue, StringRoomPropertyValue}
+import common.room.{RoomProperty, RoomPropertyValue}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
