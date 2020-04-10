@@ -30,7 +30,7 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
 
   def waitHttpResponse(replyTo: ActorRef): Receive = onWaitHttpResponse(replyTo) orElse fallbackReceive
 
-  import common.room.BasicRoomPropertyValueConversions._
+  import common.room.RoomPropertyValueConversions._
   val onReceive: Receive = {
 
     case FailResponse(ex) => sender ! Failure(ex)

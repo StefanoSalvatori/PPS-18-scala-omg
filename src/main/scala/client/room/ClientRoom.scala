@@ -5,7 +5,7 @@ import akka.util.Timeout
 import client.utils.MessageDictionary._
 import common.room.SharedRoom.{BasicRoom, RoomId}
 import akka.pattern.ask
-import common.room.RoomPropertyValue
+import common.room.{BooleanRoomPropertyValue, DoubleRoomPropertyValue, IntRoomPropertyValue, RoomPropertyValue, StringRoomPropertyValue}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
@@ -18,7 +18,14 @@ trait ClientRoom extends BasicRoom {
    *
    * @return a map containing property names as keys (name -> value)
    */
-  def properties: Map[String, RoomPropertyValue]
+  def properties: Map[String, Any]
+
+  /**
+   * Getter of the value of a given property
+   * @param propertyName the name of the property
+   * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
+   */
+  def valueOf(propertyName: String): Any
 
   /**
    * Open web socket with server room and try to join
@@ -69,12 +76,25 @@ object ClientRoom {
 case class ClientRoomImpl(coreClient: ActorRef,
                           httpServerUri: String,
                           override val roomId: RoomId,
-                          override val properties: Map[String, RoomPropertyValue])
+                          private val _properties: Map[String, RoomPropertyValue])
                          (implicit val system: ActorSystem) extends ClientRoom {
 
   private implicit val timeout: Timeout = 5 seconds
   private implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
   private implicit var innerActor: Option[ActorRef] = None
+
+  override def properties: Map[String, Any] = {
+    def runtimeValue(value: RoomPropertyValue): Any = value match {
+      case v: IntRoomPropertyValue => v.value
+      case v: StringRoomPropertyValue => v.value
+      case v: BooleanRoomPropertyValue => v.value
+      case v: DoubleRoomPropertyValue => v.value
+    }
+
+    _properties.map(e => (e._1, runtimeValue(e._2)))
+  }
+
+  override def valueOf(propertyName: String): Any = _properties(propertyName)
 
   override def join(): Future[Any] = {
     val ref = this.spawnInnerActor()

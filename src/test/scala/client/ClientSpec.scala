@@ -12,7 +12,7 @@ import server.GameServer
 import server.room. ServerRoom
 import server.utils.ExampleRooms
 import server.utils.ExampleRooms.{MyRoom, NoPropertyRoom}
-import common.room.BasicRoomPropertyValueConversions._
+import common.room.RoomPropertyValueConversions._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
@@ -166,15 +166,15 @@ class ClientSpec extends AnyFlatSpec
   it should "show the correct default room properties when properties are not overridden" in {
     val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, Set.empty), DefaultTimeout)
     room.properties should have size 2
-    room.properties should contain ("a", IntRoomPropertyValue(0))
-    room.properties should contain ("b", StringRoomPropertyValue("abc"))
+    room.properties should contain ("a", 0)
+    room.properties should contain ("b", "abc")
   }
 
   it should "show the correct room property values when properties are overridden" in {
     val properties = Set(RoomProperty("a", 1), RoomProperty("b", "qwe"))
     val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, properties), DefaultTimeout)
     room.properties should have size 2
-    room.properties should contain ("a", IntRoomPropertyValue(1))
-    room.properties should contain ("b", StringRoomPropertyValue("qwe"))
+    room.properties should contain ("a", 1)
+    room.properties should contain ("b", "qwe")
   }
 }

@@ -5,7 +5,7 @@ import common.room
 object FilterUsage extends App {
 
   // Filters on basic room option values: Int, String, Boolean
-  import common.room.BasicRoomPropertyValueConversions._
+  import common.room.RoomPropertyValueConversions._
   import common.room.{FilterOptions, RoomProperty} // Implicit conversions Int -> IntRoomPropertyValue etc.
   val prop1 = room.RoomProperty("A", 3) // Int room option
   val prop2 = room.RoomProperty("B", "svv") // String room option

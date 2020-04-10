@@ -110,10 +110,9 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   }
 
   /**
-   * Getter of the value of a property
-   *
-   * @param propertyName The name of the property
-   * @return The value of the property, as instance of first class values (int, string, boolean. double)
+   * Getter of the value of a given property
+   * @param propertyName the name of the property
+   * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
    */
   def valueOf(propertyName: String): Any =
     operationOnField(propertyName)(field => field get this)
@@ -125,7 +124,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    * @return The value of the property, expressed as a RoomPropertyValue
    */
   def `valueOf~AsProperty`(propertyName: String): RoomPropertyValue =
-    operationOnField(propertyName)(field => ServerRoom.valueToRoomPropertyValue(field get this))
+    operationOnField(propertyName)(field => RoomPropertyValue valueToRoomPropertyValue (field get this))
 
   /**
    * Getter of a room property
@@ -134,7 +133,9 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    * @return The selected property
    */
   def propertyOf(propertyName: String): RoomProperty =
-    operationOnField(propertyName)(field => RoomProperty(propertyName, ServerRoom.valueToRoomPropertyValue(field get this)))
+    operationOnField(propertyName)(field =>
+      RoomProperty(propertyName, RoomPropertyValue valueToRoomPropertyValue (field get this))
+    )
 
   /**
    * Setter of room properties
@@ -229,35 +230,10 @@ object ServerRoom {
    *
    * @return a set containing the names of the defined properties
    */
-  def defaultProperties: Set[RoomProperty] = {
-    val exampleRoom = new ServerRoom {
-      override def onCreate(): Unit = {}
-
-      override def onClose(): Unit = {}
-
-      override def onJoin(client: Client): Unit = {}
-
-      override def onLeave(client: Client): Unit = {}
-
-      override def onMessageReceived(client: Client, message: Any): Unit = {}
-    }
-    exampleRoom.properties
-  }
+  def defaultProperties: Set[RoomProperty] = ServerRoom().properties // Create an instance of ServerRoom and get properties
 
   private def propertyToPair[_](property: RoomProperty): PairRoomProperty[_] =
-    PairRoomProperty(property.name, property.value match {
-      case runtimeValue: IntRoomPropertyValue => runtimeValue.value
-      case runtimeValue: StringRoomPropertyValue => runtimeValue.value
-      case runtimeValue: BooleanRoomPropertyValue => runtimeValue.value
-      case runtimeValue: DoubleRoomPropertyValue => runtimeValue.value
-    })
-
-  private def valueToRoomPropertyValue[T](value: T): RoomPropertyValue = value match {
-    case v: Int => IntRoomPropertyValue(v)
-    case v: String => StringRoomPropertyValue(v)
-    case v: Boolean => BooleanRoomPropertyValue(v)
-    case v: Double => DoubleRoomPropertyValue(v)
-  }
+    PairRoomProperty(property.name, RoomPropertyValue runtimeValue property.value)
 }
 
 /**
