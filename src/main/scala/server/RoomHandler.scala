@@ -1,8 +1,6 @@
 package server
 
-import java.util.UUID
-
-import akka.actor.{ActorRef, ActorSystem, PoisonPill}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
 import common.room.SharedRoom.{Room, RoomId}

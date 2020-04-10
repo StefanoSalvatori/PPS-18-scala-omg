@@ -29,16 +29,21 @@ object SimpleFilters extends App {
   println(combined.options)
 }
 
-// Given a room, use its properties in filters
-// To execute this example, a server on localhost:8080 is required; it should define a room type "test_room" that contains
-// properties: "a" of type Int, "b" of type String
-object FiltersRoomIntegration extends App {
+  // Given a room, use its properties in filters
+  /*
+  import common.SharedRoom._
+  class MyRoom(override val roomId: String) extends Room {
+    val a: Int = 3
+    val b: String = "svv"
+    val c: Boolean = true
+  }
+  val room = new MyRoom("id")
 
   implicit val executionContext: ExecutionContext = ExecutionContext.global
   val client = Client("localhost", 8080) //scalastyle:ignore magic.number
   client createPublicRoom "test_room" onComplete {
     case Success(room) =>
-      //val filter = room.propertyOf("a") > 0 andThen room.propertyOf("b") =:= "abc"
-      //println(filter)
+      val filter = room.propertyOf("a") > 0 andThen room.propertyOf("b") =:= "abc"
+      println(filter)
   }
 }

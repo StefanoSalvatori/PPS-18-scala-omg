@@ -105,18 +105,17 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
     }
 
     this.getClass.getDeclaredFields.collect {
-      case f if operationOnField(f.getName)(field => checkAdmissibleFieldType(field get this)) => propertyOf(f.getName)
+      case f if operationOnField(f.getName)(field => checkAdmissibleFieldType(this --> field)) => propertyOf(f.getName)
     }.toSet
   }
 
   /**
-   * Getter of the value of a property
-   *
-   * @param propertyName The name of the property
-   * @return The value of the property, as instance of first class values (int, string, boolean. double)
+   * Getter of the value of a given property
+   * @param propertyName the name of the property
+   * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
    */
   def valueOf(propertyName: String): Any =
-    operationOnField(propertyName)(field => field get this)
+    operationOnField(propertyName)(this --> _)
 
   /**
    * Getter of the value of a property
@@ -125,7 +124,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    * @return The value of the property, expressed as a RoomPropertyValue
    */
   def `valueOf~AsProperty`(propertyName: String): RoomPropertyValue =
-    operationOnField(propertyName)(field => ServerRoom.valueToRoomPropertyValue(field get this))
+    operationOnField(propertyName)(field => RoomPropertyValue propertyValueFrom (this --> field))
 
   /**
    * Getter of a room property
@@ -134,7 +133,9 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    * @return The selected property
    */
   def propertyOf(propertyName: String): RoomProperty =
-    operationOnField(propertyName)(field => RoomProperty(propertyName, ServerRoom.valueToRoomPropertyValue(field get this)))
+    operationOnField(propertyName)(field =>
+      RoomProperty(propertyName, RoomPropertyValue propertyValueFrom (this --> field))
+    )
 
   /**
    * Setter of room properties
@@ -199,6 +200,8 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   private def fieldFrom(fieldName: String): Field = {
     this.getClass getDeclaredField fieldName
   }
+
+  private def -->(field: Field): AnyRef = field get this // Get the value of the field
 }
 
 private case class PairRoomProperty[T](name: String, value: T)
@@ -213,6 +216,9 @@ object ServerRoom {
     val runtimeOnlyPropertyNames: Set[String] = runtimeRoomProperties.map(_ name) &~ serverRoomProperties.map(_ name)
     runtimeRoomProperties.filter(property => runtimeOnlyPropertyNames contains property.name)
       .foreach(sharedRoom addSharedProperty)
+    // Add the public/private state to room properties
+    import common.room.RoomPropertyValueConversions._
+    sharedRoom addSharedProperty RoomProperty(Room.roomPrivateStatePropertyName, serverRoom.isPrivate)
     sharedRoom
   }
   implicit val serverRoomSeqToSharedRoomSeq: Seq[ServerRoom] => Seq[Room] = _.map(serverRoomToSharedRoom)
@@ -229,35 +235,10 @@ object ServerRoom {
    *
    * @return a set containing the names of the defined properties
    */
-  def defaultProperties: Set[RoomProperty] = {
-    val exampleRoom = new ServerRoom {
-      override def onCreate(): Unit = {}
-
-      override def onClose(): Unit = {}
-
-      override def onJoin(client: Client): Unit = {}
-
-      override def onLeave(client: Client): Unit = {}
-
-      override def onMessageReceived(client: Client, message: Any): Unit = {}
-    }
-    exampleRoom.properties
-  }
+  def defaultProperties: Set[RoomProperty] = ServerRoom().properties // Create an instance of ServerRoom and get properties
 
   private def propertyToPair[_](property: RoomProperty): PairRoomProperty[_] =
-    PairRoomProperty(property.name, property.value match {
-      case runtimeValue: IntRoomPropertyValue => runtimeValue.value
-      case runtimeValue: StringRoomPropertyValue => runtimeValue.value
-      case runtimeValue: BooleanRoomPropertyValue => runtimeValue.value
-      case runtimeValue: DoubleRoomPropertyValue => runtimeValue.value
-    })
-
-  private def valueToRoomPropertyValue[T](value: T): RoomPropertyValue = value match {
-    case v: Int => IntRoomPropertyValue(v)
-    case v: String => StringRoomPropertyValue(v)
-    case v: Boolean => BooleanRoomPropertyValue(v)
-    case v: Double => DoubleRoomPropertyValue(v)
-  }
+    PairRoomProperty(property.name, RoomPropertyValue valueOf property.value)
 }
 
 /**
