@@ -9,9 +9,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
-import server.room. ServerRoom
+import server.room.ServerRoom
 import server.utils.ExampleRooms
-import server.utils.ExampleRooms.{MyRoom, NoPropertyRoom}
+import server.utils.ExampleRooms.{MyRoom, NoPropertyRoom, ClosableRoomWithState}
 import common.room.BasicRoomPropertyValueConversions._
 
 import scala.concurrent.duration._
@@ -46,6 +46,8 @@ class ClientSpec extends AnyFlatSpec
     gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
     gameServer.defineRoom(ExampleRooms.myRoomType, MyRoom)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
+    gameServer.defineRoom(ExampleRooms.roomWithStateType, ClosableRoomWithState)
+
     Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
     logger debug s"Server started at $serverAddress:$serverPort"
 
@@ -177,5 +179,7 @@ class ClientSpec extends AnyFlatSpec
     room.properties should contain ("a", IntRoomPropertyValue(1))
     room.properties should contain ("b", StringRoomPropertyValue("qwe"))
   }
+
+
 
 }

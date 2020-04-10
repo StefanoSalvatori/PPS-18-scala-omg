@@ -105,7 +105,7 @@ object MessageDictionary {
    *
    * @param callback the callback that handles the message
    */
-  case class OnStateChangedCallback(callback:  Any with java.io.Serializable => Unit)
+  case class OnStateChangedCallback(callback:  Any => Unit)
 
   /**
    * Define a callback that will be execute by the actor after the room has been closed

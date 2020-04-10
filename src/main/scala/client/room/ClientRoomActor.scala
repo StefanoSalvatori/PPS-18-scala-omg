@@ -116,7 +116,8 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
 
     case RoomProtocolMessage(ProtocolMessageType.Broadcast, _, payload) => handleMessageReceived(payload)
 
-    case RoomProtocolMessage(ProtocolMessageType.StateUpdate, _, payload) => handleStateChangedReceived(payload)
+    case RoomProtocolMessage(ProtocolMessageType.StateUpdate, _, payload) =>
+      handleStateChangedReceived(payload)
 
     case RoomProtocolMessage(ProtocolMessageType.RoomClosed, _, _) =>
       this.onCloseCallback match {
