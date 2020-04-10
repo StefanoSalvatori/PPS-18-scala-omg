@@ -57,7 +57,7 @@ class RoomActor(private val serverRoom: ServerRoom,
       sender ! ClientLeaved
     case Msg(client, payload) =>
       if (this.serverRoom.clientAuthorized(client)) {
-        this.serverRoom.onMessageReceived(client, payload)
+          this.serverRoom.onMessageReceived(client, payload)
       } else {
         client.send(ClientNotAuthorized)
         sender ! ClientNotAuthorized

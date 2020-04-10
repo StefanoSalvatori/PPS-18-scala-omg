@@ -177,4 +177,5 @@ class ClientSpec extends AnyFlatSpec
     room.properties should contain ("a", IntRoomPropertyValue(1))
     room.properties should contain ("b", StringRoomPropertyValue("qwe"))
   }
+
 }

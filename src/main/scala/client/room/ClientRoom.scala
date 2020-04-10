@@ -44,7 +44,7 @@ trait ClientRoom extends BasicRoom {
 
 
   /**
-   * Callback that handle  message received from the server room
+   * Callback that handle  message received from the server room.
    *
    * @param callback callback to handle the message
    */
@@ -52,11 +52,18 @@ trait ClientRoom extends BasicRoom {
 
 
   /**
-   * Callback that handle message of game state changed received from the server room
+   * This event is triggered when the server updates its state.
    *
    * @param callback callback to handle the change of state
    */
   def onStateChanged(callback: Any with java.io.Serializable => Unit): Unit
+
+  /**
+   * This event is triggered when the room is closed
+   *
+   * @param callback callback to handle the event
+   */
+  def onClose(callback: => Unit): Unit
 
 }
 
@@ -101,7 +108,12 @@ case class ClientRoomImpl(coreClient: ActorRef,
 
   override def onMessageReceived(callback: Any => Unit): Unit = innerActor.foreach(_ ! OnMsgCallback(callback))
 
-  override def onStateChanged(callback: Any with java.io.Serializable => Unit): Unit = innerActor.foreach(_ ! OnStateChangedCallback(callback))
+  override def onStateChanged(callback: Any with java.io.Serializable => Unit): Unit =
+    innerActor.foreach(_ ! OnStateChangedCallback(callback))
+
+  override def onClose(callback: => Unit): Unit =
+    innerActor.foreach(_ ! OnCloseCallback(() => callback))
+
 
   private def spawnInnerActor(): ActorRef = {
     val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
