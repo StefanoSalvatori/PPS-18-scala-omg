@@ -1,11 +1,10 @@
-package common
+package common.room
 
+import common.room.RoomPropertyValueConversions._
+import common.room.SharedRoom.{Room, RoomId}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import common.room.BasicRoomPropertyValueConversions._
-import common.room.SharedRoom.{Room, RoomId}
-import common.room._
 import spray.json.RootJsonFormat
 
 class JsonSerializationSpec extends AnyFlatSpec with Matchers with BeforeAndAfter with RoomJsonSupport {

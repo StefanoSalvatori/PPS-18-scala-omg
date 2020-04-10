@@ -5,7 +5,7 @@ import akka.util.Timeout
 import client.utils.MessageDictionary._
 import common.room.SharedRoom.{BasicRoom, RoomId}
 import akka.pattern.ask
-import common.room.RoomPropertyValue
+import common.room.{RoomProperty, RoomPropertyValue}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
@@ -14,19 +14,11 @@ import scala.util.{Failure, Success}
 trait ClientRoom extends BasicRoom {
 
   /**
-   * Properties of the room.
-   *
-   * @return a map containing property names as keys (name -> value)
-   */
-  def properties: Map[String, RoomPropertyValue]
-
-  /**
    * Open web socket with server room and try to join
    *
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
   def join(): Future[Any]
-
 
   /**
    * Leave this room server side
@@ -58,6 +50,27 @@ trait ClientRoom extends BasicRoom {
    */
   def onStateChanged(callback: Any with java.io.Serializable => Unit): Unit
 
+  /**
+   * Properties of the room.
+   *
+   * @return a map containing property names as keys (name -> value)
+   */
+  def properties: Map[String, Any]
+
+  /**
+   * Getter of the value of a given property
+   * @param propertyName the name of the property
+   * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
+   */
+  def valueOf(propertyName: String): Any
+
+  /**
+   * Getter of a room property
+   *
+   * @param propertyName The name of the property
+   * @return The selected property
+   */
+  def propertyOf(propertyName: String): RoomProperty
 }
 
 object ClientRoom {
@@ -69,12 +82,18 @@ object ClientRoom {
 case class ClientRoomImpl(coreClient: ActorRef,
                           httpServerUri: String,
                           override val roomId: RoomId,
-                          override val properties: Map[String, RoomPropertyValue])
+                          private val _properties: Map[String, RoomPropertyValue])
                          (implicit val system: ActorSystem) extends ClientRoom {
 
   private implicit val timeout: Timeout = 5 seconds
   private implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
   private implicit var innerActor: Option[ActorRef] = None
+
+  override def properties: Map[String, Any] = _properties.map(e => (e._1, RoomPropertyValue valueOf e._2))
+
+  override def valueOf(propertyName: String): Any = RoomPropertyValue valueOf _properties(propertyName)
+
+  override def propertyOf(propertyName: String): RoomProperty = RoomProperty(propertyName, _properties(propertyName))
 
   override def join(): Future[Any] = {
     val ref = this.spawnInnerActor()
@@ -85,7 +104,6 @@ case class ClientRoomImpl(coreClient: ActorRef,
         Future.failed(ex)
     }
   }
-
 
   override def leave(): Future[Any] =
     innerActor match {

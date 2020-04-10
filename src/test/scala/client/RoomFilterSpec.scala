@@ -1,7 +1,7 @@
 package client
 
 import common._
-import common.room.BasicRoomPropertyValueConversions._
+import common.room.RoomPropertyValueConversions._
 import common.room.{EqualStrategy, FilterOption, FilterOptions, FilterStrategy, GreaterStrategy, NotEqualStrategy, RoomProperty, RoomPropertyValue}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec

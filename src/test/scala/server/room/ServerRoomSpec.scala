@@ -8,7 +8,7 @@ import common.communication.CommunicationProtocol.RoomProtocolMessage
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import common.room.BasicRoomPropertyValueConversions._
+import common.room.RoomPropertyValueConversions._
 import common.room.{RoomProperty, RoomPropertyValue}
 import server.utils.TestClient
 

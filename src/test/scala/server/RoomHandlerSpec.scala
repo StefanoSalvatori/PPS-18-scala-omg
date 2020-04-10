@@ -6,7 +6,7 @@ import common.room.SharedRoom.RoomId
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import server.room.{Client, ServerRoom}
-import common.room.BasicRoomPropertyValueConversions._
+import common.room.RoomPropertyValueConversions._
 import common.room.{FilterOptions, RoomProperty}
 import org.scalatest.BeforeAndAfter
 import server.routes.RouteCommonTestOptions

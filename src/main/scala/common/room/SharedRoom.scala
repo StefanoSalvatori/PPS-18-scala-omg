@@ -25,6 +25,7 @@ object SharedRoom {
     }
 
     val roomPasswordPropertyName = "password"
+    val roomPrivateStatePropertyName = "private"
   }
 }
 

@@ -29,7 +29,7 @@ object ChatRoomWithWebSockets extends App {
 
   import scala.concurrent.duration._
   Await.ready(gameServer.start(), 10 seconds)
-  val room = Await.result(client.createPublicRoom(ROOM_PATH, Set.empty), 10 seconds)
+  val room = Await.result(client createPublicRoom ROOM_PATH, 10 seconds)
 
   val webSocketRequest = WebSocketRequest(s"ws://$HOST:$PORT/${Routes.connectionRoute}/${room.roomId}")
   val webSocketFlow = Http().webSocketClientFlow(webSocketRequest)

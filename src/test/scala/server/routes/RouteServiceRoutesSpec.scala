@@ -13,7 +13,7 @@ import server.RoomHandler
 import server.room.ServerRoom
 import server.route_service.RouteService
 // Filters on basic room option values: Int, String, Boolean
-import common.room.BasicRoomPropertyValueConversions._
+import common.room.RoomPropertyValueConversions._
 
 import scala.concurrent.ExecutionContextExecutor
 
