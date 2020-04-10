@@ -196,12 +196,6 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    */
   def onMessageReceived(client: Client, message: Any)
 
-  // We need to override equals so that rooms are compared for their ids
-  override def equals(obj: Any): Boolean =
-    obj != null && obj.isInstanceOf[ServerRoom] && obj.asInstanceOf[ServerRoom].roomId == this.roomId
-
-  override def hashCode(): Int = this.roomId.hashCode
-
   private def operationOnField[T](fieldName: String)(f: Function[Field, T]): T = {
     val field = this fieldFrom fieldName
     field setAccessible true

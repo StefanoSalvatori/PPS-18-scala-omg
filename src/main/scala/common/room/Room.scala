@@ -11,6 +11,12 @@ object Room {
 
   trait BasicRoom {
     val roomId: RoomId
+
+    // We need to override equals so that rooms are compared for their ids
+    override def equals(obj: Any): Boolean =
+      obj != null && obj.isInstanceOf[BasicRoom] && obj.asInstanceOf[BasicRoom].roomId == this.roomId
+
+    override def hashCode(): Int = this.roomId.hashCode
   }
 
   trait SharedRoom extends BasicRoom {

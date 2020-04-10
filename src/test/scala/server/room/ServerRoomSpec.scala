@@ -46,15 +46,10 @@ class ServerRoomSpec extends AnyWordSpecLike
       var d: Double = valueD
 
       override def onCreate(): Unit = {}
-
       override def onClose(): Unit = {}
-
       override def onJoin(client: Client): Unit = {}
-
       override def onLeave(client: Client): Unit = {}
-
       override def onMessageReceived(client: Client, message: Any): Unit = {}
-
       override def joinConstraints: Boolean = { true }
     }
   }
@@ -191,6 +186,19 @@ class ServerRoomSpec extends AnyWordSpecLike
       assert(roomProperties contains RoomProperty(nameC, valueC))
       assert(roomProperties contains RoomProperty(nameD, valueD))
     }
-  }
 
+    "correctly adds a client to a private room when the correct password is provided" in {
+      // Considering just password and ignoring custom constraints (always true for simplicity)
+      val password = "abc"
+      testRoom makePrivate password
+      assert(testRoom.tryAddClient(testClient, password))
+    }
+
+    "correctly doesn't add a client to a private room when a wrong password is provided" in {
+      // Considering just password and ignoring custom constraints (always true for simplicity)
+      val password = "abc"
+      testRoom makePrivate password
+      assert(!testRoom.tryAddClient(testClient, "qwe"))
+    }
+  }
 }
