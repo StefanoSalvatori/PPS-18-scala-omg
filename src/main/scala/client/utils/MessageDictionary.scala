@@ -7,7 +7,7 @@ import client.room.ClientRoom
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.communication.SocketSerializer
 import common.room.{FilterOptions, RoomProperty}
-import common.room.SharedRoom.{Room, RoomId, RoomPassword, RoomType}
+import common.room.Room.{SharedRoom, RoomId, RoomPassword, RoomType}
 
 object MessageDictionary {
 
@@ -29,9 +29,9 @@ object MessageDictionary {
 
   case class ClientRoomActorJoined(clientRoomActor: ActorRef)
 
-  case class HttpRoomResponse(room: Room)
+  case class HttpRoomResponse(room: SharedRoom)
 
-  case class HttpRoomSequenceResponse(rooms: Seq[Room])
+  case class HttpRoomSequenceResponse(rooms: Seq[SharedRoom])
 
   case class FailResponse(ex: Throwable)
 
@@ -59,7 +59,7 @@ object MessageDictionary {
    * @param parser messages received on the socket will be parsed with this parser before sending them to the
    *               receiver actor
    */
-  case class HttpSocketRequest[T](roomId: RoomId, parser: SocketSerializer[T])
+  case class HttpSocketRequest[T](roomId: RoomId, password: RoomPassword, parser: SocketSerializer[T])
 
   /**
    * Successful response of an [[HttpSocketRequest]].
@@ -81,7 +81,7 @@ object MessageDictionary {
 
   case class ClientRoomResponse(clientRoom: ClientRoom)
 
-  case class SendJoin(roomId: RoomId)
+  case class SendJoin(roomId: RoomId, password: RoomPassword)
 
   case class SendLeave()
 

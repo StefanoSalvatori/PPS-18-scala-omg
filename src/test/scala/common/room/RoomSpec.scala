@@ -1,19 +1,19 @@
 package common.room
 
 import common.room.RoomPropertyValueConversions._
-import common.room.SharedRoom.Room
+import common.room.Room.SharedRoom
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class SharedRoomSpec extends AnyFlatSpec
+class RoomSpec extends AnyFlatSpec
   with Matchers
   with BeforeAndAfter {
 
-  var room: Room = _
+  var room: SharedRoom = _
 
   before {
-    room = new Room { override val roomId = "id" }
+    room = new SharedRoom { override val roomId = "id" }
   }
 
   behavior of "Shared Room"

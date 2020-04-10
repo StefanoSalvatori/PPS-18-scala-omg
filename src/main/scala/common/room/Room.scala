@@ -1,16 +1,19 @@
 package common.room
 
-object SharedRoom {
+object Room {
 
   type RoomId = String
   type RoomType = String
   type RoomPassword = String
 
+  val roomPrivateStatePropertyName = "private"
+  val defaultPublicPassword: RoomPassword = ""
+
   trait BasicRoom {
     val roomId: RoomId
   }
 
-  trait Room extends BasicRoom {
+  trait SharedRoom extends BasicRoom {
 
     private var _sharedProperties: Set[RoomProperty] = Set()
 
@@ -19,13 +22,12 @@ object SharedRoom {
     def addSharedProperty(property: RoomProperty): Unit = _sharedProperties = _sharedProperties + property
   }
 
-  object Room {
-    def apply(id: RoomId): Room = new Room {
+  object SharedRoom {
+    def apply(id: RoomId): SharedRoom = new SharedRoom {
       override val roomId: RoomId = id
     }
 
     val roomPasswordPropertyName = "password"
-    val roomPrivateStatePropertyName = "private"
   }
 }
 

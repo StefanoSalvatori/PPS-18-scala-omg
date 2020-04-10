@@ -1,7 +1,7 @@
 package common.room
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import common.room.SharedRoom.{Room, RoomId}
+import common.room.Room.{SharedRoom, RoomId}
 import spray.json.{DefaultJsonProtocol, JsArray, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
 
 trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
@@ -16,21 +16,21 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit val sharedRoomJsonFormat: RootJsonFormat[Room] = new RootJsonFormat[Room] {
+  implicit val sharedRoomJsonFormat: RootJsonFormat[SharedRoom] = new RootJsonFormat[SharedRoom] {
 
     private val idJsonPropertyName = "id"
     private val propertiesJsonPropertyName  ="properties"
 
-    def write(a: Room): JsValue = JsObject(
+    def write(a: SharedRoom): JsValue = JsObject(
       idJsonPropertyName -> JsString(a.roomId),
       propertiesJsonPropertyName -> roomPropertySetJsonFormat.write(a.sharedProperties)
     )
 
-    def read(value: JsValue): Room = value match {
+    def read(value: JsValue): SharedRoom = value match {
       case JsObject(json) =>
         json(idJsonPropertyName) match {
           case s: JsString =>
-            val room = Room(s.value)
+            val room = SharedRoom(s.value)
             json(propertiesJsonPropertyName).convertTo[Set[RoomProperty]].foreach(room addSharedProperty)
             room
           case _ => deserializationError("Error while reading shared room id")

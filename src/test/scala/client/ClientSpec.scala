@@ -3,7 +3,7 @@ package client
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import com.typesafe.scalalogging.LazyLogging
-import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
+import common.room.{FilterOptions, Room, RoomJsonSupport, RoomProperty}
 import common.TestConfig
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -13,7 +13,6 @@ import server.room.ServerRoom
 import server.utils.ExampleRooms
 import server.utils.ExampleRooms.{MyRoom, NoPropertyRoom}
 import common.room.RoomPropertyValueConversions._
-import common.room.SharedRoom.Room
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}

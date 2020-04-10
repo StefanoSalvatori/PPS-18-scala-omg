@@ -1,6 +1,6 @@
 package server.utils
 
-import common.room.SharedRoom.RoomId
+import common.room.Room.RoomId
 import server.room.{Client, ServerRoom}
 
 object ExampleRooms {

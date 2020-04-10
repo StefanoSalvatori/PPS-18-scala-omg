@@ -2,7 +2,7 @@ package server.room
 
 import java.util.UUID
 
-import common.room.SharedRoom.RoomId
+import common.room.Room.RoomId
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import org.scalatest.matchers.should.Matchers

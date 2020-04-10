@@ -6,18 +6,18 @@ import java.util.UUID
 import com.typesafe.scalalogging.LazyLogging
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
-import common.room.SharedRoom.{BasicRoom, Room, RoomId}
+import common.room.Room.{BasicRoom, RoomId, RoomPassword, SharedRoom}
 import common.room._
 
 trait PrivateRoomSupport {
-  private val defaultPublicPassword: String = ""
-  private var password: String = defaultPublicPassword
 
-  def isPrivate: Boolean = password != defaultPublicPassword
+  private var password: RoomPassword = Room.defaultPublicPassword
 
-  def makePublic(): Unit = password = defaultPublicPassword
+  def isPrivate: Boolean = password != Room.defaultPublicPassword
 
-  def makePrivate(newPassword: String): Unit = password = newPassword
+  def makePublic(): Unit = password = Room.defaultPublicPassword
+
+  def makePrivate(newPassword: RoomPassword): Unit = password = newPassword
 }
 
 trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
@@ -207,9 +207,9 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 private case class PairRoomProperty[T](name: String, value: T)
 
 object ServerRoom {
-  implicit val serverRoomToSharedRoom: ServerRoom => Room = serverRoom => {
+  implicit val serverRoomToSharedRoom: ServerRoom => SharedRoom = serverRoom => {
     // Create the shared room
-    val sharedRoom = Room(serverRoom.roomId)
+    val sharedRoom = SharedRoom(serverRoom.roomId)
     // Set the shared room properties
     val serverRoomProperties = ServerRoom.defaultProperties
     val runtimeRoomProperties = serverRoom.properties
@@ -221,7 +221,7 @@ object ServerRoom {
     sharedRoom addSharedProperty RoomProperty(Room.roomPrivateStatePropertyName, serverRoom.isPrivate)
     sharedRoom
   }
-  implicit val serverRoomSeqToSharedRoomSeq: Seq[ServerRoom] => Seq[Room] = _.map(serverRoomToSharedRoom)
+  implicit val serverRoomSeqToSharedRoomSeq: Seq[ServerRoom] => Seq[SharedRoom] = _.map(serverRoomToSharedRoom)
 
   /**
    * Creates a simple server room with an empty behavior.

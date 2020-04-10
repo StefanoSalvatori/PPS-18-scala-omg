@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, Props, Stash}
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
 import client.utils.MessageDictionary._
 import client.{BasicActor, HttpClient}
-import common.room.SharedRoom.RoomId
+import common.room.Room.{RoomId, RoomPassword}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.communication.{BinaryProtocolSerializer, SocketSerializer}
@@ -37,8 +37,8 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
 
   //actor states
   def onReceive: Receive = {
-    case SendJoin(roomId: RoomId) =>
-      httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer)
+    case SendJoin(roomId: RoomId, password: RoomPassword) =>
+      httpClient ! HttpSocketRequest(roomId, password, BinaryProtocolSerializer)
       context.become(waitSocketResponse(sender))
 
     case OnMsgCallback(callback) =>

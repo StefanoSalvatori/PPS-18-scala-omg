@@ -2,7 +2,7 @@ package common.http
 
 import akka.http.scaladsl.model.ws.WebSocketRequest
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
-import common.room.SharedRoom.{RoomId, RoomType}
+import common.room.Room.{RoomId, RoomType}
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import spray.json.RootJsonFormat
 

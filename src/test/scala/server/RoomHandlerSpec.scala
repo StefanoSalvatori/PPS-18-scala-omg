@@ -2,7 +2,7 @@ package server
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
-import common.room.SharedRoom.RoomId
+import common.room.Room.RoomId
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import server.room.{Client, ServerRoom}
