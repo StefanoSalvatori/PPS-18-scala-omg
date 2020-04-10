@@ -4,7 +4,7 @@ object Room {
 
   type RoomId = String
   type RoomType = String
-  type RoomPassword = String
+  type RoomPassword = String // Must be serializable
 
   val roomPrivateStatePropertyName = "private"
   val defaultPublicPassword: RoomPassword = ""

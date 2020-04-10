@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import common.room.RoomPropertyValueConversions._
-import common.room.{RoomProperty, RoomPropertyValue}
+import common.room.{Room, RoomProperty, RoomPropertyValue}
 import server.utils.TestClient
 
 class ServerRoomSpec extends AnyWordSpecLike
@@ -22,13 +22,13 @@ class ServerRoomSpec extends AnyWordSpecLike
   private var testClient2: TestClient = _
 
   val numOfProperties = 5 // A, B, C, D + roomId
-  val nameA = "a";
+  val nameA = "a"
   val valueA = 1
-  val nameB = "b";
+  val nameB = "b"
   val valueB = "abc"
-  val nameC = "c";
+  val nameC = "c"
   val valueC = false
-  val nameD = "d";
+  val nameD = "d"
   val valueD = 0.1
 
   var testRoom: ServerRoom = _
@@ -54,6 +54,8 @@ class ServerRoomSpec extends AnyWordSpecLike
       override def onLeave(client: Client): Unit = {}
 
       override def onMessageReceived(client: Client, message: Any): Unit = {}
+
+      override def joinConstraints: Boolean = { true }
     }
   }
 
@@ -63,16 +65,16 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "add clients to the room" in {
-      serverRoom.addClient(testClient)
-      serverRoom.addClient(testClient2)
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
       assert(serverRoom.connectedClients.contains(testClient2))
       assert(serverRoom.connectedClients.contains(testClient))
 
     }
 
     "remove clients from the room" in {
-      serverRoom.addClient(testClient)
-      serverRoom.addClient(testClient2)
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
       assert(serverRoom.connectedClients.size == 2)
       serverRoom.removeClient(testClient2)
       serverRoom.removeClient(testClient)
@@ -80,7 +82,7 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "send specific messages to clients using the room protocol" in {
-      serverRoom.addClient(testClient)
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
       serverRoom.tell(testClient, "Hello")
       val received = testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
       received.messageType shouldBe Tell
@@ -88,8 +90,8 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "send broadcast messages to all clients connected using the room protocol" in {
-      serverRoom.addClient(testClient)
-      serverRoom.addClient(testClient2)
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
       serverRoom.broadcast("Hello Everybody")
       val receivedFrom1 = testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
       receivedFrom1.messageType shouldBe Broadcast
@@ -101,8 +103,8 @@ class ServerRoomSpec extends AnyWordSpecLike
 
 
     "notify clients when is closed" in {
-      serverRoom.addClient(testClient)
-      serverRoom.addClient(testClient2)
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
       serverRoom.close()
       val receivedFrom1 = testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
       receivedFrom1.messageType shouldBe RoomClosed

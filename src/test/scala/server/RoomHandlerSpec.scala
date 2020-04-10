@@ -28,6 +28,8 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     override def onLeave(client: Client): Unit = {}
 
     override def onMessageReceived(client: Client, message: Any): Unit = {}
+
+    override def joinConstraints: Boolean = { true }
   }
   case class MyRoom2() extends ServerRoom() {
 
@@ -43,6 +45,8 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     override def onLeave(client: Client): Unit = {}
 
     override def onMessageReceived(client: Client, message: Any): Unit = {}
+
+    override def joinConstraints: Boolean = { true }
   }
   val myRoomType = "myRoomType"
   val myRoomType2 = "myRoomType2"

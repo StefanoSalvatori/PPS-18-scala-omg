@@ -1,8 +1,6 @@
 package client.utils
 
 import akka.actor.ActorRef
-import akka.http.scaladsl.model.StatusCode
-import akka.http.scaladsl.model.ws.Message
 import client.room.ClientRoom
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.communication.SocketSerializer
@@ -59,7 +57,7 @@ object MessageDictionary {
    * @param parser messages received on the socket will be parsed with this parser before sending them to the
    *               receiver actor
    */
-  case class HttpSocketRequest[T](roomId: RoomId, password: RoomPassword, parser: SocketSerializer[T])
+  case class HttpSocketRequest[T](roomId: RoomId, parser: SocketSerializer[T])
 
   /**
    * Successful response of an [[HttpSocketRequest]].

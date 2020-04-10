@@ -27,7 +27,7 @@ object ClientStub extends App {
   }
   */
 
-  client createPublicRoom "test_room" onComplete {
+  client createPrivateRoom ("test_room", password = "abc") onComplete {
     case Success(res) =>
       println("POST: " + res.properties)
   }

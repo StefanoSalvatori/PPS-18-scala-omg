@@ -14,5 +14,6 @@ object ExampleRooms {
     override def onJoin(client: Client): Unit = {}
     override def onLeave(client: Client): Unit = {}
     override def onMessageReceived(client: Client, message: Any): Unit = {}
+    override def joinConstraints: Boolean = true
   }
 }

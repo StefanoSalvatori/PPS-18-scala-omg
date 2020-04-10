@@ -2,8 +2,8 @@ package client
 
 import akka.NotUsed
 import akka.actor.{ActorRef, Props}
-import akka.http.scaladsl.model.ws.{InvalidUpgradeResponse, Message, TextMessage, ValidUpgrade, WebSocketRequest}
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.ws.{InvalidUpgradeResponse, Message, ValidUpgrade, WebSocketRequest}
+import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.unmarshalling._
 import akka.pattern.pipe
 import akka.stream.OverflowStrategy
@@ -69,7 +69,6 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
           })
           .to(Sink.actorRef(sender, PartialFunction.empty, PartialFunction.empty))
 
-
       val (sourceRef, publisher) =
         Source.actorRef(
           PartialFunction.empty, PartialFunction.empty, Int.MaxValue, OverflowStrategy.dropHead)
@@ -79,7 +78,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
           .toMat(Sink.asPublisher(false))(Keep.both).run()
 
       val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + Routes.webSocketConnection(roomId)
-      val flow = Http() webSocketClientFlow (WebSocketRequest(wsSocketUri))
+      val flow = Http() webSocketClientFlow WebSocketRequest(wsSocketUri)
 
       val ((_, upgradeResponse), _) = Source.fromPublisher(publisher)
         .viaMat(flow)(Keep.both)

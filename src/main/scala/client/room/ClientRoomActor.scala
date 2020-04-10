@@ -7,9 +7,8 @@ import client.{BasicActor, HttpClient}
 import common.room.Room.{RoomId, RoomPassword}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
-import common.communication.{BinaryProtocolSerializer, SocketSerializer}
+import common.communication.BinaryProtocolSerializer
 
-import scala.collection.immutable.Queue
 import scala.util.{Failure, Success}
 
 object ClientRoomActor {
@@ -26,6 +25,8 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
   private var onMessageCallback: Option[Any with java.io.Serializable => Unit] = None
   private var onStateChangedCallback: Option[Any with java.io.Serializable => Unit] = None
 
+  private var joinPassword: RoomPassword = _
+
   override def receive: Receive = onReceive orElse fallbackReceive
 
   def waitSocketResponse(replyTo: ActorRef): Receive = onWaitSocketResponse(replyTo) orElse fallbackReceive
@@ -34,11 +35,11 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
 
   def roomJoined(outRef: ActorRef): Receive = onRoomJoined(outRef) orElse fallbackReceive
 
-
   //actor states
   def onReceive: Receive = {
     case SendJoin(roomId: RoomId, password: RoomPassword) =>
-      httpClient ! HttpSocketRequest(roomId, password, BinaryProtocolSerializer)
+      joinPassword = password
+      httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer)
       context.become(waitSocketResponse(sender))
 
     case OnMsgCallback(callback) =>
@@ -57,12 +58,10 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
       replyTo ! Failure(new Exception(code.toString))
       context.become(receive)
 
-
     case HttpSocketSuccess(outRef) =>
       context.become(socketOpened(outRef, replyTo))
       unstashAll()
-      self ! SendProtocolMessage(RoomProtocolMessage(JoinRoom))
-
+      self ! SendProtocolMessage(RoomProtocolMessage(JoinRoom, payload = joinPassword))
 
     case OnMsgCallback(callback) =>
       onMessageCallback = Some(callback)

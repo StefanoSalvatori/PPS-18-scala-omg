@@ -1,6 +1,5 @@
 package server.utils
 
-import common.room.Room.RoomId
 import server.room.{Client, ServerRoom}
 
 object ExampleRooms {
@@ -12,6 +11,7 @@ object ExampleRooms {
     override def onJoin(client: Client): Unit = { }
     override def onLeave(client: Client): Unit = { }
     override def onMessageReceived(client: Client, message: Any): Unit = { }
+    override def joinConstraints: Boolean = { true }
   }
   val noPropertyRoomType = "noProperty"
 
@@ -25,6 +25,7 @@ object ExampleRooms {
     override def onJoin(client: server.room.Client): Unit = { }
     override def onLeave(client: server.room.Client): Unit = { }
     override def onMessageReceived(client: server.room.Client, message: Any): Unit = { }
+    override def joinConstraints: Boolean = { true }
   }
   val myRoomType = "myRoom"
 }

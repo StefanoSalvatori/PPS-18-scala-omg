@@ -18,6 +18,8 @@ trait PrivateRoomSupport {
   def makePublic(): Unit = password = Room.defaultPublicPassword
 
   def makePrivate(newPassword: RoomPassword): Unit = password = newPassword
+
+  def checkPasswordCorrectness(providedPassword: RoomPassword): Boolean = password == providedPassword
 }
 
 trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
@@ -30,12 +32,23 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    * Add a client to the room. Triggers the onJoin
    *
    * @param client the client to add
+   * @return true if the client successfully joined the room, false otherwise
    */
-  def addClient(client: Client): Unit = {
-    this.clients = client +: this.clients
-    client.send(RoomProtocolMessage(JoinOk, client.id))
-    this.onJoin(client)
+  def tryAddClient(client: Client, providedPassword: RoomPassword): Boolean = {
+    val canJoin = checkPasswordCorrectness(providedPassword) && joinConstraints
+    if (canJoin) {
+      this.clients = client +: this.clients
+      client.send(RoomProtocolMessage(JoinOk, client.id))
+      this.onJoin(client)
+    }
+    canJoin
   }
+
+  /**
+   * Custom room constraints that may cause a join request to fail.
+   * @return true if the join request should be satisfied, false otherwise
+   */
+  def joinConstraints: Boolean
 
   /**
    * Remove a client from the room. Triggers onLeave
@@ -254,5 +267,7 @@ private case class BasicServerRoom() extends ServerRoom {
   override def onLeave(client: Client): Unit = {}
 
   override def onMessageReceived(client: Client, message: Any): Unit = {}
+
+  override def joinConstraints: Boolean = true
 }
 

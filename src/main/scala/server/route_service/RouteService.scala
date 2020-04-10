@@ -1,12 +1,9 @@
 package server.route_service
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives.{complete, get, _}
-import akka.http.scaladsl.server.{Directive1, Route}
-import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
+import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.LazyLogging
 import common.http.Routes
-import common.room.Room.SharedRoom
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import server.RoomHandler
 import server.room.ServerRoom
@@ -71,7 +68,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
 
   val route: Route = restHttpRoute ~ webSocketRoute
 
-
   def addRouteForRoomType(roomTypeName: String, roomFactory: () => ServerRoom): Unit = {
     this.roomTypes = this.roomTypes + roomTypeName
     this.roomHandler.defineRoomType(roomTypeName, roomFactory)
@@ -109,7 +105,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
         complete(room)
       }
     }
-
 
   /**
    * GET rooms/{type}/{id}
