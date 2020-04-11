@@ -122,13 +122,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
     }.toSet
   }
 
-  /**
-   * Getter of the value of a given property
-   * @param propertyName the name of the property
-   * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
-   */
-  def valueOf(propertyName: String): Any =
-    operationOnField(propertyName)(this --> _)
+  override def valueOf(propertyName: String): Any = operationOnField(propertyName)(this --> _)
 
   /**
    * Getter of the value of a property
@@ -136,19 +130,13 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    * @param propertyName The name of the property
    * @return The value of the property, expressed as a RoomPropertyValue
    */
-  def `valueOf~AsProperty`(propertyName: String): RoomPropertyValue =
-    operationOnField(propertyName)(field => RoomPropertyValue propertyValueFrom (this --> field))
+  def `valueOf~AsPropertyValue`(propertyName: String): RoomPropertyValue = operationOnField(propertyName) { field =>
+    RoomPropertyValue propertyValueFrom (this --> field)
+  }
 
-  /**
-   * Getter of a room property
-   *
-   * @param propertyName The name of the property
-   * @return The selected property
-   */
-  def propertyOf(propertyName: String): RoomProperty =
-    operationOnField(propertyName)(field =>
-      RoomProperty(propertyName, RoomPropertyValue propertyValueFrom (this --> field))
-    )
+  override def propertyOf(propertyName: String): RoomProperty = operationOnField(propertyName) { field =>
+    RoomProperty(propertyName, RoomPropertyValue propertyValueFrom (this --> field))
+  }
 
   /**
    * Setter of room properties

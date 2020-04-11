@@ -54,21 +54,6 @@ trait ClientRoom extends BasicRoom {
    * @return a map containing property names as keys (name -> value)
    */
   def properties: Map[String, Any]
-
-  /**
-   * Getter of the value of a given property
-   * @param propertyName the name of the property
-   * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
-   */
-  def valueOf(propertyName: String): Any
-
-  /**
-   * Getter of a room property
-   *
-   * @param propertyName The name of the property
-   * @return The selected property
-   */
-  def propertyOf(propertyName: String): RoomProperty
 }
 
 object ClientRoom {

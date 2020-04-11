@@ -13,7 +13,7 @@ class RoomSpec extends AnyFlatSpec
   var room: SharedRoom = _
 
   before {
-    room = new SharedRoom { override val roomId = "id" }
+    room = SharedRoom("id")
   }
 
   behavior of "Shared Room"

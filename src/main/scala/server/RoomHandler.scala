@@ -4,8 +4,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
 import common.room.Room.{RoomId, RoomPassword, SharedRoom}
-import common.room.{FilterOptions, RoomProperty}
-import common.room.StringRoomPropertyValue
+import common.room.{FilterOptions, RoomProperty, RoomPropertyValue}
 import common.communication.BinaryProtocolSerializer
 import server.room.socket.RoomSocketFlow
 import server.room.{RoomActor, ServerRoom}
@@ -86,7 +85,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       // Given a room, check if such room satisfies all filter constraints
       filterOptions.options forall { filterOption =>
         try {
-          val propertyValue = room `valueOf~AsProperty` filterOption.optionName
+          val propertyValue = room `valueOf~AsPropertyValue` filterOption.optionName
           val filterValue = filterOption.value.asInstanceOf[propertyValue.type]
           filterOption.strategy evaluate(propertyValue, filterValue)
         } catch {
@@ -140,7 +139,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       val password = splitProperties(true)
       val properties = splitProperties.getOrElse(false, Set.empty[RoomProperty])
       newRoom setProperties properties
-      newRoom makePrivate password.map(_.value).head.asInstanceOf[StringRoomPropertyValue].value
+      newRoom makePrivate RoomPropertyValue.valueOf(password.map(_.value).head).asInstanceOf[RoomPassword]
     } else {
       newRoom setProperties roomProperties
     }

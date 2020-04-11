@@ -116,7 +116,7 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "return its room property value when required" in {
-      assert((testRoom `valueOf~AsProperty` nameA).isInstanceOf[RoomPropertyValue])
+      assert((testRoom `valueOf~AsPropertyValue` nameA).isInstanceOf[RoomPropertyValue])
     }
 
     "return the associated room property, given a property name" in {
