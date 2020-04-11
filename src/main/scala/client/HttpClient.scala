@@ -2,8 +2,8 @@ package client
 
 import akka.NotUsed
 import akka.actor.{ActorRef, Props}
-import akka.http.scaladsl.model.ws.{InvalidUpgradeResponse, Message, TextMessage, ValidUpgrade, WebSocketRequest}
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.ws.{InvalidUpgradeResponse, Message, ValidUpgrade, WebSocketRequest}
+import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.unmarshalling._
 import akka.pattern.pipe
 import akka.stream.OverflowStrategy
@@ -12,7 +12,7 @@ import client.utils.MessageDictionary._
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.http.{HttpRequests, Routes}
 import common.room.RoomJsonSupport
-import common.room.SharedRoom.Room
+import common.room.Room.SharedRoom
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -42,7 +42,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
         http singleRequest HttpRequests.postRoom(httpServerUri)(roomType, roomProperties)
       (for {
         response <- createRoomFuture
-        room <- Unmarshal(response).to[Room]
+        room <- Unmarshal(response).to[SharedRoom]
       } yield room) onComplete {
         case Success(value) => replyTo ! HttpRoomResponse(value)
         case Failure(ex) => replyTo ! FailResponse(ex)
@@ -54,7 +54,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
         http singleRequest HttpRequests.getRoomsByType(httpServerUri)(roomType, filterOptions)
       (for {
         response <- getRoomsFuture
-        rooms <- Unmarshal(response).to[Seq[Room]]
+        rooms <- Unmarshal(response).to[Seq[SharedRoom]]
       } yield rooms) onComplete {
         case Success(value) => replyTo ! HttpRoomSequenceResponse(value)
         case Failure(ex) => replyTo ! FailResponse(ex)
@@ -69,7 +69,6 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
           })
           .to(Sink.actorRef(sender, PartialFunction.empty, PartialFunction.empty))
 
-
       val (sourceRef, publisher) =
         Source.actorRef(
           PartialFunction.empty, PartialFunction.empty, Int.MaxValue, OverflowStrategy.dropHead)
@@ -79,7 +78,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
           .toMat(Sink.asPublisher(false))(Keep.both).run()
 
       val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + Routes.webSocketConnection(roomId)
-      val flow = Http() webSocketClientFlow (WebSocketRequest(wsSocketUri))
+      val flow = Http() webSocketClientFlow WebSocketRequest(wsSocketUri)
 
       val ((_, upgradeResponse), _) = Source.fromPublisher(publisher)
         .viaMat(flow)(Keep.both)

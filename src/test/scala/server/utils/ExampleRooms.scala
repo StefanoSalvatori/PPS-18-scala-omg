@@ -1,9 +1,29 @@
 package server.utils
 
-import common.room.SharedRoom.RoomId
-import server.room.{Client, ServerRoom}
+import server.room.{Client, RoomState, ServerRoom}
 
 object ExampleRooms {
+
+  case class ClosableRoomWithState() extends ServerRoom with RoomState[String] {
+    override def onCreate(): Unit = {
+      this.startStateUpdate()
+    }
+    override def onClose(): Unit = {}
+    override def onJoin(client: Client): Unit = {}
+    override def onLeave(client: Client): Unit = {}
+    override def onMessageReceived(client: Client, message: Any): Unit = {
+      message.toString match {
+        case "close" => this.close()
+        case "ping" => this.tell(client, "pong")
+      }
+    }
+    override def currentState: String = "game state"
+    override def joinConstraints: Boolean = true
+  }
+
+  val roomWithStateType = "roomWithState"
+
+  //________________________________________________
 
   case class NoPropertyRoom() extends ServerRoom {
 
@@ -12,8 +32,13 @@ object ExampleRooms {
     override def onJoin(client: Client): Unit = { }
     override def onLeave(client: Client): Unit = { }
     override def onMessageReceived(client: Client, message: Any): Unit = { }
+    override def joinConstraints: Boolean = { true }
   }
+
   val noPropertyRoomType = "noProperty"
+
+
+  //________________________________________________
 
   case class MyRoom() extends ServerRoom {
 
@@ -25,6 +50,8 @@ object ExampleRooms {
     override def onJoin(client: server.room.Client): Unit = { }
     override def onLeave(client: server.room.Client): Unit = { }
     override def onMessageReceived(client: server.room.Client, message: Any): Unit = { }
+    override def joinConstraints: Boolean = { true }
   }
+
   val myRoomType = "myRoom"
 }

@@ -8,7 +8,7 @@ import common.TestConfig
 import common.communication.BinaryProtocolSerializer
 import common.http.Routes
 import common.room.FilterOptions
-import common.room.SharedRoom.Room
+import common.room.Room.SharedRoom
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer
@@ -55,7 +55,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
       expectMsgPF() {
         case HttpRoomResponse(room) =>
-          assert(room.isInstanceOf[Room])
+          assert(room.isInstanceOf[SharedRoom])
         case FailResponse(_) =>
       }
 
@@ -65,7 +65,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       httpTestActor ! HttpGetRooms(ROOM_TYPE_NAME, FilterOptions.empty)
 
       expectMsgPF() {
-        case HttpRoomSequenceResponse(rooms) =>  assert(rooms.isInstanceOf[Seq[Room]])
+        case HttpRoomSequenceResponse(rooms) =>  assert(rooms.isInstanceOf[Seq[SharedRoom]])
         case FailResponse(_) =>
       }
     }

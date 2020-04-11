@@ -11,12 +11,11 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.ServerRoom
 import server.utils.ExampleRooms
-import server.utils.ExampleRooms.{MyRoom, NoPropertyRoom}
+import server.utils.ExampleRooms.{ClosableRoomWithState, MyRoom, NoPropertyRoom}
 import common.room.RoomPropertyValueConversions._
-import common.room.SharedRoom.Room
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor}
+import scala.concurrent.{Await, ExecutionContextExecutor, TimeoutException}
 
 class ClientSpec extends AnyFlatSpec
   with Matchers
@@ -39,6 +38,7 @@ class ClientSpec extends AnyFlatSpec
   implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private var gameServer: GameServer = _
   private var client: Client = _
+  private var client2: Client = _
 
   behavior of "Client"
 
@@ -49,13 +49,17 @@ class ClientSpec extends AnyFlatSpec
     gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
     gameServer.defineRoom(ExampleRooms.myRoomType, MyRoom)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
+    gameServer.defineRoom(ExampleRooms.roomWithStateType, ClosableRoomWithState)
+
     Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
     logger debug s"Server started at $serverAddress:$serverPort"
 
     client = Client(serverAddress, serverPort)
+    client2 = Client(serverAddress, serverPort)
   }
 
   after {
+    // Await.ready(gameServer.stop(), SERVER_SHUTDOWN_AWAIT_TIME)
     Await.ready(gameServer.terminate(), SERVER_SHUTDOWN_AWAIT_TIME)
   }
 
@@ -74,7 +78,7 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "create public room and get such rooms asking the available rooms" in {
-    val r = Await.result(client createPublicRoom ROOM_TYPE_NAME, DefaultTimeout)
+    val r = Await.result(client createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
     val roomList = Await.result(client getAvailableRoomsByType(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)
     roomList should have size 1
   }
@@ -117,9 +121,7 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "be able to join a room by it's id" in {
-    val client1 = Client(serverAddress, serverPort)
-    val client2 = Client(serverAddress, serverPort)
-    val room1 = Await.result(client1.createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
+    val room1 = Await.result(client.createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
     val room2 = Await.result(client2.joinById(room1.roomId), DefaultTimeout)
     val joinedRooms = client2 joinedRooms()
     joinedRooms should have size 1
@@ -151,54 +153,23 @@ class ClientSpec extends AnyFlatSpec
     }
   }
 
-  it should "show no property if no property is defined in the room (except for the private flag)" in {
-    val room = Await.result(client createPublicRoom ExampleRooms.noPropertyRoomType, DefaultTimeout)
-    room.properties should have size 1 // just private flag
-  }
-
   it should "not create a room if an available room exists " in {
-    val client1 = Client(serverAddress, serverPort)
-    val client2 = Client(serverAddress, serverPort)
-    val room1 = Await.result(client1.createPublicRoom(ROOM_TYPE_NAME), DefaultTimeout)
-    val room2 = Await.result(client2.joinOrCreate(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)
+    Await.result(client.createPublicRoom(ROOM_TYPE_NAME), DefaultTimeout)
+    Await.result(client2.joinOrCreate(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)
     val roomsOnServer = Await.result(client.getAvailableRoomsByType(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)
     roomsOnServer should have size 1
   }
 
-  it should "show the correct default room properties when properties are not overridden" in {
-    val room = Await.result(client createPublicRoom ExampleRooms.myRoomType, DefaultTimeout)
-    room.properties should have size 3 // a, b, private
-    room.properties should contain ("a", 0)
-    room.properties should contain ("b", "abc")
+  it should "join a private room if the right password is provided" in {
+    val room = Await.result(client.createPrivateRoom(ROOM_TYPE_NAME, password = "pwd"), DefaultTimeout)
+    val res = Await.result(client2.joinById(room.roomId, "pwd"), DefaultTimeout)
+    assert(res == room)
   }
 
-  it should "return correct room properties" in {
-    val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, testProperties), DefaultTimeout)
-    room propertyOf "a" shouldEqual RoomProperty("a", 1)
-    room propertyOf "b" shouldEqual RoomProperty("b", "qwe")
-  }
-
-  it should "show the correct room property values when properties are overridden" in {
-    val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, testProperties), DefaultTimeout)
-    room.properties should have size 3 // a, b, private
-    room.properties should contain ("a", 1)
-    room.properties should contain ("b", "qwe")
-    room.properties should contain (Room.roomPrivateStatePropertyName, false)
-  }
-
-  it should "return correct property values" in {
-    val room = Await.result(client createPublicRoom (ExampleRooms.myRoomType, testProperties), DefaultTimeout)
-    room valueOf "a" shouldEqual 1
-    room valueOf "b" shouldEqual "qwe"
-  }
-
-  it should "have the private flag turned on when a private room is created" in {
-    val room = Await.result(client createPrivateRoom (ExampleRooms.myRoomType, password = "password"), DefaultTimeout)
-    room valueOf Room.roomPrivateStatePropertyName shouldEqual true
-  }
-
-  it should "have the private flag turned off when a public room is created" in {
-    val room = Await.result(client createPublicRoom ExampleRooms.myRoomType, DefaultTimeout)
-    room valueOf Room.roomPrivateStatePropertyName shouldEqual false
+  it should "not join a private room if a wrong password is provided" in {
+    val room = Await.result(client.createPrivateRoom(ROOM_TYPE_NAME, password = "pwd"), DefaultTimeout)
+    assertThrows[TimeoutException] {
+      Await.result(client2.joinById(room.roomId, "pwd2"), DefaultTimeout)
+    }
   }
 }

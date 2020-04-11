@@ -57,7 +57,7 @@ class ClassicMatchRoom() extends ServerRoom {
             this.broadcast("draw")
         }
 
-        //TODO: close the room
+        this.close()
       }
 
     }
@@ -66,12 +66,13 @@ class ClassicMatchRoom() extends ServerRoom {
     println(s"${client.id }: $message")
   }
 
+  override def joinConstraints: Boolean = true
+
   private def checkMove(move: String) = this.availableMoves.contains(move)
 
   private def reachedMaxPlayers = this.connectedClients.size == MaxPlayers
 
   private def receivedAllMoves = gameState.size == MaxPlayers
-
 }
 
 

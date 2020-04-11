@@ -3,9 +3,9 @@ package client.room
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.util.Timeout
 import client.utils.MessageDictionary._
-import common.room.SharedRoom.{BasicRoom, RoomId}
+import common.room.Room.{BasicRoom, RoomId, RoomPassword}
 import akka.pattern.ask
-import common.room.{RoomProperty, RoomPropertyValue}
+import common.room.{Room, RoomProperty, RoomPropertyValue}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
@@ -18,7 +18,8 @@ trait ClientRoom extends BasicRoom {
    *
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
-  def join(): Future[Any]
+  def join(password: RoomPassword = Room.defaultPublicPassword): Future[Any]
+
 
   /**
    * Leave this room server side
@@ -34,7 +35,6 @@ trait ClientRoom extends BasicRoom {
    */
   def send(msg: Any with java.io.Serializable): Unit
 
-
   /**
    * Callback that handle  message received from the server room
    *
@@ -42,13 +42,19 @@ trait ClientRoom extends BasicRoom {
    */
   def onMessageReceived(callback: Any => Unit): Unit
 
-
   /**
-   * Callback that handle message of game state changed received from the server room
+   * This event is triggered when the server updates its state.
    *
    * @param callback callback to handle the change of state
    */
-  def onStateChanged(callback: Any with java.io.Serializable => Unit): Unit
+  def onStateChanged(callback: Any => Unit): Unit
+
+  /**
+   * This event is triggered when the room is closed
+   *
+   * @param callback callback to handle the event
+   */
+  def onClose(callback: => Unit): Unit
 
   /**
    * Properties of the room.
@@ -56,21 +62,6 @@ trait ClientRoom extends BasicRoom {
    * @return a map containing property names as keys (name -> value)
    */
   def properties: Map[String, Any]
-
-  /**
-   * Getter of the value of a given property
-   * @param propertyName the name of the property
-   * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
-   */
-  def valueOf(propertyName: String): Any
-
-  /**
-   * Getter of a room property
-   *
-   * @param propertyName The name of the property
-   * @return The selected property
-   */
-  def propertyOf(propertyName: String): RoomProperty
 }
 
 object ClientRoom {
@@ -95,15 +86,20 @@ case class ClientRoomImpl(coreClient: ActorRef,
 
   override def propertyOf(propertyName: String): RoomProperty = RoomProperty(propertyName, _properties(propertyName))
 
-  override def join(): Future[Any] = {
+  private var onMessageCallback: Option[Any => Unit] = None
+  private var onStateChangedCallback: Option[Any  => Unit] = None
+  private var onCloseCallback: Option[() => Unit] = None
+
+  override def join(password: RoomPassword = Room.defaultPublicPassword): Future[Any] = {
     val ref = this.spawnInnerActor()
-    (ref ? SendJoin(roomId)) flatMap {
+    (ref ? SendJoin(roomId, password)) flatMap {
       case Success(_) => Future.successful()
       case Failure(ex) =>
         this.killInnerActor()
         Future.failed(ex)
     }
   }
+
 
   override def leave(): Future[Any] =
     innerActor match {
@@ -119,19 +115,39 @@ case class ClientRoomImpl(coreClient: ActorRef,
 
   override def onMessageReceived(callback: Any => Unit): Unit = innerActor.foreach(_ ! OnMsgCallback(callback))
 
-  override def onStateChanged(callback: Any with java.io.Serializable => Unit): Unit = innerActor.foreach(_ ! OnStateChangedCallback(callback))
+  override def onStateChanged(callback: Any  => Unit): Unit = this.innerActor match {
+    case Some(ref) => ref ! OnStateChangedCallback(callback)
+    case None => this.onStateChangedCallback = Some(callback)
+  }
+
+  override def onClose(callback: => Unit): Unit =
+    this.innerActor match {
+      case Some(ref) => ref ! OnCloseCallback(() => callback)
+      case None => this.onCloseCallback = Some(() => callback)
+    }
+
 
   private def spawnInnerActor(): ActorRef = {
     val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
+    this.sendCallbacksToActor(ref)
     this.innerActor = Some(ref)
     ref
   }
+
 
   private def killInnerActor(): Unit = {
     this.innerActor match {
       case Some(value) => value ! PoisonPill
       case None =>
     }
+  }
+
+  //if callbacks were defined before actor spawning we set them now
+  private def sendCallbacksToActor(ref: ActorRef): Unit = {
+    this.onCloseCallback.foreach(ref ! OnCloseCallback(_))
+    this.onStateChangedCallback.foreach(ref ! OnStateChangedCallback(_))
+    this.onMessageCallback.foreach(ref ! OnMsgCallback(_))
+
   }
 
 }
