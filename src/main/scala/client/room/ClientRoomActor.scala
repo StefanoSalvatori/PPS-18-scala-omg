@@ -40,11 +40,9 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
 
   //actor states
   def onReceive: Receive = {
-    case SendJoin(roomId: RoomId) =>
-      httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer())
     case SendJoin(roomId: RoomId, password: RoomPassword) =>
       joinPassword = password
-      httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer)
+      httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer())
       context.become(waitSocketResponse(sender))
 
     case OnMsgCallback(callback) =>

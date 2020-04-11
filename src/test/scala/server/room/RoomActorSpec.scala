@@ -73,9 +73,6 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       probe watch roomActor
       room.close()
       probe.expectTerminated(roomActor)
-
-
-
     }
   }
 
