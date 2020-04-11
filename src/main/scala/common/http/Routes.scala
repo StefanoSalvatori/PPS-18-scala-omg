@@ -18,6 +18,7 @@ object Routes {
   def wsUri(address: String, port: Int): String = "ws://" + address + ":" + port
 
   def wsUri(httpUri: String): String = httpUri.replace("http", "ws")
+
   /**
    * Route for web socket connection to a room
    *

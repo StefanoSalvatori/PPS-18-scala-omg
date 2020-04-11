@@ -9,7 +9,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
 import common.http.{HttpRequests, Routes}
-import common.room.SharedRoom.Room
+import common.room.Room.SharedRoom
 import common.room.{FilterOptions, RoomJsonSupport}
 import common.TestConfig
 import org.scalatest.BeforeAndAfter
@@ -173,7 +173,7 @@ class GameServerSpec extends AnyFlatSpec
     Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
     this.server.createRoom("test")
     val httpResult = Await.result(makeEmptyRequestAtRooms, MAX_WAIT_REQUESTS)
-    val roomsList = Await.result(Unmarshal(httpResult).to[Seq[Room]], MAX_WAIT_REQUESTS)
+    val roomsList = Await.result(Unmarshal(httpResult).to[Seq[SharedRoom]], MAX_WAIT_REQUESTS)
     roomsList should have size 1
     Await.result(this.server.stop(), MAX_WAIT_SERVER_STARTUP)
 

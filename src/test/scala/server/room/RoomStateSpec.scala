@@ -5,6 +5,7 @@ import java.util.UUID
 import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.room.Room
 import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -38,6 +39,8 @@ class RoomStateSpec extends AnyWordSpecLike
 
     override def currentState: Integer = this.internalState
 
+    override def joinConstraints: Boolean = { true }
+
     //Only used for testing
     def changeState(newState: Int): Unit = this.internalState = newState
   }
@@ -53,8 +56,8 @@ class RoomStateSpec extends AnyWordSpecLike
     room = RoomWithState()
     client1 = TestClient()
     client2 = TestClient()
-    room.addClient(client1)
-    room.addClient(client2)
+    room.tryAddClient(client1, Room.defaultPublicPassword)
+    room.tryAddClient(client2, Room.defaultPublicPassword)
 
   }
   after {

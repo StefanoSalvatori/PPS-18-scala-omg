@@ -3,10 +3,10 @@ package client.room
 import akka.actor.{ActorRef, Props, Stash}
 import client.utils.MessageDictionary._
 import client.{BasicActor, HttpClient}
+import common.room.Room.{RoomId, RoomPassword}
 import common.communication.BinaryProtocolSerializer
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
-import common.room.SharedRoom.RoomId
 
 import scala.util.{Failure, Success}
 
@@ -25,6 +25,8 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
   private var onStateChangedCallback: Option[Any with java.io.Serializable => Unit] = None
   private var onCloseCallback: Option[() => Unit] = None
 
+  private var joinPassword: RoomPassword = _
+
   override def receive: Receive = onReceive orElse fallbackReceive
 
   def waitSocketResponse(replyTo: ActorRef): Receive = onWaitSocketResponse(replyTo) orElse fallbackReceive
@@ -33,10 +35,10 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
 
   def roomJoined(outRef: ActorRef): Receive = onRoomJoined(outRef) orElse fallbackReceive
 
-
   //actor states
   def onReceive: Receive = {
-    case SendJoin(roomId: RoomId) =>
+    case SendJoin(roomId: RoomId, password: RoomPassword) =>
+      joinPassword = password
       httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer)
       context.become(waitSocketResponse(sender))
 
@@ -60,12 +62,10 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
       replyTo ! Failure(new Exception(code.toString))
       context.become(receive)
 
-
     case HttpSocketSuccess(outRef) =>
       context.become(socketOpened(outRef, replyTo))
       unstashAll()
-      self ! SendProtocolMessage(RoomProtocolMessage(JoinRoom))
-
+      self ! SendProtocolMessage(RoomProtocolMessage(JoinRoom, payload = joinPassword))
 
     case OnMsgCallback(callback) =>
       onMessageCallback = Some(callback)
@@ -155,14 +155,14 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
 
   //private utilities
 
-  private def handleMessageReceived(msg: Any with java.io.Serializable) = {
+  private def handleMessageReceived(msg: Any with java.io.Serializable): Unit = {
     //stash messages if callback is not defined
     //They will be handled as soon as the callback is defined
     handleIfDefinedOrStash(this.onMessageCallback, msg)
 
   }
 
-  private def handleStateChangedReceived(state: Any with java.io.Serializable) = {
+  private def handleStateChangedReceived(state: Any with java.io.Serializable): Unit = {
     //stash messages if callback is not defined
     //They will be handled as soon as the callback is defined
     handleIfDefinedOrStash(this.onStateChangedCallback, state)

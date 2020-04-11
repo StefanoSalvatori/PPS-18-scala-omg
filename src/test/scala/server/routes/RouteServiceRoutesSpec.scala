@@ -2,7 +2,7 @@ package server.routes
 
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.testkit.TestKit
-import common.room.SharedRoom.Room
+import common.room.Room.SharedRoom
 import common._
 import common.http.{HttpRequests, Routes}
 import common.room.{FilterOptions, IntRoomPropertyValue, RoomJsonSupport, RoomProperty}
@@ -93,7 +93,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
     createRoomRequest(Set(testProperty))
 
     getRoomsWithEmptyFilters~> route ~> check {
-      responseAs[Seq[Room]] should have size 1
+      responseAs[Seq[SharedRoom]] should have size 1
     }
 
   }
@@ -125,9 +125,9 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
   }
 
 
-  def createRoomRequest(testProperties: Set[RoomProperty] = Set.empty): Room = {
+  def createRoomRequest(testProperties: Set[RoomProperty] = Set.empty): SharedRoom = {
     HttpRequests.postRoom("")(TestRoomType, testProperties) ~> route ~> check {
-      responseAs[Room]
+      responseAs[SharedRoom]
     }
 
 

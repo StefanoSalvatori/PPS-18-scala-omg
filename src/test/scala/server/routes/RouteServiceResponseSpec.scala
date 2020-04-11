@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import common.http.HttpRequests
-import common.room.SharedRoom.Room
+import common.room.Room.SharedRoom
 import common.room.{RoomJsonSupport, RoomProperty}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
@@ -44,27 +44,27 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers
 
   it should "respond with a list of available rooms on GET request on path 'rooms'" in {
     getRoomsWithEmptyFilters ~> route ~> check {
-      responseAs[Seq[Room]]
+      responseAs[Seq[SharedRoom]]
     }
   }
 
 
   it should "respond with a list of available rooms on GET request on path 'rooms/{type}' " in {
     getRoomsByTypeWithEmptyFilters ~> route ~> check {
-      responseAs[Seq[Room]]
+      responseAs[Seq[SharedRoom]]
     }
   }
 
 
   it should "respond with a room that was created on POST request on path 'rooms/{type}' " in {
     postRoomWithEmptyProperties ~> route ~> check {
-      responseAs[Room]
+      responseAs[SharedRoom]
     }
   }
 
   it should "respond with an empty sequence if no rooms have been created " in {
     getRoomsByTypeWithEmptyFilters ~> route ~> check {
-      responseAs[Seq[Room]] shouldBe empty
+      responseAs[Seq[SharedRoom]] shouldBe empty
     }
   }
 
@@ -73,14 +73,14 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers
     createRoomRequest(Set.empty)
 
     getRoomsByTypeWithEmptyFilters ~> route ~> check {
-      responseAs[Seq[Room]] should have size 2
+      responseAs[Seq[SharedRoom]] should have size 2
     }
   }
 
 
-  def createRoomRequest(testProperties: Set[RoomProperty] = Set.empty): Room = {
+  def createRoomRequest(testProperties: Set[RoomProperty] = Set.empty): SharedRoom = {
     HttpRequests.postRoom("")(TestRoomType, testProperties) ~> route ~> check {
-      responseAs[Room]
+      responseAs[SharedRoom]
     }
 
     /*it should "return a room on GET request on path 'rooms/{type}/{id}' " in {

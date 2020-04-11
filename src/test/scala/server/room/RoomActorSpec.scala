@@ -10,6 +10,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.room.RoomActor._
 import common.communication.CommunicationProtocol.ProtocolMessageType._
+import common.room.Room
 import server.RoomHandler
 class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
   with ImplicitSender
@@ -49,13 +50,13 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
 
   "A room actor" should {
     "allow clients to join" in {
-      roomActor ! Join(FAKE_CLIENT_1)
+      roomActor ! Join(FAKE_CLIENT_1, Room.defaultPublicPassword)
       expectMsg(JoinOk)
       assert(room.connectedClients.contains(FAKE_CLIENT_1))
     }
 
     "allow client to leave the room" in {
-      roomActor ! Join(FAKE_CLIENT_1)
+      roomActor ! Join(FAKE_CLIENT_1, Room.defaultPublicPassword)
       expectMsg(JoinOk)
       roomActor ! Leave(FAKE_CLIENT_1)
       expectMsg(ClientLeaved)

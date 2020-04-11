@@ -1,13 +1,11 @@
 package client.utils
 
 import akka.actor.ActorRef
-import akka.http.scaladsl.model.StatusCode
-import akka.http.scaladsl.model.ws.Message
 import client.room.ClientRoom
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.communication.SocketSerializer
 import common.room.{FilterOptions, RoomProperty}
-import common.room.SharedRoom.{Room, RoomId, RoomPassword, RoomType}
+import common.room.Room.{SharedRoom, RoomId, RoomPassword, RoomType}
 
 object MessageDictionary {
 
@@ -29,9 +27,9 @@ object MessageDictionary {
 
   case class ClientRoomActorJoined(clientRoomActor: ActorRef)
 
-  case class HttpRoomResponse(room: Room)
+  case class HttpRoomResponse(room: SharedRoom)
 
-  case class HttpRoomSequenceResponse(rooms: Seq[Room])
+  case class HttpRoomSequenceResponse(rooms: Seq[SharedRoom])
 
   case class FailResponse(ex: Throwable)
 
@@ -84,7 +82,7 @@ object MessageDictionary {
 
   case class ClientRoomResponse(clientRoom: ClientRoom)
 
-  case class SendJoin(roomId: RoomId)
+  case class SendJoin(roomId: RoomId, password: RoomPassword)
 
   case class SendLeave()
 
@@ -113,8 +111,4 @@ object MessageDictionary {
    * @param callback the callback that handles the message
    */
   case class OnCloseCallback(callback: () => Unit)
-
-  //common
-  case class UnknownMessageReply()
-
 }

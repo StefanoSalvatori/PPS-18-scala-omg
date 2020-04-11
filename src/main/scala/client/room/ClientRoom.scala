@@ -3,9 +3,9 @@ package client.room
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.util.Timeout
 import client.utils.MessageDictionary._
-import common.room.SharedRoom.{BasicRoom, RoomId}
+import common.room.Room.{BasicRoom, RoomId, RoomPassword}
 import akka.pattern.ask
-import common.room.{RoomProperty, RoomPropertyValue}
+import common.room.{Room, RoomProperty, RoomPropertyValue}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
@@ -18,7 +18,7 @@ trait ClientRoom extends BasicRoom {
    *
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
-  def join(): Future[Any]
+  def join(password: RoomPassword = Room.defaultPublicPassword): Future[Any]
 
 
   /**
@@ -35,14 +35,12 @@ trait ClientRoom extends BasicRoom {
    */
   def send(msg: Any with java.io.Serializable): Unit
 
-
   /**
    * Callback that handle  message received from the server room
    *
    * @param callback callback to handle the message
    */
   def onMessageReceived(callback: Any => Unit): Unit
-
 
   /**
    * This event is triggered when the server updates its state.
@@ -64,21 +62,6 @@ trait ClientRoom extends BasicRoom {
    * @return a map containing property names as keys (name -> value)
    */
   def properties: Map[String, Any]
-
-  /**
-   * Getter of the value of a given property
-   * @param propertyName the name of the property
-   * @return the value of the property, as instance of first class values (Int, String, Boolean. Double)
-   */
-  def valueOf(propertyName: String): Any
-
-  /**
-   * Getter of a room property
-   *
-   * @param propertyName The name of the property
-   * @return The selected property
-   */
-  def propertyOf(propertyName: String): RoomProperty
 }
 
 object ClientRoom {
@@ -107,9 +90,9 @@ case class ClientRoomImpl(coreClient: ActorRef,
   private var onStateChangedCallback: Option[Any  => Unit] = None
   private var onCloseCallback: Option[() => Unit] = None
 
-  override def join(): Future[Any] = {
+  override def join(password: RoomPassword = Room.defaultPublicPassword): Future[Any] = {
     val ref = this.spawnInnerActor()
-    (ref ? SendJoin(roomId)) flatMap {
+    (ref ? SendJoin(roomId, password)) flatMap {
       case Success(_) => Future.successful()
       case Failure(ex) =>
         this.killInnerActor()

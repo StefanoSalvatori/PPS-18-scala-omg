@@ -2,7 +2,7 @@ package server.routes
 
 import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest, MediaTypes}
 import akka.util.ByteString
-import common.room.SharedRoom.Room
+import common.room.Room.SharedRoom
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import common.http.{HttpRequests, Routes}
 
