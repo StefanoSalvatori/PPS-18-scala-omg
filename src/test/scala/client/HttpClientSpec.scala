@@ -74,7 +74,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       httpTestActor ! HttpPostRoom(ROOM_TYPE_NAME, Set.empty)
       val roomRes = expectMsgType[HttpRoomResponse]
 
-      httpTestActor ! HttpSocketRequest(roomRes.room.roomId, BinaryProtocolSerializer)
+      httpTestActor ! HttpSocketRequest(roomRes.room.roomId, BinaryProtocolSerializer())
 
       expectMsgPF() {
         case HttpSocketSuccess(ref) =>  assert(ref.isInstanceOf[ActorRef])

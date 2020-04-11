@@ -3,16 +3,26 @@ package common.communication
 import java.text.ParseException
 import java.util.UUID
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ws.{BinaryMessage, TextMessage}
 import akka.util.ByteString
 import common.communication.CommunicationProtocol.ProtocolMessageType.{JoinOk, LeaveRoom}
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import org.apache.commons.lang3.SerializationUtils
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 
-class BinaryProtocolSerializerSpec extends AnyFlatSpec {
+import scala.concurrent.ExecutionContext
 
-  private val serializer = BinaryProtocolSerializer
+class BinaryProtocolSerializerSpec extends AnyFlatSpec with BeforeAndAfterAll {
+
+  private implicit val actorSystem: ActorSystem = ActorSystem()
+  private val serializer = BinaryProtocolSerializer()
+
+  override def afterAll(): Unit = {
+    super.afterAll()
+    this.actorSystem.terminate()
+  }
 
   behavior of "Room Protocol Binary Serializer"
 

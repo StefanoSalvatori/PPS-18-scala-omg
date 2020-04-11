@@ -1,6 +1,6 @@
 package client.room
 
-import akka.actor.{ActorRef, Props, Stash}
+import akka.actor.{ActorRef, ActorSystem, Props, Stash}
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
 import client.utils.MessageDictionary._
 import client.{BasicActor, HttpClient}
@@ -22,6 +22,7 @@ object ClientRoomActor {
  * Notify the coreClient if the associated room was left or joined
  */
 case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends BasicActor with Stash {
+  private implicit val actorSystem: ActorSystem = this.context.system
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
   private var onMessageCallback: Option[Any with java.io.Serializable => Unit] = None
   private var onStateChangedCallback: Option[Any with java.io.Serializable => Unit] = None
@@ -38,7 +39,7 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
   //actor states
   def onReceive: Receive = {
     case SendJoin(roomId: RoomId) =>
-      httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer)
+      httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer())
       context.become(waitSocketResponse(sender))
 
     case OnMsgCallback(callback) =>
