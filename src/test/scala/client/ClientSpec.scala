@@ -11,7 +11,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.ServerRoom
 import server.utils.ExampleRooms
-import server.utils.ExampleRooms.{MyRoom, NoPropertyRoom}
+import server.utils.ExampleRooms.{ClosableRoomWithState, MyRoom, NoPropertyRoom}
 import common.room.RoomPropertyValueConversions._
 import common.room.SharedRoom.Room
 
@@ -49,6 +49,8 @@ class ClientSpec extends AnyFlatSpec
     gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
     gameServer.defineRoom(ExampleRooms.myRoomType, MyRoom)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
+    gameServer.defineRoom(ExampleRooms.roomWithStateType, ClosableRoomWithState)
+
     Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
     logger debug s"Server started at $serverAddress:$serverPort"
 
@@ -56,6 +58,7 @@ class ClientSpec extends AnyFlatSpec
   }
 
   after {
+    // Await.ready(gameServer.stop(), SERVER_SHUTDOWN_AWAIT_TIME)
     Await.ready(gameServer.terminate(), SERVER_SHUTDOWN_AWAIT_TIME)
   }
 
@@ -74,7 +77,7 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "create public room and get such rooms asking the available rooms" in {
-    val r = Await.result(client createPublicRoom ROOM_TYPE_NAME, DefaultTimeout)
+    val r = Await.result(client createPublicRoom(ROOM_TYPE_NAME, Set.empty), DefaultTimeout)
     val roomList = Await.result(client getAvailableRoomsByType(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)
     roomList should have size 1
   }

@@ -57,7 +57,7 @@ class ClassicMatchRoom() extends ServerRoom {
             this.broadcast("draw")
         }
 
-        //TODO: close the room
+        this.close()
       }
 
     }
