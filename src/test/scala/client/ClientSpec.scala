@@ -150,11 +150,6 @@ class ClientSpec extends AnyFlatSpec
     }
   }
 
-  it should "show no property if no property is defined in the room (except for the private flag)" in {
-    val room = Await.result(client createPublicRoom ExampleRooms.noPropertyRoomType, DefaultTimeout)
-    room.properties should have size 1 // just private flag
-  }
-
   it should "not create a room if an available room exists " in {
     Await.result(client.createPublicRoom(ROOM_TYPE_NAME), DefaultTimeout)
     Await.result(client2.joinOrCreate(ROOM_TYPE_NAME, FilterOptions.empty), DefaultTimeout)

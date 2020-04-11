@@ -15,7 +15,6 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       case _ => deserializationError("id expected")
     }
   }
-
   implicit val sharedRoomJsonFormat: RootJsonFormat[SharedRoom] = new RootJsonFormat[SharedRoom] {
 
     private val idJsonPropertyName = "id"

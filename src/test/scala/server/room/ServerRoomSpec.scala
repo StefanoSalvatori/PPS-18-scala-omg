@@ -187,14 +187,14 @@ class ServerRoomSpec extends AnyWordSpecLike
       assert(roomProperties contains RoomProperty(nameD, valueD))
     }
 
-    "correctly adds a client to a private room when the correct password is provided" in {
+    "add a client to a private room when the correct password is provided" in {
       // Considering just password and ignoring custom constraints (always true for simplicity)
       val password = "abc"
       testRoom makePrivate password
       assert(testRoom.tryAddClient(testClient, password))
     }
 
-    "correctly doesn't add a client to a private room when a wrong password is provided" in {
+    "not add a client to a private room when a wrong password is provided" in {
       // Considering just password and ignoring custom constraints (always true for simplicity)
       val password = "abc"
       testRoom makePrivate password

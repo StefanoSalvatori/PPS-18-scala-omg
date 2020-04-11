@@ -100,8 +100,4 @@ object MessageDictionary {
    * @param callback the callback that handles the message
    */
   case class OnStateChangedCallback(callback:  Any with java.io.Serializable => Unit)
-
-  //common
-  case class UnknownMessageReply()
-
 }
