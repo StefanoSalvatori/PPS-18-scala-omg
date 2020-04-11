@@ -29,20 +29,20 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
   with BeforeAndAfterAll
   with TestConfig {
 
-  private val HOST: String = "localhost"
-  private val PORT: Int = SERVER_ACTOR_SPEC_PORT
-  private val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
-  private val REQUEST_FAIL_TIMEOUT: FiniteDuration = 20 seconds
-  private val HTTP_BIND_TIMEOUT = 5 seconds
-  private val ROUTES_BASE_PATH: String = "test"
-  private val ROUTES: Route =
-    path(ROUTES_BASE_PATH) {
+  private val Host: String = "localhost"
+  private val Port: Int = ServerActorSpecPort
+  private val ServerTerminationDeadline: FiniteDuration = 2 seconds
+  private val RequestFailTimeout: FiniteDuration = 20 seconds
+  private val HttpBindTimeout = 5 seconds
+  private val RoutesBasePath: String = "test"
+  private val Routes: Route =
+    path(RoutesBasePath) {
       get {
         complete(StatusCodes.OK)
       }
     }
 
-  private val serverActor: ActorRef = system actorOf ServerActor(SERVER_TERMINATION_DEADLINE, ROUTES)
+  private val serverActor: ActorRef = system actorOf ServerActor(ServerTerminationDeadline, Routes)
   private val httpClientActor: ActorRef = system actorOf HttpRequestsActor()
 
 
@@ -52,26 +52,26 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
 
   "A server actor" must {
     "fail to start the server if the port is already binded" in {
-      val bind = Await.result(Http().bind(HOST, PORT).to(Sink.ignore).run(), HTTP_BIND_TIMEOUT)
-      serverActor ! StartServer(HOST, PORT)
+      val bind = Await.result(Http().bind(Host, Port).to(Sink.ignore).run(), HttpBindTimeout)
+      serverActor ! StartServer(Host, Port)
       expectMsgType[ServerFailure]
-      Await.ready(bind.unbind(), HTTP_BIND_TIMEOUT)
+      Await.ready(bind.unbind(), HttpBindTimeout)
 
     }
 
     "send a 'Started' response when StartServer is successful" in {
-      serverActor ! StartServer(HOST, PORT)
+      serverActor ! StartServer(Host, Port)
       expectMsg(Started)
     }
 
     "send a ServerAlreadyRunning or ServerIsStarting message when StartServer is called multiple times before stop" in {
-      serverActor ! StartServer(HOST, PORT)
+      serverActor ! StartServer(Host, Port)
       expectMsgAnyOf(ServerAlreadyRunning, ServerIsStarting)
 
     }
 
     "use the routes passed as parameters in the StartServer message" in {
-      makeGetRequestAt(s"$ROUTES_BASE_PATH")
+      makeGetRequestAt(s"$RoutesBasePath")
       val response = expectMsgType[HttpResponse]
       response.status shouldBe StatusCodes.OK
       response.discardEntityBytes()
@@ -84,13 +84,13 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
 
       // Await.ready(Http(system).shutdownAllConnectionPools(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
       //Now requests fail
-      makeGetRequestAt(s"$ROUTES_BASE_PATH")
-      expectMsgType[RequestFailed](REQUEST_FAIL_TIMEOUT)
+      makeGetRequestAt(s"$RoutesBasePath")
+      expectMsgType[RequestFailed](RequestFailTimeout)
     }
   }
 
   private def makeGetRequestAt(path: String): Unit = {
-    httpClientActor ! Request(HttpRequest(HttpMethods.GET, s"http://$HOST:$PORT/$path"))
+    httpClientActor ! Request(HttpRequest(HttpMethods.GET, s"http://$Host:$Port/$path"))
 
   }
 

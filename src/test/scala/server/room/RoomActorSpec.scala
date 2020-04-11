@@ -21,10 +21,10 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
 
 
   private val client1TestProbe = TestProbe()
-  private val FAKE_CLIENT_1 = Client.asActor(UUID.randomUUID.toString, client1TestProbe.ref)
+  private val FakeClient_1 = Client.asActor(UUID.randomUUID.toString, client1TestProbe.ref)
 
   private val client2TestProbe = TestProbe()
-  private val FAKE_CLIENT_2 = Client.asActor(UUID.randomUUID.toString, client2TestProbe.ref)
+  private val FakeClient_2 = Client.asActor(UUID.randomUUID.toString, client2TestProbe.ref)
 
 
   var room: ServerRoom = _
@@ -50,21 +50,21 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
 
   "A room actor" should {
     "allow clients to join" in {
-      roomActor ! Join(FAKE_CLIENT_1, Room.defaultPublicPassword)
+      roomActor ! Join(FakeClient_1, Room.defaultPublicPassword)
       expectMsg(JoinOk)
-      assert(room.connectedClients.contains(FAKE_CLIENT_1))
+      assert(room.connectedClients.contains(FakeClient_1))
     }
 
     "allow client to leave the room" in {
-      roomActor ! Join(FAKE_CLIENT_1, Room.defaultPublicPassword)
+      roomActor ! Join(FakeClient_1, Room.defaultPublicPassword)
       expectMsg(JoinOk)
-      roomActor ! Leave(FAKE_CLIENT_1)
+      roomActor ! Leave(FakeClient_1)
       expectMsg(ClientLeaved)
-      assert(!room.connectedClients.contains(FAKE_CLIENT_1))
+      assert(!room.connectedClients.contains(FakeClient_1))
     }
 
     "respond with ClientNotAuthorized when receives a message from a client that hasn't join the room" in {
-      roomActor ! Msg(FAKE_CLIENT_2, "test-message")
+      roomActor ! Msg(FakeClient_2, "test-message")
       expectMsg(ClientNotAuthorized)
     }
 

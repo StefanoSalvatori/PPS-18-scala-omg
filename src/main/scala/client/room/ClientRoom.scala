@@ -87,7 +87,7 @@ case class ClientRoomImpl(coreClient: ActorRef,
   override def propertyOf(propertyName: String): RoomProperty = RoomProperty(propertyName, _properties(propertyName))
 
   private var onMessageCallback: Option[Any => Unit] = None
-  private var onStateChangedCallback: Option[Any  => Unit] = None
+  private var onStateChangedCallback: Option[Any => Unit] = None
   private var onCloseCallback: Option[() => Unit] = None
 
   override def join(password: RoomPassword = Room.defaultPublicPassword): Future[Any] = {
@@ -113,9 +113,13 @@ case class ClientRoomImpl(coreClient: ActorRef,
 
   override def send(msg: Any with java.io.Serializable): Unit = innerActor.foreach(_ ! SendStrictMessage(msg))
 
-  override def onMessageReceived(callback: Any => Unit): Unit = innerActor.foreach(_ ! OnMsgCallback(callback))
+  override def onMessageReceived(callback: Any => Unit): Unit =
+    this.innerActor match {
+      case Some(ref) => ref ! OnMsgCallback(callback)
+      case None => this.onMessageCallback = Some(callback)
+    }
 
-  override def onStateChanged(callback: Any  => Unit): Unit = this.innerActor match {
+  override def onStateChanged(callback: Any => Unit): Unit = this.innerActor match {
     case Some(ref) => ref ! OnStateChangedCallback(callback)
     case None => this.onStateChangedCallback = Some(callback)
   }

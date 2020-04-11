@@ -29,10 +29,10 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   with TestConfig {
 
   private val serverAddress = "localhost"
-  private val serverPort = CORE_CLIENT_SPEC_SERVER_PORT
+  private val serverPort = CoreClientSpecServerPort
   private val serverUri = Routes.httpUri(serverAddress, serverPort)
 
-  private val ROOM_TYPE_NAME: String = "test_room"
+  private val RoomTypeName: String = "test_room"
 
   implicit val executionContext: ExecutionContext = system.dispatcher
   private val requestTimeout = 5 // Seconds
@@ -49,11 +49,11 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   before {
     coreClient = system actorOf CoreClient(serverUri)
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
+    gameServer.defineRoom(RoomTypeName, () => ServerRoom())
     Await.ready(gameServer.start(), 5 seconds)
 
-    Await.ready(coreClient ? CreatePublicRoom(ROOM_TYPE_NAME, Set.empty), 5 seconds)
-    Await.ready(coreClient ? CreatePublicRoom(ROOM_TYPE_NAME, Set.empty), 5 seconds)
+    Await.ready(coreClient ? CreatePublicRoom(RoomTypeName, Set.empty), 5 seconds)
+    Await.ready(coreClient ? CreatePublicRoom(RoomTypeName, Set.empty), 5 seconds)
   }
 
   "Regarding joined rooms, a core client" must {
@@ -80,7 +80,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "respond with the created room if request to create a room" in {
-      coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)
+      coreClient ! CreatePublicRoom(RoomTypeName, Set.empty)
       val tryRes = expectMsgType[Try[ClientRoom]]
       if (tryRes.isSuccess) assert(tryRes.get.isInstanceOf[ClientRoom])
 

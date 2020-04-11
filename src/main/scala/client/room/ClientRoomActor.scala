@@ -21,8 +21,8 @@ object ClientRoomActor {
  */
 case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends BasicActor with Stash {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
-  private var onMessageCallback: Option[Any with java.io.Serializable => Unit] = None
-  private var onStateChangedCallback: Option[Any with java.io.Serializable => Unit] = None
+  private var onMessageCallback: Option[Any => Unit] = None
+  private var onStateChangedCallback: Option[Any => Unit] = None
   private var onCloseCallback: Option[() => Unit] = None
 
   private var joinPassword: RoomPassword = _
@@ -155,22 +155,22 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
 
   //private utilities
 
-  private def handleMessageReceived(msg: Any with java.io.Serializable): Unit = {
+  private def handleMessageReceived(msg: Any): Unit = {
     //stash messages if callback is not defined
     //They will be handled as soon as the callback is defined
     handleIfDefinedOrStash(this.onMessageCallback, msg)
 
   }
 
-  private def handleStateChangedReceived(state: Any with java.io.Serializable): Unit = {
+  private def handleStateChangedReceived(state: Any): Unit = {
     //stash messages if callback is not defined
     //They will be handled as soon as the callback is defined
     handleIfDefinedOrStash(this.onStateChangedCallback, state)
   }
 
 
-  private def handleIfDefinedOrStash(callback: Option[Any with java.io.Serializable => Unit],
-                                     msg: Any with java.io.Serializable): Unit = {
+  private def handleIfDefinedOrStash(callback: Option[Any => Unit],
+                                     msg: Any ): Unit = {
     callback match {
       case Some(value) => value(msg)
       case None => stash()

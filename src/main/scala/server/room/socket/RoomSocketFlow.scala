@@ -30,7 +30,7 @@ case class RoomSocketFlow(private val roomActor: ActorRef,
 
 
   def createFlow(overflowStrategy: OverflowStrategy = OverflowStrategy.dropHead,
-                 bufferSize: Int = DEFAULT_BUFFER_SIZE): Flow[Message, Message, NotUsed]
+                 bufferSize: Int = DefaultBufferSize): Flow[Message, Message, NotUsed]
   = {
     //Output (from room to client)
     val (socketActor, publisher) = Source.actorRef(PartialFunction.empty, PartialFunction.empty, bufferSize, overflowStrategy)

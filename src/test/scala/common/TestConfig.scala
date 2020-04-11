@@ -2,13 +2,13 @@ package common
 
 trait TestConfig {
 
-  val GAMESERVER_SPEC_SERVER_PORT = 8080
-  val CLIENT_SPEC_SERVER_PORT = 8081
-  val HTTP_CLIENT_SPEC_SERVER_PORT = 8082
-  val SERVER_ACTOR_SPEC_PORT = 8083
-  val CORE_CLIENT_SPEC_SERVER_PORT = 8084
-  val SOCKET_HANDLER_SPEC_SERVER_PORT = 8085
-  val CLIENT_ROOM_ACTOR_SPEC_SERVER_PORT = 8086
-  val CLIENT_ROOM_SPEC_SERVER_PORT = 8087
+  val GameServerSpecServerPort = 8080
+  val ClientSpecServerPort = 8081
+  val HttpClientSpecServerPort = 8082
+  val ServerActorSpecPort = 8083
+  val CoreClientSpecServerPort = 8084
+  val SocketHandlerSpecServerPort = 8085
+  val ClientRoomActorSpecServerPort = 8086
+  val ClientRoomSpecServerPort = 8087
 
 }

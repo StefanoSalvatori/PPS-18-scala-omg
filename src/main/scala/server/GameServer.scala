@@ -81,12 +81,12 @@ trait GameServer {
 object GameServer {
 
 
-  implicit val ACTOR_REQUEST_TIMEOUT: Timeout = 10 seconds
+  implicit val ActorRequestTimeout: Timeout = 10 seconds
 
   /**
    * Timeout for the graceful shutdown of the server
    */
-  val SERVER_TERMINATION_DEADLINE: FiniteDuration = 2 seconds
+  val ServerTerminationDeadline: FiniteDuration = 2 seconds
 
 
   /**
@@ -129,7 +129,7 @@ private class GameServerImpl(override val host: String,
   private val routeService = RouteService(roomHandler)
   private val roomsRoutes = routeService.route
 
-  private val serverActor = actorSystem actorOf ServerActor(SERVER_TERMINATION_DEADLINE, roomsRoutes ~ additionalRoutes)
+  private val serverActor = actorSystem actorOf ServerActor(ServerTerminationDeadline, roomsRoutes ~ additionalRoutes)
 
 
   private var onStart: () => Unit = () => {}
