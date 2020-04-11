@@ -11,16 +11,20 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer
-import server.room.ServerRoom
 import akka.pattern.ask
 import akka.util.Timeout
 import common.http.Routes
-import common.room.{Room, RoomJsonSupport, RoomProperty}
-import server.utils.ExampleRooms
+
+import common.room.{Room, RoomProperty}
 import server.utils.ExampleRooms.{MyRoom, NoPropertyRoom}
 
+import common.room.RoomJsonSupport
+import server.utils.ExampleRooms
+import server.utils.ExampleRooms.ClosableRoomWithState
+
+
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor}
+import scala.concurrent.{Await, ExecutionContextExecutor, Promise}
 import scala.util.Try
 import common.room.RoomPropertyValueConversions._
 
@@ -36,7 +40,6 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   private val ServerAddress = "localhost"
   private val ServerPort = CLIENT_ROOM_SPEC_SERVER_PORT
 
-  private val RoomTypeName: String = "test_room"
   private val ServerLaunchAwaitTime = 10 seconds
   private val ServerShutdownAwaitTime = 10 seconds
   implicit private val DefaultTimeout: Timeout = 5 seconds
@@ -49,13 +52,14 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   before {
     gameServer = GameServer(ServerAddress, ServerPort)
-    gameServer.defineRoom(RoomTypeName, () => ServerRoom())
+    gameServer.defineRoom(ExampleRooms.roomWithStateType, ClosableRoomWithState)
     gameServer.defineRoom(ExampleRooms.myRoomType, MyRoom)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
     logger debug s"Server started at $ServerAddress:$ServerPort"
     coreClient = system actorOf CoreClient(Routes.httpUri(ServerAddress, ServerPort))
-    val res = Await.result((coreClient ? CreatePublicRoom(RoomTypeName, Set.empty)).mapTo[Try[ClientRoom]], DefaultDuration)
+    val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.roomWithStateType, Set.empty))
+      .mapTo[Try[ClientRoom]], DefaultDuration)
     clientRoom = res.get
   }
 
@@ -66,7 +70,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   "A client room" must {
     "join and notify the core client" in {
       Await.result(clientRoom.join(), DefaultDuration)
-      val res = Await.result( (coreClient ? GetJoinedRooms).mapTo[JoinedRooms], DefaultDuration).joinedRooms
+      val res = Await.result((coreClient ? GetJoinedRooms).mapTo[JoinedRooms], DefaultDuration).joinedRooms
       res should have size 1
     }
 
@@ -74,7 +78,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       Await.result(clientRoom.join(), DefaultDuration)
       Await.result(clientRoom.leave(), DefaultDuration)
 
-      val res = Await.result( (coreClient ? GetJoinedRooms).mapTo[JoinedRooms], DefaultDuration).joinedRooms
+      val res = Await.result((coreClient ? GetJoinedRooms).mapTo[JoinedRooms], DefaultDuration).joinedRooms
       res should have size 0
     }
 
@@ -88,8 +92,8 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.myRoomType, Set.empty)).mapTo[Try[ClientRoom]], DefaultDuration)
       val room = res.get
       room.properties should have size 3 // a, b, private
-      room.properties should contain ("a", 0)
-      room.properties should contain ("b", "abc")
+      room.properties should contain("a", 0)
+      room.properties should contain("b", "abc")
     }
 
     "show correct room properties when default values are overridden" in {
@@ -112,9 +116,9 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.myRoomType, properties)).mapTo[Try[ClientRoom]], DefaultDuration)
       val room = res.get
       room.properties should have size 3 // a, b, private
-      room.properties should contain ("a", 1)
-      room.properties should contain ("b", "qwe")
-      room.properties should contain (Room.roomPrivateStatePropertyName, false)
+      room.properties should contain("a", 1)
+      room.properties should contain("b", "qwe")
+      room.properties should contain(Room.roomPrivateStatePropertyName, false)
     }
 
     "have the private flag turned on when a private room is created" in {
@@ -127,6 +131,43 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.myRoomType, Set.empty)).mapTo[Try[ClientRoom]], DefaultDuration)
       val room = res.get
       room valueOf Room.roomPrivateStatePropertyName shouldEqual false
+    }
+
+    "define a callback to handle messages from server room" in {
+      val p = Promise[String]()
+      Await.ready(clientRoom.join(), DefaultDuration)
+
+      clientRoom.onMessageReceived { m =>
+        p.success(m.toString)
+      }
+      clientRoom.send("ping")
+
+      val res = Await.result(p.future, DefaultDuration)
+      res shouldEqual "pong"
+    }
+
+    "define a callback to handle state changed" in {
+      val p = Promise[Boolean]()
+
+      clientRoom.onStateChanged { _ =>
+        p.success(true)
+      }
+      Await.ready(clientRoom.join(), DefaultDuration)
+
+      val res = Await.result(p.future, DefaultDuration)
+      res shouldBe true
+    }
+
+    "define a callback to handle room closed changed" in {
+      val p = Promise[Boolean]()
+
+      Await.ready(clientRoom.join(), DefaultDuration)
+      clientRoom.onClose {
+        p.success(true)
+      }
+      clientRoom.send("close")
+      val res = Await.result(p.future, DefaultDuration)
+      res shouldBe true
     }
   }
 }

@@ -39,19 +39,22 @@ object MessageDictionary {
   //HttpClient
 
   /**
-   * Create a room and respond with [[HttpRoomResponse]] on success or [[FailResponse]] on failure
+   * Create a room and respond with [[client.utils.MessageDictionary.HttpRoomResponse]] on success or
+   * [[client.utils.MessageDictionary.FailResponse]] on failure
    */
   case class HttpPostRoom(roomType: RoomType, roomOption: Set[RoomProperty])
 
 
   /**
-   * Get rooms and respond with [[HttpRoomSequenceResponse]] or [[FailResponse]]  on failure
+   * Get rooms and respond with [[client.utils.MessageDictionary.HttpRoomSequenceResponse]]
+   * or [[client.utils.MessageDictionary.FailResponse]]  on failure
    */
   case class HttpGetRooms(roomType: RoomType, roomOption: FilterOptions)
 
   /**
    * Perform a web socket request to open a connection to server side room with the given id.
-   * If the connection is successful respond with message [[HttpSocketSuccess]] otherwise [[HttpSocketFail]]
+   * If the connection is successful respond with message [[client.utils.MessageDictionary.HttpSocketSuccess]]
+   * otherwise [[client.utils.MessageDictionary.HttpSocketFail]]
    *
    * @param roomId id of the room to connect to
    * @param parser messages received on the socket will be parsed with this parser before sending them to the
@@ -60,7 +63,7 @@ object MessageDictionary {
   case class HttpSocketRequest[T](roomId: RoomId, parser: SocketSerializer[T])
 
   /**
-   * Successful response of an [[HttpSocketRequest]].
+   * Successful response of an [[client.utils.MessageDictionary.HttpSocketRequest]].
    * Contains an actor ref.
    *
    * @param outRef Sending messages to this actor means sending them in the socket
@@ -97,7 +100,15 @@ object MessageDictionary {
   /**
    * Define a callback that will be execute by the actor after a message
    * that represent a new game state
+   *
    * @param callback the callback that handles the message
    */
-  case class OnStateChangedCallback(callback:  Any with java.io.Serializable => Unit)
+  case class OnStateChangedCallback(callback:  Any => Unit)
+
+  /**
+   * Define a callback that will be execute by the actor after the room has been closed
+   *
+   * @param callback the callback that handles the message
+   */
+  case class OnCloseCallback(callback: () => Unit)
 }
