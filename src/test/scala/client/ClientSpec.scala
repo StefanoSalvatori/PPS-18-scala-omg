@@ -11,7 +11,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.ServerRoom
 import server.utils.ExampleRooms
-import server.utils.ExampleRooms.{ClosableRoomWithState, MyRoom, NoPropertyRoom}
+import server.utils.ExampleRooms.{ClosableRoomWithState, MyRoom, NoPropertyRoom, RoomWithReconnection}
 import common.room.RoomPropertyValueConversions._
 
 import scala.concurrent.duration._
@@ -50,6 +50,7 @@ class ClientSpec extends AnyFlatSpec
     gameServer.defineRoom(ExampleRooms.myRoomType, MyRoom)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
     gameServer.defineRoom(ExampleRooms.roomWithStateType, ClosableRoomWithState)
+    gameServer.defineRoom(ExampleRooms.roomWithReconnection, RoomWithReconnection)
 
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
     logger debug s"Server started at $serverAddress:$serverPort"
@@ -72,13 +73,13 @@ class ClientSpec extends AnyFlatSpec
   it should "create public rooms" in {
     val roomList1 = Await.result(client getAvailableRoomsByType(RoomTypeName, FilterOptions.empty), DefaultTimeout)
     roomList1 should have size 0
-    val r = Await.result(client createPublicRoom RoomTypeName, DefaultTimeout)
+    Await.ready(client createPublicRoom RoomTypeName, DefaultTimeout)
     val roomList2 = Await.result(client getAvailableRoomsByType(RoomTypeName, FilterOptions.empty), DefaultTimeout)
     roomList2 should have size 1
   }
 
   it should "create public room and get such rooms asking the available rooms" in {
-    val r = Await.result(client createPublicRoom(RoomTypeName, Set.empty), DefaultTimeout)
+    Await.ready(client createPublicRoom(RoomTypeName, Set.empty), DefaultTimeout)
     val roomList = Await.result(client getAvailableRoomsByType(RoomTypeName, FilterOptions.empty), DefaultTimeout)
     roomList should have size 1
   }
@@ -99,14 +100,14 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "get all available rooms of specific type" in {
-    Await.result(client createPublicRoom RoomTypeName, DefaultTimeout)
-    Await.result(client createPublicRoom RoomTypeName, DefaultTimeout)
+    Await.ready(client createPublicRoom RoomTypeName, DefaultTimeout)
+    Await.ready(client createPublicRoom RoomTypeName, DefaultTimeout)
     val roomList = Await.result(client getAvailableRoomsByType(RoomTypeName, FilterOptions.empty), DefaultTimeout)
     roomList should have size 2
   }
 
   it should "fail on joining a room if server is unreachable" in {
-    Await.result(client createPublicRoom RoomTypeName, DefaultTimeout)
+    Await.ready(client createPublicRoom RoomTypeName, DefaultTimeout)
     Await.ready(gameServer.stop(), ServerShutdownAwaitTime)
 
     assertThrows[Exception] {
@@ -173,7 +174,18 @@ class ClientSpec extends AnyFlatSpec
     }
   }
 
-  it should "allow to recconect to a previously joined room (allowing reconnection) with the same session id" in {
-    fail
+
+  it should "leave a rooms" in {
+    val room = Await.result(client.joinOrCreate(RoomTypeName, FilterOptions.empty, Set.empty), DefaultTimeout)
+    Await.ready(room.leave(), DefaultTimeout)
+  }
+
+  it should "allow to reconnect to a previously joined room (that allows reconnection) with the same session id" in {
+    val room = Await.result(client.joinOrCreate(ExampleRooms.roomWithReconnection, FilterOptions.empty, Set.empty), DefaultTimeout)
+    Await.ready(room.leave(), DefaultTimeout)
+    val res = Await.result(client.reconnect(room.roomId, room.sessionId.get), DefaultTimeout)
+
+    room.sessionId shouldEqual res.sessionId
+
   }
 }

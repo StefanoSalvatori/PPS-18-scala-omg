@@ -7,7 +7,7 @@ import java.util.TimerTask
  */
 trait Timer {
 
-  private var timer: Option[java.util.Timer] = Option.empty
+  private var timer: Option[java.util.Timer] = None
 
   def started: Boolean = this.timer.nonEmpty
 
@@ -31,10 +31,8 @@ trait Timer {
   }
 
   def stopTimer(): Unit = {
-    this.timer match {
-      case Some(timer) => stop(timer)
-      case None =>
-    }
+    this.timer foreach stop
+
   }
 
   private def schedule(task: () => Unit, delay: Long): Unit = {
@@ -54,7 +52,7 @@ trait Timer {
   }
 
   private def stop(timer: java.util.Timer) = {
-    this.timer = Option.empty
+    this.timer = None
     timer.cancel()
     timer.purge()
   }

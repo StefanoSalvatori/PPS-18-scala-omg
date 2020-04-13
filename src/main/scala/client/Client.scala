@@ -134,12 +134,10 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     }
 
   override def joinById(roomId: RoomId, password: RoomPassword = Room.defaultPublicPassword): Future[ClientRoom] = {
-    if (this.joinedRooms().exists(_.roomId == roomId)) {
-      Future.failed(new Exception("Room already joined"))
-    } else {
+    ifNotJoined(roomId, {
       val clientRoom = ClientRoom(coreClient, httpServerUri, roomId, Map())
       clientRoom.join(password).map(_ => clientRoom)
-    }
+    })
   }
 
   override def getAvailableRoomsByType(roomType: String, filterOption: FilterOptions): Future[Seq[ClientRoom]] =
@@ -147,6 +145,26 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       case Success(room) => Future.successful(room.asInstanceOf[Seq[ClientRoom]])
       case Failure(ex) => Future.failed(ex)
     }
+
+
+  override def reconnect(roomId: String, sessionId: String): Future[ClientRoom] = {
+    ifNotJoined(roomId, {
+      val clientRoom = ClientRoom(coreClient, httpServerUri, roomId, Map(), sessionId)
+      clientRoom.join().map(_ => clientRoom)
+    })
+  }
+
+  /**
+   * Perform the given action if the room with the specified id is not already joined.
+   * If the room is joined return a failed future
+   */
+  private def ifNotJoined(idToCheck: RoomId, exec: => Future[ClientRoom]): Future[ClientRoom] = {
+    if (this.joinedRooms().exists(_.roomId == idToCheck)) {
+      Future.failed(new Exception("Room already joined"))
+    } else {
+      exec
+    }
+  }
 
   private def createRoom(message: CreateRoomMessage, password: RoomPassword = Room.defaultPublicPassword): Future[ClientRoom] = {
     for {
@@ -158,10 +176,5 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     } yield {
       clientRoom
     }
-  }
-
-  override def reconnect(roomId: String, sessionId: String): Future[ClientRoom] = {
-    //TODO: implement
-    Future.successful(ClientRoom.mock)
   }
 }

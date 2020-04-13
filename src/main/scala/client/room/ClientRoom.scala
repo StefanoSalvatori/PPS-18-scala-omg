@@ -14,6 +14,13 @@ import scala.util.{Failure, Success}
 trait ClientRoom extends BasicRoom {
 
   /**
+   * Session id of this client when the room is joined.
+   *
+   * @return
+   */
+  def sessionId: Option[String]
+
+  /**
    * Open web socket with server room and try to join
    *
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
@@ -65,23 +72,32 @@ trait ClientRoom extends BasicRoom {
 }
 
 object ClientRoom {
-  def apply(coreClient: ActorRef, httpServerUri: String, roomId: RoomId, properties: Map[String, RoomPropertyValue])
-           (implicit system: ActorSystem): ClientRoom =
-    ClientRoomImpl(coreClient, httpServerUri, roomId, properties)
+  def apply(coreClient: ActorRef, httpServerUri: String, roomId: RoomId, properties: Map[String, RoomPropertyValue],
+            sessionId: String = "")(implicit system: ActorSystem): ClientRoom =
+    if (sessionId.isEmpty) {
+      ClientRoomImpl(coreClient, httpServerUri, roomId, properties, None)
+    } else {
+      ClientRoomImpl(coreClient, httpServerUri, roomId, properties, Some(sessionId))
+    }
 
-  def mock()(implicit system: ActorSystem): ClientRoom =
-    ClientRoomImpl(ActorRef.noSender, "", "", Map.empty)
+  def mock()(implicit system: ActorSystem): ClientRoom = ClientRoomImpl(ActorRef.noSender, "", "", Map.empty, None)
 }
 
 case class ClientRoomImpl(coreClient: ActorRef,
                           httpServerUri: String,
                           override val roomId: RoomId,
-                          private val _properties: Map[String, RoomPropertyValue])
+                          private val _properties: Map[String, RoomPropertyValue],
+                          private var _sessionId: Option[String])
                          (implicit val system: ActorSystem) extends ClientRoom {
 
   private implicit val timeout: Timeout = 5 seconds
   private implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
   private implicit var innerActor: Option[ActorRef] = None
+
+
+  private var onMessageCallback: Option[Any => Unit] = None
+  private var onStateChangedCallback: Option[Any => Unit] = None
+  private var onCloseCallback: Option[() => Unit] = None
 
   override def properties: Map[String, Any] = _properties.map(e => (e._1, RoomPropertyValue valueOf e._2))
 
@@ -89,14 +105,14 @@ case class ClientRoomImpl(coreClient: ActorRef,
 
   override def propertyOf(propertyName: String): RoomProperty = RoomProperty(propertyName, _properties(propertyName))
 
-  private var onMessageCallback: Option[Any => Unit] = None
-  private var onStateChangedCallback: Option[Any => Unit] = None
-  private var onCloseCallback: Option[() => Unit] = None
+  override def sessionId: Option[String] = this._sessionId
 
   override def join(password: RoomPassword = Room.defaultPublicPassword): Future[Any] = {
     val ref = this.spawnInnerActor()
-    (ref ? SendJoin(roomId, password)) flatMap {
-      case Success(_) => Future.successful()
+    (ref ? SendJoin(roomId, sessionId, password)) flatMap {
+      case Success(responseId) =>
+        this._sessionId = Some(responseId.asInstanceOf[String])
+        Future.successful()
       case Failure(ex) =>
         this.killInnerActor()
         Future.failed(ex)

@@ -29,7 +29,7 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
 
   override def receive: Receive = onReceive orElse fallbackReceive
 
-  def waitSocketResponse(replyTo: ActorRef): Receive = onWaitSocketResponse(replyTo) orElse fallbackReceive
+  def waitSocketResponse(replyTo: ActorRef, sessionId: Option[String]): Receive = onWaitSocketResponse(replyTo, sessionId) orElse fallbackReceive
 
   def socketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = onSocketOpened(outRef, replyTo) orElse fallbackReceive
 
@@ -37,10 +37,10 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
 
   //actor states
   def onReceive: Receive = {
-    case SendJoin(roomId: RoomId, password: RoomPassword) =>
+    case SendJoin(roomId: RoomId, sessionId: Option[String], password: RoomPassword) =>
       joinPassword = password
       httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer)
-      context.become(waitSocketResponse(sender))
+      context.become(waitSocketResponse(sender, sessionId))
 
     case OnMsgCallback(callback) =>
       onMessageCallback = Some(callback)
@@ -55,7 +55,7 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
       unstashAll()
   }
 
-  def onWaitSocketResponse(replyTo: ActorRef): Receive = {
+  def onWaitSocketResponse(replyTo: ActorRef, sessionId: Option[String]): Receive = {
     case RoomProtocolMessage => stash()
 
     case HttpSocketFail(code) =>
@@ -65,7 +65,14 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
     case HttpSocketSuccess(outRef) =>
       context.become(socketOpened(outRef, replyTo))
       unstashAll()
-      self ! SendProtocolMessage(RoomProtocolMessage(JoinRoom, payload = joinPassword))
+      val stringId: String = sessionId match {
+        case Some(value) => value
+        case None => "" //empty string is no id is specified
+      }
+      self ! SendProtocolMessage(RoomProtocolMessage(
+        messageType = JoinRoom,
+        sessionId = stringId,
+        payload = joinPassword))
 
     case OnMsgCallback(callback) =>
       onMessageCallback = Some(callback)
@@ -78,16 +85,18 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
     case OnCloseCallback(callback) =>
       onCloseCallback = Some(callback)
       unstashAll()
+
   }
 
   def onSocketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
 
-    case RoomProtocolMessage(ProtocolMessageType.JoinOk, _, _) =>
+    case RoomProtocolMessage(ProtocolMessageType.JoinOk, sessionId, _) =>
       coreClient ! ClientRoomActorJoined
-      replyTo ! Success()
+      replyTo ! Success(sessionId)
       context.become(roomJoined(outRef))
 
     case RoomProtocolMessage(ProtocolMessageType.RoomClosed, _, _) =>
+
     case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
       replyTo ! Failure(new Exception("Can't join"))
 
@@ -127,7 +136,7 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
       }
 
     case SendLeave =>
-      self ! SendProtocolMessage(RoomProtocolMessage(LeaveRoom))
+      outRef ! RoomProtocolMessage(LeaveRoom)
       coreClient ! ClientRoomActorLeaved
       sender ! Success()
       context.become(receive)
@@ -170,7 +179,7 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
   }
 
 
-  private def handleIfDefinedOrStash(callback: Option[Any => Unit],  msg: Any ): Unit = {
+  private def handleIfDefinedOrStash(callback: Option[Any => Unit], msg: Any): Unit = {
     callback match {
       case Some(value) => value(msg)
       case None => stash()
