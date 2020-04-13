@@ -22,7 +22,9 @@ object RoomActor {
 
   def apply(serverRoom: ServerRoom, roomHandler: RoomHandler): Props = Props(classOf[RoomActor], serverRoom, roomHandler)
 
-  case class Tick(f: Client => Unit)
+  // Timers
+  case class StateSyncTick(f: Client => Unit)
+  case class WorldUpdateTick()
 }
 
 /**
@@ -42,6 +44,7 @@ class RoomActor(private val serverRoom: ServerRoom,
   override def preStart(): Unit = {
     this.timers.startTimerAtFixedRate(CheckRoomStateTimer, CheckRoomState, CheckRoomStateRate)
     super.preStart()
+    serverRoom setAssociatedActor self
     this.serverRoom.onCreate()
   }
 
@@ -72,7 +75,11 @@ class RoomActor(private val serverRoom: ServerRoom,
         self ! PoisonPill
       }
 
-    case Tick(f) => serverRoom.connectedClients foreach f
+    case StateSyncTick(f) =>
+      serverRoom.connectedClients foreach f
+
+    case WorldUpdateTick() =>
+      serverRoom.asInstanceOf[GameLoop].updateWorld()
   }
 
 }

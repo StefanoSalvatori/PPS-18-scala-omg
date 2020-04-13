@@ -9,7 +9,7 @@ object ExampleRooms {
 
   case class RoomWithState() extends ServerRoom with SynchronizedRoomState[Integer] {
     private var internalState = RoomWithState.RoomInitialState
-    override val updateRate: Int = RoomWithState.UpdateRate
+    override val stateUpdateRate: Int = RoomWithState.UpdateRate
 
     override def onCreate(): Unit = {}
     override def onClose(): Unit = this.stopStateUpdate()

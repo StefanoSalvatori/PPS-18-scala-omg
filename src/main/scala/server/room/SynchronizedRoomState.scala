@@ -3,7 +3,7 @@ package server.room
 
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import server.room.RoomActor.Tick
+import server.room.RoomActor.StateSyncTick
 import server.utils.Timer
 
 /**
@@ -17,15 +17,13 @@ trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends Timer { 
   /**
    * How often clients will be updated (time expressed in milliseconds)
    */
-  protected val updateRate = 50 //milliseconds
+  protected val stateUpdateRate = 50 //milliseconds
 
   /**
    * Start sending state to all clients
    */
   def startStateUpdate(): Unit =
-    this.scheduleAtFixedRate(() => {
-      sendStateUpdate()
-    }, 0, this.updateRate)
+    this.scheduleAtFixedRate(() => generateStateSyncTick(), 0, stateUpdateRate)
 
   /**
    * Stop sending state updates to clients
@@ -39,8 +37,8 @@ trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends Timer { 
    */
   def currentState: T
 
-  private def sendStateUpdate(): Unit =
-    self.roomActor ! Tick(c => c send RoomProtocolMessage(StateUpdate, c.id, currentState))
+  private def generateStateSyncTick(): Unit =
+    self.roomActor ! StateSyncTick(c => c send RoomProtocolMessage(StateUpdate, c.id, currentState))
 
 }
 

@@ -213,7 +213,15 @@ object ServerRoom {
     // Set the shared room properties
     val serverRoomProperties = ServerRoom.defaultProperties
     val runtimeRoomProperties = serverRoom.properties
-    val runtimeOnlyPropertyNames: Set[String] = runtimeRoomProperties.map(_ name) &~ serverRoomProperties.map(_ name)
+    var runtimeOnlyPropertyNames: Set[String] = runtimeRoomProperties.map(_ name) &~ serverRoomProperties.map(_ name)
+    // Edit properties if the room uses game loop functionality
+    if (serverRoom.isInstanceOf[GameLoop]) {
+      runtimeOnlyPropertyNames = runtimeOnlyPropertyNames - "worldUpdateRate"
+    }
+    if (serverRoom.isInstanceOf[SynchronizedRoomState[_]]) {
+      runtimeOnlyPropertyNames = runtimeOnlyPropertyNames - "stateUpdateRate"
+    }
+    // Add selected properties to the shared room
     runtimeRoomProperties.filter(property => runtimeOnlyPropertyNames contains property.name)
       .foreach(sharedRoom addSharedProperty)
     // Add the public/private state to room properties
@@ -245,16 +253,11 @@ object ServerRoom {
  * A room with empty behavior
  */
 private case class BasicServerRoom() extends ServerRoom {
-  override def onCreate(): Unit = {}
-
-  override def onClose(): Unit = {}
-
-  override def onJoin(client: Client): Unit = {}
-
-  override def onLeave(client: Client): Unit = {}
-
-  override def onMessageReceived(client: Client, message: Any): Unit = {}
-
+  override def onCreate(): Unit = { }
+  override def onClose(): Unit = { }
+  override def onJoin(client: Client): Unit = { }
+  override def onLeave(client: Client): Unit = { }
+  override def onMessageReceived(client: Client, message: Any): Unit = { }
   override def joinConstraints: Boolean = true
 }
 
