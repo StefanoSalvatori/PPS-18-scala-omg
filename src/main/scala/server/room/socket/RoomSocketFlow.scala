@@ -46,11 +46,10 @@ case class RoomSocketFlow(private val roomActor: ActorRef,
       .map {
         this.parser.parseFromSocket(_) match {
           case Success(RoomProtocolMessage(ProtocolMessageType.JoinRoom, sessionId, payload)) =>
-            //if sessionId is given create the client with that id instead of a new one
+            //if sessionId is given create the client with that id
             if(!sessionId.isEmpty) {
               client =  Client.asActor(sessionId, socketActor)
             }
-
             roomActor ! Join(client, sessionId, payload.asInstanceOf[RoomPassword])
           case Success(RoomProtocolMessage(ProtocolMessageType.LeaveRoom, _, _)) =>
             roomActor ! Leave(client)

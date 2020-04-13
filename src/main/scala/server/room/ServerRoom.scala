@@ -30,6 +30,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   private var closed = false
 
   //TODO: need to be syncronized if it's immutable?
+  //clients that are able to reconnect with the associate expiration timer
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
   /**
@@ -69,13 +70,18 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
     reconnectingClient.nonEmpty
   }
 
+  /**
+   * Allow the given client to reconnect to this room within the specified amount of time
+   * @param client the reconnecting client
+   * @param period time in seconds within which the client can reconnect
+   */
   def allowReconnection(client: Client, period: Long): Unit = {
     val timer = Timer()
     this.reconnectingClients = (client, timer) +: this.reconnectingClients
 
     timer.scheduleOnce(() => {
       this.reconnectingClients = this.reconnectingClients.filter(_._1.id != client.id)
-    }, period)
+    }, period * 1000) //seconds to millis
   }
 
   /**
