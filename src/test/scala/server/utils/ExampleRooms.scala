@@ -1,10 +1,38 @@
 package server.utils
 
-import server.room.{Client, RoomState, ServerRoom}
+import server.room.{Client, SynchronizedRoomState, ServerRoom}
 
+/**
+ * Rooms used for testing purpose.
+ */
 object ExampleRooms {
 
-  case class ClosableRoomWithState() extends ServerRoom with RoomState[String] {
+  case class RoomWithState() extends ServerRoom with SynchronizedRoomState[Integer] {
+    private var internalState = RoomWithState.RoomInitialState
+    override val updateRate: Int = RoomWithState.UpdateRate
+
+    override def onCreate(): Unit = {}
+    override def onClose(): Unit = this.stopStateUpdate()
+    override def onJoin(client: Client): Unit = {}
+    override def onLeave(client: Client): Unit = {}
+    override def onMessageReceived(client: Client, message: Any): Unit = {}
+    override def currentState: Integer = this.internalState
+    override def joinConstraints: Boolean = { true }
+
+    //Only used for testing
+    def changeState(newState: Int): Unit = this.internalState = newState
+  }
+
+  object RoomWithState {
+    val UpdateRate = 100 //milliseconds
+    val RoomInitialState: Int = 0
+  }
+
+  val roomWithStateType = "roomWithState"
+
+  //__________________________________________________
+
+  case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
     override def onCreate(): Unit = {
       this.startStateUpdate()
     }
@@ -21,7 +49,7 @@ object ExampleRooms {
     override def joinConstraints: Boolean = true
   }
 
-  val roomWithStateType = "roomWithState"
+  val closableRoomWithStateType = "closableRoomWithState"
 
   //________________________________________________
 

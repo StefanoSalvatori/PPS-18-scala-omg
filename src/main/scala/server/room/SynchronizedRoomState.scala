@@ -3,6 +3,7 @@ package server.room
 
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.communication.CommunicationProtocol.ProtocolMessageType._
+import server.room.RoomActor.Tick
 import server.utils.Timer
 
 /**
@@ -11,8 +12,7 @@ import server.utils.Timer
  * @tparam T generic type for the state. It must extends [[java.io.Serializable]] so that it can be serialized and
  *           sent to clients
  */
-trait RoomState[T <: Any with java.io.Serializable] extends Timer {
-  this: ServerRoom =>
+trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends Timer { self: ServerRoom =>
 
   /**
    * How often clients will be updated (time expressed in milliseconds)
@@ -40,7 +40,7 @@ trait RoomState[T <: Any with java.io.Serializable] extends Timer {
   def currentState: T
 
   private def sendStateUpdate(): Unit =
-    this.connectedClients.foreach(c => c.send(RoomProtocolMessage(StateUpdate, c.id, currentState)))
+    self.roomActor ! Tick(c => c send RoomProtocolMessage(StateUpdate, c.id, currentState))
 
 }
 

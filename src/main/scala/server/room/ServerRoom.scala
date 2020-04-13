@@ -3,6 +3,7 @@ package server.room
 import java.lang.reflect.Field
 import java.util.UUID
 
+import akka.actor.ActorRef
 import com.typesafe.scalalogging.LazyLogging
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
@@ -27,6 +28,10 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   override val roomId: RoomId = UUID.randomUUID.toString
   private var clients: Seq[Client] = Seq.empty
   private var closed = false
+
+  protected var roomActor: ActorRef = _
+
+  def setAssociatedActor(actor: ActorRef): Unit = roomActor = actor
 
   /**
    * Add a client to the room. Triggers the onJoin

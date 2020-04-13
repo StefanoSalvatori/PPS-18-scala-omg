@@ -22,6 +22,7 @@ object RoomActor {
 
   def apply(serverRoom: ServerRoom, roomHandler: RoomHandler): Props = Props(classOf[RoomActor], serverRoom, roomHandler)
 
+  case class Tick(f: Client => Unit)
 }
 
 /**
@@ -52,21 +53,26 @@ class RoomActor(private val serverRoom: ServerRoom,
     case Join(client, password) =>
       val joined = serverRoom tryAddClient (client, password)
       sender ! (if (joined) JoinOk else ClientNotAuthorized)
+
     case Leave(client) =>
       this.serverRoom.removeClient(client)
       sender ! ClientLeaved
+
     case Msg(client, payload) =>
       if (this.serverRoom.clientAuthorized(client)) {
-          this.serverRoom.onMessageReceived(client, payload)
+        this.serverRoom.onMessageReceived(client, payload)
       } else {
         client.send(ClientNotAuthorized)
         sender ! ClientNotAuthorized
       }
+
     case CheckRoomState =>
       if (this.serverRoom.isClosed) {
         this.roomHandler.removeRoom(this.serverRoom.roomId)
         self ! PoisonPill
       }
+
+    case Tick(f) => serverRoom.connectedClients foreach f
   }
 
 }

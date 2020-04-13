@@ -1,0 +1,34 @@
+p 660.0 220.0 RoomLock 1 ne
+t 660.0 385.0 anyOperationFromRoomActor w 0 w n {} ne
+t 245.0 230.0 readSharedWorldState w 0 w n {} ne
+p 245.0 120.0 ReadyToSyncWorld 0 n
+t 80.0 120.0 GenerateSyncWorldTick n 0 w n {} ne
+p 1050.0 120.0 ReadyToUpdateWorld 0 n
+t 1250.0 120.0 GenerateUpdateWorldTick n 0 w n {} ne
+p 660.0 510.0 RoomActorIDLE 1 s
+t 1050.0 230.0 updateWorldState e 0 w n {} ne
+p 245.0 340.0 GotCurrentShrredWorldState 0 w
+t 245.0 450.0 SendSharedWorldState w 0 w n {} ne
+t 660.0 115.0 anyOperationFromRoomHandler e 0 w n {} ne
+p 660.0 30.0 RoomHandlerIDLE 0 e
+e anyOperationFromRoomHandler 0.2185835209 35.6931366 RoomHandlerIDLE 0.7775729042 40.60788101 1 n
+e RoomLock 0.2210070129 38.63935817 anyOperationFromRoomHandler 0.7782653079 39.62322551 1 n
+e anyOperationFromRoomHandler 0.7139038422 40.02499219 RoomLock 0.2789929871 38.63935817 1 n
+e RoomHandlerIDLE 0.7088153334 35.17101079 anyOperationFromRoomHandler 0.2879758532 38.07886553 1 n
+e GotCurrentShrredWorldState SendSharedWorldState 1 n
+e readSharedWorldState GotCurrentShrredWorldState 1 n
+e ReadyToSyncWorld readSharedWorldState 1 n
+e RoomLock 0.5395165664 73.24616031 readSharedWorldState 0.986767662 144.4991349 1 n
+e GenerateSyncWorldTick ReadyToSyncWorld 1 n
+e GenerateUpdateWorldTick ReadyToUpdateWorld 1 n
+e ReadyToUpdateWorld updateWorldState 1 n
+e RoomLock 0.9749951247 102.2594739 updateWorldState 0.5142996801 111.4495402 1 n
+e RoomActorIDLE 0.2796803123 53.93514624 anyOperationFromRoomActor 0.7208570083 54.91812087 1 n
+e RoomLock 0.7209446969 66.09841148 anyOperationFromRoomActor 0.2739323561 66.75327707 1 n
+e readSharedWorldState 0.02480719471 141.7180299 RoomLock 0.4821423674 71.44928271 1 n
+e updateWorldState 0.4683264049 121.3960461 RoomLock 0.02285200685 83.86298349 1 n
+e anyOperationFromRoomActor 0.2207244896 87.47571091 RoomLock 0.7750536739 63.78871377 1 n
+e anyOperationFromRoomActor 0.7841889331 56.2938718 RoomActorIDLE 0.2237157716 60.8276253 1 n
+h {serverRoom-PN}
+
+

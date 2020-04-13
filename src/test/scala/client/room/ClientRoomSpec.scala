@@ -52,13 +52,13 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   before {
     gameServer = GameServer(ServerAddress, ServerPort)
-    gameServer.defineRoom(ExampleRooms.roomWithStateType, ClosableRoomWithState)
+    gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState)
     gameServer.defineRoom(ExampleRooms.myRoomType, MyRoom)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
     logger debug s"Server started at $ServerAddress:$ServerPort"
     coreClient = system actorOf CoreClient(Routes.httpUri(ServerAddress, ServerPort))
-    val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.roomWithStateType, Set.empty))
+    val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.closableRoomWithStateType, Set.empty))
       .mapTo[Try[ClientRoom]], DefaultDuration)
     clientRoom = res.get
   }
