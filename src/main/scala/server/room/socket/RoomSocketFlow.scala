@@ -38,14 +38,20 @@ case class RoomSocketFlow(private val roomActor: ActorRef,
       .toMat(Sink.asPublisher(false))(Keep.both).run()
 
     //Link this socket to the client
-    val client = Client.asActor(UUID.randomUUID.toString, socketActor)
+    var client = Client.asActor(UUID.randomUUID.toString, socketActor)
+
 
     //Input (From client to room)
     val sink: Sink[Message, Any] = Flow[Message]
       .map {
         this.parser.parseFromSocket(_) match {
-          case Success(RoomProtocolMessage(ProtocolMessageType.JoinRoom, _, payload)) =>
-            roomActor ! Join(client, payload.asInstanceOf[RoomPassword])
+          case Success(RoomProtocolMessage(ProtocolMessageType.JoinRoom, sessionId, payload)) =>
+            //if sessionId is given create the client with that id instead of a new one
+            if(!sessionId.isEmpty) {
+              client =  Client.asActor(sessionId, socketActor)
+            }
+
+            roomActor ! Join(client, sessionId, payload.asInstanceOf[RoomPassword])
           case Success(RoomProtocolMessage(ProtocolMessageType.LeaveRoom, _, _)) =>
             roomActor ! Leave(client)
           case Success(RoomProtocolMessage(ProtocolMessageType.MessageRoom, _, payload)) =>

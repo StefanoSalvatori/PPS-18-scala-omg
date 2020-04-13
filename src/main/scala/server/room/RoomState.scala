@@ -5,6 +5,7 @@ import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import server.utils.Timer
 
+
 /**
  * Trait that define a room with a state.
  *

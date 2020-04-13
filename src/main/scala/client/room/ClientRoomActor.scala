@@ -108,6 +108,7 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
       unstashAll()
   }
 
+
   def onRoomJoined(outRef: ActorRef): Receive = {
 
     case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
@@ -169,8 +170,7 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
   }
 
 
-  private def handleIfDefinedOrStash(callback: Option[Any => Unit],
-                                     msg: Any ): Unit = {
+  private def handleIfDefinedOrStash(callback: Option[Any => Unit],  msg: Any ): Unit = {
     callback match {
       case Some(value) => value(msg)
       case None => stash()

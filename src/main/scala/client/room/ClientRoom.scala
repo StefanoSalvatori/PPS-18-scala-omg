@@ -68,6 +68,9 @@ object ClientRoom {
   def apply(coreClient: ActorRef, httpServerUri: String, roomId: RoomId, properties: Map[String, RoomPropertyValue])
            (implicit system: ActorSystem): ClientRoom =
     ClientRoomImpl(coreClient, httpServerUri, roomId, properties)
+
+  def mock()(implicit system: ActorSystem): ClientRoom =
+    ClientRoomImpl(ActorRef.noSender, "", "", Map.empty)
 }
 
 case class ClientRoomImpl(coreClient: ActorRef,

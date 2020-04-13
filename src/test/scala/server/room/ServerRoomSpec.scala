@@ -200,5 +200,20 @@ class ServerRoomSpec extends AnyWordSpecLike
       testRoom makePrivate password
       assert(!testRoom.tryAddClient(testClient, "qwe"))
     }
+
+    "allow reconnections within a specified period" in {
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.allowReconnection(testClient, 3000 )
+      serverRoom.removeClient(testClient)
+      assert(serverRoom.tryReconnectClient(testClient))
+    }
+
+    "don't accept reconnections after the period expires" in {
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.allowReconnection(testClient, 3000 )
+      serverRoom.removeClient(testClient)
+      Thread.sleep(5000)
+      assert(!serverRoom.tryReconnectClient(testClient))
+    }
   }
 }

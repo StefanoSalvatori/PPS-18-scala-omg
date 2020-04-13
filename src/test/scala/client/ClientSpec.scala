@@ -172,4 +172,8 @@ class ClientSpec extends AnyFlatSpec
       Await.result(client2.joinById(room.roomId, "pwd2"), DefaultTimeout)
     }
   }
+
+  it should "allow to recconect to a previously joined room (allowing reconnection) with the same session id" in {
+    fail
+  }
 }
