@@ -12,7 +12,9 @@ import server.utils.Timer
  * @tparam T generic type for the state. It must extends [[java.io.Serializable]] so that it can be serialized and
  *           sent to clients
  */
-trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends Timer { self: ServerRoom =>
+trait SynchronizedRoomState[T <: Any with java.io.Serializable] { self: ServerRoom =>
+
+  private val stateTimer = new Timer{ }
 
   /**
    * How often clients will be updated (time expressed in milliseconds)
@@ -23,12 +25,12 @@ trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends Timer { 
    * Start sending state to all clients
    */
   def startStateUpdate(): Unit =
-    this.scheduleAtFixedRate(() => generateStateSyncTick(), 0, stateUpdateRate)
+    stateTimer.scheduleAtFixedRate(() => generateStateSyncTick(), 0, stateUpdateRate)
 
   /**
    * Stop sending state updates to clients
    */
-  def stopStateUpdate(): Unit = this.stopTimer()
+  def stopStateUpdate(): Unit = stateTimer.stopTimer()
 
   /**
    * This is the function that is called at each update to get the most recent state that will be sent to clients

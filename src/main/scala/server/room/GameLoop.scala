@@ -1,15 +1,17 @@
 package server.room
 
 import server.room.RoomActor.WorldUpdateTick
-import server.utils.{Timer, Timer2}
+import server.utils.Timer
 
 /**
  * It defines a room that uses game loop, i.e. the state of the world is updated periodically
  */
-trait GameLoop extends Timer2 { self: ServerRoom =>
+trait GameLoop { self: ServerRoom =>
+
+  private val worldTimer: Timer = new Timer{ }
 
   /**
-   * How often the wolrd will be updated (time expressed in milliseconds)
+   * How often the world will be updated (time expressed in milliseconds)
    */
   protected val worldUpdateRate = 50 //milliseconds
 
@@ -17,12 +19,12 @@ trait GameLoop extends Timer2 { self: ServerRoom =>
    * Start updating the world with a fixed period
    */
   def startWorldUpdate(): Unit =
-    this.scheduleAtFixedRate2(() => this.generateWorldUpdateTick(), 0, worldUpdateRate)
+    worldTimer.scheduleAtFixedRate(() => this.generateWorldUpdateTick(), 0, worldUpdateRate)
 
   /**
    * Stop updating the world
    */
-  def stopWorldUpdate(): Unit = this.stopTimer2()
+  def stopWorldUpdate(): Unit = worldTimer.stopTimer()
 
   /**
    * Function called at each tick to update the world
