@@ -3,8 +3,9 @@ package client
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import com.typesafe.scalalogging.LazyLogging
-import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import common.TestConfig
+import common.room.RoomPropertyValueConversions._
+import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -12,10 +13,9 @@ import server.GameServer
 import server.room.ServerRoom
 import server.utils.ExampleRooms
 import server.utils.ExampleRooms.{ClosableRoomWithState, MyRoom, NoPropertyRoom}
-import common.room.RoomPropertyValueConversions._
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor, TimeoutException}
+import scala.concurrent.{Await, ExecutionContextExecutor}
 
 class ClientSpec extends AnyFlatSpec
   with Matchers
@@ -168,8 +168,8 @@ class ClientSpec extends AnyFlatSpec
 
   it should "not join a private room if a wrong password is provided" in {
     val room = Await.result(client.createPrivateRoom(ROOM_TYPE_NAME, password = "pwd"), DefaultTimeout)
-    assertThrows[TimeoutException] {
-      Await.result(client2.joinById(room.roomId, "pwd2"), DefaultTimeout)
+    assertThrows[Exception] {
+      val joinResponse = Await.result( client2.joinById(room.roomId, "pwd2"), DefaultTimeout)
     }
   }
 }

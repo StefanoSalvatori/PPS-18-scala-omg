@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.utils.TestClient
-class RoomStateSpec extends AnyWordSpecLike
+class SynchronizedRoomStateSpec extends AnyWordSpecLike
   with Matchers
   with BeforeAndAfter
   with BeforeAndAfterAll
@@ -20,7 +20,7 @@ class RoomStateSpec extends AnyWordSpecLike
   private val RoomInitialState: Int = 0
 
   // Room used for testing
-  private case class RoomWithState() extends ServerRoom with RoomState[Integer] {
+  private case class RoomWithState() extends ServerRoom with SynchronizedRoomState[Integer] {
     private var internalState = RoomInitialState
     override val updateRate: Int = UpdateRate
 

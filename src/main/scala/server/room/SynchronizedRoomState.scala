@@ -6,13 +6,13 @@ import common.communication.CommunicationProtocol.ProtocolMessageType._
 import server.utils.Timer
 
 /**
- * Trait that define a room with a state.
+ * Trait that define a room with a state that is periodically sent to all clients.
  *
  * @tparam T generic type for the state. It must extends [[java.io.Serializable]] so that it can be serialized and
  *           sent to clients
  */
-trait RoomState[T <: Any with java.io.Serializable] extends Timer {
-  this: ServerRoom =>
+trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends Timer {
+  room: ServerRoom =>
 
   /**
    * How often clients will be updated (time expressed in milliseconds)
@@ -39,9 +39,9 @@ trait RoomState[T <: Any with java.io.Serializable] extends Timer {
    */
   def currentState: T
 
-  private def sendStateUpdate(): Unit =
-    this.connectedClients.foreach(c => c.send(RoomProtocolMessage(StateUpdate, c.id, currentState)))
-
+  private def sendStateUpdate(): Unit = room.synchronized {
+    room.connectedClients.foreach(c => c.send(RoomProtocolMessage(StateUpdate, c.id, currentState)))
+  }
 }
 
 
