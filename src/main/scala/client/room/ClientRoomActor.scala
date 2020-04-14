@@ -41,7 +41,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
   def onReceive: Receive = {
     case SendJoin(roomId: RoomId, sessionId: Option[String], password: RoomPassword) =>
       joinPassword = password
-      httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer)
+      httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer())
       context.become(waitSocketResponse(sender, sessionId))
 
     case OnMsgCallback(callback) =>
