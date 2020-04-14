@@ -14,9 +14,7 @@ import scala.util.{Failure, Success}
 trait ClientRoom extends BasicRoom {
 
   /**
-   * Session id of this client when the room is joined.
-   *
-   * @return
+   * @return if present the session id of this client when the room is joined.
    */
   def sessionId: Option[String]
 
@@ -83,8 +81,8 @@ object ClientRoom {
   def mock()(implicit system: ActorSystem): ClientRoom = ClientRoomImpl(ActorRef.noSender, "", "", Map.empty, None)
 }
 
-case class ClientRoomImpl(coreClient: ActorRef,
-                          httpServerUri: String,
+case class ClientRoomImpl(private val coreClient: ActorRef,
+                          private val httpServerUri: String,
                           override val roomId: RoomId,
                           private val _properties: Map[String, RoomPropertyValue],
                           private var _sessionId: Option[String])

@@ -174,8 +174,7 @@ class ClientSpec extends AnyFlatSpec
     }
   }
 
-
-  it should "leave a rooms" in {
+  it should "leave rooms" in {
     val room = Await.result(client.joinOrCreate(RoomTypeName, FilterOptions.empty, Set.empty), DefaultTimeout)
     Await.ready(room.leave(), DefaultTimeout)
   }
@@ -187,5 +186,13 @@ class ClientSpec extends AnyFlatSpec
 
     room.sessionId shouldEqual res.sessionId
 
+  }
+
+  it should "not allow to reconnect an already joined room" in {
+    val room = Await.result(client.joinOrCreate(ExampleRooms.roomWithReconnection, FilterOptions.empty, Set.empty), DefaultTimeout)
+
+    assertThrows[Exception] {
+      Await.result(client.reconnect(room.roomId, room.sessionId.get), DefaultTimeout)
+    }
   }
 }

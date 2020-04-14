@@ -30,7 +30,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   private var closed = false
 
   //TODO: need to be syncronized if it's immutable?
-  //clients that are able to reconnect with the associate expiration timer
+  //clients that are allowed to reconnect with the associate expiration timer
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
   /**

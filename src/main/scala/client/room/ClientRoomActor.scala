@@ -9,17 +9,19 @@ import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 
 import scala.util.{Failure, Success}
+sealed trait ClientRoomActor extends BasicActor
+
 
 object ClientRoomActor {
-  def apply[S](coreClient: ActorRef, serverUri: String, room: ClientRoom): Props =
-    Props(classOf[ClientRoomActor[S]], coreClient, serverUri, room)
+  def apply(coreClient: ActorRef, serverUri: String, room: ClientRoom): Props =
+    Props(classOf[ClientRoomActorImpl], coreClient, serverUri, room)
 }
 
 /**
  * Handles the connection with the server side room.
  * Notify the coreClient if the associated room is left or joined.
  */
-case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends BasicActor with Stash {
+case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends ClientRoomActor with Stash {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
   private var onMessageCallback: Option[Any => Unit] = None
   private var onStateChangedCallback: Option[Any => Unit] = None
@@ -67,7 +69,7 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
       unstashAll()
       val stringId: String = sessionId match {
         case Some(value) => value
-        case None => "" //empty string is no id is specified
+        case None => "" //empty string if no id is specified
       }
       self ! SendProtocolMessage(RoomProtocolMessage(
         messageType = JoinRoom,
@@ -117,7 +119,6 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
       unstashAll()
   }
 
-
   def onRoomJoined(outRef: ActorRef): Receive = {
 
     case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
@@ -137,7 +138,7 @@ case class ClientRoomActor[S](coreClient: ActorRef, httpServerUri: String, room:
 
     case SendLeave =>
       outRef ! RoomProtocolMessage(LeaveRoom)
-      coreClient ! ClientRoomActorLeaved
+      coreClient ! ClientRoomActorLeft
       sender ! Success()
       context.become(receive)
 

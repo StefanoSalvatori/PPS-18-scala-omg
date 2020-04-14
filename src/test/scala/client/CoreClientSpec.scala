@@ -71,7 +71,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       refs foreach { t =>
         coreClient.tell(ClientRoomActorJoined, sender = t)
       }
-      coreClient.tell(ClientRoomActorLeaved, sender = refs.head)
+      coreClient.tell(ClientRoomActorLeft, sender = refs.head)
 
       coreClient ! GetJoinedRooms
       val res = expectMsgType[JoinedRooms]

@@ -23,7 +23,7 @@ object MessageDictionary {
 
   case class JoinedRooms(joinedRooms: Set[ClientRoom])
 
-  case class ClientRoomActorLeaved(clientRoomActor: ActorRef)
+  case class ClientRoomActorLeft(clientRoomActor: ActorRef)
 
   case class ClientRoomActorJoined(clientRoomActor: ActorRef)
 
