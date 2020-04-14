@@ -34,7 +34,6 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
     // Can't directly use roomHandler.createRoom since we need server room type instance
     room = RoomWithState()
     roomActor = actorSystem actorOf RoomActor(room, RoomHandler())
-    room setAssociatedActor roomActor
     client1 = TestClient()
     client2 = TestClient()
     room.tryAddClient(client1, Room.defaultPublicPassword)

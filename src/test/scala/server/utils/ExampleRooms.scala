@@ -1,6 +1,6 @@
 package server.utils
 
-import server.room.{Client, SynchronizedRoomState, ServerRoom}
+import server.room.{Client, GameLoop, ServerRoom, SynchronizedRoomState}
 
 /**
  * Rooms used for testing purpose.
@@ -29,6 +29,43 @@ object ExampleRooms {
   }
 
   val roomWithStateType = "roomWithState"
+
+  //_________________________________________________
+
+  case class RoomWithGameLoop() extends ServerRoom with GameLoop {
+
+    private var count = RoomWithGameLoop.initialState
+    override val worldUpdateRate: Int = RoomWithGameLoop.updateRate
+
+    override def joinConstraints: Boolean = true
+
+    override def onCreate(): Unit = {}
+
+    override def onClose(): Unit = {}
+
+    override def onJoin(client: Client): Unit = {}
+
+    override def onLeave(client: Client): Unit = {}
+
+    override def onMessageReceived(client: Client, message: Any): Unit = {}
+
+    override def updateWorld(): Unit = {
+      count = count + 1
+      receivedTicks = receivedTicks + 1
+    }
+
+    // Used for testing purpose
+    def state: Int = count
+    var receivedTicks: Int = 0
+
+  }
+
+  object RoomWithGameLoop {
+    val initialState = 0
+    val updateRate = 100 // millis
+  }
+
+  val roomWithGameLoopType = "roomWithGameLoop"
 
   //__________________________________________________
 
@@ -64,7 +101,6 @@ object ExampleRooms {
   }
 
   val noPropertyRoomType = "noProperty"
-
 
   //________________________________________________
 

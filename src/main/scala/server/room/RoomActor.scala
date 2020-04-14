@@ -37,14 +37,14 @@ class RoomActor(private val serverRoom: ServerRoom,
 
   import RoomActor._
   import scala.concurrent.duration._
-
   implicit val CheckRoomStateRate: FiniteDuration = 50 millis
   implicit val executionContext: ExecutionContextExecutor = this.context.system.dispatcher
+
+  serverRoom setAssociatedActor self
 
   override def preStart(): Unit = {
     this.timers.startTimerAtFixedRate(CheckRoomStateTimer, CheckRoomState, CheckRoomStateRate)
     super.preStart()
-    serverRoom setAssociatedActor self
     this.serverRoom.onCreate()
   }
 
