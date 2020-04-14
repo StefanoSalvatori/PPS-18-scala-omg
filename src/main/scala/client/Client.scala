@@ -134,31 +134,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       toJoinRoom
     }
 
-  private def firstSucceededOf[T](futures: TraversableOnce[Future[T]]): Future[T] = {
-    val p = Promise[T]()
-    val size = futures.size
-    val failureCount = new AtomicInteger(0)
 
-    futures foreach {
-      _.onComplete {
-        case Success(v) => p.trySuccess(v)
-        case Failure(e) =>
-          val count = failureCount.incrementAndGet
-          if (count == size) p.tryFailure(e)
-      }
-    }
-    p.future
-  }
-
-  private def findJoinable(rooms: Seq[ClientRoom]): Future[ClientRoom] = {
-    firstSucceededOf {
-      rooms.map { room =>
-        for {_ <- room.join()} yield {
-          room
-        }
-      }
-    }
-  }
 
   override def joinById(roomId: RoomId, password: RoomPassword = Room.defaultPublicPassword): Future[ClientRoom] = {
     ifNotJoined(roomId, {
@@ -202,6 +178,35 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       _ <- clientRoom.join(password)
     } yield {
       clientRoom
+    }
+  }
+
+  /**
+   * @returns a future containing the first successful result or contains the last failure if all futures have failed
+   */
+  private def firstSucceededOf[T](futures: TraversableOnce[Future[T]]): Future[T] = {
+    val p = Promise[T]()
+    val size = futures.size
+    val failureCount = new AtomicInteger(0)
+
+    futures foreach {
+      _.onComplete {
+        case Success(v) => p.trySuccess(v)
+        case Failure(e) =>
+          val count = failureCount.incrementAndGet
+          if (count == size) p.tryFailure(e)
+      }
+    }
+    p.future
+  }
+
+  private def findJoinable(rooms: Seq[ClientRoom]): Future[ClientRoom] = {
+    firstSucceededOf {
+      rooms.map { room =>
+        for {_ <- room.join()} yield {
+          room
+        }
+      }
     }
   }
 }
