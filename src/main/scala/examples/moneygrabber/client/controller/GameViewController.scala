@@ -1,43 +1,76 @@
 package examples.moneygrabber.client.controller
 
-import java.awt.Color  // scalastyle:ignore illegal.imports
-
 import client.room.ClientRoom
-import examples.moneygrabber.client.view.GameGrid.ButtonPressedEvent
-import examples.moneygrabber.client.view.GameView
-import examples.moneygrabber.common.Model
-import examples.moneygrabber.common.Model.World
+import examples.moneygrabber.client.view.game.GameFrame.GameFrameClosed
+import examples.moneygrabber.client.view.game.GameGrid.ButtonPressedEvent
+import examples.moneygrabber.client.view.game.{GameFrame, GameView}
+import examples.moneygrabber.common.Board
+import examples.moneygrabber.common.Entities.{Direction, Down, Left, Right, Up}
 import javax.swing.SwingUtilities
 
-import scala.swing.Publisher
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.swing.event.Key
+import scala.swing.{Dialog, Publisher}
+import scala.util.{Failure, Success}
 
 object GameViewController {
-  def keyToAction(key: Key.Value): Model.Direction = key match {
-    case Key.Left => Model.Left
-    case Key.Right => Model.Right
-    case Key.Up => Model.Up
-    case Key.Down => Model.Down
+  def keyToAction(key: Key.Value): Direction = key match {
+    case Key.Left => Left
+    case Key.Right => Right
+    case Key.Up => Up
+    case Key.Down => Down
   }
-
 }
 
-case class GameViewController(private val view: GameView, private val room: ClientRoom) extends Publisher {
+case class GameViewController(private val frame: GameFrame, private val room: ClientRoom) extends Publisher {
 
   import GameViewController._
-
-  listenTo(view.gameGrid)
+  implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
+  val view: GameView = this.frame.gameView
+  listenTo(this.view, this.frame)
   reactions += {
     case ButtonPressedEvent(key) => this.room.send(keyToAction(key))
+    case GameFrameClosed => this.room.leave() onComplete {
+      case Success(value) => println("leave ok")
+      case Failure(_) => println("leave error")
+    }
+  }
+
+  room.onMessageReceived {
+    case id: Int => SwingUtilities.invokeLater(() => {
+      this.view.setPlayerColor(id)
+    })
+    case endState: Board => this.onGameEnd(endState)
   }
 
   room.onStateChanged(state => {
-    val gameState = state.asInstanceOf[World]
-    SwingUtilities.invokeLater(() => {
-      view.gameGrid.resetGrid()
-      gameState.coins.map(_.position).foreach(view.gameGrid.colorButton(_, Color.yellow))
-      gameState.players.map(_.position).foreach(view.gameGrid.colorButton(_, Color.red))
-      view.setPlayerPoints(gameState.players.map(_.points))
-    })
+    val gameState = state.asInstanceOf[Board]
+    if (!gameState.gameEnded) {
+      this.updateView(gameState)
+    }
   })
+
+  def openGameView(): Unit = this.frame.show()
+
+  private def updateView(gameState: Board): Unit = {
+    SwingUtilities.invokeLater(() => {
+      view.clearTiles()
+      gameState.coins.foreach(c => view.colorCoinTile(c.position))
+      gameState.players.foreach(p => view.colorPlayerTile(p.id, p.position))
+      view.showPlayersPoints(gameState.players.map(p => (p.id, p.points)).toMap)
+    })
+  }
+
+  private def onGameEnd(gameState: Board): Unit = {
+    SwingUtilities.invokeLater(() => {
+      import examples.moneygrabber.client.view.Utils._
+      room.leave()
+      Dialog.showMessage(view,
+        s"${view.PlayerIdToColor(gameState.winner.id).name} player won",
+        "Game Ended",
+        Dialog.Message.Plain)
+      frame.close()
+    })
+
+  }
 }

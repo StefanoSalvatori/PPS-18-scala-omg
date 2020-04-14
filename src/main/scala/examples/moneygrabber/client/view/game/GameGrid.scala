@@ -1,9 +1,9 @@
-package examples.moneygrabber.client.view
+package examples.moneygrabber.client.view.game
 
-import java.awt.Color  // scalastyle:ignore illegal.imports
+import java.awt.Color
 
 import scala.swing.GridBagPanel.Fill
-import scala.swing.event.{Event, Key, KeyPressed}
+import scala.swing.event.{Event, Key}
 import scala.swing.{Button, Dimension, GridBagPanel}
 
 object GameGrid {
@@ -14,22 +14,11 @@ object GameGrid {
 case class GameGrid(gridSize: (Int, Int), tileSize: Int) extends GridBagPanel {
 
   import GameGrid._
-
   private var gridButtons: Map[(Int, Int), Button] = Map.empty
-
-  this.focusable = true
-  listenTo(keys)
-  reactions += {
-    case event: KeyPressed => publish(ButtonPressedEvent(event.key))
-  }
-  val c = new Constraints
+  private val c = new Constraints
+  focusable = true
   c.fill = Fill.Both
-  for (x <- 0 until gridSize._1; y <- 0 until gridSize._2) {
-    val button = newButton()
-    gridButtons = gridButtons + ((x, gridSize._2 - 1 - y) -> button)
-    c.gridx = x; c.gridy = y
-    layout(button) = c
-  }
+  drawGrid()
 
   def resetGrid(): Unit = this.gridButtons.values.foreach(_.background = GridDefaultColor)
 
@@ -39,7 +28,18 @@ case class GameGrid(gridSize: (Int, Int), tileSize: Int) extends GridBagPanel {
     }
   }
 
+  private def drawGrid(): Unit = {
+    for (x <- 0 until gridSize._1; y <- 0 until gridSize._2) {
+      val button = newButton()
+      gridButtons = gridButtons + ((x, gridSize._2 - 1 - y) -> button)
+      c.grid = (x, y)
+      layout(button) = c
+    }
+
+  }
+
   private def newButton() = new Button {
+    enabled = false
     background = GridDefaultColor
     preferredSize = new Dimension(tileSize, tileSize)
   }

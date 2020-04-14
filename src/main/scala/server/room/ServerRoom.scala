@@ -36,7 +36,6 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    */
   def tryAddClient(client: Client, providedPassword: RoomPassword): Boolean = {
     val canJoin = checkPasswordCorrectness(providedPassword) && joinConstraints
-    println(canJoin)
     if (canJoin) {
       this.clients = client +: this.clients
       client.send(RoomProtocolMessage(JoinOk, client.id))

@@ -8,6 +8,7 @@ val akkaHttpVersion = "10.1.11"
 scalastyleFailOnWarning := true
 
 libraryDependencies ++= Seq(
+  "org.scala-lang.modules" %% "scala-swing" % "2.1.1",
   "org.scalatest" %% "scalatest" % "3.1.1" % "test",
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",

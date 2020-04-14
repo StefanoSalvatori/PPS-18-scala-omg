@@ -11,9 +11,7 @@ import server.utils.Timer
  * @tparam T generic type for the state. It must extends [[java.io.Serializable]] so that it can be serialized and
  *           sent to clients
  */
-trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends Timer {
-  room: ServerRoom =>
-
+trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends ServerRoom with Timer {
   /**
    * How often clients will be updated (time expressed in milliseconds)
    */
@@ -39,8 +37,13 @@ trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends Timer {
    */
   def currentState: T
 
-  private def sendStateUpdate(): Unit = room.synchronized {
-    room.connectedClients.foreach(c => c.send(RoomProtocolMessage(StateUpdate, c.id, currentState)))
+  override def close(): Unit = {
+    super.close()
+    this.stopStateUpdate()
+  }
+
+  private def sendStateUpdate(): Unit = this.synchronized {
+    this.connectedClients.foreach(c => c.send(RoomProtocolMessage(StateUpdate, c.id, currentState)))
   }
 }
 
