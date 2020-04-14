@@ -111,7 +111,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     this.roomsByType
       .flatMap(_._2)
       .find(_._1.roomId == roomId)
-      .map(room => RoomSocketFlow(room._2, BinaryProtocolSerializer).createFlow())
+      .map(room => RoomSocketFlow(room._2, BinaryProtocolSerializer()).createFlow())
   }
 
   override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] =

@@ -1,7 +1,5 @@
 package server.room
 
-import java.util.UUID
-
 import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.RoomProtocolMessage
@@ -19,7 +17,6 @@ class RoomStateSpec extends AnyWordSpecLike
   with Eventually {
 
   private val UpdateRate = 100 //milliseconds
-  private val DeltaUpdate = 10 //milliseconds
   private val RoomInitialState: Int = 0
 
   // Room used for testing
@@ -47,7 +44,7 @@ class RoomStateSpec extends AnyWordSpecLike
 
 
   import scala.concurrent.duration._
-  override implicit val patienceConfig: PatienceConfig = PatienceConfig(1 seconds, 25 millis)
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(20 seconds, 25 millis)
   private var room = RoomWithState()
   private var client1 = TestClient()
   private var client2 = TestClient()
@@ -67,7 +64,7 @@ class RoomStateSpec extends AnyWordSpecLike
   "A room with state" should {
     "not start sending updates before startUpdate() is called" in {
       lastReceivedMessageOf(client1).messageType shouldBe JoinOk
-      Thread.sleep(UpdateRate + DeltaUpdate) //wait state update
+      Thread.sleep(UpdateRate) //wait state update
       lastReceivedMessageOf(client1).messageType shouldBe JoinOk
 
     }
@@ -102,7 +99,7 @@ class RoomStateSpec extends AnyWordSpecLike
       room.stopStateUpdate()
       val newState = RoomInitialState + 1
       room.changeState(newState)
-      Thread.sleep(UpdateRate + DeltaUpdate)
+      Thread.sleep(UpdateRate)
       lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, RoomInitialState)
       lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, RoomInitialState)
 
@@ -117,7 +114,7 @@ class RoomStateSpec extends AnyWordSpecLike
       room.stopStateUpdate()
       val newState = RoomInitialState + 1
       room.changeState(newState)
-      Thread.sleep(UpdateRate + DeltaUpdate)
+      Thread.sleep(UpdateRate)
       room.startStateUpdate()
       eventually {
         lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, newState)

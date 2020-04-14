@@ -14,6 +14,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.room.socket.RoomSocketFlow
 import common.communication.CommunicationProtocol.ProtocolMessageType._
+import org.scalatest.concurrent.Eventually
 import server.RoomHandler
 
 import scala.concurrent.duration._
@@ -23,6 +24,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
   with ImplicitSender
   with AnyWordSpecLike
   with Matchers
+  with Eventually
   with BeforeAndAfter
   with BeforeAndAfterAll {
 
@@ -84,6 +86,18 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
       })
     }
 
+    "automatically remove clients when their socket is closed" in {
+      val join = Source.single(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
+      flow.runWith(join, Sink.ignore)
+      flow.watchTermination()((_, f) => {
+        Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)
+        assert(room.connectedClients.size == 1)
+      })
+
+      eventually {
+        assert(room.connectedClients.isEmpty)
+      }
+    }
   }
 
 

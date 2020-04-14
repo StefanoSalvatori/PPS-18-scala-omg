@@ -105,7 +105,6 @@ class ServerRoomSpec extends AnyWordSpecLike
       receivedFrom1.messageType shouldBe RoomClosed
       val receivedFrom2 = testClient2.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
       receivedFrom2.messageType shouldBe RoomClosed
-
     }
 
     "return correct values of its properties" in {
