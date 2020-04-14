@@ -114,11 +114,14 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       .map(room => RoomSocketFlow(room._2, BinaryProtocolSerializer()).createFlow())
   }
 
-  override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] =
-    this.roomsByType.get(roomType) match {
+  override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
+    val roomsType = this.roomsByType.get(roomType) match {
       case Some(value) => value.keys.toSeq
       case None => Seq.empty
     }
+    println(this.getAvailableRooms(filterOptions).map(_.roomId))
+    this.getAvailableRooms(filterOptions).filter(r => roomsType.map(_.roomId).contains(r.roomId))
+  }
 
   override def removeRoom(roomId: RoomId): Unit = {
     this.roomsByType find (_._2.keys.map(_.roomId) exists (_ == roomId)) foreach (entry => {
