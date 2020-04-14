@@ -29,7 +29,6 @@ object CommunicationProtocol {
    * @param messageType the type of message to send
    * @param payload     an optional payload
    */
-  //TODO: generify this functions so that we can also pass different type of payloads other than strings
   @SerialVersionUID(1234L) // scalastyle:ignore magic.number
   case class RoomProtocolMessage(messageType: ProtocolMessageType, sessionId: String = "", payload: java.io.Serializable = "")
     extends java.io.Serializable

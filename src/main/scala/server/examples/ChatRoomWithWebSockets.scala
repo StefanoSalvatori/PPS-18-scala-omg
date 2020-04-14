@@ -17,21 +17,21 @@ import scala.concurrent.Await
 import scala.io.StdIn
 
 object ChatRoomWithWebSockets extends App {
-  implicit val actorSystem: ActorSystem = ActorSystem()
+  implicit private val actorSystem: ActorSystem = ActorSystem()
 
-  val HOST: String = "localhost"
-  val PORT: Int = 8080
-  val ESCAPE_TEXT = "quit"
-  val ROOM_PATH = "chat"
-  val gameServer: GameServer = GameServer(HOST, PORT)
-  val client = Client(HOST, PORT)
-  gameServer.defineRoom(ROOM_PATH, ChatRoom)
+  private val Host: String = "localhost"
+  private val Port: Int = 8080
+  private val EscapeExit = "quit"
+  private val RoomPath = "chat"
+  private val gameServer: GameServer = GameServer(Host, Port)
+  private val client = Client(Host, Port)
+  gameServer.defineRoom(RoomPath, ChatRoom)
 
   import scala.concurrent.duration._
   Await.ready(gameServer.start(), 10 seconds)
-  val room = Await.result(client createPublicRoom ROOM_PATH, 10 seconds)
+  val room = Await.result(client createPublicRoom RoomPath, 10 seconds)
 
-  val webSocketRequest = WebSocketRequest(s"ws://$HOST:$PORT/${Routes.connectionRoute}/${room.roomId}")
+  val webSocketRequest = WebSocketRequest(s"ws://$Host:$Port/${Routes.connectionRoute}/${room.roomId}")
   val webSocketFlow = Http().webSocketClientFlow(webSocketRequest)
 
   // Create a queue that streams messages through a websocket
@@ -53,7 +53,7 @@ object ChatRoomWithWebSockets extends App {
   do {
     msg = StdIn.readLine()
     this.sendToRoom(msg)
-  } while (msg != ESCAPE_TEXT)
+  } while (msg != EscapeExit)
 
   Await.ready(gameServer.stop(), 10 seconds)
   Await.ready(gameServer.terminate(), 10 seconds)

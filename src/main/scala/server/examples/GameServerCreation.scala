@@ -8,11 +8,11 @@ import scala.util.{Failure, Success}
 
 object GameServerCreation extends App {
 
-  implicit val executor: ExecutionContext = ExecutionContext.global
-  val HOST = "localhost"
-  val PORT = 8080
+  implicit private val executor: ExecutionContext = ExecutionContext.global
+  private val Host = "localhost"
+  private val Port = 8080
 
-  val gameServer = GameServer(HOST, PORT)
+  private val gameServer = GameServer(Host, Port)
   gameServer onStart {
     println("GAMESERVER STARTED")
   }

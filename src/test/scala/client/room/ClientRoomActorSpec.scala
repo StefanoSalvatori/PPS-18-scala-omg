@@ -28,10 +28,10 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
   with TestConfig {
 
   private val serverAddress = "localhost"
-  private val serverPort = CLIENT_ROOM_ACTOR_SPEC_SERVER_PORT
+  private val serverPort = ClientRoomActorSpecServerPort
   private val serverUri = Routes.httpUri(serverAddress, serverPort)
 
-  private val ROOM_TYPE_NAME: String = "test_room"
+  private val RoomTypeName: String = "test_room"
 
   implicit val executionContext: ExecutionContext = system.dispatcher
   private val requestTimeout = 5 // Seconds
@@ -49,10 +49,10 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
   before {
     coreClient = system actorOf CoreClient(serverUri)
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
+    gameServer.defineRoom(RoomTypeName, () => ServerRoom())
     Await.ready(gameServer.start(), 5 seconds)
 
-    coreClient ! CreatePublicRoom(ROOM_TYPE_NAME, Set.empty)
+    coreClient ! CreatePublicRoom(RoomTypeName, Set.empty)
     val room = expectMsgType[Success[ClientRoom]]
     clientRoomActor = system actorOf ClientRoomActor(coreClient, serverUri, room.value)
 

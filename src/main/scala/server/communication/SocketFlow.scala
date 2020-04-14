@@ -11,11 +11,11 @@ import common.communication.SocketSerializer
  */
 trait SocketFlow {
 
-  protected val DEFAULT_BUFFER_SIZE: Int = 128
-  protected val DEFAULT_OVERFLOW_STRATEGY: OverflowStrategy = OverflowStrategy.dropHead
+  protected val DefaultBufferSize: Int = 128
+  protected val DefaultOverflowStrategy: OverflowStrategy = OverflowStrategy.dropHead
 
 
-  def createFlow(overflowStrategy: OverflowStrategy = DEFAULT_OVERFLOW_STRATEGY,
-                 bufferSize: Int = DEFAULT_BUFFER_SIZE): Flow[Message, Message, Any]
+  def createFlow(overflowStrategy: OverflowStrategy = DefaultOverflowStrategy,
+                 bufferSize: Int = DefaultBufferSize): Flow[Message, Message, Any]
 
 }

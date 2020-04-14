@@ -20,16 +20,17 @@ class ServerRoomSpec extends AnyWordSpecLike
   private var serverRoom: ServerRoom = _
   private var testClient: TestClient = _
   private var testClient2: TestClient = _
+  private var testClient3: TestClient = _
 
-  val numOfProperties = 5 // A, B, C, D + roomId
-  val nameA = "a"
-  val valueA = 1
-  val nameB = "b"
-  val valueB = "abc"
-  val nameC = "c"
-  val valueC = false
-  val nameD = "d"
-  val valueD = 0.1
+  private val numOfProperties = 5 // A, B, C, D + roomId
+  private val nameA = "a"
+  private val valueA = 1
+  private val nameB = "b"
+  private val valueB = "abc"
+  private val nameC = "c"
+  private val valueC = false
+  private val nameD = "d"
+  private val valueD = 0.1
 
   var testRoom: ServerRoom = _
 
@@ -37,6 +38,8 @@ class ServerRoomSpec extends AnyWordSpecLike
     serverRoom = ServerRoom()
     testClient = TestClient(UUID.randomUUID().toString)
     testClient2 = TestClient(UUID.randomUUID().toString)
+    testClient3 = TestClient(UUID.randomUUID().toString)
+
 
     testRoom = new ServerRoom {
       override val roomId: RoomId = "id"
@@ -46,11 +49,16 @@ class ServerRoomSpec extends AnyWordSpecLike
       var d: Double = valueD
 
       override def onCreate(): Unit = {}
+
       override def onClose(): Unit = {}
+
       override def onJoin(client: Client): Unit = {}
+
       override def onLeave(client: Client): Unit = {}
+
       override def onMessageReceived(client: Client, message: Any): Unit = {}
-      override def joinConstraints: Boolean = { true }
+
+      override def joinConstraints: Boolean = this.connectedClients.size < 2
     }
   }
 
@@ -64,7 +72,6 @@ class ServerRoomSpec extends AnyWordSpecLike
       serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
       assert(serverRoom.connectedClients.contains(testClient2))
       assert(serverRoom.connectedClients.contains(testClient))
-
     }
 
     "remove clients from the room" in {
@@ -82,6 +89,19 @@ class ServerRoomSpec extends AnyWordSpecLike
       val received = testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
       received.messageType shouldBe Tell
       received.payload shouldBe "Hello"
+    }
+
+    "send a JoinOk message when the client correctly joins the room" in {
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage].messageType shouldBe JoinOk
+    }
+
+    "send a ClientNotAuthorized when the client can't join the room" in {
+      testRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      testRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
+      testRoom.tryAddClient(testClient3, Room.defaultPublicPassword)
+      testClient3.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage].messageType shouldBe ClientNotAuthorized
+
     }
 
     "send broadcast messages to all clients connected using the room protocol" in {
@@ -156,6 +176,13 @@ class ServerRoomSpec extends AnyWordSpecLike
       assert(!testRoom.isPrivate)
     }
 
+    "not check the password if the room is public" in {
+      serverRoom.tryAddClient(testClient, "uslessPassword")
+      testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage].messageType shouldBe JoinOk
+      assert(serverRoom.connectedClients.contains(testClient))
+
+    }
+
     "become private when setting a password" in {
       val password = "pwd"
       testRoom makePrivate password
@@ -198,6 +225,29 @@ class ServerRoomSpec extends AnyWordSpecLike
       val password = "abc"
       testRoom makePrivate password
       assert(!testRoom.tryAddClient(testClient, "qwe"))
+    }
+
+    "allow reconnections within a specified period" in {
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.allowReconnection(testClient, 3 )
+      serverRoom.removeClient(testClient)
+      assert(serverRoom.tryReconnectClient(testClient))
+    }
+
+    "don't accept reconnections after the period expires" in {
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.allowReconnection(testClient, 3 )
+      serverRoom.removeClient(testClient)
+      Thread.sleep(5000)
+      assert(!serverRoom.tryReconnectClient(testClient))
+    }
+
+    "add the client to the list of connected clients after a reconnection" in {
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.allowReconnection(testClient, 3 )
+      serverRoom.removeClient(testClient)
+      serverRoom.tryReconnectClient(testClient)
+      assert(serverRoom.connectedClients.contains(testClient))
     }
   }
 }

@@ -9,6 +9,7 @@ import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.room.Room.{BasicRoom, RoomId, RoomPassword, SharedRoom}
 import common.room._
+import server.utils.Timer
 
 trait PrivateRoomSupport {
 
@@ -20,11 +21,11 @@ trait PrivateRoomSupport {
 
   def makePrivate(newPassword: RoomPassword): Unit = password = newPassword
 
-  def checkPasswordCorrectness(providedPassword: RoomPassword): Boolean = password == providedPassword
+  def checkPasswordCorrectness(providedPassword: RoomPassword): Boolean =
+    password == Room.defaultPublicPassword || password == providedPassword
 }
 
 trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
-
   override val roomId: RoomId = UUID.randomUUID.toString
   private var clients: Seq[Client] = Seq.empty
   private var closed = false
@@ -33,6 +34,10 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 
   def setAssociatedActor(actor: ActorRef): Unit = roomActor = actor
 
+  //TODO: need to be syncronized if it's immutable?
+  //clients that are allowed to reconnect with the associate expiration timer
+  private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
+
   /**
    * Add a client to the room. Triggers the onJoin
    *
@@ -40,20 +45,58 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    * @return true if the client successfully joined the room, false otherwise
    */
   def tryAddClient(client: Client, providedPassword: RoomPassword): Boolean = {
+
     val canJoin = checkPasswordCorrectness(providedPassword) && joinConstraints
     if (canJoin) {
       this.clients = client +: this.clients
       client.send(RoomProtocolMessage(JoinOk, client.id))
       this.onJoin(client)
+    } else {
+      client.send(RoomProtocolMessage(ClientNotAuthorized))
     }
     canJoin
   }
 
   /**
+   * Reconnect the client to the room.
+   *
+   * @param client the client that wants to reconnect
+   * @return true if the client successfully reconnected to the room, false otherwise
+   */
+  def tryReconnectClient(client: Client): Boolean = {
+
+    val reconnectingClient = this.reconnectingClients.find(_._1.id == client.id)
+    if (reconnectingClient.nonEmpty) {
+      reconnectingClient.get._2.stopTimer()
+      this.reconnectingClients = this.reconnectingClients.filter(_._1.id != client.id)
+      this.clients = client +: this.clients
+      client.send(RoomProtocolMessage(JoinOk, client.id))
+    } else {
+      client.send(RoomProtocolMessage(ClientNotAuthorized, client.id))
+    }
+    reconnectingClient.nonEmpty
+  }
+
+  /**
+   * Allow the given client to reconnect to this room within the specified amount of time
+   * @param client the reconnecting client
+   * @param period time in seconds within which the client can reconnect
+   */
+  def allowReconnection(client: Client, period: Long): Unit = {
+    val timer = Timer()
+    this.reconnectingClients = (client, timer) +: this.reconnectingClients
+
+    timer.scheduleOnce(() => {
+      this.reconnectingClients = this.reconnectingClients.filter(_._1.id != client.id)
+    }, period * 1000) //seconds to millis
+  }
+
+  /**
    * Custom room constraints that may cause a join request to fail.
+   *
    * @return true if the join request should be satisfied, false otherwise
    */
-  def joinConstraints: Boolean
+  def joinConstraints: Boolean = true
 
   /**
    * Remove a client from the room. Triggers onLeave
@@ -204,9 +247,10 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   private def -->(field: Field): AnyRef = field get this // Get the value of the field
 }
 
-private case class PairRoomProperty[T](name: String, value: T)
 
 object ServerRoom {
+  private case class PairRoomProperty[T](name: String, value: T)
+
   implicit val serverRoomToSharedRoom: ServerRoom => SharedRoom = serverRoom => {
     // Create the shared room
     val sharedRoom = SharedRoom(serverRoom.roomId)

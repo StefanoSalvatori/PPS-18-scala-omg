@@ -1,6 +1,6 @@
 package server.utils
 
-import server.room.{Client, GameLoop, ServerRoom, SynchronizedRoomState}
+import server.room.{Client, SynchronizedRoomState, GameLoop, ServerRoom}
 
 /**
  * Rooms used for testing purpose.
@@ -62,6 +62,22 @@ object ExampleRooms {
   val roomWithGameLoopType = "roomWithGameLoop"
 
   //__________________________________________________
+
+  case class RoomWithReconnection() extends ServerRoom {
+    private val ReconnectionTime = 10 //s
+    override def onCreate(): Unit = {  }
+    override def onClose(): Unit = {}
+    override def onJoin(client: Client): Unit = {}
+    override def onLeave(client: Client): Unit = {
+      this.allowReconnection(client, ReconnectionTime)
+    }
+    override def onMessageReceived(client: Client, message: Any): Unit = { }
+    override def joinConstraints: Boolean = true
+  }
+
+  val roomWithReconnection= "roomWithReconnection"
+
+  //________________________________________________
 
   case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
     override def onCreate(): Unit = {
