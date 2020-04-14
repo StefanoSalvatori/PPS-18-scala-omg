@@ -195,4 +195,18 @@ class ClientSpec extends AnyFlatSpec
       Await.result(client.reconnect(room.roomId, room.sessionId.get), DefaultTimeout)
     }
   }
+
+  it should "try to join all rooms available" in {
+    val testProperty = RoomProperty("a", 1)
+    val testProperty2 = RoomProperty("a", 2)
+    val testProperty3 = RoomProperty("a", 3)
+
+    //create 3 rooms so that only the second matches the filters
+    Await.ready(client.createPublicRoom(ExampleRooms.myRoomType, Set(testProperty)), DefaultTimeout)
+    val room = Await.result(client.createPublicRoom(ExampleRooms.myRoomType, Set(testProperty3)), DefaultTimeout)
+    Await.ready(client.createPublicRoom(ExampleRooms.myRoomType, Set(testProperty2)), DefaultTimeout)
+
+    val joined = Await.result(client.join(ExampleRooms.myRoomType, FilterOptions just testProperty =:= 3), DefaultTimeout)
+    room.roomId shouldEqual joined.roomId
+  }
 }

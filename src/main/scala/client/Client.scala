@@ -1,5 +1,7 @@
 package client
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import client.room.ClientRoom
@@ -9,7 +11,7 @@ import common.room.Room.{RoomId, RoomPassword, RoomType}
 import common.room.{FilterOptions, Room, RoomProperty}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future, Promise}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
@@ -127,11 +129,36 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     for {
       rooms <- getAvailableRoomsByType(roomType, roomOption)
       if rooms.nonEmpty
-      toJoinRoom = rooms.head
-      _ <- toJoinRoom.join()
+      toJoinRoom <- findJoinable(rooms)
     } yield {
       toJoinRoom
     }
+
+  private def firstSucceededOf[T](futures: TraversableOnce[Future[T]]): Future[T] = {
+    val p = Promise[T]()
+    val size = futures.size
+    val failureCount = new AtomicInteger(0)
+
+    futures foreach {
+      _.onComplete {
+        case Success(v) => p.trySuccess(v)
+        case Failure(e) =>
+          val count = failureCount.incrementAndGet
+          if (count == size) p.tryFailure(e)
+      }
+    }
+    p.future
+  }
+
+  private def findJoinable(rooms: Seq[ClientRoom]): Future[ClientRoom] = {
+    firstSucceededOf {
+      rooms.map { room =>
+        for {_ <- room.join()} yield {
+          room
+        }
+      }
+    }
+  }
 
   override def joinById(roomId: RoomId, password: RoomPassword = Room.defaultPublicPassword): Future[ClientRoom] = {
     ifNotJoined(roomId, {
