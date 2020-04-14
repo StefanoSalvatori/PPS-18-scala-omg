@@ -5,12 +5,12 @@ import examples.moneygrabber.common.{Board, GameModes}
 import server.room.{Client, ServerRoom, SynchronizedRoomState}
 
 case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
-  var size: Int = 20
-  var mode: String = GameModes.Max2.name
+  val boardSize: Int = 20
+  val mode: String = GameModes.Max2.name
   var gameStarted: Boolean = false
 
-  private var gameState = Board.withRandomCoins((size, size), coinRatio = 0.1)
-  //map clientId -> playerId
+  private var gameState = Board.withRandomCoins((boardSize, boardSize), coinRatio = 0.1) // initial state
+  //map clientId -> playerId to keep the link between clients and players
   private var players: Map[String, Int] = Map.empty
 
 
@@ -61,9 +61,9 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
 
   private def playerStartingPosition = this.connectedClients.size match {
     case 1 => (0, 0)
-    case 2 => (size - 1, size - 1)
-    case 3 => (size - 1, 0)
-    case 4 => (0, size - 1)
+    case 2 => (boardSize - 1, boardSize - 1)
+    case 3 => (boardSize - 1, 0)
+    case 4 => (0, boardSize - 1) // scalastyle:ignore magic.number
   }
 
 }

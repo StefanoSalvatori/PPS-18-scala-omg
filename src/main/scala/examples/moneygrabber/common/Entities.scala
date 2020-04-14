@@ -25,9 +25,7 @@ object Entities {
     }
   }
 
-  implicit val playerOrder: Ordering[Player] = new Ordering[Player] {
-    override def compare(x: Player, y: Player): Int = x.points - y.points
-  }
+  implicit val playerOrder: Ordering[Player] = (x: Player, y: Player) => x.points - y.points
   @SerialVersionUID(1234L) // scalastyle:ignore magic.number
   case class Player(id: Int, position: Position, points: Int) extends Entity with java.io.Serializable
 

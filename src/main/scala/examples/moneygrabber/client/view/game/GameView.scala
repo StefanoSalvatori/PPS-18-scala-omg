@@ -10,6 +10,7 @@ import scala.swing.event.KeyPressed
 
 class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPanel(Orientation.Vertical) {
   private val TileSize = 20
+  private val PlayerInfoColorSize = 10
   private val CoinColor = Color.yellow
   val PlayerIdToColor: PartialFunction[Int, Color] = {
     case 0 => Color.red
@@ -23,7 +24,7 @@ class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPa
     contents += new Label("You are:")
     contents += new Button {
       background = Color.GRAY
-      preferredSize = new Dimension(10, 10)
+      preferredSize = new Dimension(PlayerInfoColorSize, PlayerInfoColorSize)
     }
   }
   private val pointsInfo: GridPanel = new GridPanel(1, numPlayers) {
