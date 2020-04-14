@@ -13,7 +13,7 @@ import scalafx.scene.Scene
 object View1 extends JFXApp {
 
 
-  val root: jfxs.Parent = jfxf.FXMLLoader.load(getClass.getResource("./resources/home.fxml"))
+  private val root: jfxs.Parent = jfxf.FXMLLoader.load(getClass.getResource("./resources/home.fxml"))
 
   stage = new PrimaryStage() {
     title = "Client 1"
@@ -23,7 +23,7 @@ object View1 extends JFXApp {
 }
 
 object View2 extends JFXApp {
-  val root: jfxs.Parent = jfxf.FXMLLoader.load(getClass.getResource("./resources/home.fxml"))
+  private val root: jfxs.Parent = jfxf.FXMLLoader.load(getClass.getResource("./resources/home.fxml"))
 
   stage = new PrimaryStage() {
     title = "Client 2"

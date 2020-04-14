@@ -21,15 +21,15 @@ class ServerRoomSpec extends AnyWordSpecLike
   private var testClient: TestClient = _
   private var testClient2: TestClient = _
 
-  val numOfProperties = 5 // A, B, C, D + roomId
-  val nameA = "a"
-  val valueA = 1
-  val nameB = "b"
-  val valueB = "abc"
-  val nameC = "c"
-  val valueC = false
-  val nameD = "d"
-  val valueD = 0.1
+  private val numOfProperties = 5 // A, B, C, D + roomId
+  private val nameA = "a"
+  private val valueA = 1
+  private val nameB = "b"
+  private val valueB = "abc"
+  private val nameC = "c"
+  private val valueC = false
+  private val nameD = "d"
+  private val valueD = 0.1
 
   var testRoom: ServerRoom = _
 
@@ -198,6 +198,29 @@ class ServerRoomSpec extends AnyWordSpecLike
       val password = "abc"
       testRoom makePrivate password
       assert(!testRoom.tryAddClient(testClient, "qwe"))
+    }
+
+    "allow reconnections within a specified period" in {
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.allowReconnection(testClient, 3 )
+      serverRoom.removeClient(testClient)
+      assert(serverRoom.tryReconnectClient(testClient))
+    }
+
+    "don't accept reconnections after the period expires" in {
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.allowReconnection(testClient, 3 )
+      serverRoom.removeClient(testClient)
+      Thread.sleep(5000)
+      assert(!serverRoom.tryReconnectClient(testClient))
+    }
+
+    "add the client to the list of connected clients after a reconnection" in {
+      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.allowReconnection(testClient, 3 )
+      serverRoom.removeClient(testClient)
+      serverRoom.tryReconnectClient(testClient)
+      assert(serverRoom.connectedClients.contains(testClient))
     }
   }
 }

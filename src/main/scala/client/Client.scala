@@ -26,9 +26,10 @@ sealed trait Client {
 
   /**
    * Create a private room.
-   * @param roomType type of the room to create
+   *
+   * @param roomType       type of the room to create
    * @param roomProperties room options to set as starting ones
-   * @param password password required for clients to join the room
+   * @param password       password required for clients to join the room
    */
   def createPrivateRoom(roomType: RoomType, roomProperties: Set[RoomProperty] = Set.empty, password: RoomPassword): Future[ClientRoom]
 
@@ -67,6 +68,17 @@ sealed trait Client {
    */
   def getAvailableRoomsByType(roomType: String, filterOptions: FilterOptions): Future[Seq[ClientRoom]]
 
+
+  /**
+   * Reconnects the client into a room he was previously connected with.
+   * The room should allow reconnection server-side
+   *
+   * @param roomId    room id
+   * @param sessionId session id that was given by the room to this client
+   * @return
+   */
+  def reconnect(roomId: String, sessionId: String): Future[ClientRoom]
+
   /**
    * @return the set of currently joined rooms
    */
@@ -82,7 +94,9 @@ object Client {
 class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
 
   private val requestTimeout = 5 // Seconds
+
   import akka.util.Timeout
+
   implicit val timeout: Timeout = requestTimeout seconds
 
   private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
@@ -101,7 +115,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     this createRoom CreatePublicRoom(roomType, roomProperties)
 
   override def createPrivateRoom(roomType: RoomType, roomProperties: Set[RoomProperty] = Set.empty, password: RoomPassword): Future[ClientRoom] =
-    this createRoom (CreatePrivateRoom(roomType, roomProperties, password), password)
+    this createRoom(CreatePrivateRoom(roomType, roomProperties, password), password)
 
   override def joinOrCreate(roomType: RoomType, filterOption: FilterOptions, roomProperties: Set[RoomProperty] = Set.empty): Future[ClientRoom] = {
     this.join(roomType, filterOption) recoverWith {
@@ -120,12 +134,10 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     }
 
   override def joinById(roomId: RoomId, password: RoomPassword = Room.defaultPublicPassword): Future[ClientRoom] = {
-    if (this.joinedRooms().exists(_.roomId == roomId)) {
-      Future.failed(new Exception("Room already joined"))
-    } else {
+    ifNotJoined(roomId, {
       val clientRoom = ClientRoom(coreClient, httpServerUri, roomId, Map())
       clientRoom.join(password).map(_ => clientRoom)
-    }
+    })
   }
 
   override def getAvailableRoomsByType(roomType: String, filterOption: FilterOptions): Future[Seq[ClientRoom]] =
@@ -133,6 +145,26 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       case Success(room) => Future.successful(room.asInstanceOf[Seq[ClientRoom]])
       case Failure(ex) => Future.failed(ex)
     }
+
+
+  override def reconnect(roomId: String, sessionId: String): Future[ClientRoom] = {
+    ifNotJoined(roomId, {
+      val clientRoom = ClientRoom(coreClient, httpServerUri, roomId, Map(), sessionId)
+      clientRoom.join().map(_ => clientRoom)
+    })
+  }
+
+  /**
+   * Perform the given action if the room with the specified id is not already joined.
+   * If the room is joined return a failed future
+   */
+  private def ifNotJoined(idToCheck: RoomId, exec: => Future[ClientRoom]): Future[ClientRoom] = {
+    if (this.joinedRooms().exists(_.roomId == idToCheck)) {
+      Future.failed(new Exception("Room already joined"))
+    } else {
+      exec
+    }
+  }
 
   private def createRoom(message: CreateRoomMessage, password: RoomPassword = Room.defaultPublicPassword): Future[ClientRoom] = {
     for {

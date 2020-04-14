@@ -12,18 +12,18 @@ import scala.io.StdIn
 
 
 object ChatRoomExample extends App {
-  implicit val actorSystem: ActorSystem = ActorSystem()
-  val HOST: String = "localhost"
-  val PORT: Int = 8080
-  val ESCAPE_TEXT = "quit"
-  val ROOM_PATH = "chat"
-  val gameServer: GameServer = GameServer(HOST, PORT)
-  gameServer.defineRoom(ROOM_PATH, ChatRoom)
+  implicit private val actorSystem: ActorSystem = ActorSystem()
+  private val Host: String = "localhost"
+  private val Port: Int = 8080
+  private val EscapeExit = "quit"
+  private val RoomPath = "chat"
+  private val gameServer: GameServer = GameServer(Host, Port)
+  gameServer.defineRoom(RoomPath, ChatRoom)
 
   import scala.concurrent.duration._
   Await.ready(gameServer.start(), 10 seconds)
-  while (StdIn.readLine(s"press any key to create chatRoom; type '$ESCAPE_TEXT' to exit \n") != ESCAPE_TEXT) {
-    Http().singleRequest(HttpRequest(HttpMethods.POST, uri = s"http://$HOST:$PORT/rooms/$ROOM_PATH"))
+  while (StdIn.readLine(s"press any key to create chatRoom; type '$EscapeExit' to exit \n") != EscapeExit) {
+    Http().singleRequest(HttpRequest(HttpMethods.POST, uri = s"http://$Host:$Port/rooms/$RoomPath"))
   }
   Await.ready(gameServer.stop(), 10 seconds)
   gameServer.terminate()

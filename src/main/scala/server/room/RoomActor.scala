@@ -2,6 +2,7 @@ package server.room
 
 import akka.actor.{Actor, ActorLogging, PoisonPill, Props, Timers}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
+import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.room.Room.RoomPassword
 import server.RoomHandler
 
@@ -9,7 +10,7 @@ import scala.concurrent.ExecutionContextExecutor
 
 object RoomActor {
   sealed trait RoomCommand
-  case class Join(client: Client, password: RoomPassword) extends RoomCommand
+  case class Join(client: Client, sessionId: String, password: RoomPassword) extends RoomCommand
   case class Leave(client: Client) extends RoomCommand
   case class Msg(client: Client, payload: Any) extends RoomCommand
 
@@ -49,9 +50,15 @@ class RoomActor(private val serverRoom: ServerRoom,
   }
 
   override def receive: Receive = {
-    case Join(client, password) =>
-      val joined = serverRoom tryAddClient (client, password)
-      sender ! (if (joined) JoinOk else ClientNotAuthorized)
+    case Join(client, sessionId, password) =>
+      if(sessionId.isEmpty) {
+        val joined = serverRoom tryAddClient (client, password)
+        sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
+      } else {//if sessionId not empty means reconnection
+        val reconnected = serverRoom tryReconnectClient(client)
+        sender ! (if (reconnected)  RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
+      }
+
     case Leave(client) =>
       this.serverRoom.removeClient(client)
       sender ! ClientLeaved
@@ -60,7 +67,7 @@ class RoomActor(private val serverRoom: ServerRoom,
           this.serverRoom.onMessageReceived(client, payload)
       } else {
         client.send(ClientNotAuthorized)
-        sender ! ClientNotAuthorized
+        sender ! RoomProtocolMessage(ClientNotAuthorized, client.id)
       }
     case CheckRoomState =>
       if (this.serverRoom.isClosed) {

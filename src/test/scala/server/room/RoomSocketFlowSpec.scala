@@ -29,7 +29,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
   with BeforeAndAfterAll {
 
 
-  private val MAX_AWAIT_SOCKET_MESSAGES = 10 seconds
+  private val MaxAwaitSocketMessages = 10 seconds
 
   private var room: ServerRoom = _
   private var roomActor: ActorRef = _
@@ -52,7 +52,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
       val joinMessage = Source.single(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
       flow.runWith(joinMessage, Sink.ignore)
       flow.watchTermination()((_, f) => {
-        Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)
+        Await.result(f, MaxAwaitSocketMessages)
         assert(room.connectedClients.size == 1)
       })
     }
@@ -64,7 +64,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
       ).iterator)
       flow.runWith(joinAndLeave, Sink.ignore)
       flow.watchTermination()((_, f) => {
-        Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)
+        Await.result(f, MaxAwaitSocketMessages)
         assert(room.connectedClients.isEmpty)
       })
     }
@@ -73,7 +73,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
       val join = Source.single(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
       flow.runWith(join, Sink.ignore)
       flow.watchTermination()((_, f) => {
-        Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)
+        Await.result(f, MaxAwaitSocketMessages)
         assert(room.connectedClients.size == 1)
       })
 
@@ -81,7 +81,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
       val leave = Source.single(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
       flow.runWith(leave, Sink.ignore)
       flow.watchTermination()((_, f) => {
-        Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)
+        Await.result(f, MaxAwaitSocketMessages)
         assert(room.connectedClients.size == 1)
       })
     }
@@ -90,7 +90,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
       val join = Source.single(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)))
       flow.runWith(join, Sink.ignore)
       flow.watchTermination()((_, f) => {
-        Await.result(f, MAX_AWAIT_SOCKET_MESSAGES)
+        Await.result(f, MaxAwaitSocketMessages)
         assert(room.connectedClients.size == 1)
       })
 

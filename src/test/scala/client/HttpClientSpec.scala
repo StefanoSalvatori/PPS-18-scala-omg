@@ -24,24 +24,24 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   with TestConfig {
 
   private val serverAddress = "localhost"
-  private val serverPort = HTTP_CLIENT_SPEC_SERVER_PORT
+  private val serverPort = HttpClientSpecServerPort
   private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
 
-  private val ROOM_TYPE_NAME: String = "test_room"
-  private val SERVER_LAUNCH_AWAIT_TIME = 10 seconds
-  private val SERVER_SHUTDOWN_AWAIT_TIME = 10 seconds
+  private val RoomTypeName: String = "test_room"
+  private val ServerLaunchAwaitTime = 10 seconds
+  private val ServerShutdownAwaitTime = 10 seconds
 
 
   private var gameServer: GameServer = _
 
   override def beforeAll: Unit = {
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
-    Await.ready(gameServer.start(), SERVER_LAUNCH_AWAIT_TIME)
+    gameServer.defineRoom(RoomTypeName, () => ServerRoom())
+    Await.ready(gameServer.start(), ServerLaunchAwaitTime)
   }
 
   override def afterAll: Unit = {
-    Await.ready(gameServer.terminate(), SERVER_SHUTDOWN_AWAIT_TIME)
+    Await.ready(gameServer.terminate(), ServerShutdownAwaitTime)
     TestKit.shutdownActorSystem(system)
   }
 
@@ -51,7 +51,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
 
     "when asked to post a room, return the new room" in {
-      httpTestActor ! HttpPostRoom(ROOM_TYPE_NAME, Set.empty)
+      httpTestActor ! HttpPostRoom(RoomTypeName, Set.empty)
 
       expectMsgPF() {
         case HttpRoomResponse(room) =>
@@ -62,7 +62,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "when asked to get a rooms, return a set of rooms" in {
-      httpTestActor ! HttpGetRooms(ROOM_TYPE_NAME, FilterOptions.empty)
+      httpTestActor ! HttpGetRooms(RoomTypeName, FilterOptions.empty)
 
       expectMsgPF() {
         case HttpRoomSequenceResponse(rooms) =>  assert(rooms.isInstanceOf[Seq[SharedRoom]])
@@ -71,7 +71,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "when asked to open a web socket, return an actor ref related to that socket" in {
-      httpTestActor ! HttpPostRoom(ROOM_TYPE_NAME, Set.empty)
+      httpTestActor ! HttpPostRoom(RoomTypeName, Set.empty)
       val roomRes = expectMsgType[HttpRoomResponse]
 
       httpTestActor ! HttpSocketRequest(roomRes.room.roomId, BinaryProtocolSerializer())
