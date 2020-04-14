@@ -48,6 +48,7 @@ class MainMenu extends MainFrame {
 
   title = "Money Grabber"
   preferredSize = DefaultWindowSize
+  resizable = false
   contents = new BorderPanel {
     border = BorderFactory.createEmptyBorder(TitleMargin, TitleMargin, TitleMargin, TitleMargin)
     val menuTitle: Label = new Label("Money Grabber") {

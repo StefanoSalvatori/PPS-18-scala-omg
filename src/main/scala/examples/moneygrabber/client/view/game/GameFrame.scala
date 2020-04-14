@@ -13,6 +13,7 @@ case class GameFrame(gameView: GameView) extends Frame {
 
   title = "Money Grabber"
   contents = gameView
+  resizable = false
 
   def show(): Unit = {
     pack()

@@ -15,6 +15,7 @@ class MainMenuController(private val menu: MainMenu) extends Publisher {
   implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
   private val Host = "localhost"
   private val Port = 8080
+  private val client = Client(Host, Port)
 
   listenTo(MainMenu.MenuButtons: _*)
   reactions += {
@@ -30,8 +31,8 @@ class MainMenuController(private val menu: MainMenu) extends Publisher {
     val gameMode = RoomProperty("mode", mode.name)
     val gameStarted = RoomProperty("gameStarted", false)
     val filters = FilterOptions just gameMode =:= mode.name andThen gameStarted =:= false
-    val room = Await.result(Client(Host, Port).joinOrCreate("game", filters, Set(gameMode)), 10 seconds)
-    val size = room.properties("size").asInstanceOf[Int]
+    val room = Await.result(client.joinOrCreate("game", filters, Set(gameMode)), 10 seconds)
+    val size = room.properties("boardSize").asInstanceOf[Int]
     val view = new GameView((size, size), mode.numPlayers)
     new GameViewController(GameFrame(view), room).openGameView()
   }

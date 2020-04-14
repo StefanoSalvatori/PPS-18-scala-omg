@@ -16,7 +16,7 @@ class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPa
     case 0 => Color.red
     case 1 => Color.blue
     case 2 => Color.green
-    case 3 => Color.orange
+    case 3 => Color.pink
     case _ => Color.white
   }
   focusable = true

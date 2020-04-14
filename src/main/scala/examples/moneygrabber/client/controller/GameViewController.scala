@@ -30,10 +30,7 @@ case class GameViewController(private val frame: GameFrame, private val room: Cl
   listenTo(this.view, this.frame)
   reactions += {
     case ButtonPressedEvent(key) => this.room.send(keyToAction(key))
-    case GameFrameClosed => this.room.leave() onComplete {
-      case Success(value) => println("leave ok")
-      case Failure(_) => println("leave error")
-    }
+    case GameFrameClosed => this.room.leave()
   }
 
   room.onMessageReceived {
@@ -63,12 +60,11 @@ case class GameViewController(private val frame: GameFrame, private val room: Cl
 
   private def onGameEnd(gameState: Board): Unit = {
     SwingUtilities.invokeLater(() => {
-      import examples.moneygrabber.client.view.Utils._
+      import examples.moneygrabber.client.view.utils.Utils._
       room.leave()
       Dialog.showMessage(view,
         s"${view.PlayerIdToColor(gameState.winner.id).name} player won",
-        "Game Ended",
-        Dialog.Message.Plain)
+        "Game Ended", Dialog.Message.Plain)
       frame.close()
     })
 
