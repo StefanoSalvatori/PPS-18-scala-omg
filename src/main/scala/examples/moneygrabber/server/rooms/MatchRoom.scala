@@ -5,13 +5,13 @@ import examples.moneygrabber.common.{Board, GameModes}
 import server.room.{Client, ServerRoom, SynchronizedRoomState}
 
 case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
-  val size: Int = 20
-  val mode: String = GameModes.Max2.name
+  var size: Int = 20
+  var mode: String = GameModes.Max2.name
+  var gameStarted: Boolean = false
 
   private var gameState = Board.withRandomCoins((size, size), coinRatio = 0.1)
   //map clientId -> playerId
   private var players: Map[String, Int] = Map.empty
-  private var gameStarted = false
 
 
   override def onCreate(): Unit = {}
@@ -39,7 +39,7 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
       val direction: Direction = message.asInstanceOf[Direction]
       val playerId: Int = this.players(client.id)
       this.gameState = this.gameState.movePlayer(playerId, direction).takeCoins()
-      if(this.gameState.gameEnded) {
+      if (this.gameState.gameEnded) {
         broadcast(gameState)
         this.close()
       }

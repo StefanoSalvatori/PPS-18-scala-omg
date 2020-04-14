@@ -58,8 +58,10 @@ class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPa
   }
 
   def showPlayersPoints(players: Map[Int, Int]): Unit = {
-    this.pointsInfo.contents.map(_.asInstanceOf[PointsInfo])
-      .foreach(panel => panel.playerPoints.text = players(panel.playerId).toString)
+    players.foreach(entry => {
+      this.pointsInfo.contents.map(_.asInstanceOf[PointsInfo]).filter(_.playerId == entry._1)
+        .foreach(panel => panel.playerPoints.text = players(panel.playerId).toString)
+    })
   }
 
   def setPlayerColor(playerId: Int): Unit = {

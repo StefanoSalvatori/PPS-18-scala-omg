@@ -170,7 +170,7 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "not join a private room if a wrong password is provided" in {
-    val room = Await.result(client.createPrivateRoom(ROOM_TYPE_NAME, password = "pwd"), DefaultTimeout)
+    val room = Await.result(client.createPrivateRoom(RoomTypeName, password = "pwd"), DefaultTimeout)
     assertThrows[Exception] {
       val joinResponse = Await.result( client2.joinById(room.roomId, "pwd2"), DefaultTimeout)
     }
