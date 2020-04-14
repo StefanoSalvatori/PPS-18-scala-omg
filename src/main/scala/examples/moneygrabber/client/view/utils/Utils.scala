@@ -1,7 +1,6 @@
-package examples.moneygrabber.client.view
+package examples.moneygrabber.client.view.utils
 
 import java.awt.Color
-
 
 object Utils {
 
@@ -11,6 +10,7 @@ object Utils {
       case Color.BLUE => "Blue"
       case Color.GREEN => "Green"
       case Color.ORANGE => "Orange"
+      case Color.PINK => "Pink"
       case Color.WHITE => "White"
       case _ => color.toString
     }
