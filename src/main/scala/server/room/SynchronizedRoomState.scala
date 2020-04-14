@@ -3,6 +3,7 @@ package server.room
 
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.communication.CommunicationProtocol.ProtocolMessageType._
+import common.room.RoomProperty
 import server.room.RoomActor.StateSyncTick
 import server.utils.Timer
 
@@ -15,6 +16,7 @@ import server.utils.Timer
 trait SynchronizedRoomState[T <: Any with java.io.Serializable] { self: ServerRoom =>
 
   private val stateTimer = new Timer{ }
+  val ghi = 2
 
   /**
    * How often clients will be updated (time expressed in milliseconds)
@@ -43,6 +45,29 @@ trait SynchronizedRoomState[T <: Any with java.io.Serializable] { self: ServerRo
     self.roomActor ! StateSyncTick(c => c send RoomProtocolMessage(StateUpdate, c.id, currentState))
 
 }
+
+object SynchronizedRoomState {
+
+  private case class BasicServerRoomWithSynchronizedState() extends ServerRoom with SynchronizedRoomState[Integer] {
+    override def joinConstraints: Boolean = true
+    override def onCreate(): Unit = {}
+    override def onClose(): Unit = {}
+    override def onJoin(client: Client): Unit = {}
+    override def onLeave(client: Client): Unit = {}
+    override def onMessageReceived(client: Client, message: Any): Unit = {}
+    override def currentState: Integer = 0
+  }
+
+  private def apply(): BasicServerRoomWithSynchronizedState = BasicServerRoomWithSynchronizedState()
+
+  /**
+   * Getter of the synchronized state properties
+   *
+   * @return a set containing the defined properties
+   */
+  def defaultProperties: Set[RoomProperty] = ServerRoom propertyDifferenceFrom BasicServerRoomWithSynchronizedState()
+}
+
 
 
 

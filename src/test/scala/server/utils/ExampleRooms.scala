@@ -38,15 +38,10 @@ object ExampleRooms {
     override val worldUpdateRate: Int = RoomWithGameLoop.updateRate
 
     override def joinConstraints: Boolean = true
-
     override def onCreate(): Unit = {}
-
     override def onClose(): Unit = {}
-
     override def onJoin(client: Client): Unit = {}
-
     override def onLeave(client: Client): Unit = {}
-
     override def onMessageReceived(client: Client, message: Any): Unit = {}
 
     override def updateWorld(): Unit = {
@@ -57,7 +52,6 @@ object ExampleRooms {
     // Used for testing purpose
     def state: Int = count
     var receivedTicks: Int = 0
-
   }
 
   object RoomWithGameLoop {
@@ -104,7 +98,7 @@ object ExampleRooms {
 
   //________________________________________________
 
-  case class MyRoom() extends ServerRoom {
+  case class RoomWithProperty() extends ServerRoom {
 
     val a: Int = 0
     val b: String = "abc"

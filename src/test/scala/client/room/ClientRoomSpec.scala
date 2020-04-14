@@ -16,7 +16,7 @@ import akka.util.Timeout
 import common.http.Routes
 
 import common.room.{Room, RoomProperty}
-import server.utils.ExampleRooms.{MyRoom, NoPropertyRoom}
+import server.utils.ExampleRooms.{RoomWithProperty, NoPropertyRoom}
 
 import common.room.RoomJsonSupport
 import server.utils.ExampleRooms
@@ -53,7 +53,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   before {
     gameServer = GameServer(ServerAddress, ServerPort)
     gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState)
-    gameServer.defineRoom(ExampleRooms.myRoomType, MyRoom)
+    gameServer.defineRoom(ExampleRooms.myRoomType, RoomWithProperty)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
     logger debug s"Server started at $ServerAddress:$ServerPort"

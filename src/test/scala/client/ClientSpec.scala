@@ -11,7 +11,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.ServerRoom
 import server.utils.ExampleRooms
-import server.utils.ExampleRooms.{ClosableRoomWithState, MyRoom, NoPropertyRoom}
+import server.utils.ExampleRooms.{ClosableRoomWithState, RoomWithProperty, NoPropertyRoom}
 import common.room.RoomPropertyValueConversions._
 
 import scala.concurrent.duration._
@@ -47,7 +47,7 @@ class ClientSpec extends AnyFlatSpec
   before {
     gameServer = GameServer(serverAddress, serverPort)
     gameServer.defineRoom(ROOM_TYPE_NAME, () => ServerRoom())
-    gameServer.defineRoom(ExampleRooms.myRoomType, MyRoom)
+    gameServer.defineRoom(ExampleRooms.myRoomType, RoomWithProperty)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
     gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState)
 
