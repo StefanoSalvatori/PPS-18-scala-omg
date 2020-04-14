@@ -10,7 +10,6 @@ import server.utils.Timer
 trait GameLoop { self: ServerRoom =>
 
   private val worldTimer: Timer = new Timer{ }
-  val abc = 1
 
   /**
    * How often the world will be updated (time expressed in milliseconds)
