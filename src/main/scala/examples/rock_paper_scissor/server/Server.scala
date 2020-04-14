@@ -10,11 +10,11 @@ import scala.util.{Failure, Success}
 
 object Server extends App {
 
-  implicit val executor: ExecutionContext = ExecutionContext.global
-  val Host = "localhost"
-  val Port = 8080
+  implicit private val executor: ExecutionContext = ExecutionContext.global
+  private val Host = "localhost"
+  private val Port = 8080
 
-  val gameServer = GameServer(Host, Port)
+  private val gameServer = GameServer(Host, Port)
 
   //define room types to host matches
   gameServer defineRoom("classic", () => new ClassicMatchRoom())

@@ -38,7 +38,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   with RoomJsonSupport {
 
   private val ServerAddress = "localhost"
-  private val ServerPort = CLIENT_ROOM_SPEC_SERVER_PORT
+  private val ServerPort = ClientRoomSpecServerPort
 
   private val ServerLaunchAwaitTime = 10 seconds
   private val ServerShutdownAwaitTime = 10 seconds

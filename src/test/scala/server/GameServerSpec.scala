@@ -30,120 +30,120 @@ class GameServerSpec extends AnyFlatSpec
 
   implicit val actorSystem: ActorSystem = ActorSystem()
 
-  private val MAX_WAIT_REQUESTS = 5 seconds
-  private val MAX_WAIT_CONNECTION_POOL_SHUTDOWN = 15 seconds
+  private val MaxWaitRequests = 5 seconds
+  private val MaxWaitConnectionPoolShutdown = 15 seconds
 
-  private val MAX_WAIT_SERVER_STARTUP = 5 seconds
-  private val MAX_WAIT_SERVER_SHUTDOWN = 5 seconds
+  private val MaxWaitServerStartup = 5 seconds
+  private val MaxWaitServerShutdown = 5 seconds
 
-  private val HOST: String = "localhost"
-  private val PORT: Int = GAMESERVER_SPEC_SERVER_PORT
+  private val Host: String = "localhost"
+  private val Port: Int = GameServerSpecServerPort
 
-  private val ADDITIONAL_PATH = "test"
-  private val ADDITIONAL_TEST_ROUTES =
-    path(ADDITIONAL_PATH) {
+  private val AdditionalPath = "test"
+  private val AdditionalTestRoutes =
+    path(AdditionalPath) {
       get {
         complete(StatusCodes.OK)
       }
     }
 
-  private val server: GameServer = GameServer(HOST, PORT, ADDITIONAL_TEST_ROUTES)
+  private val server: GameServer = GameServer(Host, Port, AdditionalTestRoutes)
 
   behavior of "Game Server facade"
 
 
   after {
-    Await.result(Http().shutdownAllConnectionPools(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
+    Await.result(Http().shutdownAllConnectionPools(), MaxWaitConnectionPoolShutdown)
   }
 
 
   override def afterAll(): Unit = {
-    Await.ready(this.server.terminate(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.ready(this.server.terminate(), MaxWaitServerShutdown)
     TestKit.shutdownActorSystem(system)
   }
 
   it should "allow the creation of a server with a specified address and port" in {
-    assert(this.server.host equals HOST)
-    assert(this.server.port equals PORT)
+    assert(this.server.host equals Host)
+    assert(this.server.port equals Port)
   }
 
 
   it should "not accept requests before start() is called" in {
     assertThrows[Exception] {
-      Await.result(this.makeEmptyRequest(), MAX_WAIT_REQUESTS)
+      Await.result(this.makeEmptyRequest(), MaxWaitRequests)
     }
   }
 
   it should "throw an exception if we call start() but the port we want to use is already binded" in {
-    val bind = Await.result(Http(actorSystem).bind(HOST, PORT).to(Sink.ignore).run(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
+    val bind = Await.result(Http(actorSystem).bind(Host, Port).to(Sink.ignore).run(), MaxWaitConnectionPoolShutdown)
     assertThrows[Exception] {
-      Await.result(server.start(), MAX_WAIT_SERVER_STARTUP)
+      Await.result(server.start(), MaxWaitServerStartup)
     }
-    Await.ready(bind.unbind(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
+    Await.ready(bind.unbind(), MaxWaitConnectionPoolShutdown)
   }
 
 
   it should "allow to start a server listening for http requests" in {
-    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    val res = Await.result(this.makeEmptyRequest(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.start(), MaxWaitServerStartup)
+    val res = Await.result(this.makeEmptyRequest(), MaxWaitServerStartup)
     assert(res.isResponse())
     res.discardEntityBytes()
-    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MaxWaitServerShutdown)
 
   }
 
 
   it should "stop the server when stop() is called" in {
-    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.start(), MaxWaitServerStartup)
+    Await.result(this.server.stop(), MaxWaitServerShutdown)
     assertThrows[Exception] {
-      Await.result(this.makeEmptyRequestAtRooms, MAX_WAIT_REQUESTS)
+      Await.result(this.makeEmptyRequestAtRooms, MaxWaitRequests)
     }
   }
 
   it should "throw an IllegalStateException when stop() is called before start()" in {
     assertThrows[IllegalStateException] {
-      Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
+      Await.result(this.server.stop(), MaxWaitServerShutdown)
     }
   }
 
   it should s"respond to requests received at ${Routes.rooms}" in {
-    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    val response = Await.result(this.makeEmptyRequestAtRooms, MAX_WAIT_REQUESTS)
+    Await.result(this.server.start(), MaxWaitServerStartup)
+    val response = Await.result(this.makeEmptyRequestAtRooms, MaxWaitRequests)
     assert(response.status equals StatusCodes.OK)
     response.discardEntityBytes()
-    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MaxWaitServerShutdown)
 
   }
 
   it should "restart calling start() after stop()" in {
-    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
-    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    val res = Await.result(this.makeEmptyRequest(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.start(), MaxWaitServerStartup)
+    Await.result(this.server.stop(), MaxWaitServerShutdown)
+    Await.result(this.server.start(), MaxWaitServerStartup)
+    val res = Await.result(this.makeEmptyRequest(), MaxWaitServerStartup)
     assert(res.isResponse())
 
-    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MaxWaitServerShutdown)
 
 
   }
 
   it should "throw an IllegalStateException if start() is called twice" in {
-    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.start(), MaxWaitServerStartup)
     assertThrows[IllegalStateException] {
-      Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+      Await.result(this.server.start(), MaxWaitServerStartup)
     }
-    Await.result(this.server.stop(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.stop(), MaxWaitServerStartup)
 
   }
 
   it should "allow to specify behaviour during stop" in {
-    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.start(), MaxWaitServerStartup)
     var flag = false
     this.server.onStop {
       flag = true
     }
-    Await.result(this.server.stop(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.stop(), MaxWaitServerStartup)
     flag shouldBe true
   }
 
@@ -152,30 +152,30 @@ class GameServerSpec extends AnyFlatSpec
     this.server.onStart {
       flag = true
     }
-    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.start(), MaxWaitServerStartup)
     flag shouldBe true
 
-    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MaxWaitServerShutdown)
 
   }
 
   it should "use the additional routes passed as parameter" in {
-    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
-    val response = Await.result(this.makeEmptyRequestAtPath(ADDITIONAL_PATH), MAX_WAIT_REQUESTS)
+    Await.result(this.server.start(), MaxWaitServerStartup)
+    val response = Await.result(this.makeEmptyRequestAtPath(AdditionalPath), MaxWaitRequests)
     response.status shouldBe StatusCodes.OK
     response.discardEntityBytes()
-    Await.result(this.server.stop(), MAX_WAIT_SERVER_SHUTDOWN)
+    Await.result(this.server.stop(), MaxWaitServerShutdown)
 
   }
 
   it should "create rooms" in {
     this.server.defineRoom("test", () => ServerRoom())
-    Await.result(this.server.start(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.start(), MaxWaitServerStartup)
     this.server.createRoom("test")
-    val httpResult = Await.result(makeEmptyRequestAtRooms, MAX_WAIT_REQUESTS)
-    val roomsList = Await.result(Unmarshal(httpResult).to[Seq[SharedRoom]], MAX_WAIT_REQUESTS)
+    val httpResult = Await.result(makeEmptyRequestAtRooms, MaxWaitRequests)
+    val roomsList = Await.result(Unmarshal(httpResult).to[Seq[SharedRoom]], MaxWaitRequests)
     roomsList should have size 1
-    Await.result(this.server.stop(), MAX_WAIT_SERVER_STARTUP)
+    Await.result(this.server.stop(), MaxWaitServerStartup)
 
 
   }
@@ -186,14 +186,14 @@ class GameServerSpec extends AnyFlatSpec
   }
 
   private def makeEmptyRequestAtRooms: Future[HttpResponse] = {
-    Http().singleRequest(HttpRequests.getRooms(Routes.httpUri(HOST, PORT))(FilterOptions.empty))
+    Http().singleRequest(HttpRequests.getRooms(Routes.httpUri(Host, Port))(FilterOptions.empty))
   }
 
   private def makeEmptyRequestAtRoomsWithType(roomType: String): Future[HttpResponse] = {
-    Http().singleRequest(HttpRequests.getRoomsByType(Routes.httpUri(HOST, PORT))(roomType, FilterOptions.empty))
+    Http().singleRequest(HttpRequests.getRoomsByType(Routes.httpUri(Host, Port))(roomType, FilterOptions.empty))
   }
 
   private def makeEmptyRequestAtPath(path: String): Future[HttpResponse] = {
-    Http().singleRequest(HttpRequest(uri = Routes.httpUri(HOST,PORT) + "/" + path))
+    Http().singleRequest(HttpRequest(uri = Routes.httpUri(Host,Port) + "/" + path))
   }
 }

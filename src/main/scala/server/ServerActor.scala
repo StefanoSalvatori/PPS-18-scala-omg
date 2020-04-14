@@ -11,7 +11,7 @@ import scala.language.postfixOps
 
 object ServerActor {
 
-  private val DEFAULT_DEADLINE: FiniteDuration = 3 seconds
+  private val DefaultDeadline: FiniteDuration = 3 seconds
 
   sealed trait ServerEvent
 
@@ -34,7 +34,7 @@ object ServerActor {
   object ServerAlreadyStopped extends Error("Server already stopped")
   object ServerIsStopping extends Error("Server is stopping")
 
-  def apply(terminationDeadline: FiniteDuration = DEFAULT_DEADLINE, additionalRoutes: Route): Props =
+  def apply(terminationDeadline: FiniteDuration = DefaultDeadline, additionalRoutes: Route): Props =
     Props(classOf[ServerActor], terminationDeadline, additionalRoutes)
 }
 

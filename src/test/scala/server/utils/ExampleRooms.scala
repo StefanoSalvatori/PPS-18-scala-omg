@@ -4,6 +4,22 @@ import server.room.{Client, SynchronizedRoomState, ServerRoom}
 
 object ExampleRooms {
 
+  case class RoomWithReconnection() extends ServerRoom {
+    private val ReconnectionTime = 10 //s
+    override def onCreate(): Unit = {  }
+    override def onClose(): Unit = {}
+    override def onJoin(client: Client): Unit = {}
+    override def onLeave(client: Client): Unit = {
+      this.allowReconnection(client, ReconnectionTime)
+    }
+    override def onMessageReceived(client: Client, message: Any): Unit = { }
+    override def joinConstraints: Boolean = true
+  }
+
+  val roomWithReconnection= "roomWithReconnection"
+
+  //________________________________________________
+
   case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
     override def onCreate(): Unit = {
       this.startStateUpdate()
