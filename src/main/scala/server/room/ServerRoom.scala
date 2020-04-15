@@ -30,7 +30,6 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   /**
    * if true, the room will be automatically closed when no client is connected
    */
-  val autoClose: Boolean = true
   private var clients: Seq[Client] = Seq.empty
   private var closed = false
 
@@ -41,6 +40,8 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   //TODO: need to be syncronized if it's immutable?
   //clients that are allowed to reconnect with the associate expiration timer
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
+
+  def autoClose: Boolean = false
 
   /**
    * Add a client to the room. Triggers the onJoin
@@ -287,6 +288,7 @@ object ServerRoom {
   /**
    * From a given room, it calculates properties not in common with a basic server room.
    * Useful for calculating just properties of a custom room, without the one of the basic one.
+   *
    * @param runtimeRoom the room with its own custom properties
    * @return the set of property of the custom room that are not shared with the basic server room
    */
@@ -302,7 +304,7 @@ object ServerRoom {
    *
    * @return the room
    */
-  def apply(autoClose: Boolean = true): ServerRoom = BasicServerRoom(autoClose)
+  def apply(autoClose: Boolean = false): ServerRoom = BasicServerRoom(autoClose)
 
   /**
    * Getter of the default room properties defined in a server room
@@ -318,12 +320,19 @@ object ServerRoom {
 /**
  * A room with empty behavior
  */
-private case class BasicServerRoom(override val autoClose: Boolean = true) extends ServerRoom {
+private case class BasicServerRoom(automaticClose: Boolean = true) extends ServerRoom {
+  override def autoClose: Boolean = this.automaticClose
+
   override def onCreate(): Unit = {}
+
   override def onClose(): Unit = {}
+
   override def onJoin(client: Client): Unit = {}
+
   override def onLeave(client: Client): Unit = {}
+
   override def onMessageReceived(client: Client, message: Any): Unit = {}
+
   override def joinConstraints: Boolean = true
 }
 

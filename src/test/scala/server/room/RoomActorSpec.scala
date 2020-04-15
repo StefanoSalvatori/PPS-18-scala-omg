@@ -5,16 +5,16 @@ import java.util.UUID
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpecLike
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.room.RoomActor._
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.room.Room
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.RoomHandler
+import server.room.RoomActor._
+
 import scala.concurrent.duration._
-import scala.concurrent.duration.Duration
 
 class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
   with ImplicitSender
@@ -34,7 +34,7 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
 
 
   before {
-    room = ServerRoom()
+    room = ServerRoom(autoClose = true)
     roomHandler = RoomHandler()
     roomActor = system actorOf RoomActor(room, roomHandler)
   }
