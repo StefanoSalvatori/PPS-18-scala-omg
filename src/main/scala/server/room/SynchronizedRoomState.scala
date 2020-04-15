@@ -25,7 +25,7 @@ trait SynchronizedRoomState[T <: Any with java.io.Serializable] { self: ServerRo
   /**
    * Start sending state to all clients
    */
-  def startStateUpdate(): Unit =
+  def startStateSynchronization(): Unit =
     stateTimer.scheduleAtFixedRate(() => generateStateSyncTick(), 0, stateUpdateRate)
 
   /**

@@ -81,7 +81,7 @@ object ExampleRooms {
 
   case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
     override def onCreate(): Unit = {
-      this.startStateUpdate()
+      this.startStateSynchronization()
     }
     override def onClose(): Unit = {}
     override def onJoin(client: Client): Unit = {}
