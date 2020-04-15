@@ -7,8 +7,7 @@ import akka.actor.ActorRef
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.stream.{Materializer, OverflowStrategy}
-import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
-import common.communication.SocketSerializer
+import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage, RoomProtocolMessageSerializer}
 import common.room.Room.RoomPassword
 import server.communication.SocketFlow
 import server.room.Client
@@ -24,9 +23,9 @@ import scala.util.Success
  *
  * @param roomActor the actor that will receive the messages
  */
-case class RoomSocketFlow(private val roomActor: ActorRef,
-                          private val parser: SocketSerializer[RoomProtocolMessage])
-                         (implicit materializer: Materializer) extends SocketFlow {
+case class RoomSocket(private val roomActor: ActorRef,
+                      private val parser: RoomProtocolMessageSerializer)
+                     (implicit materializer: Materializer) extends SocketFlow {
 
 
   def createFlow(overflowStrategy: OverflowStrategy = OverflowStrategy.dropHead,
@@ -47,8 +46,8 @@ case class RoomSocketFlow(private val roomActor: ActorRef,
         this.parser.parseFromSocket(_) match {
           case Success(RoomProtocolMessage(ProtocolMessageType.JoinRoom, sessionId, payload)) =>
             //if sessionId is given create the client with that id
-            if(!sessionId.isEmpty) {
-              client =  Client.asActor(sessionId, socketActor)
+            if (!sessionId.isEmpty) {
+              client = Client.asActor(sessionId, socketActor)
             }
             roomActor ! Join(client, sessionId, payload.asInstanceOf[RoomPassword])
           case Success(RoomProtocolMessage(ProtocolMessageType.LeaveRoom, _, _)) =>

@@ -12,7 +12,7 @@ import scala.util.{Failure, Success, Try}
  * <br>
  * It handles them as text strings in the form <em>action{separator}sessionId{separator}payload</em>
  */
-object TextProtocolSerializer extends SocketSerializer[RoomProtocolMessage] {
+object TextProtocolSerializer extends RoomProtocolMessageSerializer {
   val SEPARATOR = ":"
   private val ProtocolFieldsCount = 3
 

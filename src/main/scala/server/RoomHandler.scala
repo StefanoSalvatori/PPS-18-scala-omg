@@ -6,7 +6,7 @@ import akka.stream.scaladsl.Flow
 import common.room.Room.{RoomId, RoomPassword, SharedRoom}
 import common.room.{FilterOptions, RoomProperty, RoomPropertyValue}
 import common.communication.BinaryProtocolSerializer
-import server.room.socket.RoomSocketFlow
+import server.room.socket.RoomSocket
 import server.room.{RoomActor, ServerRoom}
 
 trait RoomHandler {
@@ -111,7 +111,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     this.roomsByType
       .flatMap(_._2)
       .find(_._1.roomId == roomId)
-      .map(room => RoomSocketFlow(room._2, BinaryProtocolSerializer()).createFlow())
+      .map(room => RoomSocket(room._2, BinaryProtocolSerializer()).createFlow())
   }
 
   override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
@@ -119,7 +119,6 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       case Some(value) => value.keys.toSeq
       case None => Seq.empty
     }
-    println(this.getAvailableRooms(filterOptions).map(_.roomId))
     this.getAvailableRooms(filterOptions).filter(r => roomsType.map(_.roomId).contains(r.roomId))
   }
 

@@ -4,7 +4,7 @@ import examples.moneygrabber.server.rooms.MatchRoom
 import server.GameServer
 
 object Server extends App {
-  private val Host = "localhost"
+  private val Host = "192.168.1.4"
   private val Port = 8080
   val server: GameServer = GameServer(Host, Port)
   server onStart {

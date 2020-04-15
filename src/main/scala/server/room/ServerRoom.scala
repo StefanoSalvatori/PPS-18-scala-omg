@@ -24,8 +24,13 @@ trait PrivateRoomSupport {
     password == Room.defaultPublicPassword || password == providedPassword
 }
 
+
 trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   override val roomId: RoomId = UUID.randomUUID.toString
+  /**
+   * if true, the room will be automatically closed when no client is connected
+   */
+  val autoClose: Boolean = true
   private var clients: Seq[Client] = Seq.empty
   private var closed = false
 
@@ -74,6 +79,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 
   /**
    * Allow the given client to reconnect to this room within the specified amount of time
+   *
    * @param client the reconnecting client
    * @param period time in seconds within which the client can reconnect
    */
@@ -246,6 +252,9 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
 object ServerRoom {
   private case class PairRoomProperty[T](name: String, value: T)
 
+  import scala.concurrent.duration._
+  val AutomaticCloseTimeout: FiniteDuration = 5 seconds
+
   implicit val serverRoomToSharedRoom: ServerRoom => SharedRoom = serverRoom => {
     // Create the shared room
     val sharedRoom = SharedRoom(serverRoom.roomId)
@@ -267,7 +276,7 @@ object ServerRoom {
    *
    * @return the room
    */
-  def apply(): ServerRoom = BasicServerRoom()
+  def apply(autoClose: Boolean = true): ServerRoom = BasicServerRoom(autoClose)
 
   /**
    * Getter of the default room properties defined in a server room
@@ -283,7 +292,7 @@ object ServerRoom {
 /**
  * A room with empty behavior
  */
-private case class BasicServerRoom() extends ServerRoom {
+private case class BasicServerRoom(override val autoClose: Boolean = true) extends ServerRoom {
   override def onCreate(): Unit = {}
 
   override def onClose(): Unit = {}
