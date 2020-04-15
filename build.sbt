@@ -8,6 +8,7 @@ val akkaHttpVersion = "10.1.11"
 scalastyleFailOnWarning := true
 
 libraryDependencies ++= Seq(
+  "org.scala-lang.modules" %% "scala-swing" % "2.1.1",
   "org.scalatest" %% "scalatest" % "3.1.1" % "test",
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
@@ -20,8 +21,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "org.apache.commons" % "commons-lang3" % "3.3.2",
-
-
   "ch.qos.logback" % "logback-classic" % "1.2.3")
 
 libraryDependencies += "it.unibo.alice.tuprolog" % "tuprolog" % "3.1"

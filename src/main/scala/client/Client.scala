@@ -135,7 +135,6 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     }
 
 
-
   override def joinById(roomId: RoomId, password: RoomPassword = Room.defaultPublicPassword): Future[ClientRoom] = {
     ifNotJoined(roomId, {
       val clientRoom = ClientRoom(coreClient, httpServerUri, roomId, Map())
@@ -182,31 +181,20 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   }
 
   /**
-   * @returns a future containing the first successful result or contains the last failure if all futures have failed
+   * @param rooms to check
+   * @return the first joinable room in the sequence
    */
-  private def firstSucceededOf[T](futures: TraversableOnce[Future[T]]): Future[T] = {
-    val p = Promise[T]()
-    val size = futures.size
-    val failureCount = new AtomicInteger(0)
-
-    futures foreach {
-      _.onComplete {
-        case Success(v) => p.trySuccess(v)
-        case Failure(e) =>
-          val count = failureCount.incrementAndGet
-          if (count == size) p.tryFailure(e)
-      }
-    }
-    p.future
-  }
-
-  private def findJoinable(rooms: Seq[ClientRoom]): Future[ClientRoom] = {
-    firstSucceededOf {
-      rooms.map { room =>
-        for {_ <- room.join()} yield {
-          room
+  @scala.annotation.tailrec
+  private def findJoinable(rooms: Seq[ClientRoom]): Future[ClientRoom] =
+    rooms match {
+      case head +: _ =>
+        try {
+          Await.result(head.join(), 5 seconds)
+          Future.successful(head)
+        } catch {
+          case _: Exception => findJoinable(rooms.tail)
         }
-      }
+      case Nil => Future.failed(new Exception("no room to join"))
+
     }
-  }
 }

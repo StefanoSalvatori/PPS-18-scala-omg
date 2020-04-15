@@ -10,7 +10,6 @@ trait BasicActor extends Actor with LazyLogging {
   implicit val executionContext: ExecutionContext = system.dispatcher
 
   val fallbackReceive: PartialFunction[Any, Unit] = {
-    case msg =>
-      logger debug s"Ignoring unknown message: $msg"
+    case msg => logger debug s"Ignoring unknown message: $msg"
   }
 }

@@ -89,7 +89,7 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
                          (implicit val system: ActorSystem) extends ClientRoom {
 
   private implicit val timeout: Timeout = 5 seconds
-  private implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
+  private implicit val executionContext: ExecutionContextExecutor = system.dispatcher
   private implicit var innerActor: Option[ActorRef] = None
 
 

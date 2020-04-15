@@ -1,6 +1,6 @@
 package server.utils
 
-import server.room.{Client, RoomState, ServerRoom}
+import server.room.{Client, SynchronizedRoomState, ServerRoom}
 
 object ExampleRooms {
 
@@ -20,7 +20,7 @@ object ExampleRooms {
 
   //________________________________________________
 
-  case class ClosableRoomWithState() extends ServerRoom with RoomState[String] {
+  case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
     override def onCreate(): Unit = {
       this.startStateUpdate()
     }
