@@ -5,7 +5,7 @@ import java.util.TimerTask
 /**
  * Utility trait to wrap a [[java.util.Timer]]
  */
-trait Timer {
+sealed trait Timer {
 
   private var timer: Option[java.util.Timer] = None
 
@@ -62,4 +62,4 @@ object Timer {
   def apply(): Timer = TimerImpl()
 }
 
-case class TimerImpl() extends Timer
+private case class TimerImpl() extends Timer

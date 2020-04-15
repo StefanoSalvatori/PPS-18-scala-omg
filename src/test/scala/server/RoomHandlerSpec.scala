@@ -101,10 +101,10 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
   }
 
   it should "not return rooms by type that does not match filters" in {
-    roomHandler defineRoomType(myRoomType, MyRoom)
-    roomHandler createRoom myRoomType
+    roomHandler defineRoomType(RoomType, MyRoom)
+    roomHandler createRoom RoomType
     val property = RoomProperty("a", 2)
-    roomHandler.getRoomsByType(myRoomType, FilterOptions just property =:= 0) should have size 0
+    roomHandler.getRoomsByType(RoomType, FilterOptions just property =:= 0) should have size 0
   }
 
   "An empty filter" should "not affect any room" in {

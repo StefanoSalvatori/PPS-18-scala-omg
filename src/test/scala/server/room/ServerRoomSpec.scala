@@ -229,14 +229,38 @@ class ServerRoomSpec extends AnyWordSpecLike
 
     "allow reconnections within a specified period" in {
       serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
-      serverRoom.allowReconnection(testClient, 3 )
+      serverRoom.allowReconnection(testClient, 3)
       serverRoom.removeClient(testClient)
       assert(serverRoom.tryReconnectClient(testClient))
     }
 
+    "allow reconnections of multiple clients" in {
+      val clients = (0 to 2).map(_ => TestClient(UUID.randomUUID().toString))
+      clients.foreach(serverRoom.tryAddClient(_, Room.defaultPublicPassword))
+      clients.foreach(serverRoom.allowReconnection(_, 5))
+      clients.foreach(serverRoom.removeClient(_))
+
+
+      assert(clients.forall(serverRoom.tryReconnectClient(_)))
+    }
+
+    "dont accept reconnections of not allowed clients" in {
+      val allowed = (0 to 2).map(_ => TestClient(UUID.randomUUID().toString))
+      val notAllowed = (0 to 2).map(_ => TestClient(UUID.randomUUID().toString))
+
+      allowed.foreach(serverRoom.tryAddClient(_, Room.defaultPublicPassword))
+      notAllowed.foreach(serverRoom.tryAddClient(_, Room.defaultPublicPassword))
+
+      allowed.foreach(serverRoom.allowReconnection(_, 5))
+      notAllowed.foreach(serverRoom.removeClient(_))
+
+
+      assert(notAllowed.forall(!serverRoom.tryReconnectClient(_)))
+    }
+
     "don't accept reconnections after the period expires" in {
       serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
-      serverRoom.allowReconnection(testClient, 3 )
+      serverRoom.allowReconnection(testClient, 3)
       serverRoom.removeClient(testClient)
       Thread.sleep(5000)
       assert(!serverRoom.tryReconnectClient(testClient))
@@ -244,7 +268,7 @@ class ServerRoomSpec extends AnyWordSpecLike
 
     "add the client to the list of connected clients after a reconnection" in {
       serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
-      serverRoom.allowReconnection(testClient, 3 )
+      serverRoom.allowReconnection(testClient, 3)
       serverRoom.removeClient(testClient)
       serverRoom.tryReconnectClient(testClient)
       assert(serverRoom.connectedClients.contains(testClient))
