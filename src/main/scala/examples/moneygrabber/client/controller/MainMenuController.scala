@@ -1,12 +1,13 @@
 package examples.moneygrabber.client.controller
 
-import client.{Client, ClientImpl}
+import client.Client
 import common.room.{FilterOptions, RoomProperty}
 import examples.moneygrabber.client.view.game.{GameFrame, GameView}
 import examples.moneygrabber.client.view.menu.MainMenu
 import examples.moneygrabber.client.view.menu.MainMenu.{FourPlayers, Quit, TwoPlayers}
 import examples.moneygrabber.common.GameModes
 import examples.moneygrabber.common.GameModes.GameMode
+import examples.moneygrabber.server.Server
 
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
 import scala.swing.Publisher

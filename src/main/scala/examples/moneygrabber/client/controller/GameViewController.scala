@@ -3,6 +3,7 @@ package examples.moneygrabber.client.controller
 import client.room.ClientRoom
 import examples.moneygrabber.client.view.game.GameFrame.GameFrameClosed
 import examples.moneygrabber.client.view.game.GameGrid.ButtonPressedEvent
+import examples.moneygrabber.client.view.game.GameView.{GameEnd, GameStarted}
 import examples.moneygrabber.client.view.game.{GameFrame, GameView}
 import examples.moneygrabber.common.Board
 import examples.moneygrabber.common.Entities.{Direction, Down, Left, Right, Up}
@@ -11,7 +12,6 @@ import javax.swing.SwingUtilities
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.swing.event.Key
 import scala.swing.{Dialog, Publisher}
-import scala.util.{Failure, Success}
 
 object GameViewController {
   def keyToAction(key: Key.Value): Direction = key match {
@@ -43,6 +43,7 @@ case class GameViewController(private val frame: GameFrame, private val room: Cl
   room.onStateChanged(state => {
     val gameState = state.asInstanceOf[Board]
     if (!gameState.gameEnded) {
+      this.frame.gameView.setGameStatus(GameStarted)
       this.updateView(gameState)
     }
   })
@@ -61,6 +62,7 @@ case class GameViewController(private val frame: GameFrame, private val room: Cl
   private def onGameEnd(gameState: Board): Unit = {
     SwingUtilities.invokeLater(() => {
       import examples.moneygrabber.client.view.utils.Utils._
+      this.frame.gameView.setGameStatus(GameEnd)
       room.leave()
       Dialog.showMessage(view,
         s"${view.PlayerIdToColor(gameState.winner.id).name} player won",

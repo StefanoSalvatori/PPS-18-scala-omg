@@ -3,9 +3,17 @@ package examples.moneygrabber.client.view.game
 import java.awt.Color
 
 import examples.moneygrabber.client.view.game.GameGrid.ButtonPressedEvent
+import examples.moneygrabber.client.view.game.GameView.{GameStatus, WaitingPlayers}
 
 import scala.swing._
 import scala.swing.event.KeyPressed
+
+object GameView {
+  class GameStatus(val text: String)
+  case object WaitingPlayers extends GameStatus(s"Waiting players...")
+  case object GameStarted extends GameStatus("Game started!")
+  case object GameEnd extends GameStatus("Game ended")
+}
 
 
 class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPanel(Orientation.Vertical) {
@@ -20,6 +28,9 @@ class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPa
     case _ => Color.white
   }
   focusable = true
+  private val gameStatus: Label = new Label {
+    text = WaitingPlayers.text
+  }
   private val playerInfo: FlowPanel = new FlowPanel {
     contents += new Label("You are:")
     contents += new Button {
@@ -32,7 +43,8 @@ class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPa
       contents += new PointsInfo(id)
     }
   }
-  private val topPanel: Panel = new GridPanel(1, 2) {
+  private val topPanel: Panel = new GridPanel(1, 3) {
+    contents += gameStatus
     contents += playerInfo
     contents += pointsInfo
   }
@@ -67,6 +79,10 @@ class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPa
 
   def setPlayerColor(playerId: Int): Unit = {
     this.playerInfo.contents.find(_.isInstanceOf[Button]).foreach(_.background = PlayerIdToColor(playerId))
+  }
+
+  def setGameStatus(state: GameStatus): Unit = {
+    this.gameStatus.text = state.text
   }
 
   private class PointsInfo(val playerId: Int) extends FlowPanel {
