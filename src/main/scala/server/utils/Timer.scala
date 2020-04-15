@@ -1,12 +1,43 @@
 package server.utils
 
 import java.util.TimerTask
+import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 
-/**
- * Utility trait to wrap a [[java.util.Timer]]
- */
 trait Timer {
+  /**
+   * Schedule a given task at a fixed rate. The task will be added to a task queue if other scheduled tasks are running
+   *
+   * @param task   the task to schedule
+   * @param delay  the initial delay
+   * @param period the period
+   */
+  def scheduleAtFixedRate(task: () => Unit, delay: Long, period: Long): Unit
 
+  /**
+   * Schedule the execution of the given task. The task will be added to a task queue if other scheduled tasks are running
+   *
+   * @param task  the task to execute
+   * @param delay the initial delay
+   */
+  def scheduleOnce(task: () => Unit, delay: Long): Unit
+
+  /**
+   * Cancel the execution of all tasks and reset the timer
+   */
+  def stopTimer(): Unit
+}
+
+
+object Timer {
+  def apply(): Timer = JavaUtilTimer()
+
+  def withExecutor(): Timer = ExecutorTimer()
+}
+
+case class JavaUtilTimer() extends Timer {
+  /**
+   * Utility trait to wrap a [[java.util.Timer]]
+   */
   private var timer: Option[java.util.Timer] = None
 
   def started: Boolean = this.timer.nonEmpty
@@ -20,7 +51,8 @@ trait Timer {
 
   /**
    * Schedules the specified task for execution after the specified delay.
-   * @param task the task to be executed
+   *
+   * @param task  the task to be executed
    * @param delay millis
    */
   def scheduleOnce(task: () => Unit, delay: Long): Unit = {
@@ -58,8 +90,30 @@ trait Timer {
   }
 }
 
-object Timer {
-  def apply(): Timer = TimerImpl()
-}
+case class ExecutorTimer() extends Timer {
+  private var executor: Option[ScheduledThreadPoolExecutor] = Some(createExecutor())
 
-case class TimerImpl() extends Timer
+  override def scheduleAtFixedRate(task: () => Unit, delay: Long, period: Long): Unit =
+    getOrCreate().scheduleAtFixedRate(() => task(), delay, period, TimeUnit.MILLISECONDS)
+
+
+  override def scheduleOnce(task: () => Unit, delay: Long): Unit = {
+    getOrCreate().schedule(new Runnable {
+      override def run(): Unit = task()
+    }, delay, TimeUnit.MILLISECONDS)
+  }
+
+  override def stopTimer(): Unit = {
+    this.executor.foreach(_.shutdown())
+    this.executor = None
+  }
+
+  private def getOrCreate(): ScheduledThreadPoolExecutor = {
+    this.executor.getOrElse({
+      this.executor = Some(createExecutor())
+      this.executor.get
+    })
+  }
+
+  private def createExecutor(): ScheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1)
+}
