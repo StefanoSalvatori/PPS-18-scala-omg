@@ -66,10 +66,9 @@ trait ServerRoom extends BasicRoom
   with PrivateRoomSupport
   with RoomLockingSupport
   with LazyLogging {
+
   override val roomId: RoomId = UUID.randomUUID.toString
-  /**
-   * if true, the room will be automatically closed when no client is connected
-   */
+
   private var clients: Seq[Client] = Seq.empty
   private var closed = false
 
@@ -81,6 +80,9 @@ trait ServerRoom extends BasicRoom
   //clients that are allowed to reconnect with the associate expiration timer
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
+  /**
+   * if true, the room will be automatically closed when no client is connected
+   */
   def autoClose: Boolean = false
 
   /**
@@ -358,6 +360,7 @@ object ServerRoom {
    * A room with empty behavior
    */
   private case class BasicServerRoom(automaticClose: Boolean) extends ServerRoom {
+    override def autoClose: Boolean = this.automaticClose
     override def onCreate(): Unit = { }
     override def onClose(): Unit = { }
     override def onJoin(client: Client): Unit = { }

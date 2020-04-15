@@ -97,7 +97,6 @@ class RoomActor(private val serverRoom: ServerRoom,
       serverRoom.asInstanceOf[GameLoop].updateWorld()
   }
 
-
   private def checkAutoClose(): Boolean =
     this.serverRoom.autoClose && this.serverRoom.connectedClients.isEmpty && !this.timers.isTimerActive(AutoCloseRoomTimer)
 

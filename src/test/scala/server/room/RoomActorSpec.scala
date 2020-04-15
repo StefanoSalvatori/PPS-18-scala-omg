@@ -71,7 +71,7 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       roomActor ! Leave(testClient)
       expectMsg(ClientLeaved)
 
-      room.allowReconnection(testClient, 5000)
+      room.allowReconnection(testClient, 5000) //scalastyle:ignore magic.number
       val fakeClient = makeClient(res.sessionId)
 
       roomActor ! Join(fakeClient, fakeClient.id, Room.defaultPublicPassword)
