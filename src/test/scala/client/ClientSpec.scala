@@ -3,8 +3,6 @@ package client
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import com.typesafe.scalalogging.LazyLogging
-import common.TestConfig
-import common.room.RoomPropertyValueConversions._
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import common.TestConfig
 import org.scalatest.flatspec.AnyFlatSpec
@@ -13,7 +11,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.ServerRoom
 import server.utils.ExampleRooms
-import server.utils.ExampleRooms.{ClosableRoomWithState, MyRoom, NoPropertyRoom, RoomWithReconnection}
+import server.utils.ExampleRooms.{ClosableRoomWithState, NoPropertyRoom, RoomWithProperty, RoomWithReconnection}
 import common.room.RoomPropertyValueConversions._
 
 import scala.concurrent.duration._
@@ -49,9 +47,9 @@ class ClientSpec extends AnyFlatSpec
   before {
     gameServer = GameServer(serverAddress, serverPort)
     gameServer.defineRoom(RoomTypeName, () => ServerRoom())
-    gameServer.defineRoom(ExampleRooms.myRoomType, MyRoom)
+    gameServer.defineRoom(ExampleRooms.myRoomType, RoomWithProperty)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
-    gameServer.defineRoom(ExampleRooms.roomWithStateType, ClosableRoomWithState)
+    gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState)
     gameServer.defineRoom(ExampleRooms.roomWithReconnection, RoomWithReconnection)
 
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)

@@ -1,5 +1,6 @@
 package server.room
 
+import akka.actor.{ActorRef, ActorSystem}
 import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.RoomProtocolMessage
@@ -8,7 +9,9 @@ import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import server.RoomHandler
 import server.utils.TestClient
+
 class SynchronizedRoomStateSpec extends AnyWordSpecLike
   with Matchers
   with BeforeAndAfter
@@ -16,41 +19,21 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
   with TestConfig
   with Eventually {
 
-  private val UpdateRate = 100 //milliseconds
-  private val RoomInitialState: Int = 0
-
-  // Room used for testing
-  private case class RoomWithState() extends ServerRoom with SynchronizedRoomState[Integer] {
-    private var internalState = RoomInitialState
-    override val updateRate: Int = UpdateRate
-
-    override def onCreate(): Unit = {}
-
-    override def onClose(): Unit = this.stopStateUpdate()
-
-    override def onJoin(client: Client): Unit = {}
-
-    override def onLeave(client: Client): Unit = {}
-
-    override def onMessageReceived(client: Client, message: Any): Unit = {}
-
-    override def currentState: Integer = this.internalState
-
-    override def joinConstraints: Boolean = { true }
-
-    //Only used for testing
-    def changeState(newState: Int): Unit = this.internalState = newState
-  }
-
-
   import scala.concurrent.duration._
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(20 seconds, 25 millis)
-  private var room = RoomWithState()
+  implicit private val actorSystem: ActorSystem = ActorSystem()
+
+  import server.utils.ExampleRooms.RoomWithState
+  import server.utils.ExampleRooms.RoomWithState._
+  private var room: RoomWithState = _
+  private var roomActor: ActorRef = _
   private var client1 = TestClient()
   private var client2 = TestClient()
 
   before {
+    // Can't directly use roomHandler.createRoom since we need server room type instance
     room = RoomWithState()
+    roomActor = actorSystem actorOf RoomActor(room, RoomHandler())
     client1 = TestClient()
     client2 = TestClient()
     room.tryAddClient(client1, Room.defaultPublicPassword)

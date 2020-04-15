@@ -25,6 +25,9 @@ object RoomActor {
 
   def apply(serverRoom: ServerRoom, roomHandler: RoomHandler): Props = Props(classOf[RoomActor], serverRoom, roomHandler)
 
+  // Timers
+  case class StateSyncTick(f: Client => Unit)
+  case class WorldUpdateTick()
 }
 
 /**
@@ -40,6 +43,8 @@ class RoomActor(private val serverRoom: ServerRoom,
 
   implicit val CheckRoomStateRate: FiniteDuration = 50 millis
   implicit val executionContext: ExecutionContextExecutor = this.context.system.dispatcher
+
+  serverRoom setAssociatedActor self
 
   override def preStart(): Unit = {
     this.timers.startTimerAtFixedRate(CheckRoomStateTimer, CheckRoomState, CheckRoomStateRate)
@@ -89,6 +94,10 @@ class RoomActor(private val serverRoom: ServerRoom,
     case AutoCloseRoom => serverRoom.synchronized {
       this.serverRoom.close()
     }
+    case StateSyncTick(f) =>
+      serverRoom.connectedClients foreach f
+    case WorldUpdateTick() =>
+      serverRoom.asInstanceOf[GameLoop].updateWorld()
   }
 
 
