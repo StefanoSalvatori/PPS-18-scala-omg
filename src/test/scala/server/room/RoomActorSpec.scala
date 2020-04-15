@@ -13,6 +13,7 @@ import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.room.Room
 import server.RoomHandler
+
 class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
   with ImplicitSender
   with Matchers
@@ -20,15 +21,12 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
   with BeforeAndAfter
   with BeforeAndAfterAll {
 
-
   private val FakeClient_1 = makeClient()
   private val FakeClient_2 = makeClient()
 
-
-  var room: ServerRoom = _
-  var roomHandler: RoomHandler = _
-  var roomActor: ActorRef = _
-
+  private var room: ServerRoom = _
+  private var roomHandler: RoomHandler = _
+  private var roomActor: ActorRef = _
 
   before {
     room = ServerRoom()

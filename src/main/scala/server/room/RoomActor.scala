@@ -55,36 +55,30 @@ class RoomActor(private val serverRoom: ServerRoom,
 
   override def receive: Receive = {
     case Join(client, sessionId, password) =>
-      serverRoom.synchronized {
-        if (sessionId.isEmpty) {
-          val joined = serverRoom tryAddClient(client, password)
-          sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
-        } else { //if sessionId not empty means reconnection
-          val reconnected = serverRoom tryReconnectClient (client)
-          sender ! (if (reconnected) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
-        }
+      if (sessionId.isEmpty) {
+        val joined = serverRoom tryAddClient(client, password)
+        sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
+      } else { //if sessionId not empty means reconnection
+        val reconnected = serverRoom tryReconnectClient client
+        sender ! (if (reconnected) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
       }
+
     case Leave(client) =>
-      serverRoom.synchronized {
-        this.serverRoom.removeClient(client)
-        sender ! ClientLeaved
-      }
+      this.serverRoom.removeClient(client)
+      sender ! ClientLeaved
+
     case Msg(client, payload) =>
-      serverRoom.synchronized {
-        if (this.serverRoom.clientAuthorized(client)) {
-          this.serverRoom.onMessageReceived(client, payload)
-        } else {
-          client.send(ClientNotAuthorized)
-          sender ! RoomProtocolMessage(ClientNotAuthorized, client.id)
-        }
+      if (this.serverRoom.clientAuthorized(client)) {
+        this.serverRoom.onMessageReceived(client, payload)
+      } else {
+        client.send(ClientNotAuthorized)
+        sender ! RoomProtocolMessage(ClientNotAuthorized, client.id)
       }
 
     case CheckRoomState =>
-      serverRoom.synchronized {
-        if (this.serverRoom.isClosed) {
-          this.roomHandler.removeRoom(this.serverRoom.roomId)
-          self ! PoisonPill
-        }
+      if (this.serverRoom.isClosed) {
+        this.roomHandler.removeRoom(this.serverRoom.roomId)
+        self ! PoisonPill
       }
 
     case StateSyncTick(f) =>

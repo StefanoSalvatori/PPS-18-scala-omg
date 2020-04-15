@@ -16,7 +16,6 @@ object HttpRequestsActor {
   case class RequestFailed(exception: Throwable) extends Response
 
   def apply(): Props = Props(classOf[HttpRequestsActor])
-
 }
 
 class HttpRequestsActor extends Actor {
@@ -36,6 +35,5 @@ class HttpRequestsActor extends Actor {
         case Failure(exception) =>
           replyTo ! RequestFailed(exception)
       }
-
   }
 }

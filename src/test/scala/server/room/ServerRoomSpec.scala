@@ -22,7 +22,6 @@ class ServerRoomSpec extends AnyWordSpecLike
   private var testClient2: TestClient = _
   private var testClient3: TestClient = _
 
-  private val numOfProperties = 5 // A, B, C, D + roomId
   private val nameA = "a"
   private val valueA = 1
   private val nameB = "b"
@@ -40,7 +39,6 @@ class ServerRoomSpec extends AnyWordSpecLike
     testClient2 = TestClient(UUID.randomUUID().toString)
     testClient3 = TestClient(UUID.randomUUID().toString)
 
-
     testRoom = new ServerRoom {
       override val roomId: RoomId = "id"
       var a: Int = valueA
@@ -49,15 +47,10 @@ class ServerRoomSpec extends AnyWordSpecLike
       var d: Double = valueD
 
       override def onCreate(): Unit = {}
-
       override def onClose(): Unit = {}
-
       override def onJoin(client: Client): Unit = {}
-
       override def onLeave(client: Client): Unit = {}
-
       override def onMessageReceived(client: Client, message: Any): Unit = {}
-
       override def joinConstraints: Boolean = this.connectedClients.size < 2
     }
   }
@@ -206,7 +199,7 @@ class ServerRoomSpec extends AnyWordSpecLike
     "expose just the correct properties" in {
       val roomProperties = testRoom.properties
       val parentProperties = ServerRoom.defaultProperties
-      roomProperties &~ parentProperties should have size numOfProperties
+      roomProperties &~ parentProperties should have size 5 // A, B, C, D + roomId
       assert(roomProperties contains RoomProperty(nameA, valueA))
       assert(roomProperties contains RoomProperty(nameB, valueB))
       assert(roomProperties contains RoomProperty(nameC, valueC))
@@ -234,11 +227,11 @@ class ServerRoomSpec extends AnyWordSpecLike
       assert(serverRoom.tryReconnectClient(testClient))
     }
 
-    "don't accept reconnections after the period expires" in {
+    "not accept reconnections after the period expires" in {
       serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
       serverRoom.allowReconnection(testClient, 3 )
       serverRoom.removeClient(testClient)
-      Thread.sleep(5000)
+      Thread sleep 5000 //scalastyle:ignore magic.number
       assert(!serverRoom.tryReconnectClient(testClient))
     }
 
@@ -248,6 +241,29 @@ class ServerRoomSpec extends AnyWordSpecLike
       serverRoom.removeClient(testClient)
       serverRoom.tryReconnectClient(testClient)
       assert(serverRoom.connectedClients.contains(testClient))
+    }
+
+    "not be locked by default" in {
+      assert(!serverRoom.isLocked)
+    }
+
+    "become locked when required" in {
+      serverRoom.lock()
+      assert(serverRoom isLocked)
+    }
+
+    "become unlocked when required, after being locked" in {
+      serverRoom.lock()
+      serverRoom.unlock()
+      assert(!serverRoom.isLocked)
+    }
+
+    "not add a client to the room if the room is locked" in {
+      assert(serverRoom.tryAddClient(testClient, ""))
+      serverRoom.lock()
+      assert(!serverRoom.tryAddClient(testClient2, ""))
+      serverRoom.unlock()
+      assert(serverRoom.tryAddClient(testClient2, ""))
     }
   }
 }

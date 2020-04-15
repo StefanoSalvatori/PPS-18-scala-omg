@@ -27,9 +27,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private val routeService = RouteService(RoomHandler())
-
   private val route = routeService.route
-
 
   behavior of "Route Service routing"
 

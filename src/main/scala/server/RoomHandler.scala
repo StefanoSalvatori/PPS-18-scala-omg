@@ -150,5 +150,4 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     }
     newRoom
   }
-
 }

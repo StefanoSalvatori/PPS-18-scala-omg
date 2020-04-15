@@ -3,9 +3,9 @@ package server.utils
 import java.util.TimerTask
 
 /**
- * Utility trait to wrap a [[java.util.Timer]]
+ * Utility class used to wrap a [[java.util.Timer]]
  */
-trait Timer {
+case class Timer() {
 
   private var timer: Option[java.util.Timer] = None
 
@@ -57,9 +57,3 @@ trait Timer {
     timer.purge()
   }
 }
-
-object Timer {
-  def apply(): Timer = TimerImpl()
-}
-
-case class TimerImpl() extends Timer

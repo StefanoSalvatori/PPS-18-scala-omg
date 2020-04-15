@@ -2,6 +2,7 @@ package client
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
+import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import common.TestConfig
@@ -26,14 +27,10 @@ class ClientSpec extends AnyFlatSpec
   with LazyLogging
   with RoomJsonSupport {
 
-  private val DefaultTimeout = 5 seconds
-
   private val serverAddress = "localhost"
   private val serverPort = ClientSpecServerPort
 
   private val RoomTypeName: String = "test_room"
-  private val ServerLaunchAwaitTime = 10 seconds
-  private val ServerShutdownAwaitTime = 10 seconds
 
   implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private var gameServer: GameServer = _
@@ -44,10 +41,12 @@ class ClientSpec extends AnyFlatSpec
 
   val testProperties = Set(RoomProperty("a", 1), RoomProperty("b", "qwe"))
 
+  implicit val timeoutToDuration: Timeout => Duration = timeout => timeout.duration
+
   before {
     gameServer = GameServer(serverAddress, serverPort)
     gameServer.defineRoom(RoomTypeName, () => ServerRoom())
-    gameServer.defineRoom(ExampleRooms.myRoomType, RoomWithProperty)
+    gameServer.defineRoom(ExampleRooms.roomWithPropertyType, RoomWithProperty)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
     gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState)
     gameServer.defineRoom(ExampleRooms.roomWithReconnection, RoomWithReconnection)
@@ -170,7 +169,7 @@ class ClientSpec extends AnyFlatSpec
   it should "not join a private room if a wrong password is provided" in {
     val room = Await.result(client.createPrivateRoom(RoomTypeName, password = "pwd"), DefaultTimeout)
     assertThrows[Exception] {
-      val joinResponse = Await.result( client2.joinById(room.roomId, "pwd2"), DefaultTimeout)
+      Await.result( client2.joinById(room.roomId, "pwd2"), DefaultTimeout)
     }
   }
 
