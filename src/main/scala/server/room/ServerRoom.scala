@@ -67,6 +67,9 @@ trait ServerRoom extends BasicRoom
   with RoomLockingSupport
   with LazyLogging {
   override val roomId: RoomId = UUID.randomUUID.toString
+  /**
+   * if true, the room will be automatically closed when no client is connected
+   */
   private var clients: Seq[Client] = Seq.empty
   private var closed = false
 
@@ -77,6 +80,8 @@ trait ServerRoom extends BasicRoom
   //TODO: need to be syncronized if it's immutable?
   //clients that are allowed to reconnect with the associate expiration timer
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
+
+  def autoClose: Boolean = false
 
   /**
    * Add a client to the room. It triggers the onJoin handler
@@ -118,6 +123,7 @@ trait ServerRoom extends BasicRoom
 
   /**
    * Allow the given client to reconnect to this room within the specified amount of time
+   *
    * @param client the reconnecting client
    * @param period time in seconds within which the client can reconnect
    */
@@ -293,6 +299,9 @@ trait ServerRoom extends BasicRoom
 
 object ServerRoom {
 
+  import scala.concurrent.duration._
+  val AutomaticCloseTimeout: FiniteDuration = 5 seconds
+
   /**
    * It creates a SharedRoom from a given ServerRoom.
    * Properties of the basic ServerRoom are dropped (except for the private state),
@@ -334,6 +343,7 @@ object ServerRoom {
   /**
    * From a given room, it calculates properties not in common with a basic server room.
    * Useful for calculating just properties of a custom room, without the one of the basic one.
+   *
    * @param runtimeRoom the room with its own custom properties
    * @return the set of property of the custom room that are not shared with the basic server room
    */
@@ -347,7 +357,7 @@ object ServerRoom {
   /**
    * A room with empty behavior
    */
-  private case class BasicServerRoom() extends ServerRoom {
+  private case class BasicServerRoom(automaticClose: Boolean) extends ServerRoom {
     override def onCreate(): Unit = { }
     override def onClose(): Unit = { }
     override def onJoin(client: Client): Unit = { }
@@ -361,7 +371,7 @@ object ServerRoom {
    *
    * @return the room
    */
-  def apply(): ServerRoom = BasicServerRoom()
+  def apply(autoClose: Boolean = false): ServerRoom = BasicServerRoom(autoClose)
 
   /**
    * Getter of the default room properties defined in a server room
@@ -375,5 +385,4 @@ object ServerRoom {
   private def propertyToPair[_](property: RoomProperty): PairRoomProperty[_] =
     PairRoomProperty(property.name, RoomPropertyValue valueOf property.value)
 }
-
 

@@ -30,4 +30,3 @@ trait SocketSerializer[T] {
 
 }
 
-

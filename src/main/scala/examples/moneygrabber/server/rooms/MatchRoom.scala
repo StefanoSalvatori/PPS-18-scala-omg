@@ -13,6 +13,7 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
   //map clientId -> playerId to keep the link between clients and players
   private var players: Map[String, Int] = Map.empty
 
+  override def autoClose: Boolean = true
 
   override def onCreate(): Unit = {}
 
@@ -41,7 +42,6 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
       this.gameState = this.gameState.movePlayer(playerId, direction).takeCoins()
       if (this.gameState.gameEnded) {
         broadcast(gameState)
-        this.close()
       }
     }
   }

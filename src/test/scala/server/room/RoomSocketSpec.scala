@@ -10,7 +10,7 @@ import common.communication.TextProtocolSerializer
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import server.room.socket.RoomSocketFlow
+import server.room.socket.RoomSocket
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import org.scalatest.concurrent.Eventually
 import server.RoomHandler
@@ -18,7 +18,7 @@ import server.RoomHandler
 import scala.concurrent.duration._
 import scala.concurrent.Await
 
-class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory.load()))
+class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory.load()))
   with ImplicitSender
   with AnyWordSpecLike
   with Matchers
@@ -30,7 +30,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
 
   private var room: ServerRoom = _
   private var roomActor: ActorRef = _
-  private var roomSocketFlow: RoomSocketFlow = _
+  private var roomSocketFlow: RoomSocket = _
   private var flow: Flow[Message, Message, Any] = _
 
   override def afterAll(): Unit = {
@@ -40,7 +40,7 @@ class RoomSocketFlowSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFac
   before {
     room = ServerRoom()
     roomActor = system actorOf RoomActor(room, RoomHandler())
-    roomSocketFlow = RoomSocketFlow(roomActor, TextProtocolSerializer)
+    roomSocketFlow = RoomSocket(roomActor, TextProtocolSerializer)
     flow = roomSocketFlow.createFlow()
   }
 

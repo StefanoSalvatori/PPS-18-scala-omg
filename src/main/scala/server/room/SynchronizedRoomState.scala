@@ -15,7 +15,7 @@ import server.utils.Timer
  */
 trait SynchronizedRoomState[T <: Any with java.io.Serializable] { self: ServerRoom =>
 
-  private val stateTimer = Timer()
+  private val stateTimer = Timer.withExecutor()
 
   /**
    * How often clients will be updated (time expressed in milliseconds)

@@ -19,7 +19,9 @@ object RoomActor {
 
   private trait InternalMessage
   private case object CheckRoomStateTimer
+  private case object AutoCloseRoomTimer
   private case object CheckRoomState extends InternalMessage
+  private case object AutoCloseRoom extends InternalMessage
 
   def apply(serverRoom: ServerRoom, roomHandler: RoomHandler): Props = Props(classOf[RoomActor], serverRoom, roomHandler)
 
@@ -38,6 +40,7 @@ class RoomActor(private val serverRoom: ServerRoom,
 
   import RoomActor._
   import scala.concurrent.duration._
+
   implicit val CheckRoomStateRate: FiniteDuration = 50 millis
   implicit val executionContext: ExecutionContextExecutor = this.context.system.dispatcher
 
@@ -55,6 +58,7 @@ class RoomActor(private val serverRoom: ServerRoom,
 
   override def receive: Receive = {
     case Join(client, sessionId, password) =>
+      this.timers.cancel(AutoCloseRoomTimer)
       if (sessionId.isEmpty) {
         val joined = serverRoom tryAddClient(client, password)
         sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
@@ -79,7 +83,12 @@ class RoomActor(private val serverRoom: ServerRoom,
       if (this.serverRoom.isClosed) {
         this.roomHandler.removeRoom(this.serverRoom.roomId)
         self ! PoisonPill
+      } else if (checkAutoClose()) {
+        this.timers.startSingleTimer(AutoCloseRoomTimer, AutoCloseRoom, ServerRoom.AutomaticCloseTimeout)
       }
+
+    case AutoCloseRoom =>
+      this.serverRoom.close()
 
     case StateSyncTick(f) =>
       serverRoom.connectedClients foreach f
@@ -87,5 +96,9 @@ class RoomActor(private val serverRoom: ServerRoom,
     case WorldUpdateTick() =>
       serverRoom.asInstanceOf[GameLoop].updateWorld()
   }
+
+
+  private def checkAutoClose(): Boolean =
+    this.serverRoom.autoClose && this.serverRoom.connectedClients.isEmpty && !this.timers.isTimerActive(AutoCloseRoomTimer)
 
 }
