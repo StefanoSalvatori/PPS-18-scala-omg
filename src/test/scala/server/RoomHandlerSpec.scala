@@ -29,7 +29,9 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
 
     override def onMessageReceived(client: Client, message: Any): Unit = {}
 
-    override def joinConstraints: Boolean = { true }
+    override def joinConstraints: Boolean = {
+      true
+    }
   }
   private case class MyRoom2() extends ServerRoom {
 
@@ -46,7 +48,9 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
 
     override def onMessageReceived(client: Client, message: Any): Unit = {}
 
-    override def joinConstraints: Boolean = { true }
+    override def joinConstraints: Boolean = {
+      true
+    }
   }
 
   private val RoomType = "myRoomType"
@@ -94,7 +98,13 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     val room = this.roomHandler.createRoom(roomType1)
     this.roomHandler.removeRoom(room.roomId)
     assert(!this.roomHandler.getAvailableRooms().exists(_.roomId == room.roomId))
+  }
 
+  it should "not return rooms by type that does not match filters" in {
+    roomHandler defineRoomType(myRoomType, MyRoom)
+    roomHandler createRoom myRoomType
+    val property = RoomProperty("a", 2)
+    roomHandler.getRoomsByType(myRoomType, FilterOptions just property =:= 0) should have size 0
   }
 
   "An empty filter" should "not affect any room" in {

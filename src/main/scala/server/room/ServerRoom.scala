@@ -3,6 +3,7 @@ package server.room
 import java.lang.reflect.Field
 import java.util.UUID
 
+import akka.actor.ActorRef
 import com.typesafe.scalalogging.LazyLogging
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
@@ -20,14 +21,18 @@ trait PrivateRoomSupport {
 
   def makePrivate(newPassword: RoomPassword): Unit = password = newPassword
 
-  def checkPasswordCorrectness(providedPassword: RoomPassword): Boolean = password == providedPassword
+  def checkPasswordCorrectness(providedPassword: RoomPassword): Boolean =
+    password == Room.defaultPublicPassword || password == providedPassword
 }
 
 trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
-
   override val roomId: RoomId = UUID.randomUUID.toString
   private var clients: Seq[Client] = Seq.empty
   private var closed = false
+
+  protected var roomActor: ActorRef = _
+
+  def setAssociatedActor(actor: ActorRef): Unit = roomActor = actor
 
   //TODO: need to be syncronized if it's immutable?
   //clients that are allowed to reconnect with the associate expiration timer
@@ -46,6 +51,8 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
       this.clients = client +: this.clients
       client.send(RoomProtocolMessage(JoinOk, client.id))
       this.onJoin(client)
+    } else {
+      client.send(RoomProtocolMessage(ClientNotAuthorized))
     }
     canJoin
   }
@@ -89,7 +96,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    *
    * @return true if the join request should be satisfied, false otherwise
    */
-  def joinConstraints: Boolean
+  def joinConstraints: Boolean = true
 
   /**
    * Remove a client from the room. Triggers onLeave
@@ -240,24 +247,47 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   private def -->(field: Field): AnyRef = field get this // Get the value of the field
 }
 
-private case class PairRoomProperty[T](name: String, value: T)
 
 object ServerRoom {
+  private case class PairRoomProperty[T](name: String, value: T)
+
   implicit val serverRoomToSharedRoom: ServerRoom => SharedRoom = serverRoom => {
     // Create the shared room
     val sharedRoom = SharedRoom(serverRoom.roomId)
-    // Set the shared room properties
-    val serverRoomProperties = ServerRoom.defaultProperties
-    val runtimeRoomProperties = serverRoom.properties
-    val runtimeOnlyPropertyNames: Set[String] = runtimeRoomProperties.map(_ name) &~ serverRoomProperties.map(_ name)
-    runtimeRoomProperties.filter(property => runtimeOnlyPropertyNames contains property.name)
-      .foreach(sharedRoom addSharedProperty)
+
+    // Calculate the property of the room
+    var runtimeOnlyProperties = propertyDifferenceFrom(serverRoom)
+    // Edit properties if the room uses game loop and/or synchronized state functionality
+    if (serverRoom.isInstanceOf[GameLoop]) {
+      val gameLoopOnlyPropertyNames = GameLoop.defaultProperties.map(_ name)
+      runtimeOnlyProperties = runtimeOnlyProperties.filterNot(gameLoopOnlyPropertyNames contains _.name)
+    }
+    if (serverRoom.isInstanceOf[SynchronizedRoomState[_]]) {
+      val syncStateOnlyPropertyNames = SynchronizedRoomState.defaultProperties.map(_ name)
+      runtimeOnlyProperties = runtimeOnlyProperties.filterNot(syncStateOnlyPropertyNames contains _.name)
+    }
+
+    // Add selected properties to the shared room
+    runtimeOnlyProperties.foreach(sharedRoom addSharedProperty)
     // Add the public/private state to room properties
     import common.room.RoomPropertyValueConversions._
     sharedRoom addSharedProperty RoomProperty(Room.roomPrivateStatePropertyName, serverRoom.isPrivate)
     sharedRoom
   }
   implicit val serverRoomSeqToSharedRoomSeq: Seq[ServerRoom] => Seq[SharedRoom] = _.map(serverRoomToSharedRoom)
+
+  /**
+   * From a given room, it calculates properties not in common with a basic server room.
+   * Useful for calculating just properties of a custom room, without the one of the basic one.
+   * @param runtimeRoom the room with its own custom properties
+   * @return the set of property of the custom room that are not shared with the basic server room
+   */
+  def propertyDifferenceFrom[T <: ServerRoom](runtimeRoom: T): Set[RoomProperty] = {
+    val serverRoomProperties = ServerRoom.defaultProperties
+    val runtimeProperties = runtimeRoom.properties
+    val runtimeOnlyPropertyNames = runtimeProperties.map(_ name) &~ serverRoomProperties.map(_ name)
+    runtimeProperties.filter(property => runtimeOnlyPropertyNames contains property.name)
+  }
 
   /**
    * Creates a simple server room with an empty behavior.
@@ -269,7 +299,7 @@ object ServerRoom {
   /**
    * Getter of the default room properties defined in a server room
    *
-   * @return a set containing the names of the defined properties
+   * @return a set containing the defined properties
    */
   def defaultProperties: Set[RoomProperty] = ServerRoom().properties // Create an instance of ServerRoom and get properties
 
@@ -281,16 +311,11 @@ object ServerRoom {
  * A room with empty behavior
  */
 private case class BasicServerRoom() extends ServerRoom {
-  override def onCreate(): Unit = {}
-
-  override def onClose(): Unit = {}
-
-  override def onJoin(client: Client): Unit = {}
-
-  override def onLeave(client: Client): Unit = {}
-
-  override def onMessageReceived(client: Client, message: Any): Unit = {}
-
+  override def onCreate(): Unit = { }
+  override def onClose(): Unit = { }
+  override def onJoin(client: Client): Unit = { }
+  override def onLeave(client: Client): Unit = { }
+  override def onMessageReceived(client: Client, message: Any): Unit = { }
   override def joinConstraints: Boolean = true
 }
 
