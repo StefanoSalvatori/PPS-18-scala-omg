@@ -201,7 +201,7 @@ class ClientSpec extends AnyFlatSpec
     val testProperty2 = RoomProperty("a", 2)
     val testProperty3 = RoomProperty("a", 3)
 
-    //create 3 rooms so that only the second matches the filters
+    //create 3 rooms so that only the second one matches the filters
     Await.ready(client.createPublicRoom(ExampleRooms.myRoomType, Set(testProperty)), DefaultTimeout)
     val room = Await.result(client.createPublicRoom(ExampleRooms.myRoomType, Set(testProperty3)), DefaultTimeout)
     Await.ready(client.createPublicRoom(ExampleRooms.myRoomType, Set(testProperty2)), DefaultTimeout)
