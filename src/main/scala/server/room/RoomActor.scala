@@ -88,8 +88,8 @@ class RoomActor(private val serverRoom: ServerRoom,
     case AutoCloseRoom =>
       this.serverRoom.close()
 
-    case StateSyncTick(f) =>
-      serverRoom.connectedClients foreach f
+    case StateSyncTick(onTick) =>
+      serverRoom.connectedClients foreach onTick
 
     case WorldUpdateTick() =>
       serverRoom.asInstanceOf[GameLoop].updateWorld()

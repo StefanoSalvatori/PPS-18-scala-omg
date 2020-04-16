@@ -12,10 +12,20 @@ object TestClient {
  * A client that expose the last message received.
  */
 case class TestClient(override val id: String) extends Client {
-  private var messageReceived: Option[Any] = Option.empty
+  private var messagesReceivedList: List[Any] = List.empty
 
-  def lastMessageReceived: Option[Any] = this.messageReceived
+  def lastMessageReceived: Option[Any] = this.messagesReceivedList match {
+    case List() => None
+    case some => Some(some.head)
+  }
 
-  override def send[T](msg: T): Unit = this.messageReceived = Option(msg)
+  def allMessagesReceived: List[Any] = synchronized {
+    this.messagesReceivedList
+  }
+
+  override def send[T](msg: T): Unit = synchronized {
+    this.messagesReceivedList = msg :: messagesReceivedList
+  }
+
 }
 

@@ -17,6 +17,7 @@ trait PrivateRoomSupport {
 
   /**
    * Check if the room is private.
+   *
    * @return true if the room is private, false if it's public
    */
   def isPrivate: Boolean = password != Room.defaultPublicPassword
@@ -28,12 +29,14 @@ trait PrivateRoomSupport {
 
   /**
    * It makes the room private
+   *
    * @param newPassword the password to be used to join the room
    */
   def makePrivate(newPassword: RoomPassword): Unit = password = newPassword
 
   /**
    * It checks if a provided password is the correct one.
+   *
    * @param providedPassword the password provided, supposedly by a client
    * @return true if the password is correct or if the room is public, false otherwise.
    */
@@ -47,6 +50,7 @@ trait RoomLockingSupport {
 
   /**
    * It checks if the room is currently locked.
+   *
    * @return true if the room is locked, false otherwise
    */
   def isLocked: Boolean = _isLocked
@@ -68,10 +72,10 @@ trait ServerRoom extends BasicRoom
   with LazyLogging {
 
   override val roomId: RoomId = UUID.randomUUID.toString
+  val autoClose: Boolean = false
 
   private var clients: Seq[Client] = Seq.empty
   private var closed = false
-
   protected var roomActor: ActorRef = _
 
   def setAssociatedActor(actor: ActorRef): Unit = roomActor = actor
@@ -83,7 +87,6 @@ trait ServerRoom extends BasicRoom
   /**
    * if true, the room will be automatically closed when no client is connected
    */
-  def autoClose: Boolean = false
 
   /**
    * Add a client to the room. It triggers the onJoin handler
@@ -280,8 +283,9 @@ trait ServerRoom extends BasicRoom
 
   /**
    * Perform an operation on a given field.
+   *
    * @param fieldName the name of the field to use
-   * @param f the operation to execute, expressed as a function
+   * @param f         the operation to execute, expressed as a function
    * @tparam T the type of return of the operation to execute
    * @return it returns whatever the given function f returns
    */
@@ -309,6 +313,7 @@ object ServerRoom {
    * It creates a SharedRoom from a given ServerRoom.
    * Properties of the basic ServerRoom are dropped (except for the private state),
    * just properties of the custom room are kept.
+   *
    * @tparam T type of the room that extends ServerRoom
    * @return the created SharedRoom
    */
@@ -338,6 +343,7 @@ object ServerRoom {
 
   /**
    * Converter of sequence of room from ServerRoom to SharedRoom.
+   *
    * @tparam T type of custom rooms that extend ServerRoom
    * @return A sequence of SharedRoom, where each element is the corresponding one mapped from the input sequence
    */
@@ -361,12 +367,18 @@ object ServerRoom {
    * A room with empty behavior
    */
   private case class BasicServerRoom(automaticClose: Boolean) extends ServerRoom {
-    override def autoClose: Boolean = this.automaticClose
-    override def onCreate(): Unit = { }
-    override def onClose(): Unit = { }
-    override def onJoin(client: Client): Unit = { }
-    override def onLeave(client: Client): Unit = { }
-    override def onMessageReceived(client: Client, message: Any): Unit = { }
+    override val autoClose: Boolean = this.automaticClose
+
+    override def onCreate(): Unit = {}
+
+    override def onClose(): Unit = {}
+
+    override def onJoin(client: Client): Unit = {}
+
+    override def onLeave(client: Client): Unit = {}
+
+    override def onMessageReceived(client: Client, message: Any): Unit = {}
+
     override def joinConstraints: Boolean = true
   }
 

@@ -13,7 +13,7 @@ object ExampleRooms {
     override val stateUpdateRate: Int = RoomWithState.UpdateRate
 
     override def onCreate(): Unit = {}
-    override def onClose(): Unit = this.stopStateUpdate()
+    override def onClose(): Unit = this.stopStateSynchronization()
     override def onJoin(client: Client): Unit = {}
     override def onLeave(client: Client): Unit = {}
     override def onMessageReceived(client: Client, message: Any): Unit = {}
