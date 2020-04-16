@@ -168,9 +168,7 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
     this.onCloseCallback.foreach(ref ! OnCloseCallback(_))
     this.onStateChangedCallback.foreach(ref ! OnStateChangedCallback(_))
     this.onMessageCallback.foreach(ref ! OnMsgCallback(_))
-
   }
-
 }
 
 

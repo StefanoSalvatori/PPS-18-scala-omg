@@ -82,7 +82,7 @@ object ExampleRooms {
 
   case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
     override def onCreate(): Unit = {
-      this.startStateUpdate()
+      this.startStateSynchronization()
     }
     override def onClose(): Unit = {}
     override def onJoin(client: Client): Unit = {}
@@ -128,5 +128,23 @@ object ExampleRooms {
     override def joinConstraints: Boolean = { true }
   }
 
-  val myRoomType = "myRoom"
+  val roomWithPropertyType = "roomWithProperty"
+
+  // ____________________________________________________________________
+
+  case class RoomWithProperty2() extends ServerRoom {
+
+    var a: Int = 1
+    var b: String = "a"
+    var c: Boolean = true
+
+    override def onCreate(): Unit = {}
+    override def onClose(): Unit = {}
+    override def onJoin(client: Client): Unit = {}
+    override def onLeave(client: Client): Unit = {}
+    override def onMessageReceived(client: Client, message: Any): Unit = {}
+    override def joinConstraints: Boolean = true
+  }
+
+  val roomWithProperty2Type = "roomWithProperty2"
 }

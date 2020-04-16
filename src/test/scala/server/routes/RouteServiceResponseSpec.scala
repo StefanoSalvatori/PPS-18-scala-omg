@@ -21,11 +21,9 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers
   with RouteCommonTestOptions
   with BeforeAndAfter {
 
-
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private var routeService = RouteService(RoomHandler())
   private var route = routeService.route
-
 
   behavior of "Route Service routing with room handling"
 

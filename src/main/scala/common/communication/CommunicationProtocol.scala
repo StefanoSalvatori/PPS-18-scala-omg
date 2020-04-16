@@ -32,5 +32,10 @@ object CommunicationProtocol {
   @SerialVersionUID(1234L) // scalastyle:ignore magic.number
   case class RoomProtocolMessage(messageType: ProtocolMessageType, sessionId: String = "", payload: java.io.Serializable = "")
     extends java.io.Serializable
+
+  /**
+   * A socket serializer for room protocol messages
+   */
+  trait RoomProtocolMessageSerializer extends SocketSerializer[RoomProtocolMessage]
 }
 

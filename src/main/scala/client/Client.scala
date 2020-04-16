@@ -1,7 +1,5 @@
 package client
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import client.room.ClientRoom
@@ -18,10 +16,10 @@ import scala.util.{Failure, Success, Try}
 sealed trait Client {
 
   /**
-   * Creates a new public room the join
+   * Create a new public room to join
    *
    * @param roomType       type of room to create
-   * @param roomProperties options
+   * @param roomProperties room properties to set as the starting ones
    * @return a future with the joined room
    */
   def createPublicRoom(roomType: RoomType, roomProperties: Set[RoomProperty] = Set.empty): Future[ClientRoom]
@@ -30,8 +28,9 @@ sealed trait Client {
    * Create a private room.
    *
    * @param roomType       type of the room to create
-   * @param roomProperties room options to set as starting ones
+   * @param roomProperties room properties to set as starting ones
    * @param password       password required for clients to join the room
+   * @return a future with the joined room
    */
   def createPrivateRoom(roomType: RoomType, roomProperties: Set[RoomProperty] = Set.empty, password: RoomPassword): Future[ClientRoom]
 
@@ -133,7 +132,6 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     } yield {
       toJoinRoom
     }
-
 
   override def joinById(roomId: RoomId, password: RoomPassword = Room.defaultPublicPassword): Future[ClientRoom] = {
     ifNotJoined(roomId, {
