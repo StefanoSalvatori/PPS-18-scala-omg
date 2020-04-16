@@ -26,7 +26,7 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
     tell(client, this.players(client.id)) // tells the client the id that he got
     if (canStart) {
       this.gameStarted = true
-      this.startStateUpdate()
+      this.startStateSynchronization()
     }
   }
 

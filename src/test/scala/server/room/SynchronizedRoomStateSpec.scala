@@ -53,14 +53,14 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
     }
 
     "send the room state to clients with a StateUpdate message type" in {
-      room.startStateUpdate()
+      room.startStateSynchronization()
       eventually {
         lastReceivedMessageOf(client1).messageType shouldBe StateUpdate
       }
     }
 
     "update the clients with the most recent state" in {
-      room.startStateUpdate()
+      room.startStateSynchronization()
       eventually {
         lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, RoomInitialState)
       }
@@ -74,7 +74,7 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
     }
 
     "stop sending the state when stopUpdate is called" in {
-      room.startStateUpdate()
+      room.startStateSynchronization()
       eventually {
         lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, RoomInitialState)
         lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, RoomInitialState)
@@ -89,7 +89,7 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
     }
 
     "restart sending updates when startUpdate is called after stopUpdate" in {
-      room.startStateUpdate()
+      room.startStateSynchronization()
       eventually {
         lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, RoomInitialState)
         lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, RoomInitialState)
@@ -98,7 +98,7 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
       val newState = RoomInitialState + 1
       room.changeState(newState)
       Thread.sleep(UpdateRate)
-      room.startStateUpdate()
+      room.startStateSynchronization()
       eventually {
         lastReceivedMessageOf(client1) shouldBe RoomProtocolMessage(StateUpdate, client1.id, newState)
         lastReceivedMessageOf(client2) shouldBe RoomProtocolMessage(StateUpdate, client2.id, newState)

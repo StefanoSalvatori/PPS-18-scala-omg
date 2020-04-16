@@ -1,7 +1,5 @@
 package server.room
 
-import java.util.UUID
-
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{Flow, Sink, Source}
@@ -27,7 +25,6 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
   with Eventually
   with BeforeAndAfter
   with BeforeAndAfterAll {
-
 
   private val MaxAwaitSocketMessages = 10 seconds
 

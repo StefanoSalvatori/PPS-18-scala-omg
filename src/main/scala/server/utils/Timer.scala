@@ -3,6 +3,9 @@ package server.utils
 import java.util.TimerTask
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 
+/**
+ * Utility class used to wrap a [[java.util.Timer]]
+ */
 trait Timer {
   /**
    * Schedule a given task at a fixed rate. The task will be added to a task queue if other scheduled tasks are running
@@ -27,14 +30,13 @@ trait Timer {
   def stopTimer(): Unit
 }
 
-
 object Timer {
   def apply(): Timer = JavaUtilTimer()
 
   def withExecutor(): Timer = ExecutorTimer()
 }
 
-case class JavaUtilTimer() extends Timer {
+private case class JavaUtilTimer() extends Timer {
   /**
    * Utility trait to wrap a [[java.util.Timer]]
    */
@@ -90,7 +92,7 @@ case class JavaUtilTimer() extends Timer {
   }
 }
 
-case class ExecutorTimer() extends Timer {
+private case class ExecutorTimer() extends Timer {
   private var executor: Option[ScheduledThreadPoolExecutor] = Some(createExecutor())
 
   override def scheduleAtFixedRate(task: () => Unit, delay: Long, period: Long): Unit =

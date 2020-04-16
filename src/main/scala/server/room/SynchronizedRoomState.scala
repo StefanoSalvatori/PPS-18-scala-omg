@@ -8,7 +8,7 @@ import server.room.RoomActor.StateSyncTick
 import server.utils.Timer
 
 /**
- * Trait that define a room with a state.
+ * Trait that define a room with a public state that needs to be synchronized between clients.
  *
  * @tparam T generic type for the state. It must extends [[java.io.Serializable]] so that it can be serialized and
  *           sent to clients
@@ -25,7 +25,7 @@ trait SynchronizedRoomState[T <: Any with java.io.Serializable] { self: ServerRo
   /**
    * Start sending state to all clients
    */
-  def startStateUpdate(): Unit =
+  def startStateSynchronization(): Unit =
     stateTimer.scheduleAtFixedRate(() => generateStateSyncTick(), 0, stateUpdateRate)
 
   /**
@@ -60,7 +60,7 @@ object SynchronizedRoomState {
   private def apply(): BasicServerRoomWithSynchronizedState = BasicServerRoomWithSynchronizedState()
 
   /**
-   * Getter of the synchronized state properties
+   * Getter of the synchronized room state properties
    *
    * @return a set containing the defined properties
    */

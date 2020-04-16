@@ -1,7 +1,7 @@
 package client
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import akka.testkit.{ImplicitSender, TestKit}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
@@ -15,7 +15,6 @@ import server.GameServer
 import server.room.ServerRoom
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
 
 class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with ImplicitSender
@@ -28,9 +27,6 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
 
   private val RoomTypeName: String = "test_room"
-  private val ServerLaunchAwaitTime = 10 seconds
-  private val ServerShutdownAwaitTime = 10 seconds
-
 
   private var gameServer: GameServer = _
 
