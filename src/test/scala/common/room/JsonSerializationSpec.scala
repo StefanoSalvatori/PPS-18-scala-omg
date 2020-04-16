@@ -7,7 +7,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import spray.json.RootJsonFormat
 
-class JsonSerializationSpec extends AnyFlatSpec with Matchers with BeforeAndAfter with RoomJsonSupport {
+class JsonSerializationSpec extends AnyFlatSpec
+  with Matchers
+  with BeforeAndAfter
+  with RoomJsonSupport {
 
   behavior of "room"
 

@@ -24,15 +24,13 @@ object ExampleRooms {
     // Server room
     override def onCreate(): Unit = {
       this.startWorldUpdate()
-      this.startStateUpdate()
+      this.startStateSynchronization()
     }
     override def onClose(): Unit = {}
     override def onJoin(client: Client): Unit = {}
     override def onLeave(client: Client): Unit = {}
     override def onMessageReceived(client: Client, message: Any): Unit = {}
     override def joinConstraints: Boolean = true
-
-    // Game loop
 
     override def updateWorld(): Unit = {
       count = count + 1

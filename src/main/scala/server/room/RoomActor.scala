@@ -59,47 +59,43 @@ class RoomActor(private val serverRoom: ServerRoom,
   override def receive: Receive = {
     case Join(client, sessionId, password) =>
       this.timers.cancel(AutoCloseRoomTimer)
-      serverRoom.synchronized {
-        if (sessionId.isEmpty) {
-          val joined = serverRoom tryAddClient(client, password)
-          sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
-        } else { //if sessionId not empty means reconnection
-          val reconnected = serverRoom tryReconnectClient (client)
-          sender ! (if (reconnected) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
-        }
+      if (sessionId.isEmpty) {
+        val joined = serverRoom tryAddClient(client, password)
+        sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
+      } else { //if sessionId not empty means reconnection
+        val reconnected = serverRoom tryReconnectClient client
+        sender ! (if (reconnected) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
       }
+
     case Leave(client) =>
-      serverRoom.synchronized {
-        this.serverRoom.removeClient(client)
-        sender ! ClientLeaved
-      }
+      this.serverRoom.removeClient(client)
+      sender ! ClientLeaved
+
     case Msg(client, payload) =>
-      serverRoom.synchronized {
-        if (this.serverRoom.clientAuthorized(client)) {
-          this.serverRoom.onMessageReceived(client, payload)
-        } else {
-          client.send(ClientNotAuthorized)
-          sender ! RoomProtocolMessage(ClientNotAuthorized, client.id)
-        }
+      if (this.serverRoom.clientAuthorized(client)) {
+        this.serverRoom.onMessageReceived(client, payload)
+      } else {
+        client.send(ClientNotAuthorized)
+        sender ! RoomProtocolMessage(ClientNotAuthorized, client.id)
       }
+
     case CheckRoomState =>
-      serverRoom.synchronized {
-        if (this.serverRoom.isClosed) {
-          this.roomHandler.removeRoom(this.serverRoom.roomId)
-          self ! PoisonPill
-        } else if (checkAutoClose()) {
-          this.timers.startSingleTimer(AutoCloseRoomTimer, AutoCloseRoom, ServerRoom.AutomaticCloseTimeout)
-        }
+      if (this.serverRoom.isClosed) {
+        this.roomHandler.removeRoom(this.serverRoom.roomId)
+        self ! PoisonPill
+      } else if (checkAutoClose()) {
+        this.timers.startSingleTimer(AutoCloseRoomTimer, AutoCloseRoom, ServerRoom.AutomaticCloseTimeout)
       }
-    case AutoCloseRoom => serverRoom.synchronized {
+
+    case AutoCloseRoom =>
       this.serverRoom.close()
-    }
+
     case StateSyncTick(f) =>
       serverRoom.connectedClients foreach f
+
     case WorldUpdateTick() =>
       serverRoom.asInstanceOf[GameLoop].updateWorld()
   }
-
 
   private def checkAutoClose(): Boolean =
     this.serverRoom.autoClose && this.serverRoom.connectedClients.isEmpty && !this.timers.isTimerActive(AutoCloseRoomTimer)

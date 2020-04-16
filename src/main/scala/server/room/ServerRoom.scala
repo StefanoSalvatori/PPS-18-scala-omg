@@ -15,21 +15,60 @@ trait PrivateRoomSupport {
 
   private var password: RoomPassword = Room.defaultPublicPassword
 
+  /**
+   * Check if the room is private.
+   * @return true if the room is private, false if it's public
+   */
   def isPrivate: Boolean = password != Room.defaultPublicPassword
 
+  /**
+   * It makes the room public.
+   */
   def makePublic(): Unit = password = Room.defaultPublicPassword
 
+  /**
+   * It makes the room private
+   * @param newPassword the password to be used to join the room
+   */
   def makePrivate(newPassword: RoomPassword): Unit = password = newPassword
 
-  def checkPasswordCorrectness(providedPassword: RoomPassword): Boolean =
+  /**
+   * It checks if a provided password is the correct one.
+   * @param providedPassword the password provided, supposedly by a client
+   * @return true if the password is correct or if the room is public, false otherwise.
+   */
+  protected def checkPasswordCorrectness(providedPassword: RoomPassword): Boolean =
     password == Room.defaultPublicPassword || password == providedPassword
 }
 
-trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
-  override val roomId: RoomId = UUID.randomUUID.toString
+trait RoomLockingSupport {
+
+  private var _isLocked = false
+
   /**
-   * if true, the room will be automatically closed when no client is connected
+   * It checks if the room is currently locked.
+   * @return true if the room is locked, false otherwise
    */
+  def isLocked: Boolean = _isLocked
+
+  /**
+   * It locks the room; it has no effect if the room was already locked.
+   */
+  def lock(): Unit = _isLocked = true
+
+  /**
+   * It unlocks the room; it has no effect if the room was already unlocked.
+   */
+  def unlock(): Unit = _isLocked = false
+}
+
+trait ServerRoom extends BasicRoom
+  with PrivateRoomSupport
+  with RoomLockingSupport
+  with LazyLogging {
+
+  override val roomId: RoomId = UUID.randomUUID.toString
+
   private var clients: Seq[Client] = Seq.empty
   private var closed = false
 
@@ -41,23 +80,25 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   //clients that are allowed to reconnect with the associate expiration timer
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
+  /**
+   * if true, the room will be automatically closed when no client is connected
+   */
   def autoClose: Boolean = false
 
   /**
-   * Add a client to the room. Triggers the onJoin
+   * Add a client to the room. It triggers the onJoin handler
    *
    * @param client the client to add
    * @return true if the client successfully joined the room, false otherwise
    */
   def tryAddClient(client: Client, providedPassword: RoomPassword): Boolean = {
-
-    val canJoin = checkPasswordCorrectness(providedPassword) && joinConstraints
+    val canJoin = checkPasswordCorrectness(providedPassword) && !isLocked && joinConstraints
     if (canJoin) {
       this.clients = client +: this.clients
-      client.send(RoomProtocolMessage(JoinOk, client.id))
+      client send RoomProtocolMessage(JoinOk, client.id)
       this.onJoin(client)
     } else {
-      client.send(RoomProtocolMessage(ClientNotAuthorized))
+      client send RoomProtocolMessage(ClientNotAuthorized)
     }
     canJoin
   }
@@ -119,9 +160,7 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    * @param client the client to check
    * @return true if the client is authorized to perform actions on this room
    */
-  def clientAuthorized(client: Client): Boolean = {
-    this.connectedClients.contains(client)
-  }
+  def clientAuthorized(client: Client): Boolean = connectedClients contains client
 
   /**
    * @return the list of connected clients
@@ -238,6 +277,13 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
    */
   def onMessageReceived(client: Client, message: Any)
 
+  /**
+   * Perform an operation on a given field.
+   * @param fieldName the name of the field to use
+   * @param f the operation to execute, expressed as a function
+   * @tparam T the type of return of the operation to execute
+   * @return it returns whatever the given function f returns
+   */
   private def operationOnField[T](fieldName: String)(f: Function[Field, T]): T = {
     val field = this fieldFrom fieldName
     field setAccessible true
@@ -253,37 +299,48 @@ trait ServerRoom extends BasicRoom with PrivateRoomSupport with LazyLogging {
   private def -->(field: Field): AnyRef = field get this // Get the value of the field
 }
 
-
 object ServerRoom {
-  private case class PairRoomProperty[T](name: String, value: T)
 
   import scala.concurrent.duration._
   val AutomaticCloseTimeout: FiniteDuration = 5 seconds
 
-  implicit val serverRoomToSharedRoom: ServerRoom => SharedRoom = serverRoom => {
+  /**
+   * It creates a SharedRoom from a given ServerRoom.
+   * Properties of the basic ServerRoom are dropped (except for the private state),
+   * just properties of the custom room are kept.
+   * @tparam T type of the room that extends ServerRoom
+   * @return the created SharedRoom
+   */
+  implicit def serverRoomToSharedRoom[T <: ServerRoom]: T => SharedRoom = room => {
     // Create the shared room
-    val sharedRoom = SharedRoom(serverRoom.roomId)
+    val sharedRoom = SharedRoom(room.roomId)
 
-    // Calculate the property of the room
-    var runtimeOnlyProperties = propertyDifferenceFrom(serverRoom)
+    // Calculate properties of the room
+    var runtimeOnlyProperties = propertyDifferenceFrom(room)
     // Edit properties if the room uses game loop and/or synchronized state functionality
-    if (serverRoom.isInstanceOf[GameLoop]) {
+    if (room.isInstanceOf[GameLoop]) {
       val gameLoopOnlyPropertyNames = GameLoop.defaultProperties.map(_ name)
       runtimeOnlyProperties = runtimeOnlyProperties.filterNot(gameLoopOnlyPropertyNames contains _.name)
     }
-    if (serverRoom.isInstanceOf[SynchronizedRoomState[_]]) {
+    if (room.isInstanceOf[SynchronizedRoomState[_]]) {
       val syncStateOnlyPropertyNames = SynchronizedRoomState.defaultProperties.map(_ name)
       runtimeOnlyProperties = runtimeOnlyProperties.filterNot(syncStateOnlyPropertyNames contains _.name)
     }
 
     // Add selected properties to the shared room
     runtimeOnlyProperties.foreach(sharedRoom addSharedProperty)
-    // Add the public/private state to room properties
+    // Add public/private state to room properties
     import common.room.RoomPropertyValueConversions._
-    sharedRoom addSharedProperty RoomProperty(Room.roomPrivateStatePropertyName, serverRoom.isPrivate)
+    sharedRoom addSharedProperty RoomProperty(Room.roomPrivateStatePropertyName, room.isPrivate)
     sharedRoom
   }
-  implicit val serverRoomSeqToSharedRoomSeq: Seq[ServerRoom] => Seq[SharedRoom] = _.map(serverRoomToSharedRoom)
+
+  /**
+   * Converter of sequence of room from ServerRoom to SharedRoom.
+   * @tparam T type of custom rooms that extend ServerRoom
+   * @return A sequence of SharedRoom, where each element is the corresponding one mapped from the input sequence
+   */
+  implicit def serverRoomSeqToSharedRoomSeq[T <: ServerRoom]: Seq[T] => Seq[SharedRoom] = _.map(serverRoomToSharedRoom)
 
   /**
    * From a given room, it calculates properties not in common with a basic server room.
@@ -300,6 +357,19 @@ object ServerRoom {
   }
 
   /**
+   * A room with empty behavior
+   */
+  private case class BasicServerRoom(automaticClose: Boolean) extends ServerRoom {
+    override def autoClose: Boolean = this.automaticClose
+    override def onCreate(): Unit = { }
+    override def onClose(): Unit = { }
+    override def onJoin(client: Client): Unit = { }
+    override def onLeave(client: Client): Unit = { }
+    override def onMessageReceived(client: Client, message: Any): Unit = { }
+    override def joinConstraints: Boolean = true
+  }
+
+  /**
    * Creates a simple server room with an empty behavior.
    *
    * @return the room
@@ -313,26 +383,9 @@ object ServerRoom {
    */
   def defaultProperties: Set[RoomProperty] = ServerRoom().properties // Create an instance of ServerRoom and get properties
 
+  private case class PairRoomProperty[T](name: String, value: T)
+
   private def propertyToPair[_](property: RoomProperty): PairRoomProperty[_] =
     PairRoomProperty(property.name, RoomPropertyValue valueOf property.value)
-}
-
-/**
- * A room with empty behavior
- */
-private case class BasicServerRoom(automaticClose: Boolean = true) extends ServerRoom {
-  override def autoClose: Boolean = this.automaticClose
-
-  override def onCreate(): Unit = {}
-
-  override def onClose(): Unit = {}
-
-  override def onJoin(client: Client): Unit = {}
-
-  override def onLeave(client: Client): Unit = {}
-
-  override def onMessageReceived(client: Client, message: Any): Unit = {}
-
-  override def joinConstraints: Boolean = true
 }
 

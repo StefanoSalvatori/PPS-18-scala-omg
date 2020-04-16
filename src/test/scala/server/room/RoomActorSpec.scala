@@ -23,15 +23,12 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
   with BeforeAndAfter
   with BeforeAndAfterAll {
 
-
   private val FakeClient_1 = makeClient()
   private val FakeClient_2 = makeClient()
 
-
-  var room: ServerRoom = _
-  var roomHandler: RoomHandler = _
-  var roomActor: ActorRef = _
-
+  private var room: ServerRoom = _
+  private var roomHandler: RoomHandler = _
+  private var roomActor: ActorRef = _
 
   before {
     room = ServerRoom(autoClose = true)
@@ -74,7 +71,7 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       roomActor ! Leave(testClient)
       expectMsg(ClientLeaved)
 
-      room.allowReconnection(testClient, 5000)
+      room.allowReconnection(testClient, 5000) //scalastyle:ignore magic.number
       val fakeClient = makeClient(res.sessionId)
 
       roomActor ! Join(fakeClient, fakeClient.id, Room.defaultPublicPassword)
@@ -129,7 +126,7 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
     }
 
     "not automatically close the room if automaticClose is set to false" in {
-      room = ServerRoom(autoClose = false)
+      room = ServerRoom()
       roomHandler = RoomHandler()
       roomActor = system actorOf RoomActor(room, roomHandler)
       val probe = TestProbe()

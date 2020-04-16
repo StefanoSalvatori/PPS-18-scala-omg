@@ -13,7 +13,6 @@ class TextProtocolSerializerSpec extends AnyFlatSpec {
   private val serializer: TextProtocolSerializer.type = TextProtocolSerializer
   private val separator = serializer.SEPARATOR
 
-
   behavior of "Room Protocol Text Serializer"
 
   it should "assign unique string codes to protocol message types" in {
