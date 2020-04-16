@@ -79,12 +79,14 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
       coreClient ! ClientRoomActorJoined
       replyTo ! Success(sessionId)
       context.become(roomJoined(outRef))
+      unstashAll()
 
     case RoomProtocolMessage(ProtocolMessageType.RoomClosed, _, _) =>
 
     case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
       replyTo ! Failure(new Exception("Can't join"))
 
+    case SendStrictMessage(msg: Any with java.io.Serializable) => stash()
 
     case SendProtocolMessage(msg) =>
       outRef ! msg
