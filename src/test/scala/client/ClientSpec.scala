@@ -175,7 +175,7 @@ class ClientSpec extends AnyFlatSpec
 
   it should "leave rooms" in {
     val room = Await.result(client.joinOrCreate(RoomTypeName, FilterOptions.empty, Set.empty), DefaultTimeout)
-    Await.ready(room.leave(), DefaultTimeout)
+    Await.result(room.leave(), DefaultTimeout)
   }
 
   it should "allow to reconnect to a previously joined room (that allows reconnection) with the same session id" in {

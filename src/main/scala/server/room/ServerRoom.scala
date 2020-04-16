@@ -95,8 +95,8 @@ trait ServerRoom extends BasicRoom
     val canJoin = checkPasswordCorrectness(providedPassword) && !isLocked && joinConstraints
     if (canJoin) {
       this.clients = client +: this.clients
-      client send RoomProtocolMessage(JoinOk, client.id)
       this.onJoin(client)
+      client send RoomProtocolMessage(JoinOk, client.id)
     } else {
       client send RoomProtocolMessage(ClientNotAuthorized)
     }
@@ -153,6 +153,7 @@ trait ServerRoom extends BasicRoom
   def removeClient(client: Client): Unit = {
     this.clients = this.clients.filter(_.id != client.id)
     this.onLeave(client)
+    client send RoomProtocolMessage(LeaveOk)
   }
 
   /**

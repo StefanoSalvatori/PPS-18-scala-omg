@@ -14,8 +14,6 @@ object RoomActor {
   case class Leave(client: Client) extends RoomCommand
   case class Msg(client: Client, payload: Any) extends RoomCommand
 
-  sealed trait RoomResponse
-  case object ClientLeaved extends RoomResponse
 
   private trait InternalMessage
   private case object CheckRoomStateTimer
@@ -69,7 +67,7 @@ class RoomActor(private val serverRoom: ServerRoom,
 
     case Leave(client) =>
       this.serverRoom.removeClient(client)
-      sender ! ClientLeaved
+      sender ! RoomProtocolMessage(LeaveOk)
 
     case Msg(client, payload) =>
       if (this.serverRoom.clientAuthorized(client)) {
