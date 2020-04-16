@@ -4,7 +4,7 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import server.room.ServerRoom
+import server.room.{Client, ServerRoom}
 import common.room.RoomPropertyValueConversions._
 import common.room.{FilterOptions, RoomProperty}
 import org.scalatest.BeforeAndAfter
@@ -17,6 +17,9 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
   import ExampleRooms.roomWithPropertyType
   import ExampleRooms.RoomWithProperty2
   import ExampleRooms.roomWithProperty2Type
+
+  private val RoomType = "myRoomType"
+  private val RoomType2 = "myRoomType2"
 
   private var roomHandler: RoomHandler = _
 
@@ -114,6 +117,19 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     val filter2 = FilterOptions just testProperty > 3
     val filteredRooms2 = roomHandler.getAvailableRooms(filter2)
     filteredRooms2 should have size 0
+  }
+
+  it should "filter rooms when return rooms by type" in {
+    val testProperty = RoomProperty("a", 1)
+    val testProperty2 = RoomProperty("a", 2)
+
+    roomHandler defineRoomType(RoomType, RoomWithProperty)
+    roomHandler createRoom (RoomType, Set(testProperty))
+    roomHandler createRoom (RoomType, Set(testProperty2))
+
+    val filter = FilterOptions just testProperty =:= 1
+    val filteredRooms = roomHandler.getRoomsByType(RoomType, filter)
+    filteredRooms should have size 1
   }
 
 

@@ -1,6 +1,7 @@
 package server.utils
 
 import server.room.{Client, SynchronizedRoomState, GameLoop, ServerRoom}
+import server.room.{Client, SynchronizedRoomState, ServerRoom}
 
 /**
  * Rooms used for testing purpose.
@@ -80,19 +81,27 @@ object ExampleRooms {
   //________________________________________________
 
   case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
+    override val stateUpdateRate = 200
+
     override def onCreate(): Unit = {
       this.startStateSynchronization()
     }
+
     override def onClose(): Unit = {}
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {}
+
     override def onMessageReceived(client: Client, message: Any): Unit = {
       message.toString match {
         case "close" => this.close()
         case "ping" => this.tell(client, "pong")
       }
     }
+
     override def currentState: String = "game state"
+
     override def joinConstraints: Boolean = true
   }
 

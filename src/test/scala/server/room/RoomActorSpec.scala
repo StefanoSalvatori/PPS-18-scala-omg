@@ -57,10 +57,12 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
 
     "allow client to leave the room" in {
       roomActor ! Join(FakeClient_1, "", Room.defaultPublicPassword)
-      val res = expectMsgType[RoomProtocolMessage]
-      res.messageType shouldBe JoinOk
+      val joinRed = expectMsgType[RoomProtocolMessage]
+      joinRed.messageType shouldBe JoinOk
       roomActor ! Leave(FakeClient_1)
-      expectMsg(ClientLeaved)
+      val leaveRes = expectMsgType[RoomProtocolMessage]
+      leaveRes.messageType shouldBe LeaveOk
+
       assert(!room.connectedClients.contains(FakeClient_1))
     }
 
@@ -69,7 +71,8 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       roomActor ! Join(testClient, "", Room.defaultPublicPassword)
       val res = expectMsgType[RoomProtocolMessage]
       roomActor ! Leave(testClient)
-      expectMsg(ClientLeaved)
+      val leaveRes = expectMsgType[RoomProtocolMessage]
+      leaveRes.messageType shouldBe LeaveOk
 
       room.allowReconnection(testClient, 5000) //scalastyle:ignore magic.number
       val fakeClient = makeClient(res.sessionId)
@@ -84,8 +87,8 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       roomActor ! Join(FakeClient_1, "", Room.defaultPublicPassword)
       val res = expectMsgType[RoomProtocolMessage]
       roomActor ! Leave(FakeClient_1)
-      expectMsg(ClientLeaved)
-
+      val leaveRes = expectMsgType[RoomProtocolMessage]
+      leaveRes.messageType shouldBe LeaveOk
       //do not allow reconnection
       val fakeClient = makeClient(res.sessionId)
 

@@ -107,7 +107,7 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
 
   override def join(password: RoomPassword = Room.defaultPublicPassword): Future[Any] = {
     val ref = this.spawnInnerActor()
-    (ref ? SendJoin(roomId, sessionId, password)) flatMap {
+    (ref ? SendJoin(sessionId, password)) flatMap {
       case Success(responseId) =>
         this._sessionId = Some(responseId.asInstanceOf[String])
         Future.successful()
@@ -150,6 +150,7 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
 
   private def spawnInnerActor(): ActorRef = {
     val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
+    //if callbacks were defined before actor spawning we set them now
     this.sendCallbacksToActor(ref)
     this.innerActor = Some(ref)
     ref
@@ -163,7 +164,6 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
     }
   }
 
-  //if callbacks were defined before actor spawning we set them now
   private def sendCallbacksToActor(ref: ActorRef): Unit = {
     this.onCloseCallback.foreach(ref ! OnCloseCallback(_))
     this.onStateChangedCallback.foreach(ref ! OnStateChangedCallback(_))

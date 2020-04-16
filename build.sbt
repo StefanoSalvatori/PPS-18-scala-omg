@@ -23,8 +23,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "org.apache.commons" % "commons-lang3" % "3.3.2",
-
-
   "ch.qos.logback" % "logback-classic" % "1.2.3")
 
 libraryDependencies += "it.unibo.alice.tuprolog" % "tuprolog" % "3.1"

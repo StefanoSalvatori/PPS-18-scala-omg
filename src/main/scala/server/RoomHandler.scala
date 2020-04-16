@@ -80,20 +80,9 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
 
   private var roomsByType: Map[String, Map[ServerRoom, ActorRef]] = Map.empty
 
-  override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] =
-    roomsByType.values.flatMap(_ keys).filter(room =>
-      // Given a room, check if such room satisfies all filter constraints
-      filterOptions.options forall { filterOption =>
-        try {
-          val propertyValue = room `valueOf~AsPropertyValue` filterOption.optionName
-          val filterValue = filterOption.value.asInstanceOf[propertyValue.type]
-          filterOption.strategy evaluate(propertyValue, filterValue)
-        } catch {
-          // A room is dropped if it doesn't contain the specified field to be used in the filter
-          case _: NoSuchFieldException => false
-        }
-      }
-    ).toSeq
+  override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
+    roomsByType.values.flatMap(_ keys).filter(roomOptionsFilter(filterOptions)).toSeq
+  }
 
   override def createRoom(roomType: String, roomProperties: Set[RoomProperty]): SharedRoom = {
     this.handleRoomCreation(roomType, roomProperties)
@@ -115,11 +104,10 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
   }
 
   override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
-    val roomsType = this.roomsByType.get(roomType) match {
-      case Some(value) => value.keys.toSeq
+    this.roomsByType.get(roomType) match {
+      case Some(value) => value.keys.filter(roomOptionsFilter(filterOptions)).toSeq
       case None => Seq.empty
     }
-    this.getAvailableRooms(filterOptions).filter(r => roomsType.map(_.roomId).contains(r.roomId))
   }
 
   override def removeRoom(roomId: RoomId): Unit = {
@@ -149,4 +137,26 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     }
     newRoom
   }
+
+  /**
+   * Creates a function that filters rooms based on the given filter options
+   *
+   * @param filterOptions room properties to check
+   * @return the filter to be applied
+   */
+  private def roomOptionsFilter(filterOptions: FilterOptions): ServerRoom => Boolean = {
+    room => {
+      filterOptions.options forall { filterOption =>
+        try {
+          val propertyValue = room `valueOf~AsPropertyValue` filterOption.optionName
+          val filterValue = filterOption.value.asInstanceOf[propertyValue.type]
+          filterOption.strategy evaluate(propertyValue, filterValue)
+        } catch {
+          // A room is dropped if it doesn't contain the specified field to be used in the filter
+          case _: NoSuchFieldException => false
+        }
+      }
+    }
+  }
+
 }
