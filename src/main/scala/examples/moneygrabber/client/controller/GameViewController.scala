@@ -37,7 +37,9 @@ case class GameViewController(private val frame: GameFrame, private val room: Cl
     case id: Int => SwingUtilities.invokeLater(() => {
       this.view.setPlayerColor(id)
     })
-    case endState: Board => this.onGameEnd(endState)
+    case endState: Board =>
+      this.updateView(endState)
+      this.onGameEnd(endState)
   }
 
   room.onStateChanged(state => {

@@ -2,6 +2,8 @@ name := "scala-omg"
 
 version := "0.1"
 
+// fork in Test := true
+
 scalaVersion := "2.12.10"
 val akkaVersion = "2.6.4"
 val akkaHttpVersion = "10.1.11"

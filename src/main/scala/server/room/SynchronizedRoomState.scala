@@ -31,7 +31,7 @@ trait SynchronizedRoomState[T <: Any with java.io.Serializable] { self: ServerRo
   /**
    * Stop sending state updates to clients
    */
-  def stopStateUpdate(): Unit = stateTimer.stopTimer()
+  def stopStateSynchronization(): Unit = stateTimer.stopTimer()
 
   /**
    * This is the function that is called at each update to get the most recent state that will be sent to clients
