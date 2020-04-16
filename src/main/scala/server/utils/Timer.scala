@@ -106,7 +106,7 @@ private case class ExecutorTimer() extends Timer {
   }
 
   override def stopTimer(): Unit = {
-    this.executor.foreach(_.shutdown())
+    this.executor.foreach(_.shutdownNow())
     this.executor = None
   }
 

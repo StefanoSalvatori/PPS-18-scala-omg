@@ -84,6 +84,7 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
         receivedState(client2, RoomInitialState)
       }
       room.stopStateSynchronization()
+      Thread.sleep(UpdateRate) //wait timer to complete last tick
       val newState = RoomInitialState + 1
       room.changeState(newState)
       Thread.sleep(UpdateRate)
@@ -98,6 +99,7 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
         receivedState(client2, RoomInitialState)
       }
       room.stopStateSynchronization()
+      Thread.sleep(UpdateRate) //wait timer to complete last tick
       val newState = RoomInitialState + 1
       room.changeState(newState)
       Thread.sleep(UpdateRate)
