@@ -7,7 +7,7 @@ import server.utils.Timer
 /**
  * It defines a room that uses game loop, i.e. the state of the world is updated periodically
  */
-trait GameLoop { self: ServerRoom =>
+trait GameLoop extends ServerRoom {
 
   private val worldTimer: Timer = Timer.withExecutor()
 
@@ -15,6 +15,11 @@ trait GameLoop { self: ServerRoom =>
    * How often the world will be updated (time expressed in milliseconds)
    */
   protected val worldUpdateRate = 50 //milliseconds
+
+  override def close(): Unit = {
+    this.stopWorldUpdate()
+    super.close()
+  }
 
   /**
    * Start updating the world with a fixed period
@@ -33,7 +38,7 @@ trait GameLoop { self: ServerRoom =>
   def updateWorld(): Unit
 
   private def generateWorldUpdateTick(): Unit = {
-    self.roomActor ! WorldUpdateTick()
+    this.roomActor ! WorldUpdateTick()
   }
 }
 

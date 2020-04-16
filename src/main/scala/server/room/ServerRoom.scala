@@ -113,7 +113,6 @@ trait ServerRoom extends BasicRoom
    * @return true if the client successfully reconnected to the room, false otherwise
    */
   def tryReconnectClient(client: Client): Boolean = {
-
     val reconnectingClient = this.reconnectingClients.find(_._1.id == client.id)
     if (reconnectingClient.nonEmpty) {
       reconnectingClient.get._2.stopTimer()
