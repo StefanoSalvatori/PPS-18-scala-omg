@@ -86,8 +86,6 @@ object MessageDictionary {
 
   case class SendLeave()
 
-  case class SendProtocolMessage(msg: RoomProtocolMessage)
-
   case class SendStrictMessage(msg: Any with java.io.Serializable)
 
   /**

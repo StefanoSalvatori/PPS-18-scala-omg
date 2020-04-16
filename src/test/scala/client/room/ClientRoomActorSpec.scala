@@ -45,17 +45,15 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
     coreClient = system actorOf CoreClient(serverUri)
     gameServer = GameServer(serverAddress, serverPort)
     gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, () => ExampleRooms.ClosableRoomWithState())
-    Await.ready(gameServer.start(), 5 seconds)
+    Await.ready(gameServer.start(), DefaultDuration)
 
     coreClient ! CreatePublicRoom(ExampleRooms.closableRoomWithStateType, Set.empty)
     val room = expectMsgType[Success[ClientRoom]]
     clientRoomActor = system actorOf ClientRoomActor(coreClient, serverUri, room.value)
-
   }
 
   after {
     Await.ready(gameServer.terminate(), ServerShutdownAwaitTime)
-
   }
 
   "Client Room Actor" should {
@@ -74,11 +72,9 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
     }
 
 
-
     "should handle messages when receiving 'Tell' from server room" in {
       assert(this.checkCallback(Tell))
     }
-
 
     "should handle messages when receiving 'Broadcast' from server room" in {
       assert(this.checkCallback(Broadcast))
@@ -92,35 +88,60 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
       assert(this.checkCallback(RoomClosed))
     }
 
-
     "should handle callbacks defined before joining" in {
       val onMsgPromise = Promise[Boolean]()
       val onStateChangePromise = Promise[Boolean]()
       val onClosePromise = Promise[Boolean]()
-      val composed = Future.sequence(Seq(onMsgPromise.future, onStateChangePromise.future, onClosePromise.future))
 
-      clientRoomActor ! OnMsgCallback(_ =>  onMsgPromise.success(true))
-      clientRoomActor ! OnStateChangedCallback(_ => onStateChangePromise.success(true))
+      clientRoomActor ! OnMsgCallback(_ => onMsgPromise.success(true))
+      clientRoomActor ! OnStateChangedCallback(_ =>
+        if (!onStateChangePromise.isCompleted) {
+          onStateChangePromise.success(true)
+        }
+      )
       clientRoomActor ! OnCloseCallback(() => onClosePromise.success(true))
 
       clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
-      expectMsgType[Try[Any]]
+      expectMsgType[Success[_]]
+
+      assert(Await.result(onStateChangePromise.future, DefaultDuration))
 
       clientRoomActor ! SendStrictMessage("ping")
+      assert(Await.result(onMsgPromise.future, DefaultDuration))
+
       clientRoomActor ! SendStrictMessage("close")
+      assert(Await.result(onClosePromise.future, DefaultDuration))
+    }
 
+    "should receive all messages from the server room" in {
+      val messagesCount = 200
+      val allReceived = Promise[Int]()
+      var count = 0
+      clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
+      expectMsgType[Success[_]]
+      clientRoomActor ! OnMsgCallback(_ => {
+        count = count + 1
+        if(count == messagesCount) allReceived.success(count)
+      })
 
+      (0 until messagesCount).foreach(_ => {
+        clientRoomActor ! SendStrictMessage("ping")
+        Thread.sleep(10)
+      })
+      val received = Await.result(allReceived.future, 60 seconds)
 
-      assert(Await.result(composed, DefaultDuration).forall(_ == true))
+      assert(received == messagesCount)
+
     }
   }
+
 
   private def checkCallback(msgType: ProtocolMessageType): Boolean = {
     val promise = Promise[Boolean]()
     msgType match {
-      case Broadcast | Tell => clientRoomActor ! OnMsgCallback(_ =>  promise.success(true))
-      case StateUpdate => clientRoomActor ! OnStateChangedCallback(_ =>  promise.success(true))
-      case RoomClosed => clientRoomActor ! OnCloseCallback(() =>  promise.success(true))
+      case Broadcast | Tell => clientRoomActor ! OnMsgCallback(_ => promise.success(true))
+      case StateUpdate => clientRoomActor ! OnStateChangedCallback(_ => promise.success(true))
+      case RoomClosed => clientRoomActor ! OnCloseCallback(() => promise.success(true))
     }
 
     clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
