@@ -11,7 +11,7 @@ import common.communication.SocketSerializer
  */
 trait SocketFlow {
 
-  protected val DefaultBufferSize: Int = 128
+  protected val DefaultBufferSize: Int = Int.MaxValue
   protected val DefaultOverflowStrategy: OverflowStrategy = OverflowStrategy.dropHead
 
 

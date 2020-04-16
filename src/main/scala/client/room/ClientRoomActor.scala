@@ -31,19 +31,19 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
   private var joinPassword: RoomPassword = _
 
-  override def receive: Receive = waitJoinRequest orElse callbackDefinition orElse fallbackReceive
+  override def receive: Receive = waitJoinRequest orElse callbackDefinition /*orElse fallbackReceive*/
 
   def waitSocketResponse(replyTo: ActorRef, sessionId: Option[String]): Receive =
-    onWaitSocketResponse(replyTo, sessionId) orElse callbackDefinition orElse fallbackReceive
+    onWaitSocketResponse(replyTo, sessionId) orElse callbackDefinition /*orElse fallbackReceive*/
 
   def socketOpened(outRef: ActorRef, replyTo: ActorRef): Receive =
-    onSocketOpened(outRef, replyTo) orElse callbackDefinition orElse fallbackReceive
+    onSocketOpened(outRef, replyTo) orElse callbackDefinition /*orElse fallbackReceive*/
 
   def roomJoined(outRef: ActorRef): Receive =
     onRoomJoined(outRef) orElse callbackDefinition orElse fallbackReceive
 
   def waitLeaveResponse(replyTo: ActorRef, outRef: ActorRef): Receive =
-    onWaitLeaveResponse(replyTo, outRef) orElse callbackDefinition orElse fallbackReceive
+    onWaitLeaveResponse(replyTo, outRef) orElse callbackDefinition /*orElse fallbackReceive*/
 
   //actor states
   def waitJoinRequest: Receive = {
@@ -67,10 +67,10 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
         case Some(value) => value
         case None => "" //empty string if no id is specified
       }
-      self ! SendProtocolMessage(RoomProtocolMessage(
+      outRef ! RoomProtocolMessage(
         messageType = JoinRoom,
         sessionId = stringId,
-        payload = joinPassword))
+        payload = joinPassword)
   }
 
   def onSocketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
@@ -88,8 +88,6 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
     case SendStrictMessage(msg: Any with java.io.Serializable) => stash()
 
-    case SendProtocolMessage(msg) =>
-      outRef ! msg
   }
 
   def onRoomJoined(outRef: ActorRef): Receive = {
@@ -109,10 +107,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
       context.become(waitLeaveResponse(sender, outRef))
 
     case SendStrictMessage(msg: Any with java.io.Serializable) =>
-      self ! SendProtocolMessage(RoomProtocolMessage(MessageRoom, "", msg))
-
-    case SendProtocolMessage(msg) =>
-      outRef ! msg
+      outRef ! RoomProtocolMessage(MessageRoom, "", msg)
 
     case RetrieveClientRoom => sender ! ClientRoomResponse(this.room)
   }

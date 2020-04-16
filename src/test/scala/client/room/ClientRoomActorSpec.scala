@@ -93,8 +93,12 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
       val onStateChangePromise = Promise[Boolean]()
       val onClosePromise = Promise[Boolean]()
 
-      clientRoomActor ! OnMsgCallback(msg => onMsgPromise.success(true))
-      clientRoomActor ! OnStateChangedCallback(_ => onStateChangePromise.success(true))
+      clientRoomActor ! OnMsgCallback(_ => onMsgPromise.success(true))
+      clientRoomActor ! OnStateChangedCallback(_ =>
+        if (!onStateChangePromise.isCompleted) {
+          onStateChangePromise.success(true)
+        }
+      )
       clientRoomActor ! OnCloseCallback(() => onClosePromise.success(true))
 
       clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
@@ -108,7 +112,29 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
       clientRoomActor ! SendStrictMessage("close")
       assert(Await.result(onClosePromise.future, DefaultDuration))
     }
+
+    "should receive all messages from the server room" in {
+      val messagesCount = 200
+      val allReceived = Promise[Int]()
+      var count = 0
+      clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
+      expectMsgType[Success[_]]
+      clientRoomActor ! OnMsgCallback(_ => {
+        count = count + 1
+        if(count == messagesCount) allReceived.success(count)
+      })
+
+      (0 until messagesCount).foreach(_ => {
+        clientRoomActor ! SendStrictMessage("ping")
+        Thread.sleep(10)
+      })
+      val received = Await.result(allReceived.future, 60 seconds)
+
+      assert(received == messagesCount)
+
+    }
   }
+
 
   private def checkCallback(msgType: ProtocolMessageType): Boolean = {
     val promise = Promise[Boolean]()
