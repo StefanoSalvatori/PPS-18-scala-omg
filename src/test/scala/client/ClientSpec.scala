@@ -180,7 +180,7 @@ class ClientSpec extends AnyFlatSpec
 
   it should "allow to reconnect to a previously joined room (that allows reconnection) with the same session id" in {
     val room = Await.result(client.joinOrCreate(ExampleRooms.roomWithReconnection, FilterOptions.empty, Set.empty), DefaultTimeout)
-    Await.ready(room.leave(), DefaultTimeout)
+    Await.result(room.leave(), DefaultTimeout)
     val res = Await.result(client.reconnect(room.roomId, room.sessionId.get), DefaultTimeout)
 
     room.sessionId shouldEqual res.sessionId

@@ -107,7 +107,7 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
 
   override def join(password: RoomPassword = Room.defaultPublicPassword): Future[Any] = {
     val ref = this.spawnInnerActor()
-    (ref ? SendJoin(roomId, sessionId, password)) flatMap {
+    (ref ? SendJoin(sessionId, password)) flatMap {
       case Success(responseId) =>
         this._sessionId = Some(responseId.asInstanceOf[String])
         Future.successful()
