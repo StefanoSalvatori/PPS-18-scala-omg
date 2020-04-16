@@ -9,6 +9,7 @@ import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 
 import scala.util.{Failure, Success}
+
 sealed trait ClientRoomActor extends BasicActor
 
 
@@ -37,11 +38,13 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
   def roomJoined(outRef: ActorRef): Receive = onRoomJoined(outRef) orElse fallbackReceive
 
+  def waitLeaveResponse(replyTo: ActorRef, outRef: ActorRef): Receive = onWaitLeaveResponse(replyTo, outRef) orElse fallbackReceive
+
   //actor states
   def onReceive: Receive = {
-    case SendJoin(roomId: RoomId, sessionId: Option[String], password: RoomPassword) =>
+    case SendJoin(sessionId: Option[String], password: RoomPassword) =>
       joinPassword = password
-      httpClient ! HttpSocketRequest(roomId, BinaryProtocolSerializer())
+      httpClient ! HttpSocketRequest(this.room.roomId, BinaryProtocolSerializer())
       context.become(waitSocketResponse(sender, sessionId))
 
     case OnMsgCallback(callback) =>
@@ -127,20 +130,17 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
     case RoomProtocolMessage(ProtocolMessageType.Broadcast, _, payload) => handleMessageReceived(payload)
 
-    case RoomProtocolMessage(ProtocolMessageType.StateUpdate, _, payload) =>
-      handleStateChangedReceived(payload)
+    case RoomProtocolMessage(ProtocolMessageType.StateUpdate, _, payload) => handleStateChangedReceived(payload)
 
     case RoomProtocolMessage(ProtocolMessageType.RoomClosed, _, _) =>
       this.onCloseCallback match {
-        case Some(value) => value()
+        case Some(value) => value.apply()
         case None => stash()
       }
 
     case SendLeave =>
       outRef ! RoomProtocolMessage(LeaveRoom)
-      coreClient ! ClientRoomActorLeft
-      sender ! Success()
-      context.become(receive)
+      context.become(waitLeaveResponse(sender, outRef))
 
     case SendStrictMessage(msg: Any with java.io.Serializable) =>
       self ! SendProtocolMessage(RoomProtocolMessage(MessageRoom, "", msg))
@@ -163,6 +163,16 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     case RetrieveClientRoom => sender ! ClientRoomResponse(this.room)
   }
 
+  def onWaitLeaveResponse(replyTo: ActorRef, outRef: ActorRef): Receive = {
+    case RoomProtocolMessage(ProtocolMessageType.LeaveOk, _, _) =>
+      coreClient ! ClientRoomActorLeft
+      replyTo ! Success()
+      context.become(receive)
+
+    case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
+      replyTo ! Failure(new Exception("Can't leave"))
+      context.become(roomJoined(outRef))
+  }
 
   //private utilities
 
@@ -178,7 +188,6 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     //They will be handled as soon as the callback is defined
     handleIfDefinedOrStash(this.onStateChangedCallback, state)
   }
-
 
   private def handleIfDefinedOrStash(callback: Option[Any => Unit], msg: Any): Unit = {
     callback match {

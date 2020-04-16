@@ -9,7 +9,7 @@ import common.room.Room.{RoomId, RoomPassword, RoomType}
 import common.room.{FilterOptions, Room, RoomProperty}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future, Promise}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
@@ -97,6 +97,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   private val requestTimeout = 5 // Seconds
 
   import akka.util.Timeout
+
   implicit val timeout: Timeout = requestTimeout seconds
 
   private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
@@ -105,8 +106,9 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   private implicit val executor: ExecutionContextExecutor = actorSystem.dispatcher
   private val coreClient = actorSystem actorOf CoreClient(httpServerUri)
 
-  override def joinedRooms(): Set[ClientRoom] =
+  override def joinedRooms(): Set[ClientRoom] = {
     Await.result(coreClient ? GetJoinedRooms, 5 seconds).asInstanceOf[JoinedRooms].joinedRooms
+  }
 
   override def shutdown(): Unit = this.actorSystem.terminate()
 
@@ -126,17 +128,17 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     for {
       rooms <- getAvailableRoomsByType(roomType, roomOption)
       if rooms.nonEmpty
-      toJoinRoom = rooms.head
-      _ <- toJoinRoom.join()
+      toJoinRoom <- findJoinable(rooms)
     } yield {
       toJoinRoom
     }
 
-  override def joinById(roomId: RoomId, password: RoomPassword = Room.defaultPublicPassword): Future[ClientRoom] =
+  override def joinById(roomId: RoomId, password: RoomPassword = Room.defaultPublicPassword): Future[ClientRoom] = {
     ifNotJoined(roomId, {
       val clientRoom = ClientRoom(coreClient, httpServerUri, roomId, Map())
       clientRoom.join(password).map(_ => clientRoom)
     })
+  }
 
   override def getAvailableRoomsByType(roomType: String, filterOption: FilterOptions): Future[Seq[ClientRoom]] =
     (coreClient ? GetAvailableRooms(roomType, filterOption)) flatMap {
@@ -145,11 +147,12 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     }
 
 
-  override def reconnect(roomId: String, sessionId: String): Future[ClientRoom] =
+  override def reconnect(roomId: String, sessionId: String): Future[ClientRoom] = {
     ifNotJoined(roomId, {
       val clientRoom = ClientRoom(coreClient, httpServerUri, roomId, Map(), sessionId)
       clientRoom.join().map(_ => clientRoom)
     })
+  }
 
   /**
    * Perform the given action if the room with the specified id is not already joined.
@@ -174,4 +177,22 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       clientRoom
     }
   }
+
+  /**
+   * @param rooms to check
+   * @return the first joinable room in the sequence
+   */
+  @scala.annotation.tailrec
+  private def findJoinable(rooms: Seq[ClientRoom]): Future[ClientRoom] =
+    rooms match {
+      case head +: _ =>
+        try {
+          Await.result(head.join(), 5 seconds)
+          Future.successful(head)
+        } catch {
+          case _: Exception => findJoinable(rooms.tail)
+        }
+      case Nil => Future.failed(new Exception("no room to join"))
+
+    }
 }

@@ -1,6 +1,7 @@
 package server.utils
 
 import server.room.{Client, SynchronizedRoomState, GameLoop, ServerRoom}
+import server.room.{Client, SynchronizedRoomState, ServerRoom}
 
 /**
  * Rooms used for testing purpose.
