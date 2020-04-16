@@ -21,6 +21,7 @@ object CommunicationProtocol {
     val Tell: ProtocolMessageType = Value(7) // scalastyle:ignore magic.number
     val StateUpdate: ProtocolMessageType = Value(8) // scalastyle:ignore magic.number
     val RoomClosed: ProtocolMessageType = Value(9) // scalastyle:ignore magic.number
+    val LeaveOk: ProtocolMessageType = Value(10) // scalastyle:ignore magic.number
   }
 
   /**

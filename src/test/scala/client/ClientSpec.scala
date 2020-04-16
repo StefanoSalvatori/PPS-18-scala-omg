@@ -201,11 +201,11 @@ class ClientSpec extends AnyFlatSpec
     val testProperty3 = RoomProperty("a", 3)
 
     //create 3 rooms so that only the second one matches the filters
-    Await.ready(client.createPublicRoom(ExampleRooms.myRoomType, Set(testProperty)), DefaultTimeout)
-    val room = Await.result(client.createPublicRoom(ExampleRooms.myRoomType, Set(testProperty3)), DefaultTimeout)
-    Await.ready(client.createPublicRoom(ExampleRooms.myRoomType, Set(testProperty2)), DefaultTimeout)
+    Await.ready(client.createPublicRoom(ExampleRooms.roomWithPropertyType, Set(testProperty)), DefaultTimeout)
+    val room = Await.result(client.createPublicRoom(ExampleRooms.roomWithPropertyType, Set(testProperty3)), DefaultTimeout)
+    Await.ready(client.createPublicRoom(ExampleRooms.roomWithPropertyType, Set(testProperty2)), DefaultTimeout)
 
-    val joined = Await.result(client.join(ExampleRooms.myRoomType, FilterOptions just testProperty =:= 3), DefaultTimeout)
+    val joined = Await.result(client.join(ExampleRooms.roomWithPropertyType, FilterOptions just testProperty =:= 3), DefaultTimeout)
     room.roomId shouldEqual joined.roomId
   }
 }

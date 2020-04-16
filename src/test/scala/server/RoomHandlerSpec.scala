@@ -4,7 +4,7 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import server.room.ServerRoom
+import server.room.{Client, ServerRoom}
 import common.room.RoomPropertyValueConversions._
 import common.room.{FilterOptions, RoomProperty}
 import org.scalatest.BeforeAndAfter
@@ -17,45 +17,6 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
   import ExampleRooms.roomWithPropertyType
   import ExampleRooms.RoomWithProperty2
   import ExampleRooms.roomWithProperty2Type
-  private case class MyRoom() extends ServerRoom {
-
-    var a: Int = 1
-    var b: String = "a"
-    var c: Boolean = true
-
-    override def onCreate(): Unit = {}
-
-    override def onClose(): Unit = {}
-
-    override def onJoin(client: Client): Unit = {}
-
-    override def onLeave(client: Client): Unit = {}
-
-    override def onMessageReceived(client: Client, message: Any): Unit = {}
-
-    override def joinConstraints: Boolean = {
-      true
-    }
-  }
-  private case class MyRoom2() extends ServerRoom {
-
-    val a: Int = 1
-    val b: String = "a"
-
-    override def onCreate(): Unit = {}
-
-    override def onClose(): Unit = {}
-
-    override def onJoin(client: Client): Unit = {}
-
-    override def onLeave(client: Client): Unit = {}
-
-    override def onMessageReceived(client: Client, message: Any): Unit = {}
-
-    override def joinConstraints: Boolean = {
-      true
-    }
-  }
 
   private val RoomType = "myRoomType"
   private val RoomType2 = "myRoomType2"
@@ -162,7 +123,7 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     val testProperty = RoomProperty("a", 1)
     val testProperty2 = RoomProperty("a", 2)
 
-    roomHandler defineRoomType(RoomType, MyRoom)
+    roomHandler defineRoomType(RoomType, RoomWithProperty)
     roomHandler createRoom (RoomType, Set(testProperty))
     roomHandler createRoom (RoomType, Set(testProperty2))
 

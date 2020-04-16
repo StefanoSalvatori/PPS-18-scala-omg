@@ -199,7 +199,7 @@ class ServerRoomSpec extends AnyWordSpecLike
     "expose just the correct properties" in {
       val roomProperties = testRoom.properties
       val parentProperties = ServerRoom.defaultProperties
-      roomProperties &~ parentProperties should have size numOfProperties
+      roomProperties &~ parentProperties should have size 5 // A, B, C, D + roomId
       assert(roomProperties contains RoomProperty(nameA, valueA))
       assert(roomProperties contains RoomProperty(nameB, valueB))
       assert(roomProperties contains RoomProperty(nameC, valueC))

@@ -37,6 +37,8 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
   def roomJoined(outRef: ActorRef): Receive = onRoomJoined(outRef) orElse fallbackReceive
 
+  def waitLeaveResponse(replyTo: ActorRef): Receive = onWaitLeaveResponse(replyTo) orElse fallbackReceive
+
   //actor states
   def onReceive: Receive = {
     case SendJoin(roomId: RoomId, sessionId: Option[String], password: RoomPassword) =>
@@ -138,9 +140,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
     case SendLeave =>
       outRef ! RoomProtocolMessage(LeaveRoom)
-      coreClient ! ClientRoomActorLeft
-      sender ! Success()
-      context.become(receive)
+      context.become(waitLeaveResponse(sender))
 
     case SendStrictMessage(msg: Any with java.io.Serializable) =>
       self ! SendProtocolMessage(RoomProtocolMessage(MessageRoom, "", msg))
@@ -163,6 +163,12 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     case RetrieveClientRoom => sender ! ClientRoomResponse(this.room)
   }
 
+  def onWaitLeaveResponse(replyTo: ActorRef): Receive = {
+    case RoomProtocolMessage(ProtocolMessageType.LeaveOk, _, _) =>
+      coreClient ! ClientRoomActorLeft
+      replyTo ! Success()
+      context.become(receive)
+  }
 
   //private utilities
 
@@ -178,7 +184,6 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     //They will be handled as soon as the callback is defined
     handleIfDefinedOrStash(this.onStateChangedCallback, state)
   }
-
 
   private def handleIfDefinedOrStash(callback: Option[Any => Unit], msg: Any): Unit = {
     callback match {

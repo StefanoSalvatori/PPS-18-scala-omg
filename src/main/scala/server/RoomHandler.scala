@@ -81,7 +81,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
   private var roomsByType: Map[String, Map[ServerRoom, ActorRef]] = Map.empty
 
   override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
-   roomsByType.values.flatMap(_ keys).filter(roomOptionsFilter(filterOptions)).toSeq
+    roomsByType.values.flatMap(_ keys).filter(roomOptionsFilter(filterOptions)).toSeq
   }
 
   override def createRoom(roomType: String, roomProperties: Set[RoomProperty]): SharedRoom = {
@@ -103,12 +103,11 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       .map(room => RoomSocket(room._2, BinaryProtocolSerializer()).createFlow())
   }
 
-  override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] =
+  override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
     this.roomsByType.get(roomType) match {
       case Some(value) => value.keys.filter(roomOptionsFilter(filterOptions)).toSeq
       case None => Seq.empty
     }
-    this.getAvailableRooms(filterOptions).filter(r => roomsType.map(_.roomId).contains(r.roomId))
   }
 
   override def removeRoom(roomId: RoomId): Unit = {
@@ -141,6 +140,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
 
   /**
    * Creates a function that filters rooms based on the given filter options
+   *
    * @param filterOptions room properties to check
    * @return the filter to be applied
    */
