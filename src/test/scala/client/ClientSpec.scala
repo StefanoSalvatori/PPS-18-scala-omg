@@ -195,7 +195,7 @@ class ClientSpec extends AnyFlatSpec
     }
   }
 
-  it should "try to join all rooms available" in {
+  it should "try to join all rooms available until success" in {
     val testProperty = RoomProperty("a", 1)
     val testProperty2 = RoomProperty("a", 2)
     val testProperty3 = RoomProperty("a", 3)

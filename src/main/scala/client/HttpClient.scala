@@ -64,8 +64,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
       val sink: Sink[Message, NotUsed] =
         Flow[Message]
           .map(x => parser.parseFromSocket(x))
-          .filter(_.isSuccess)
-          .map(_.get)
+          .collect({ case Success(value) => value })
           .to(Sink.actorRef(sender, PartialFunction.empty, PartialFunction.empty))
 
       val (sourceRef, publisher) =
