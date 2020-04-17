@@ -7,14 +7,17 @@ import akka.http.scaladsl.model.ws.TextMessage
 import common.communication.CommunicationProtocol._
 import org.scalatest.flatspec.AnyFlatSpec
 import ProtocolMessageType._
+import common.TestConfig
 
-class TextProtocolSerializerSpec extends AnyFlatSpec {
+import scala.concurrent.Await
+
+class TextProtocolSerializerSpec extends AnyFlatSpec with TestConfig{
 
   private val serializer: TextProtocolSerializer.type = TextProtocolSerializer
   private val separator = serializer.SEPARATOR
 
   behavior of "Room Protocol Text Serializer"
-/*
+
   it should "assign unique string codes to protocol message types" in {
     val messageTypes = ProtocolMessageType.values.toList
     val stringCodes = messageTypes.map(t => serializer.prepareToSocket(RoomProtocolMessage(t)))
@@ -36,7 +39,8 @@ class TextProtocolSerializerSpec extends AnyFlatSpec {
     val joinOkCode = JoinOk.id.toString
     val messageToReceive = TextMessage.Strict(s"$joinOkCode$separator$separator")
     val expected = RoomProtocolMessage(JoinOk)
-    assert(serializer.parseFromSocket(messageToReceive).get == expected)
+    val res = Await.result(serializer.parseFromSocket(messageToReceive), DefaultDuration)
+    assert(res == expected)
 
   }
 
@@ -46,25 +50,22 @@ class TextProtocolSerializerSpec extends AnyFlatSpec {
     val messageToReceive =
       TextMessage.Strict(s"$leaveRoomCode$separator$sessionId${separator}Payload")
     val expected = RoomProtocolMessage(LeaveRoom, sessionId, "Payload")
-    assert(serializer.parseFromSocket(messageToReceive).get == expected)
+    val res = Await.result(serializer.parseFromSocket(messageToReceive), DefaultDuration)
+
+    assert(res == expected)
   }
 
   it should "fail to parse malformed messages" in {
     val messageToReceive = TextMessage.Strict("foo")
-    val parseResult = serializer.parseFromSocket(messageToReceive)
-    assert(parseResult.isFailure)
     assertThrows[ParseException] {
-      parseResult.get
+      Await.result(serializer.parseFromSocket(messageToReceive), DefaultDuration)
     }
   }
 
   it should "fail with NoSuchElementException parsing messages with an unknown type" in {
     val messageToReceive = TextMessage.Strict(s"97${separator}id${separator}Payload")
-    val parseResult = serializer.parseFromSocket(messageToReceive)
-    assert(parseResult.isFailure)
     assertThrows[NoSuchElementException] {
-      parseResult.get
-    }
-  }*/
+      Await.result(serializer.parseFromSocket(messageToReceive), DefaultDuration)    }
+  }
 
 }
