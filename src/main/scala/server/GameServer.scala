@@ -1,11 +1,12 @@
 package server
 
-import akka.actor.{ActorSystem, Terminated}
+import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import common.room.RoomProperty
+import server.GameServer.ConnectionConfigurations
 import server.ServerActor._
 import server.room.ServerRoom
 import server.route_service.RouteService
@@ -79,10 +80,6 @@ trait GameServer {
 
 
 object GameServer {
-
-
-  implicit val ActorRequestTimeout: Timeout = 10 seconds
-
   /**
    * Timeout for the graceful shutdown of the server
    */
@@ -102,9 +99,16 @@ object GameServer {
    * @param existingRoutes (optional) additional routes that will be used by the server
    * @return an instance if a [[server.GameServer]]
    */
-  def apply(host: String, port: Int, existingRoutes: Route = reject): GameServer =
-    new GameServerImpl(host, port, existingRoutes)
+  def apply(host: String, port: Int, existingRoutes: Route = reject, configurations: ConnectionConfigurations = ConnectionConfigurations()): GameServer =
+    new GameServerImpl(host, port, existingRoutes, configurations)
 
+  /**
+   *
+   * @param idleConnectionTimeout time after which an idle connections  to a client should be closed
+   * @param keepAlive             if set to a duration, enables heartbeat service to clients
+   */
+  case class ConnectionConfigurations(idleConnectionTimeout: FiniteDuration = 60 seconds,
+                                      keepAlive: Duration = Duration.Inf)
 }
 
 /**
@@ -116,13 +120,17 @@ object GameServer {
  **/
 private class GameServerImpl(override val host: String,
                              override val port: Int,
-                             additionalRoutes: Route = reject) extends GameServer
+                             private val additionalRoutes: Route = reject,
+                             private val configurations: ConnectionConfigurations = ConnectionConfigurations()) extends GameServer
   with LazyLogging {
 
   import GameServer._
   import akka.pattern.ask
+  import com.typesafe.config.ConfigFactory
 
-  implicit val actorSystem: ActorSystem = ActorSystem()
+  private implicit val ActorRequestTimeout: Timeout = 10 seconds
+
+  implicit val actorSystem: ActorSystem = ActorSystem("GameServerActorSystem", this.serverConfigurations)
   implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
 
   private val roomHandler = RoomHandler()
@@ -130,8 +138,6 @@ private class GameServerImpl(override val host: String,
   private val roomsRoutes = routeService.route
 
   private val serverActor = actorSystem actorOf ServerActor(ServerTerminationDeadline, roomsRoutes ~ additionalRoutes)
-
-
   private var onStart: () => Unit = () => {}
   private var onShutdown: () => Unit = () => {}
 
@@ -167,12 +173,27 @@ private class GameServerImpl(override val host: String,
   override def createRoom(roomType: String, properties: Set[RoomProperty] = Set.empty): Unit =
     this.roomHandler.createRoom(roomType, properties)
 
-
   override def terminate(): Future[Unit] =
     for {
       _ <- this.stop()
       _ <- this.actorSystem.terminate()
     } yield {}
+
+
+  private def serverConfigurations = {
+    val keepAliveString = configurations.keepAlive match {
+      case Duration.Inf => "infinite"
+      case other => s"${other.toSeconds} s"
+    }
+
+    ConfigFactory.parseString({
+      s"""{
+         |akka.http.server.idle-timeout: ${configurations.idleConnectionTimeout.toSeconds} s
+         |akka.http.websocket.periodic-keep-alive-max-idle = $keepAliveString
+         |}
+         |""".stripMargin
+    }).withFallback(ConfigFactory.load())
+  }
 }
 
 

@@ -13,14 +13,13 @@ object RoomActor {
   case class Join(client: Client, sessionId: String, password: RoomPassword) extends RoomCommand
   case class Leave(client: Client) extends RoomCommand
   case class Msg(client: Client, payload: Any) extends RoomCommand
+  case object Close extends RoomCommand
 
-  sealed trait RoomResponse
-  case object ClientLeaved extends RoomResponse
+  case object StartAutoCloseTimeout
+
 
   private trait InternalMessage
-  private case object CheckRoomStateTimer
   private case object AutoCloseRoomTimer
-  private case object CheckRoomState extends InternalMessage
   private case object AutoCloseRoom extends InternalMessage
 
   def apply(serverRoom: ServerRoom, roomHandler: RoomHandler): Props = Props(classOf[RoomActor], serverRoom, roomHandler)
@@ -41,15 +40,16 @@ class RoomActor(private val serverRoom: ServerRoom,
   import RoomActor._
   import scala.concurrent.duration._
 
-  implicit val CheckRoomStateRate: FiniteDuration = 50 millis
   implicit val executionContext: ExecutionContextExecutor = this.context.system.dispatcher
 
   serverRoom setAssociatedActor self
 
   override def preStart(): Unit = {
-    this.timers.startTimerAtFixedRate(CheckRoomStateTimer, CheckRoomState, CheckRoomStateRate)
     super.preStart()
     this.serverRoom.onCreate()
+    if (this.serverRoom.checkAutoClose()) {
+      self ! StartAutoCloseTimeout
+    }
   }
 
   override def postStop(): Unit = {
@@ -69,7 +69,7 @@ class RoomActor(private val serverRoom: ServerRoom,
 
     case Leave(client) =>
       this.serverRoom.removeClient(client)
-      sender ! ClientLeaved
+      sender ! RoomProtocolMessage(LeaveOk)
 
     case Msg(client, payload) =>
       if (this.serverRoom.clientAuthorized(client)) {
@@ -79,25 +79,20 @@ class RoomActor(private val serverRoom: ServerRoom,
         sender ! RoomProtocolMessage(ClientNotAuthorized, client.id)
       }
 
-    case CheckRoomState =>
-      if (this.serverRoom.isClosed) {
-        this.roomHandler.removeRoom(this.serverRoom.roomId)
-        self ! PoisonPill
-      } else if (checkAutoClose()) {
-        this.timers.startSingleTimer(AutoCloseRoomTimer, AutoCloseRoom, ServerRoom.AutomaticCloseTimeout)
-      }
+    case Close =>
+      this.roomHandler.removeRoom(this.serverRoom.roomId)
+      self ! PoisonPill
+
+    case StartAutoCloseTimeout =>
+      this.timers.startSingleTimer(AutoCloseRoomTimer, AutoCloseRoom, this.serverRoom.autoCloseTimeout)
 
     case AutoCloseRoom =>
       this.serverRoom.close()
 
-    case StateSyncTick(f) =>
-      serverRoom.connectedClients foreach f
+    case StateSyncTick(onTick) =>
+      serverRoom.connectedClients foreach onTick
 
     case WorldUpdateTick() =>
       serverRoom.asInstanceOf[GameLoop].updateWorld()
   }
-
-  private def checkAutoClose(): Boolean =
-    this.serverRoom.autoClose && this.serverRoom.connectedClients.isEmpty && !this.timers.isTimerActive(AutoCloseRoomTimer)
-
 }

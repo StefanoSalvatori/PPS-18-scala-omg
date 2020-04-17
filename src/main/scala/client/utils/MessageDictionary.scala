@@ -82,11 +82,9 @@ object MessageDictionary {
 
   case class ClientRoomResponse(clientRoom: ClientRoom)
 
-  case class SendJoin(roomId: RoomId, sessionId: Option[String], password: RoomPassword)
+  case class SendJoin(sessionId: Option[String], password: RoomPassword)
 
   case class SendLeave()
-
-  case class SendProtocolMessage(msg: RoomProtocolMessage)
 
   case class SendStrictMessage(msg: Any with java.io.Serializable)
 

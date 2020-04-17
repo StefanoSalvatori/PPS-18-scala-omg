@@ -9,7 +9,10 @@ import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.room.Room.{BasicRoom, RoomId, RoomPassword, SharedRoom}
 import common.room._
+import server.room.RoomActor.{Close, StartAutoCloseTimeout}
 import server.utils.Timer
+
+import scala.concurrent.duration.FiniteDuration
 
 trait PrivateRoomSupport {
 
@@ -17,6 +20,7 @@ trait PrivateRoomSupport {
 
   /**
    * Check if the room is private.
+   *
    * @return true if the room is private, false if it's public
    */
   def isPrivate: Boolean = password != Room.defaultPublicPassword
@@ -28,12 +32,14 @@ trait PrivateRoomSupport {
 
   /**
    * It makes the room private
+   *
    * @param newPassword the password to be used to join the room
    */
   def makePrivate(newPassword: RoomPassword): Unit = password = newPassword
 
   /**
    * It checks if a provided password is the correct one.
+   *
    * @param providedPassword the password provided, supposedly by a client
    * @return true if the password is correct or if the room is public, false otherwise.
    */
@@ -47,6 +53,7 @@ trait RoomLockingSupport {
 
   /**
    * It checks if the room is currently locked.
+   *
    * @return true if the room is locked, false otherwise
    */
   def isLocked: Boolean = _isLocked
@@ -66,24 +73,18 @@ trait ServerRoom extends BasicRoom
   with PrivateRoomSupport
   with RoomLockingSupport
   with LazyLogging {
+  import ServerRoom._
 
+  val autoClose: Boolean = false
+  val autoCloseTimeout: FiniteDuration = DefaultAutomaticCloseTimeout
   override val roomId: RoomId = UUID.randomUUID.toString
-
+  protected var roomActor: Option[ActorRef] = None
   private var clients: Seq[Client] = Seq.empty
-  private var closed = false
-
-  protected var roomActor: ActorRef = _
-
-  def setAssociatedActor(actor: ActorRef): Unit = roomActor = actor
-
-  //TODO: need to be syncronized if it's immutable?
   //clients that are allowed to reconnect with the associate expiration timer
+  //TODO: need to be syncronized if it's immutable?
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
-  /**
-   * if true, the room will be automatically closed when no client is connected
-   */
-  def autoClose: Boolean = false
+  def setAssociatedActor(actor: ActorRef): Unit = roomActor = Some(actor)
 
   /**
    * Add a client to the room. It triggers the onJoin handler
@@ -110,7 +111,6 @@ trait ServerRoom extends BasicRoom
    * @return true if the client successfully reconnected to the room, false otherwise
    */
   def tryReconnectClient(client: Client): Boolean = {
-
     val reconnectingClient = this.reconnectingClients.find(_._1.id == client.id)
     if (reconnectingClient.nonEmpty) {
       reconnectingClient.get._2.stopTimer()
@@ -139,6 +139,13 @@ trait ServerRoom extends BasicRoom
   }
 
   /**
+   *
+   * @return true if the autoclose operations need to start
+   */
+  def checkAutoClose(): Boolean = this.autoClose && this.connectedClients.isEmpty
+
+
+  /**
    * Custom room constraints that may cause a join request to fail.
    *
    * @return true if the join request should be satisfied, false otherwise
@@ -153,6 +160,10 @@ trait ServerRoom extends BasicRoom
   def removeClient(client: Client): Unit = {
     this.clients = this.clients.filter(_.id != client.id)
     this.onLeave(client)
+    client send RoomProtocolMessage(LeaveOk)
+    if(this.checkAutoClose()) {
+      this.roomActor.foreach(_ ! StartAutoCloseTimeout)
+    }
   }
 
   /**
@@ -185,17 +196,12 @@ trait ServerRoom extends BasicRoom
     this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)))
 
   /**
-   *
-   * @return true if this room is closed, false otherwise
-   */
-  def isClosed: Boolean = this.closed
-
-  /**
    * Close this room
    */
   def close(): Unit = {
-    this.closed = true
+    this.lock()
     this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.RoomClosed, client.id)))
+    this.roomActor.foreach(_ ! Close)
     this.onClose()
   }
 
@@ -239,6 +245,7 @@ trait ServerRoom extends BasicRoom
       .map(ServerRoom.propertyToPair)
       .foreach(property => operationOnField(property.name)(f => f set(this, property.value)))
 
+
   /**
    * Called as soon as the room is created by the server
    */
@@ -281,8 +288,9 @@ trait ServerRoom extends BasicRoom
 
   /**
    * Perform an operation on a given field.
+   *
    * @param fieldName the name of the field to use
-   * @param f the operation to execute, expressed as a function
+   * @param f         the operation to execute, expressed as a function
    * @tparam T the type of return of the operation to execute
    * @return it returns whatever the given function f returns
    */
@@ -307,12 +315,13 @@ trait ServerRoom extends BasicRoom
 object ServerRoom {
 
   import scala.concurrent.duration._
-  val AutomaticCloseTimeout: FiniteDuration = 5 seconds
+  val DefaultAutomaticCloseTimeout: FiniteDuration = 5 seconds
 
   /**
    * It creates a SharedRoom from a given ServerRoom.
    * Properties of the basic ServerRoom are dropped (except for the private state),
    * just properties of the custom room are kept.
+   *
    * @tparam T type of the room that extends ServerRoom
    * @return the created SharedRoom
    */
@@ -342,6 +351,7 @@ object ServerRoom {
 
   /**
    * Converter of sequence of room from ServerRoom to SharedRoom.
+   *
    * @tparam T type of custom rooms that extend ServerRoom
    * @return A sequence of SharedRoom, where each element is the corresponding one mapped from the input sequence
    */
@@ -365,12 +375,18 @@ object ServerRoom {
    * A room with empty behavior
    */
   private case class BasicServerRoom(automaticClose: Boolean) extends ServerRoom {
-    override def autoClose: Boolean = this.automaticClose
-    override def onCreate(): Unit = { }
-    override def onClose(): Unit = { }
-    override def onJoin(client: Client): Unit = { }
-    override def onLeave(client: Client): Unit = { }
-    override def onMessageReceived(client: Client, message: Any): Unit = { }
+    override val autoClose: Boolean = this.automaticClose
+
+    override def onCreate(): Unit = {}
+
+    override def onClose(): Unit = {}
+
+    override def onJoin(client: Client): Unit = {}
+
+    override def onLeave(client: Client): Unit = {}
+
+    override def onMessageReceived(client: Client, message: Any): Unit = {}
+
     override def joinConstraints: Boolean = true
   }
 

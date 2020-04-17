@@ -1,6 +1,6 @@
 package server.utils
 
-import server.room.{Client, GameLoop, RoomPropertyAnn, ServerRoom, SynchronizedRoomState}
+import server.room.{Client, GameLoop, ServerRoom, SynchronizedRoomState, RoomPropertyAnn}
 
 /**
  * Rooms used for testing purpose.
@@ -12,12 +12,20 @@ object ExampleRooms {
     override val stateUpdateRate: Int = RoomWithState.UpdateRate
 
     override def onCreate(): Unit = {}
-    override def onClose(): Unit = this.stopStateUpdate()
+
+    override def onClose(): Unit = this.stopStateSynchronization()
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {}
+
     override def onMessageReceived(client: Client, message: Any): Unit = {}
+
     override def currentState: Integer = this.internalState
-    override def joinConstraints: Boolean = { true }
+
+    override def joinConstraints: Boolean = {
+      true
+    }
 
     //Only used for testing
     def changeState(newState: Int): Unit = this.internalState = newState
@@ -38,10 +46,15 @@ object ExampleRooms {
     override val worldUpdateRate: Int = RoomWithGameLoop.updateRate
 
     override def joinConstraints: Boolean = true
+
     override def onCreate(): Unit = {}
+
     override def onClose(): Unit = {}
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {}
+
     override def onMessageReceived(client: Client, message: Any): Unit = {}
 
     override def updateWorld(): Unit = {
@@ -51,6 +64,7 @@ object ExampleRooms {
 
     // Used for testing purpose
     def state: Int = count
+
     var receivedTicks: Int = 0
   }
 
@@ -65,34 +79,55 @@ object ExampleRooms {
 
   case class RoomWithReconnection() extends ServerRoom {
     private val ReconnectionTime = 10 //s
-    override def onCreate(): Unit = {  }
+    override def onCreate(): Unit = {}
+
     override def onClose(): Unit = {}
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {
       this.allowReconnection(client, ReconnectionTime)
     }
-    override def onMessageReceived(client: Client, message: Any): Unit = { }
+
+    override def onMessageReceived(client: Client, message: Any): Unit = {}
+
     override def joinConstraints: Boolean = true
   }
 
-  val roomWithReconnection= "roomWithReconnection"
+  val roomWithReconnection = "roomWithReconnection"
 
   //________________________________________________
 
+  object ClosableRoomWithState {
+    val ChangeStateMessage = "changeState"
+    val CloseRoomMessage = "close"
+    val PingMessage = "ping"
+    val PongResponse = "pong"
+  }
+
   case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
-    override def onCreate(): Unit = {
-      this.startStateSynchronization()
-    }
+    import ClosableRoomWithState._
+    override val stateUpdateRate = 200
+    private var gameState = "gameState"
+
+    override def onCreate(): Unit = this.startStateSynchronization()
+
     override def onClose(): Unit = {}
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {}
+
     override def onMessageReceived(client: Client, message: Any): Unit = {
       message.toString match {
-        case "close" => this.close()
-        case "ping" => this.tell(client, "pong")
+        case CloseRoomMessage => this.close()
+        case PingMessage => this.tell(client, PongResponse)
+        case ChangeStateMessage => this.gameState = "gameState_updated"
       }
     }
-    override def currentState: String = "game state"
+
+    override def currentState: String = this.gameState
+
     override def joinConstraints: Boolean = true
   }
 
@@ -102,12 +137,19 @@ object ExampleRooms {
 
   case class NoPropertyRoom() extends ServerRoom {
 
-    override def onCreate(): Unit = { }
-    override def onClose(): Unit = { }
-    override def onJoin(client: Client): Unit = { }
-    override def onLeave(client: Client): Unit = { }
-    override def onMessageReceived(client: Client, message: Any): Unit = { }
-    override def joinConstraints: Boolean = { true }
+    override def onCreate(): Unit = {}
+
+    override def onClose(): Unit = {}
+
+    override def onJoin(client: Client): Unit = {}
+
+    override def onLeave(client: Client): Unit = {}
+
+    override def onMessageReceived(client: Client, message: Any): Unit = {}
+
+    override def joinConstraints: Boolean = {
+      true
+    }
   }
 
   val noPropertyRoomType = "noProperty"
@@ -120,12 +162,19 @@ object ExampleRooms {
     @RoomPropertyAnn private val b: String = "abc"
     private val c: Int = 0
 
-    override def onCreate(): Unit = { }
-    override def onClose(): Unit = { }
-    override def onJoin(client: server.room.Client): Unit = { }
-    override def onLeave(client: server.room.Client): Unit = { }
-    override def onMessageReceived(client: server.room.Client, message: Any): Unit = { }
-    override def joinConstraints: Boolean = { true }
+    override def onCreate(): Unit = {}
+
+    override def onClose(): Unit = {}
+
+    override def onJoin(client: server.room.Client): Unit = {}
+
+    override def onLeave(client: server.room.Client): Unit = {}
+
+    override def onMessageReceived(client: server.room.Client, message: Any): Unit = {}
+
+    override def joinConstraints: Boolean = {
+      true
+    }
   }
 
   val roomWithPropertyType = "roomWithProperty"
@@ -140,10 +189,15 @@ object ExampleRooms {
     private var d: Int = 0
 
     override def onCreate(): Unit = {}
+
     override def onClose(): Unit = {}
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {}
+
     override def onMessageReceived(client: Client, message: Any): Unit = {}
+
     override def joinConstraints: Boolean = true
   }
 

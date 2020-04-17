@@ -1,20 +1,21 @@
 package examples.moneygrabber.client.controller
 
-import client.{Client, ClientImpl}
+import client.Client
 import common.room.{FilterOptions, RoomProperty}
 import examples.moneygrabber.client.view.game.{GameFrame, GameView}
 import examples.moneygrabber.client.view.menu.MainMenu
 import examples.moneygrabber.client.view.menu.MainMenu.{FourPlayers, Quit, TwoPlayers}
 import examples.moneygrabber.common.GameModes
 import examples.moneygrabber.common.GameModes.GameMode
+import examples.moneygrabber.server.{Server, ServerConfig}
 
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
 import scala.swing.Publisher
 
 class MainMenuController(private val menu: MainMenu) extends Publisher {
   implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
-  private val Host = "localhost"
-  private val Port = 8080
+  private val Host = ServerConfig.ServerHost
+  private val Port = ServerConfig.ServerPort
   private val client = Client(Host, Port)
 
   listenTo(MainMenu.MenuButtons: _*)

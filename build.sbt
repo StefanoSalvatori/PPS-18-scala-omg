@@ -2,6 +2,8 @@ name := "scala-omg"
 
 version := "0.1"
 
+// fork in Test := true
+
 scalaVersion := "2.12.10"
 val akkaVersion = "2.6.4"
 val akkaHttpVersion = "10.1.11"
@@ -17,18 +19,13 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % "2.5.26", // or whatever the latest version is
   "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
-  "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
-  "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "org.apache.commons" % "commons-lang3" % "3.3.2",
-
-
-  "ch.qos.logback" % "logback-classic" % "1.2.3")
-
-libraryDependencies += "it.unibo.alice.tuprolog" % "tuprolog" % "3.1"
-
-// Add dependency on ScalaFX library
-libraryDependencies += "org.scalafx" %% "scalafx" % "12.0.2-R18"
+  "it.unibo.alice.tuprolog" % "tuprolog" % "3.1",
+  "org.scalafx" %% "scalafx" % "12.0.2-R18",
+  "ch.qos.logback" % "logback-classic" % "1.2.3",
+  "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
+  "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test)
 
 // Determine OS version of JavaFX binaries
 lazy val osName = System.getProperty("os.name") match {
