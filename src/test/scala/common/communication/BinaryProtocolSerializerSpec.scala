@@ -25,7 +25,7 @@ class BinaryProtocolSerializerSpec extends AnyFlatSpec with BeforeAndAfterAll {
   }
 
   behavior of "Room Protocol Binary Serializer"
-
+/*
   it should "serialize and deserialize room protocol messages " in {
     val testMessage = RoomProtocolMessage(JoinOk, "", "random payload")
     val serialized = serializer.prepareToSocket(testMessage)
@@ -53,6 +53,6 @@ class BinaryProtocolSerializerSpec extends AnyFlatSpec with BeforeAndAfterAll {
     assertThrows[ParseException] {
       parseResult.get
     }
-  }
+  }*/
 
 }

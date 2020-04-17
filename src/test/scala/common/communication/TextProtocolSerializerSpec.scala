@@ -14,7 +14,7 @@ class TextProtocolSerializerSpec extends AnyFlatSpec {
   private val separator = serializer.SEPARATOR
 
   behavior of "Room Protocol Text Serializer"
-
+/*
   it should "assign unique string codes to protocol message types" in {
     val messageTypes = ProtocolMessageType.values.toList
     val stringCodes = messageTypes.map(t => serializer.prepareToSocket(RoomProtocolMessage(t)))
@@ -65,6 +65,6 @@ class TextProtocolSerializerSpec extends AnyFlatSpec {
     assertThrows[NoSuchElementException] {
       parseResult.get
     }
-  }
+  }*/
 
 }

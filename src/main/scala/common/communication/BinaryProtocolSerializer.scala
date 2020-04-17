@@ -5,10 +5,11 @@ import java.text.ParseException
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
-import akka.util.ByteString
+import akka.util.{ByteString, ByteStringBuilder}
 import common.communication.CommunicationProtocol.{RoomProtocolMessage, RoomProtocolMessageSerializer}
 import org.apache.commons.lang3.SerializationUtils
 
+import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -17,15 +18,21 @@ import scala.util.{Failure, Success, Try}
  */
 case class BinaryProtocolSerializer(implicit val materializer: Materializer) extends RoomProtocolMessageSerializer {
 
+  import scala.concurrent.duration._
 
-  override def parseFromSocket(msg: Message): Try[RoomProtocolMessage] = msg match {
+  private implicit val executor = materializer.executionContext
+
+  override def parseFromSocket(msg: Message): Future[RoomProtocolMessage] = msg match {
     case BinaryMessage.Strict(binaryMessage) => parseBinaryMessage(binaryMessage)
 
     // ignore binary messages but drain content to avoid the stream being clogged
-    case bm@BinaryMessage.Streamed(_) =>
-      parseIgnoreStream(bm)
-      Failure(new ParseException("ignore stream", 0))
-    case _ => Failure(new ParseException(msg.toString, -1))
+    case BinaryMessage.Streamed(binaryStream) => binaryStream
+      .completionTimeout(5 seconds)
+      .runFold(new ByteStringBuilder())((b, e) => b.append(e))
+      .map(b => b.result)
+      .flatMap(binary => parseBinaryMessage(BinaryMessage.Strict(binary).data))
+
+    case _ => Future.failed(new ParseException(msg.toString, -1))
   }
 
   override def prepareToSocket(msg: RoomProtocolMessage): BinaryMessage =
@@ -36,11 +43,11 @@ case class BinaryProtocolSerializer(implicit val materializer: Materializer) ext
     bm.dataStream.runWith(Sink.ignore)
   }
 
-  private def parseBinaryMessage(msg: ByteString): Try[RoomProtocolMessage] = {
+  private def parseBinaryMessage(msg: ByteString): Future[RoomProtocolMessage] = {
     try {
-      Success(SerializationUtils.deserialize(msg.toArray).asInstanceOf[RoomProtocolMessage])
+      Future.successful(SerializationUtils.deserialize(msg.toArray).asInstanceOf[RoomProtocolMessage])
     } catch {
-      case _: Exception => Failure(new ParseException(msg.toString, -1))
+      case _: Exception => Future.failed(new ParseException(msg.toString, -1))
     }
   }
 }
