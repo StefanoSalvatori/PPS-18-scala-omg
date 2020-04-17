@@ -30,6 +30,7 @@ object ClientStub extends App {
   client createPublicRoom "test_room" onComplete {
     case Success(res) =>
       println("POST: " + res.properties + " .. " + res.roomId)
+      //println(res.valueOf("CdC"))
   }
 
   /*
