@@ -1,13 +1,13 @@
 package server.examples.rooms
 
-import server.room.{Client, GameLoop, ServerRoom, SynchronizedRoomState}
+import server.room.{Client, GameLoop, RoomPropertyAnn, ServerRoom, SynchronizedRoomState}
 
 object ExampleRooms {
 
   case class MyRoom() extends ServerRoom {
 
-    val a: Int = 0
-    val b: String = "abc"
+    @RoomPropertyAnn val a: Int = 0
+    @RoomPropertyAnn val b: String = "abc"
 
     override def onCreate(): Unit = {}
     override def onClose(): Unit = {}
@@ -19,6 +19,7 @@ object ExampleRooms {
 
   case class RoomWithGameLoopAndSync() extends ServerRoom with GameLoop with SynchronizedRoomState[Integer] {
 
+    @RoomPropertyAnn private val maxClients = 2
     private var count = 0
 
     // Server room
@@ -41,7 +42,5 @@ object ExampleRooms {
       println("UPDATE " + count)
       count
     }
-
-
   }
 }

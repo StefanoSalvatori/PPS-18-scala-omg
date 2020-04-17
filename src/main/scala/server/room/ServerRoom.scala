@@ -1,7 +1,7 @@
 package server.room
 
 import java.lang.reflect.Field
-import java.util.UUID
+import java.util.{NoSuchElementException, UUID}
 
 import akka.actor.ActorRef
 import com.typesafe.scalalogging.LazyLogging
@@ -210,12 +210,12 @@ trait ServerRoom extends BasicRoom
       case _ => false
     }
 
-    this.getClass.getDeclaredFields.collect {
+    this.getClass.getDeclaredFields.filter(isProperty) collect {
       case f if operationOnField(f.getName)(field => checkAdmissibleFieldType(this --> field)) => propertyOf(f.getName)
-    }.toSet
+    } toSet
   }
 
-  override def valueOf(propertyName: String): Any = operationOnField(propertyName)(this --> _)
+  override def valueOf(propertyName: String): Any = operationOnProperty(propertyName)(this --> _)
 
   /**
    * Getter of the value of a property
@@ -223,27 +223,21 @@ trait ServerRoom extends BasicRoom
    * @param propertyName The name of the property
    * @return The value of the property, expressed as a RoomPropertyValue
    */
-  def `valueOf~AsPropertyValue`(propertyName: String): RoomPropertyValue = operationOnField(propertyName) { field =>
-    RoomPropertyValue propertyValueFrom (this --> field)
-  }
+  def `valueOf~AsPropertyValue`(propertyName: String): RoomPropertyValue =
+    operationOnProperty(propertyName)(f => RoomPropertyValue propertyValueFrom (this --> f))
 
-  override def propertyOf(propertyName: String): RoomProperty = operationOnField(propertyName) { field =>
-    RoomProperty(propertyName, RoomPropertyValue propertyValueFrom (this --> field))
-  }
+  override def propertyOf(propertyName: String): RoomProperty =
+    operationOnProperty(propertyName)(f => RoomProperty(propertyName, RoomPropertyValue propertyValueFrom (this --> f)))
 
   /**
    * Setter of room properties
    *
    * @param properties A set containing the properties to set
    */
-  def setProperties(properties: Set[RoomProperty]): Unit = properties.map(ServerRoom.propertyToPair).foreach(property => {
-    try {
-      operationOnField(property.name)(f => f set(this, property.value))
-    } catch {
-      case _: NoSuchFieldException =>
-        logger debug s"Impossible to set property '${property.name}': No such property in the room."
-    }
-  })
+  def setProperties(properties: Set[RoomProperty]): Unit =
+    properties.filter(p => isProperty(this fieldFrom p.name))
+      .map(ServerRoom.propertyToPair)
+      .foreach(property => operationOnField(property.name)(f => f set(this, property.value)))
 
   /**
    * Called as soon as the room is created by the server
@@ -277,6 +271,14 @@ trait ServerRoom extends BasicRoom
    */
   def onMessageReceived(client: Client, message: Any)
 
+  private def operationOnProperty[T](propertyName: String)(f: Function[Field, T]): T = {
+    if (isProperty(this fieldFrom propertyName)) {
+      operationOnField(propertyName)(f)
+    } else {
+      throw NoSuchPropertyException()
+    }
+  }
+
   /**
    * Perform an operation on a given field.
    * @param fieldName the name of the field to use
@@ -297,6 +299,9 @@ trait ServerRoom extends BasicRoom
   }
 
   private def -->(field: Field): AnyRef = field get this // Get the value of the field
+
+  private def isProperty(field: Field): Boolean =
+    field.getDeclaredAnnotations collectFirst { case ann: RoomPropertyAnn => ann } nonEmpty
 }
 
 object ServerRoom {

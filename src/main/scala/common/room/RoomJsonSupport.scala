@@ -18,7 +18,7 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val sharedRoomJsonFormat: RootJsonFormat[SharedRoom] = new RootJsonFormat[SharedRoom] {
 
     private val idJsonPropertyName = "id"
-    private val propertiesJsonPropertyName  ="properties"
+    private val propertiesJsonPropertyName = "properties"
 
     def write(a: SharedRoom): JsValue = JsObject(
       idJsonPropertyName -> JsString(a.roomId),
