@@ -45,3 +45,8 @@ object RoomPropertyValueConversions {
   implicit def booleanToBooleanProperty(value: Boolean): BooleanRoomPropertyValue = BooleanRoomPropertyValue(value)
   implicit def DoubleToBooleanProperty(value: Double): DoubleRoomPropertyValue = DoubleRoomPropertyValue(value)
 }
+
+case class NoSuchPropertyException(
+  private val message: String = "The specified property does not exist in the room",
+  private val cause: Throwable = None.orNull
+                                  ) extends Exception(message, cause)

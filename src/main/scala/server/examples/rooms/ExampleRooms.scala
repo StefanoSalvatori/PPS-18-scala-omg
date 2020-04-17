@@ -1,13 +1,13 @@
 package server.examples.rooms
 
-import server.room.{Client, GameLoop, ServerRoom, SynchronizedRoomState}
+import server.room.{Client, GameLoop, RoomPropertyAnn, ServerRoom, SynchronizedRoomState}
 
 object ExampleRooms {
 
   case class MyRoom() extends ServerRoom {
 
-    val a: Int = 0
-    val b: String = "abc"
+    @RoomPropertyAnn val a: Int = 0
+    @RoomPropertyAnn val b: String = "abc"
 
     override def onCreate(): Unit = {}
     override def onClose(): Unit = {}
@@ -19,29 +19,42 @@ object ExampleRooms {
 
   case class RoomWithGameLoopAndSync() extends ServerRoom with GameLoop with SynchronizedRoomState[Integer] {
 
+    @RoomPropertyAnn private val maxClients = 2
     private var count = 0
+
+    override val stateUpdateRate: Int = 100
+    override val worldUpdateRate: Int = 100
 
     // Server room
     override def onCreate(): Unit = {
       this.startWorldUpdate()
       this.startStateSynchronization()
     }
+
     override def onClose(): Unit = {}
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {}
+
     override def onMessageReceived(client: Client, message: Any): Unit = {}
+
     override def joinConstraints: Boolean = true
 
     override def updateWorld(): Unit = {
       count = count + 1
-      println(count)
+      if (count % 10 == 0) {
+        println(count)
+        System.out.flush()
+      }
     }
 
     override def currentState: Integer = {
-      println("UPDATE " + count)
+      if (count % 10 == 0) {
+        println("UPDATE " + count)
+        System.out.flush()
+      }
       count
     }
-
-
   }
 }

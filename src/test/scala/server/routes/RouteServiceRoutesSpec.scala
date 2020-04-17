@@ -86,15 +86,17 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
     }
   }
 
+  // TODO
+  /*
   it should "create only one room after a single POST request" in {
-    val testProperty = RoomProperty("A", IntRoomPropertyValue(1))
+    val testProperty = RoomProperty("A", 1)
     createRoomRequest(Set(testProperty))
 
     getRoomsWithEmptyFilters~> route ~> check {
       responseAs[Seq[SharedRoom]] should have size 1
     }
-
   }
+   */
 
   /// GET rooms/{type}/{id}
   it should "handle GET request on path 'rooms/{type}/{id}' if such id exists " in {
@@ -122,12 +124,10 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
       }
   }
 
-
   def createRoomRequest(testProperties: Set[RoomProperty] = Set.empty): SharedRoom = {
     HttpRequests.postRoom("")(TestRoomType, testProperties) ~> route ~> check {
       responseAs[SharedRoom]
     }
-
 
     /*
   /// PUT rooms/{type}
