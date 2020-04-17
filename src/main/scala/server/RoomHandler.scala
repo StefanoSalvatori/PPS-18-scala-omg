@@ -125,6 +125,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     val newRoom = this.roomTypesHandlers(roomType)()
     val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
+
     // Set room properties and password
     if (roomProperties.map(_ name) contains SharedRoom.roomPasswordPropertyName) {
       val splitProperties = roomProperties.groupBy(_.name == SharedRoom.roomPasswordPropertyName)

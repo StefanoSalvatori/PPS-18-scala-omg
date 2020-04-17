@@ -12,8 +12,8 @@ import common.room.Room.RoomPassword
 import server.communication.SocketFlow
 import server.room.Client
 import server.room.RoomActor.{Join, Leave, Msg}
-
-import scala.util.Success
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 
 /**
@@ -26,6 +26,8 @@ import scala.util.Success
 case class RoomSocket(private val roomActor: ActorRef,
                       private val parser: RoomProtocolMessageSerializer)
                      (implicit materializer: Materializer) extends SocketFlow {
+
+  private implicit val executor = materializer.executionContext
 
 
   def createFlow(overflowStrategy: OverflowStrategy = OverflowStrategy.dropHead,
@@ -42,24 +44,27 @@ case class RoomSocket(private val roomActor: ActorRef,
 
     //Input (From client to room)
     val sink: Sink[Message, Any] = Flow[Message]
-      .map {
-        this.parser.parseFromSocket(_) match {
-          case Success(RoomProtocolMessage(ProtocolMessageType.JoinRoom, sessionId, payload)) =>
-            //if sessionId is given create the client with that id
-            if (!sessionId.isEmpty) {
-              client = Client.asActor(sessionId, socketActor)
-            }
-            roomActor ! Join(client, sessionId, payload.asInstanceOf[RoomPassword])
-          case Success(RoomProtocolMessage(ProtocolMessageType.LeaveRoom, _, _)) =>
-            roomActor ! Leave(client)
-          case Success(RoomProtocolMessage(ProtocolMessageType.MessageRoom, _, payload)) =>
-            roomActor ! Msg(client, payload)
-          case _ =>
-        }
-      }
+      .mapAsync[RoomProtocolMessage](parallelism = Int.MaxValue)(x =>
+        this.parser.parseFromSocket(x).recover { case _ => null } // scalastyle:ignore null
+        // null values are not passed downstream
+      )
+      .collect({
+        case RoomProtocolMessage(ProtocolMessageType.JoinRoom, sessionId, payload) =>
+          //if sessionId is given create the client with that id
+          if (!sessionId.isEmpty) {
+            client = Client.asActor(sessionId, socketActor)
+          }
+          roomActor ! Join(client, sessionId, payload.asInstanceOf[RoomPassword])
+        case RoomProtocolMessage(ProtocolMessageType.LeaveRoom, _, _) =>
+          roomActor ! Leave(client)
+        case RoomProtocolMessage(ProtocolMessageType.MessageRoom, _, payload) =>
+          roomActor ! Msg(client, payload)
+        case _ =>
+      })
       .to(Sink.onComplete(_ => {
         roomActor ! Leave(client)
       }))
+
 
     Flow.fromSinkAndSourceCoupled(sink, Source.fromPublisher(publisher))
 

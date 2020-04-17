@@ -75,28 +75,34 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
   def onSocketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
 
-    case RoomProtocolMessage(ProtocolMessageType.JoinOk, sessionId, _) =>
+
+    case RoomProtocolMessage(JoinOk, sessionId, _) =>
       coreClient ! ClientRoomActorJoined
       replyTo ! Success(sessionId)
       context.become(roomJoined(outRef))
       unstashAll()
 
-    case RoomProtocolMessage(ProtocolMessageType.RoomClosed, _, _) =>
 
-    case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
+    case RoomProtocolMessage(ClientNotAuthorized, _, _) =>
       replyTo ! Failure(new Exception("Can't join"))
 
-    case SendStrictMessage(msg: Any with java.io.Serializable) => stash()
+    case SendStrictMessage(_: Any with java.io.Serializable) => stash()
+
+    case RoomProtocolMessage(Tell, _, _) => stash()
+    case RoomProtocolMessage(Broadcast, _, _) => stash()
+    case RoomProtocolMessage(RoomClosed, _, _) => stash()
+
+
 
   }
 
   def onRoomJoined(outRef: ActorRef): Receive = {
 
-    case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
-    case RoomProtocolMessage(ProtocolMessageType.Tell, _, payload) => handleMessageReceived(payload)
-    case RoomProtocolMessage(ProtocolMessageType.Broadcast, _, payload) => handleMessageReceived(payload)
-    case RoomProtocolMessage(ProtocolMessageType.StateUpdate, _, payload) => handleStateChangedReceived(payload)
-    case RoomProtocolMessage(ProtocolMessageType.RoomClosed, _, _) =>
+    case RoomProtocolMessage(ClientNotAuthorized, _, _) =>
+    case RoomProtocolMessage(Tell, _, payload) => handleMessageReceived(payload)
+    case RoomProtocolMessage(Broadcast, _, payload) => handleMessageReceived(payload)
+    case RoomProtocolMessage(StateUpdate, _, payload) => handleStateChangedReceived(payload)
+    case RoomProtocolMessage(RoomClosed, _, _) =>
       this.onCloseCallback match {
         case Some(value) => value()
         case None => stash()
