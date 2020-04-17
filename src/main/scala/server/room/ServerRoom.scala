@@ -1,7 +1,7 @@
 package server.room
 
 import java.lang.reflect.Field
-import java.util.{NoSuchElementException, UUID}
+import java.util.UUID
 
 import akka.actor.ActorRef
 import com.typesafe.scalalogging.LazyLogging
@@ -81,7 +81,7 @@ trait ServerRoom extends BasicRoom
   protected var roomActor: Option[ActorRef] = None
   private var clients: Seq[Client] = Seq.empty
   //clients that are allowed to reconnect with the associate expiration timer
-  //TODO: need to be syncronized if it's immutable?
+  //TODO: need to be synchronized if it's immutable?
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
   def setAssociatedActor(actor: ActorRef): Unit = roomActor = Some(actor)
@@ -241,10 +241,9 @@ trait ServerRoom extends BasicRoom
    * @param properties A set containing the properties to set
    */
   def setProperties(properties: Set[RoomProperty]): Unit =
-    properties.filter(p => isProperty(this fieldFrom p.name))
+    properties.filter(p => try { isProperty(this fieldFrom p.name) } catch { case _: NoSuchFieldException => false })
       .map(ServerRoom.propertyToPair)
       .foreach(property => operationOnField(property.name)(f => f set(this, property.value)))
-
 
   /**
    * Called as soon as the room is created by the server
@@ -278,12 +277,14 @@ trait ServerRoom extends BasicRoom
    */
   def onMessageReceived(client: Client, message: Any)
 
-  private def operationOnProperty[T](propertyName: String)(f: Function[Field, T]): T = {
+  private def operationOnProperty[T](propertyName: String)(f: Function[Field, T]): T = try {
     if (isProperty(this fieldFrom propertyName)) {
       operationOnField(propertyName)(f)
     } else {
       throw NoSuchPropertyException()
     }
+  } catch {
+    case _: NoSuchFieldException => throw NoSuchPropertyException()
   }
 
   /**
