@@ -14,7 +14,7 @@ import scala.swing.Publisher
 
 class MainMenuController(private val menu: MainMenu) extends Publisher {
   implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
-  private val Host = "192.168.1.4"
+  private val Host = "localhost"
   private val Port = 8080
   private val client = Client(Host, Port)
 
