@@ -100,17 +100,18 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
         }
       )
       clientRoomActor ! OnCloseCallback(() => onClosePromise.success(true))
-
       clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
       expectMsgType[Success[_]]
-
-      assert(Await.result(onStateChangePromise.future, DefaultDuration))
 
       clientRoomActor ! SendStrictMessage("ping")
       assert(Await.result(onMsgPromise.future, DefaultDuration))
 
+      clientRoomActor ! SendStrictMessage("changeState")
+      assert(Await.result(onStateChangePromise.future, DefaultDuration))
+
       clientRoomActor ! SendStrictMessage("close")
       assert(Await.result(onClosePromise.future, DefaultDuration))
+
     }
 
     "should receive all messages from the server room" in {

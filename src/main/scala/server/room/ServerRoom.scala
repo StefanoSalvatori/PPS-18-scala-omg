@@ -9,7 +9,10 @@ import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.room.Room.{BasicRoom, RoomId, RoomPassword, SharedRoom}
 import common.room._
+import server.room.RoomActor.{Close, StartAutoCloseTimeout}
 import server.utils.Timer
+
+import scala.concurrent.duration.FiniteDuration
 
 trait PrivateRoomSupport {
 
@@ -70,23 +73,18 @@ trait ServerRoom extends BasicRoom
   with PrivateRoomSupport
   with RoomLockingSupport
   with LazyLogging {
+  import ServerRoom._
 
-  override val roomId: RoomId = UUID.randomUUID.toString
   val autoClose: Boolean = false
-
+  val autoCloseTimeout: FiniteDuration = DefaultAutomaticCloseTimeout
+  override val roomId: RoomId = UUID.randomUUID.toString
+  protected var roomActor: Option[ActorRef] = None
   private var clients: Seq[Client] = Seq.empty
-  private var closed = false
-  protected var roomActor: ActorRef = _
-
-  def setAssociatedActor(actor: ActorRef): Unit = roomActor = actor
-
-  //TODO: need to be syncronized if it's immutable?
   //clients that are allowed to reconnect with the associate expiration timer
+  //TODO: need to be syncronized if it's immutable?
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
-  /**
-   * if true, the room will be automatically closed when no client is connected
-   */
+  def setAssociatedActor(actor: ActorRef): Unit = roomActor = Some(actor)
 
   /**
    * Add a client to the room. It triggers the onJoin handler
@@ -98,8 +96,8 @@ trait ServerRoom extends BasicRoom
     val canJoin = checkPasswordCorrectness(providedPassword) && !isLocked && joinConstraints
     if (canJoin) {
       this.clients = client +: this.clients
-      this.onJoin(client)
       client send RoomProtocolMessage(JoinOk, client.id)
+      this.onJoin(client)
     } else {
       client send RoomProtocolMessage(ClientNotAuthorized)
     }
@@ -141,6 +139,13 @@ trait ServerRoom extends BasicRoom
   }
 
   /**
+   *
+   * @return true if the autoclose operations need to start
+   */
+  def checkAutoClose(): Boolean = this.autoClose && this.connectedClients.isEmpty
+
+
+  /**
    * Custom room constraints that may cause a join request to fail.
    *
    * @return true if the join request should be satisfied, false otherwise
@@ -156,6 +161,9 @@ trait ServerRoom extends BasicRoom
     this.clients = this.clients.filter(_.id != client.id)
     this.onLeave(client)
     client send RoomProtocolMessage(LeaveOk)
+    if(this.checkAutoClose()) {
+      this.roomActor.foreach(_ ! StartAutoCloseTimeout)
+    }
   }
 
   /**
@@ -188,17 +196,12 @@ trait ServerRoom extends BasicRoom
     this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)))
 
   /**
-   *
-   * @return true if this room is closed, false otherwise
-   */
-  def isClosed: Boolean = this.closed
-
-  /**
    * Close this room
    */
   def close(): Unit = {
-    this.closed = true
+    this.lock()
     this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.RoomClosed, client.id)))
+    this.roomActor.foreach(_ ! Close)
     this.onClose()
   }
 
@@ -247,6 +250,7 @@ trait ServerRoom extends BasicRoom
         logger debug s"Impossible to set property '${property.name}': No such property in the room."
     }
   })
+
 
   /**
    * Called as soon as the room is created by the server
@@ -301,12 +305,13 @@ trait ServerRoom extends BasicRoom
   }
 
   private def -->(field: Field): AnyRef = field get this // Get the value of the field
-}
+
+  }
 
 object ServerRoom {
 
   import scala.concurrent.duration._
-  val AutomaticCloseTimeout: FiniteDuration = 5 seconds
+  val DefaultAutomaticCloseTimeout: FiniteDuration = 5 seconds
 
   /**
    * It creates a SharedRoom from a given ServerRoom.

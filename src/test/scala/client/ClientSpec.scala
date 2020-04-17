@@ -48,7 +48,7 @@ class ClientSpec extends AnyFlatSpec
     gameServer.defineRoom(RoomTypeName, () => ServerRoom())
     gameServer.defineRoom(ExampleRooms.roomWithPropertyType, RoomWithProperty)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
-    gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState)
+    gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState.apply)
     gameServer.defineRoom(ExampleRooms.roomWithReconnection, RoomWithReconnection)
 
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
@@ -129,7 +129,7 @@ class ClientSpec extends AnyFlatSpec
   }
 
   it should "join a room or create it if it does not exists" in {
-    val room = Await.result(client.joinOrCreate(RoomTypeName, FilterOptions.empty),  DefaultTimeout)
+    val room = Await.result(client.joinOrCreate(RoomTypeName, FilterOptions.empty), DefaultTimeout)
     client joinedRooms() should have size 1
     val roomOnServer = Await.result(client.getAvailableRoomsByType(RoomTypeName, FilterOptions.empty), DefaultTimeout)
     assert(roomOnServer.map(_.roomId).contains(room.roomId))
@@ -143,11 +143,11 @@ class ClientSpec extends AnyFlatSpec
 
   it should "create a public room and join such room" in {
     val room = Await.result(client createPublicRoom RoomTypeName, DefaultTimeout)
-    assert(client.joinedRooms().exists(_.roomId==room.roomId))
+    assert(client.joinedRooms().exists(_.roomId == room.roomId))
   }
 
   it should "fail on joining an already joined room" in {
-    val room = Await.result(client createPublicRoom RoomTypeName , DefaultTimeout)
+    val room = Await.result(client createPublicRoom RoomTypeName, DefaultTimeout)
     assertThrows[Exception] {
       Await.result(client joinById room.roomId, DefaultTimeout)
     }
@@ -169,7 +169,7 @@ class ClientSpec extends AnyFlatSpec
   it should "not join a private room if a wrong password is provided" in {
     val room = Await.result(client.createPrivateRoom(RoomTypeName, password = "pwd"), DefaultTimeout)
     assertThrows[Exception] {
-      Await.result( client2.joinById(room.roomId, "pwd2"), DefaultTimeout)
+      Await.result(client2.joinById(room.roomId, "pwd2"), DefaultTimeout)
     }
   }
 

@@ -16,6 +16,7 @@ import server.utils.Timer
 trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends ServerRoom {
 
   private val stateTimer = Timer.withExecutor()
+  private var lastStateSent: T  = _
 
   /**
    * How often clients will be updated (time expressed in milliseconds)
@@ -46,7 +47,10 @@ trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends ServerRo
   def currentState: T
 
   private def generateStateSyncTick(): Unit =
-    this.roomActor ! StateSyncTick(c => c send RoomProtocolMessage(StateUpdate, c.id, currentState))
+    if(this.lastStateSent==null || this.lastStateSent != currentState) {
+      this.lastStateSent = currentState
+      this.roomActor.foreach(_ ! StateSyncTick(c => c send RoomProtocolMessage(StateUpdate, c.id, currentState)))
+    }
 
 }
 

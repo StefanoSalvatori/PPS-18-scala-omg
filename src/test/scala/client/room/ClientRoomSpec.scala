@@ -2,7 +2,7 @@ package client.room
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
-import client.utils.MessageDictionary.{CreatePrivateRoom, CreatePublicRoom, GetJoinedRooms, JoinedRooms}
+import client.utils.MessageDictionary.{CreatePrivateRoom, CreatePublicRoom, GetJoinedRooms, JoinedRooms, SendStrictMessage}
 import client.CoreClient
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
@@ -42,7 +42,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   before {
     gameServer = GameServer(ServerAddress, ServerPort)
-    gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState)
+    gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState.apply)
     gameServer.defineRoom(ExampleRooms.roomWithPropertyType, RoomWithProperty)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
@@ -130,20 +130,17 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       clientRoom.onMessageReceived { m =>
         p.success(m.toString)
       }
-      clientRoom.send("ping")
+      clientRoom.send(ClosableRoomWithState.PingMessage)
 
       val res = Await.result(p.future, DefaultDuration)
-      res shouldEqual "pong"
+      res shouldEqual ClosableRoomWithState.PongResponse
     }
 
     "define a callback to handle state changed" in {
       val p = Promise[Boolean]()
-
-      clientRoom.onStateChanged { _ =>
-        p.success(true)
-      }
+      clientRoom.onStateChanged { _ => p.success(true) }
       Await.ready(clientRoom.join(), DefaultDuration)
-
+      clientRoom.send(ClosableRoomWithState.ChangeStateMessage)
       val res = Await.result(p.future, DefaultDuration)
       res shouldBe true
     }
@@ -155,7 +152,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       clientRoom.onClose {
         p.success(true)
       }
-      clientRoom.send("close")
+      clientRoom.send(ClosableRoomWithState.CloseRoomMessage)
       val res = Await.result(p.future, DefaultDuration)
       res shouldBe true
     }

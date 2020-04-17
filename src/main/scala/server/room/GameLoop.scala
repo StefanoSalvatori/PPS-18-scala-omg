@@ -38,7 +38,7 @@ trait GameLoop extends ServerRoom {
   def updateWorld(): Unit
 
   private def generateWorldUpdateTick(): Unit = {
-    this.roomActor ! WorldUpdateTick()
+    this.roomActor.foreach(_ ! WorldUpdateTick())
   }
 }
 
