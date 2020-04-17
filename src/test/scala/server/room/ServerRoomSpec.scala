@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import common.room.RoomPropertyValueConversions._
-import common.room.{Room, RoomProperty, RoomPropertyValue}
+import common.room.{NoSuchPropertyException, Room, RoomProperty, RoomPropertyValue}
 import server.utils.TestClient
 
 class ServerRoomSpec extends AnyWordSpecLike
@@ -30,6 +30,8 @@ class ServerRoomSpec extends AnyWordSpecLike
   private val valueC = false
   private val nameD = "d"
   private val valueD = 0.1
+  private val nameE = "e"
+  private val valueE = 0
 
   var testRoom: ServerRoom = _
 
@@ -41,16 +43,17 @@ class ServerRoomSpec extends AnyWordSpecLike
 
     testRoom = new ServerRoom {
       override val roomId: RoomId = "id"
-      var a: Int = valueA
-      var b: String = valueB
-      var c: Boolean = valueC
-      var d: Double = valueD
+      @RoomPropertyAnn var a: Int = valueA
+      @RoomPropertyAnn var b: String = valueB
+      @RoomPropertyAnn var c: Boolean = valueC
+      @RoomPropertyAnn var d: Double = valueD
+      val e: Int = valueE
 
-      override def onCreate(): Unit = {}
-      override def onClose(): Unit = {}
-      override def onJoin(client: Client): Unit = {}
-      override def onLeave(client: Client): Unit = {}
-      override def onMessageReceived(client: Client, message: Any): Unit = {}
+      def onCreate(): Unit = {}
+      def onClose(): Unit = {}
+      def onJoin(client: Client): Unit = {}
+      def onLeave(client: Client): Unit = {}
+      def onMessageReceived(client: Client, message: Any): Unit = {}
       override def joinConstraints: Boolean = this.connectedClients.size < 2
     }
   }
@@ -109,7 +112,6 @@ class ServerRoomSpec extends AnyWordSpecLike
       receivedFrom2.payload shouldBe "Hello Everybody"
     }
 
-
     "notify clients when is closed" in {
       serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
       serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
@@ -155,13 +157,19 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "notify the error when trying to read a non existing property" in {
-      assertThrows[NoSuchFieldException] {
-        testRoom valueOf "randomName"
+      assertThrows[NoSuchPropertyException] {
+        testRoom valueOf nameE
+      }
+      assertThrows[NoSuchPropertyException] {
+        testRoom `valueOf~AsPropertyValue` nameE
+      }
+      assertThrows[NoSuchPropertyException] {
+        testRoom propertyOf nameE
       }
     }
 
     "be safely handled when trying to write a non existing property" in {
-      testRoom setProperties Set(RoomProperty("randomName", 0))
+      testRoom setProperties Set(RoomProperty(nameE, 1))
       noException
     }
 
@@ -198,8 +206,6 @@ class ServerRoomSpec extends AnyWordSpecLike
 
     "expose just the correct properties" in {
       val roomProperties = testRoom.properties
-      val parentProperties = ServerRoom.defaultProperties
-      roomProperties &~ parentProperties should have size 5 // A, B, C, D + roomId
       assert(roomProperties contains RoomProperty(nameA, valueA))
       assert(roomProperties contains RoomProperty(nameB, valueB))
       assert(roomProperties contains RoomProperty(nameC, valueC))

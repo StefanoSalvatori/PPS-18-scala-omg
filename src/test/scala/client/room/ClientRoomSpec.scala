@@ -13,9 +13,8 @@ import server.GameServer
 import akka.pattern.ask
 import common.TestConfig
 import common.http.Routes
-import common.room.{Room, RoomProperty}
+import common.room.{NoSuchPropertyException, Room, RoomJsonSupport, RoomProperty}
 import server.utils.ExampleRooms.{NoPropertyRoom, RoomWithProperty}
-import common.room.RoomJsonSupport
 import server.utils.ExampleRooms
 import server.utils.ExampleRooms.ClosableRoomWithState
 
@@ -109,6 +108,17 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       room.properties should contain("a", 1)
       room.properties should contain("b", "qwe")
       room.properties should contain(Room.roomPrivateStatePropertyName, false)
+    }
+
+    "throw an error when trying to access a non existing property" in {
+      val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.roomWithPropertyType, Set.empty)).mapTo[Try[ClientRoom]], DefaultDuration)
+      val room = res.get
+      assertThrows[NoSuchPropertyException] {
+        room propertyOf "randomProperty"
+      }
+      assertThrows[NoSuchPropertyException] {
+        room valueOf "randomProperty"
+      }
     }
 
     "have the private flag turned on when a private room is created" in {

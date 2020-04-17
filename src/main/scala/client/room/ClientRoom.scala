@@ -1,13 +1,14 @@
 package client.room
 
+import java.util.NoSuchElementException
+
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.util.Timeout
 import client.utils.MessageDictionary._
 import common.room.Room.{BasicRoom, RoomId, RoomPassword}
 import akka.pattern.ask
-import common.room.{Room, RoomProperty, RoomPropertyValue}
-
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import common.room.{NoSuchPropertyException, Room, RoomProperty, RoomPropertyValue}
+import scala.concurrent.{ ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -99,9 +100,11 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
 
   override def properties: Map[String, Any] = _properties.map(e => (e._1, RoomPropertyValue valueOf e._2))
 
-  override def valueOf(propertyName: String): Any = RoomPropertyValue valueOf _properties(propertyName)
+  override def valueOf(propertyName: String): Any =
+    tryReadingProperty(propertyName)(p => RoomPropertyValue valueOf _properties(p))
 
-  override def propertyOf(propertyName: String): RoomProperty = RoomProperty(propertyName, _properties(propertyName))
+  override def propertyOf(propertyName: String): RoomProperty =
+    tryReadingProperty(propertyName)(p => RoomProperty(p, _properties(p)))
 
   override def sessionId: Option[String] = this._sessionId
 
@@ -116,7 +119,6 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
         Future.failed(ex)
     }
   }
-
 
   override def leave(): Future[Any] =
     innerActor match {
@@ -168,6 +170,12 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
     this.onCloseCallback.foreach(ref ! OnCloseCallback(_))
     this.onStateChangedCallback.foreach(ref ! OnStateChangedCallback(_))
     this.onMessageCallback.foreach(ref ! OnMsgCallback(_))
+  }
+
+  private def tryReadingProperty[T](propertyName: String)(f: Function[String, T]): T = try {
+    f(propertyName)
+  } catch {
+    case _: NoSuchElementException => throw NoSuchPropertyException()
   }
 }
 

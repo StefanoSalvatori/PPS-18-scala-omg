@@ -59,7 +59,6 @@ class ClientSpec extends AnyFlatSpec
   }
 
   after {
-    // Await.ready(gameServer.stop(), SERVER_SHUTDOWN_AWAIT_TIME)
     Await.ready(gameServer.terminate(), ServerShutdownAwaitTime)
   }
 

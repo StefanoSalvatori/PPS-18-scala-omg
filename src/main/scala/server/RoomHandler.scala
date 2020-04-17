@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
 import common.room.Room.{RoomId, RoomPassword, SharedRoom}
-import common.room.{FilterOptions, RoomProperty, RoomPropertyValue}
+import common.room.{FilterOptions, NoSuchPropertyException, RoomProperty, RoomPropertyValue}
 import common.communication.BinaryProtocolSerializer
 import server.room.socket.RoomSocket
 import server.room.{RoomActor, ServerRoom}
@@ -144,19 +144,16 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
    * @param filterOptions room properties to check
    * @return the filter to be applied
    */
-  private def roomOptionsFilter(filterOptions: FilterOptions): ServerRoom => Boolean = {
-    room => {
-      filterOptions.options forall { filterOption =>
-        try {
-          val propertyValue = room `valueOf~AsPropertyValue` filterOption.optionName
-          val filterValue = filterOption.value.asInstanceOf[propertyValue.type]
-          filterOption.strategy evaluate(propertyValue, filterValue)
-        } catch {
-          // A room is dropped if it doesn't contain the specified field to be used in the filter
-          case _: NoSuchFieldException => false
-        }
+  private def roomOptionsFilter(filterOptions: FilterOptions): ServerRoom => Boolean = room => {
+    filterOptions.options forall { filterOption =>
+      try {
+        val propertyValue = room `valueOf~AsPropertyValue` filterOption.optionName
+        val filterValue = filterOption.value.asInstanceOf[propertyValue.type]
+        filterOption.strategy evaluate(propertyValue, filterValue)
+      } catch {
+        // A room is dropped if it doesn't contain the specified property to be used in the filter
+        case _: NoSuchPropertyException => false
       }
     }
   }
-
 }
