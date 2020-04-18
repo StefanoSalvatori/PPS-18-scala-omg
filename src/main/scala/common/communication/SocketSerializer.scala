@@ -2,6 +2,7 @@ package common.communication
 
 import akka.http.scaladsl.model.ws.Message
 
+import scala.concurrent.Future
 import scala.util.Try
 
 /**
@@ -17,7 +18,7 @@ trait SocketSerializer[T] {
    * @param msg the msg to parse
    * @return the corresponding class of Generic type [[T]]
    */
-  def parseFromSocket(msg: Message): Try[T]
+  def parseFromSocket(msg: Message): Future[T]
 
 
   /**

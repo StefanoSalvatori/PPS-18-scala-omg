@@ -129,7 +129,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
         clientRoomActor ! SendStrictMessage("ping")
         Thread.sleep(10)
       })
-      val received = Await.result(allReceived.future, 60 seconds)
+      val received = Await.result(allReceived.future, 10 seconds)
 
       assert(received == messagesCount)
 

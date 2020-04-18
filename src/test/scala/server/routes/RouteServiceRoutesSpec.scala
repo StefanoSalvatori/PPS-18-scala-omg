@@ -2,17 +2,15 @@ package server.routes
 
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.testkit.TestKit
-import common.room.Room.SharedRoom
-import common._
 import common.http.{HttpRequests, Routes}
-import common.room.{FilterOptions, IntRoomPropertyValue, RoomJsonSupport, RoomProperty}
+import common.room.Room.SharedRoom
+import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import server.RoomHandler
-import server.room.ServerRoom
 import server.route_service.RouteService
-// Filters on basic room option values: Int, String, Boolean
+import server.utils.ExampleRooms._
 import common.room.RoomPropertyValueConversions._
 
 import scala.concurrent.ExecutionContextExecutor
@@ -32,7 +30,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
 
   before {
     //ensure to have at least one room-type
-    routeService.addRouteForRoomType(TestRoomType, () => ServerRoom())
+    routeService.addRouteForRoomType(TestRoomType, RoomWithProperty)
   }
 
   override def afterAll(): Unit = {
@@ -68,7 +66,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
 
   /// GET rooms/{type}
   it should "handle GET request on path 'rooms/{type}' with room filters as payload " in {
-    val prop1 = RoomProperty("A", 3)
+    val prop1 = RoomProperty("a", 3)
     val f = FilterOptions just prop1 > 2
     getRoomsByTypeWithFilters(f) ~> route ~> check {
       handled shouldBe true
@@ -83,7 +81,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
   }
 
   it should "create only one room after a single POST request" in {
-    val testProperty = RoomProperty("A", 1)
+    val testProperty = RoomProperty("a", 1)
     createRoomRequest(Set(testProperty))
 
     getRoomsWithEmptyFilters~> route ~> check {
@@ -121,7 +119,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
     HttpRequests.postRoom("")(TestRoomType, testProperties) ~> route ~> check {
       responseAs[SharedRoom]
     }
-
+  }
     /*
   /// PUT rooms/{type}
 it should "handle PUT request on path 'rooms/{type}' with room options as payload  " in {
@@ -137,6 +135,5 @@ it should "handle PUT request on path 'rooms/{type}' with no payload " in {
 }
 
  */
-  }
 }
 

@@ -9,12 +9,12 @@ import client.Client
 import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
 import common.http.Routes
 import common.communication.TextProtocolSerializer
-
 import server.GameServer
 import server.examples.rooms.ChatRoom
 
 import scala.concurrent.Await
 import scala.io.StdIn
+import scala.util.{Failure, Success}
 
 object ChatRoomWithWebSockets extends App {
   implicit private val actorSystem: ActorSystem = ActorSystem()
@@ -28,6 +28,7 @@ object ChatRoomWithWebSockets extends App {
   gameServer.defineRoom(RoomPath, ChatRoom)
 
   import scala.concurrent.duration._
+
   Await.ready(gameServer.start(), 10 seconds)
   val room = Await.result(client createPublicRoom RoomPath, 10 seconds)
 
@@ -39,11 +40,11 @@ object ChatRoomWithWebSockets extends App {
     .viaMat(webSocketFlow)(Keep.left)
     .toMat(Sink.foreach(msg => {
       val protocolReceived = TextProtocolSerializer.parseFromSocket(msg)
-      if (protocolReceived.isSuccess) {
-        println(protocolReceived.get.payload)
-      } else {
-        println("Received malformed message")
-      }
+      protocolReceived.onComplete {
+        case Failure(_) => println("Received malformed message")
+        case Success(value) => println(value)
+
+      }(actorSystem.dispatcher)
     }))(Keep.left).run()
 
   //join chatroom
