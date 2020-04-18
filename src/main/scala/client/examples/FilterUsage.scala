@@ -6,7 +6,7 @@ import scala.concurrent.ExecutionContext
 import common.room._
 import common.room.RoomPropertyValueConversions._
 
-import scala.util.Success // Implicit conversions Int -> IntRoomPropertyValue etc.
+import scala.util.{Failure, Success} // Implicit conversions Int -> IntRoomPropertyValue etc.
 
 // Filters on basic room option values: Int, String, Boolean, Double
 object SimpleFilters extends App {
@@ -40,5 +40,6 @@ object FiltersRoomIntegration extends App {
     case Success(room) =>
       val filter = room.propertyOf("a") > 0 andThen room.propertyOf("b") =:= "abc"
       println(filter)
+    case Failure(_) =>
   }
 }

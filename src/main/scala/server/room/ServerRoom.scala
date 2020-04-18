@@ -10,6 +10,7 @@ import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProt
 import common.room.Room.{BasicRoom, RoomId, RoomPassword, SharedRoom}
 import common.room._
 import server.room.RoomActor.{Close, StartAutoCloseTimeout}
+import server.room.socket.ConnectionConfigurations
 import server.utils.Timer
 
 import scala.concurrent.duration.FiniteDuration
@@ -73,11 +74,13 @@ trait ServerRoom extends BasicRoom
   with PrivateRoomSupport
   with RoomLockingSupport
   with LazyLogging {
+
   import ServerRoom._
 
+  override val roomId: RoomId = UUID.randomUUID.toString
+  val socketConfigurations: ConnectionConfigurations = ConnectionConfigurations.Default
   val autoClose: Boolean = false
   val autoCloseTimeout: FiniteDuration = DefaultAutomaticCloseTimeout
-  override val roomId: RoomId = UUID.randomUUID.toString
   protected var roomActor: Option[ActorRef] = None
   private var clients: Seq[Client] = Seq.empty
   //clients that are allowed to reconnect with the associate expiration timer
@@ -161,7 +164,7 @@ trait ServerRoom extends BasicRoom
     this.clients = this.clients.filter(_.id != client.id)
     this.onLeave(client)
     client send RoomProtocolMessage(LeaveOk)
-    if(this.checkAutoClose()) {
+    if (this.checkAutoClose()) {
       this.roomActor.foreach(_ ! StartAutoCloseTimeout)
     }
   }
