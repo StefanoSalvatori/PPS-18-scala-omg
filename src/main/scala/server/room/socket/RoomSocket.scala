@@ -15,7 +15,7 @@ import server.room.Client
 import server.room.RoomActor.{Join, Leave, Msg}
 import server.utils.Timer
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration.{FiniteDuration, _}
 
 object RoomSocket {
@@ -44,7 +44,8 @@ case class RoomSocket(private val room: ActorRef,
 
   private implicit val executor: ExecutionContextExecutor = materializer.executionContext
   private val heartbeatTimer = Timer.withExecutor()
-  private var heartbeatService: Option[Cancellable] = None
+  private var heartbeatService: Option[ActorRef] = None
+
   private var socketPublisher: Option[ActorRef] = None
 
   def createFlow(overflowStrategy: OverflowStrategy = OverflowStrategy.dropHead,
@@ -80,20 +81,29 @@ case class RoomSocket(private val room: ActorRef,
       case RoomProtocolMessage(MessageRoom, _, payload) =>
         room ! Msg(client, payload)
       case RoomProtocolMessage(Pong, _, _) =>
-        heartbeatTimer.stopTimer()
+        heartbeatService.foreach(_ ! Pong)
     }).to(Sink.onComplete(_ => {
-      heartbeatService.foreach(_.cancel())
+      this.heartbeatTimer.stopTimer()
+      heartbeatService.foreach(_ ! PoisonPill)
       room ! Leave(client)
     }))
     Flow.fromSinkAndSourceCoupled(sink, Source.fromPublisher(publisher))
   }
 
-  private def startHeartbeat(client: Client, rate: FiniteDuration): Cancellable = {
-    Source.tick(0 seconds, rate, ())
-      .map(_ => {
-        client.send(RoomProtocolMessage(Ping))
-        heartbeatTimer.scheduleOnce(() => this.closeSocket(), connectionConfig.keepAlive.toMillis)
-      }).toMat(Sink.ignore)(Keep.left).run()
+  private def startHeartbeat(client: Client, rate: FiniteDuration): ActorRef = {
+    val heartbeatActor =
+      Source.actorRef[ProtocolMessageType](PartialFunction.empty, PartialFunction.empty, Int.MaxValue,
+        OverflowStrategy.fail)
+        .toMat(Sink.fold(true) { (pongRcv, msg) => {
+          msg match {
+            case Ping if pongRcv => client.send(RoomProtocolMessage(Ping)); false
+            case Ping => this.closeSocket(); false
+            case Pong => true
+          }
+        }
+        })(Keep.left).run()
+    heartbeatTimer.scheduleAtFixedRate(() => heartbeatActor ! Ping, 0, connectionConfig.keepAlive.toMillis)
+    heartbeatActor
   }
 
   private def closeSocket(): Unit = {
