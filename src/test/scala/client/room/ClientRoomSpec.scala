@@ -21,6 +21,8 @@ import server.utils.ExampleRooms.ClosableRoomWithState
 import scala.concurrent.{Await, ExecutionContextExecutor, Promise}
 import scala.util.Try
 import common.room.RoomPropertyValueConversions._
+import server.GameServer.ConnectionConfigurations
+import scala.concurrent.duration._
 
 class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with TestConfig
@@ -40,7 +42,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   private var clientRoom: ClientRoom = _
 
   before {
-    gameServer = GameServer(ServerAddress, ServerPort)
+    gameServer = GameServer(ServerAddress, ServerPort, configurations = ConnectionConfigurations(2 seconds))
     gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState.apply)
     gameServer.defineRoom(ExampleRooms.roomWithPropertyType, RoomWithProperty)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
@@ -151,20 +153,27 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       clientRoom.onStateChanged { _ => p.success(true) }
       Await.ready(clientRoom.join(), DefaultDuration)
       clientRoom.send(ClosableRoomWithState.ChangeStateMessage)
-      val res = Await.result(p.future, DefaultDuration)
-      res shouldBe true
+      assert(Await.result(p.future, DefaultDuration))
+
     }
 
     "define a callback to handle room closed changed" in {
       val p = Promise[Boolean]()
 
       Await.ready(clientRoom.join(), DefaultDuration)
-      clientRoom.onClose {
-        p.success(true)
-      }
+      clientRoom.onClose { p.success(true) }
       clientRoom.send(ClosableRoomWithState.CloseRoomMessage)
-      val res = Await.result(p.future, DefaultDuration)
-      res shouldBe true
+      assert(Await.result(p.future, DefaultDuration))
+    }
+
+    "define a callback to handle socket errors" in {
+      val p = Promise[Boolean]()
+      clientRoom.onError { _ => p.success(true) }
+      Await.ready(clientRoom.join(), DefaultDuration)
+
+      assert(Await.result(p.future, DefaultDuration))
+
     }
   }
+
 }

@@ -23,9 +23,6 @@ object ExampleRooms {
 
     override def currentState: Integer = this.internalState
 
-    override def joinConstraints: Boolean = {
-      true
-    }
 
     //Only used for testing
     def changeState(newState: Int): Unit = this.internalState = newState
