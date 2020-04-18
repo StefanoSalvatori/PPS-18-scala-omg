@@ -76,7 +76,7 @@ In the end, the room can have properties, i.e. metadata values that describe roo
 \\
 Those properties can be defined on room creation and are public to clients, either the ones in the room or not.
 \\
-Room properties can be of four basic types: integer, double, string, boolean. 
+A room property is made up of a name and a value; the value can be of four basic types: integer, double, string, boolean. 
 \\
 The room public/private state is considered a room property as well, and there is by default.
 \\
@@ -98,7 +98,7 @@ A room must provide two possible mechanisms usefull for communication with joine
 
 \subsection{Client}
 
-A client should, in primis, display all existing rooms of a given type and their properties, both for public and private rooms. Currently locked rooms must not be displayed.
+A client should, in primis, display all existing rooms of a given type, both for public and private rooms. Currently locked rooms must not be displayed.
 \\
 Room visualization must include the possibility for clients to filter rooms using their properties. A client can specify a property name, a value and a strategy to be used to evaluate the property. Operations allowed on room properties while filtering are:
 \begin{itemize}
@@ -108,19 +108,76 @@ Room visualization must include the possibility for clients to filter rooms usin
 \item \textbf{Lower}: the property value must be lower than the provided one.
 \end{itemize}
 
-Moreover, a client can display just its joined rooms (and their properties) as well.
+Moreover, a client can display just its joined rooms as well.
 
 \bigskip
-A client can create a public or private room of a certain type. If the room is private, the provision of a password is mandatory.
+\textit{Room creation}
+\\
+A client can create a room of a certain type. If the room is private, the provision of a password is mandatory.
 The client must fail on creating the room if its type is not already defined server side.
 When creating a room, a client can optionally specify a set of starting properties; each property will be set in the room if present or, otherwise, it will be ignored.
+
+\bigskip
+Allowed actions that a client can do on a room are:
+\begin{itemize}
+\item Join
+\item Leave
+\item Reconnect
+\item Visualize properties
+\item Send message
+\end{itemize}
+
+\bigskip
+\textit{Join}
 \\
-When successfully creating a room, the client should automatically join it.
+There are three ways a client can join a room, that is:
+\begin{itemize}
+\item \textbf{Radom join}: a client joins a random public room of a certain type; filter options may be used to provide some directives.
+\item \textbf{Join by Id}: a client joins a room by providing its id, and optionally a password(required if the room is private, any provided password will be ignored if the room is public).
+\item \textbf{Auto join}: when successfully creating a room, the client should automatically join it.
+\end{itemize}  
+
+\bigskip
+\textit{Leave}
 \\
-When a client leaves a room, the client can reconnect to the room. It is not considered as a join event.
+A client can leave a room. Obviously, the operation fails if the client didn't previously join the room. 
+
+\bigskip
+\textit{Reconnect}
+\\
+When a client leaves a room, the client can reconnect to such room. It is not considered as a join event.
 The reconnection fails if the client has not previously joined the room or if it took too long to reconnect. Indeed, there is a fixed period within a client can reconnect to the room.
 \\
 By default the reconnection feature is disabled. The reconnection period is specified when enabling the reconnection feature.
+
+\bigskip
+\textit{Visualize properties}
+\\
+From a given room, a client should have the possibility to visualize all its properties. A client can also retrieve a single property value by specifying the right property name. An error should be notified if the property does not exist.
+
+\bigskip
+\textit{Send message}
+\\
+A client can send a message to the room. No reply from the room is expected.
+
+\bigskip
+\textit{Reactive behavior}
+\\
+In the end, a client can specify a reactive behavior too. Possible events are:
+\begin{itemize}
+\item \textbf{Receive message}: the client receives a message from the room.
+\item \textbf{State change}: the client is notified with the new public state of the world.
+\item \textbf{Close room}: the client is notified that the room has been closed.
+\end{itemize}  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  
 
  
