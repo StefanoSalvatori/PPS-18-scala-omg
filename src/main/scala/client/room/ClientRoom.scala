@@ -85,8 +85,6 @@ object ClientRoom {
     } else {
       ClientRoomImpl(coreClient, httpServerUri, roomId, properties, Some(sessionId))
     }
-
-  def mock()(implicit system: ActorSystem): ClientRoom = ClientRoomImpl(ActorRef.noSender, "", "", Map.empty, None)
 }
 
 case class ClientRoomImpl(private val coreClient: ActorRef,

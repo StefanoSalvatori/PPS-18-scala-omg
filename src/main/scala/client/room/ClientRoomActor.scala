@@ -32,7 +32,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
   private var joinPassword: RoomPassword = _
 
-  override def receive: Receive = waitJoinRequest orElse callbackDefinition orElse fallbackReceive
+  override def receive: Receive = waitJoinRequest orElse callbackDefinition orElse handleErrors orElse fallbackReceive
 
   def waitSocketResponse(replyTo: ActorRef, sessionId: Option[String]): Receive =
     onWaitSocketResponse(replyTo, sessionId) orElse callbackDefinition orElse handleErrors orElse fallbackReceive
@@ -113,7 +113,6 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
       context.become(waitLeaveResponse(sender, outRef))
 
     case SendStrictMessage(msg: Any with java.io.Serializable) =>
-      //TODO: add session id to this message if needed
       outRef ! RoomProtocolMessage(MessageRoom, "", msg)
 
     case RetrieveClientRoom => sender ! ClientRoomResponse(this.room)
