@@ -21,7 +21,8 @@ import server.utils.ExampleRooms.ClosableRoomWithState
 import scala.concurrent.{Await, ExecutionContextExecutor, Promise}
 import scala.util.Try
 import common.room.RoomPropertyValueConversions._
-import server.GameServer.ConnectionConfigurations
+import server.room.socket.ConnectionConfigurations
+
 import scala.concurrent.duration._
 
 class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
@@ -42,7 +43,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   private var clientRoom: ClientRoom = _
 
   before {
-    gameServer = GameServer(ServerAddress, ServerPort, configurations = ConnectionConfigurations(2 seconds))
+    gameServer = GameServer(ServerAddress, ServerPort)
     gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState.apply)
     gameServer.defineRoom(ExampleRooms.roomWithPropertyType, RoomWithProperty)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
@@ -171,6 +172,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       clientRoom.onError { _ => p.success(true) }
       Await.ready(clientRoom.join(), DefaultDuration)
 
+      //not sending any message should close the socket
       assert(Await.result(p.future, DefaultDuration))
 
     }

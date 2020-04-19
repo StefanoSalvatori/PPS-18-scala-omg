@@ -38,15 +38,25 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     onWaitSocketResponse(replyTo, sessionId) orElse callbackDefinition orElse handleErrors orElse fallbackReceive
 
   def socketOpened(outRef: ActorRef, replyTo: ActorRef): Receive =
-    onSocketOpened(outRef, replyTo) orElse callbackDefinition orElse handleErrors orElse fallbackReceive
+    onSocketOpened(outRef, replyTo) orElse
+      callbackDefinition orElse
+      heartbeatResponse(outRef) orElse
+      handleErrors orElse
+      fallbackReceive
 
   def roomJoined(outRef: ActorRef): Receive =
-    onRoomJoined(outRef) orElse callbackDefinition orElse heartbeatResponse(outRef) orElse fallbackReceive
-    onRoomJoined(outRef) orElse callbackDefinition orElse handleErrors orElse fallbackReceive
+    onRoomJoined(outRef) orElse
+      callbackDefinition orElse
+      heartbeatResponse(outRef) orElse
+      handleErrors orElse
+      fallbackReceive
 
   def waitLeaveResponse(replyTo: ActorRef, outRef: ActorRef): Receive =
-    onWaitLeaveResponse(replyTo, outRef) orElse callbackDefinition orElse heartbeatResponse(outRef) /*orElse fallbackReceive*/
-    onWaitLeaveResponse(replyTo, outRef) orElse callbackDefinition orElse handleErrors orElse fallbackReceive
+    onWaitLeaveResponse(replyTo, outRef) orElse
+      callbackDefinition orElse
+      heartbeatResponse(outRef) orElse
+      handleErrors orElse
+      fallbackReceive
 
   //actor states
   def waitJoinRequest: Receive = {
@@ -90,7 +100,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     case RoomProtocolMessage(Tell, _, _) => stash()
     case RoomProtocolMessage(Broadcast, _, _) => stash()
     case RoomProtocolMessage(RoomClosed, _, _) => stash()
-    case RoomProtocolMessage(Ping, _, _) => stash()
+
   }
 
   def onRoomJoined(outRef: ActorRef): Receive = {
@@ -136,6 +146,10 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
   }
 
+  private def heartbeatResponse(roomSocket: ActorRef): Receive = {
+    case RoomProtocolMessage(Ping, _, _) => roomSocket ! RoomProtocolMessage(Pong)
+  }
+
   private def callbackDefinition: Receive = {
     case OnMsgCallback(callback) =>
       onMessageCallback = Some(callback)
@@ -171,9 +185,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     }
   }
 
-  private def heartbeatResponse(roomSocket: ActorRef): Receive = {
-    case RoomProtocolMessage(Ping, _, _) => roomSocket ! RoomProtocolMessage(Pong)
-  }
+
 
 
 }
