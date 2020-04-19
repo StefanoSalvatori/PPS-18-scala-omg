@@ -6,10 +6,12 @@ import server.room.{Client, GameLoop, RoomPropertyMarker, ServerRoom, Synchroniz
 
 case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] with GameLoop {
   @RoomPropertyMarker val boardSize: Int = 50
+  @RoomPropertyMarker val numHunters: Int = 25
+  @RoomPropertyMarker val coinRatio: Double = 0.1
   @RoomPropertyMarker val mode: String = GameModes.Max2.name
   @RoomPropertyMarker var gameStarted: Boolean = false
 
-  private var gameState = Board.withRandomCoins((boardSize, boardSize), 25, coinRatio = 0.1) // initial state
+  private var gameState = Board.withRandomCoins((boardSize, boardSize), numHunters, coinRatio) // initial state
   //map clientId -> playerId to keep the link between clients and players
   private var players: Map[String, Int] = Map.empty
 
