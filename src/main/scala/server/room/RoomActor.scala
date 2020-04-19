@@ -17,20 +17,26 @@ object RoomActor {
 
   case object StartAutoCloseTimeout
 
-
   private trait InternalMessage
   private case object AutoCloseRoomTimer
   private case object AutoCloseRoom extends InternalMessage
 
   def apply(serverRoom: ServerRoom, roomHandler: RoomHandler): Props = Props(classOf[RoomActor], serverRoom, roomHandler)
 
-  // Timers
-  case class StateSyncTick(f: Client => Unit)
+  /**
+   * It triggers the synchronization of public room state between clients.
+   * @param onTick A consumer that specifies how to sync a given client
+   */
+  case class StateSyncTick(onTick: Client => Unit)
+
+  /**
+   * It triggers the update of the room state.
+   */
   case class WorldUpdateTick()
 }
 
 /**
- * This actor acts as a wrapper for server rooms to handle concurrency
+ * This actor acts as a wrapper for a server room to handle concurrency
  *
  * @param serverRoom the room linked with this actor
  */
@@ -62,12 +68,12 @@ class RoomActor(private val serverRoom: ServerRoom,
       sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
 
     case Join(client, _, _) => //if sessionId is not empty means reconnection
-      this.timers.cancel(AutoCloseRoomTimer)
+      this.timers cancel AutoCloseRoomTimer
       val reconnected = serverRoom tryReconnectClient client
       sender ! (if (reconnected) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
 
     case Leave(client) =>
-      this.serverRoom.removeClient(client)
+      this.serverRoom removeClient client
       sender ! RoomProtocolMessage(LeaveOk)
 
     case Msg(client, payload) =>

@@ -63,7 +63,7 @@ The room must be aware of unreachable and/or inactive clients, and may kick them
 \\
 The room state is made up of items that can be everything, from simple numbers to objects.   
 \\
-The state can be split in private and public one about visibility to clients. By default the state is private and never automatically communicated to clients in the room. Part (or the totality) of the state can be made public and periodically synchronized between all connected clients in the room.
+The state can be split in private and public one about visibility to clients. By default the state is private and never automatically communicated to clients in the room. Part (or the totality) of the state can be made public, and periodically synchronized between all connected clients in the room. The state is synchronized between clients and server only if it changed from the last update. 
 
 \bigskip
 \textit{Room behavior}

@@ -110,7 +110,7 @@ class RoomHandlerSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest 
     val testProperty2 = RoomProperty("b", "a")
     roomHandler createRoom roomWithPropertyType
 
-    val filter = FilterOptions just testProperty < 2 andThen testProperty2 =:= "abc"
+    val filter = FilterOptions just testProperty < 2 and testProperty2 =:= "abc"
     val filteredRooms = roomHandler.getAvailableRooms(filter)
     filteredRooms should have size 1
 

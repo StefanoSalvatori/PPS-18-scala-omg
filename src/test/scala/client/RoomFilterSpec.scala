@@ -37,7 +37,7 @@ class RoomFilterSpec extends AnyFlatSpec with Matchers with BeforeAndAfter {
   }
 
   "A concatenation of filter clauses " should "create a filter with all such clauses" in {
-    val filter = intProperty =!= 1 andThen stringProperty =:= "aba" andThen booleanProperty =:= true
+    val filter = intProperty =!= 1 and stringProperty =:= "aba" and booleanProperty =:= true
     val options = filter.options
     options should have size 3
     checkFilterOptionCorrectness(options.head)(intProperty.name, NotEqualStrategy(), 1)
