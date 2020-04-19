@@ -42,6 +42,7 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
       this.gameState = this.gameState.movePlayer(playerId, direction).takeCoins()
       if (this.gameState.gameEnded) {
         broadcast(gameState)
+        this.close()
       }
     }
   }
