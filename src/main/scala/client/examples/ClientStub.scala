@@ -15,42 +15,12 @@ object ClientStub extends App {
 
   val client = Client(serverAddress, serverPort)
   val p = Set(RoomProperty("a", 1), RoomProperty("b", "qwe"))
-  /*
-  client.getAvailableRoomsByType("test_room", FilterOptions.empty) onComplete {
-    case Success(res) => println("GET: " + res)
-  }
-  */
-
-  /*
-  client.getAvailableRoomsByType("test_room", FilterOptions.empty) onComplete {
-    case Success(res) => println(res.head.properties)
-  }
-  */
+  val filter = FilterOptions.empty
 
   client createPublicRoom "test_room" onComplete {
     case Success(res) =>
       println("POST: " + res.properties + " .. " + res.roomId)
-    case _ =>
-    //println(res.valueOf("CdC"))
   }
-
-  /*
-  client createPrivateRoom("test_room", password = "pwd") onComplete {
-    case Success(res) =>
-      println("POST: " + res.properties)
-  }
-  */
-
-
-  /*
-  andThen {
-    case Success(_) =>
-      client.getAvailableRoomsByType("test_room", FilterOptions.empty) onComplete {
-        case Success(rooms) => println("GET: " + rooms)
-      }
-  }
-  */
-
 
   //client.shutdown()
 }

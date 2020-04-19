@@ -9,9 +9,11 @@ import spray.json.RootJsonFormat
 object HttpRequests extends RoomJsonSupport {
 
   private val defaultContentType = ContentTypes.`application/json`
+  /* Since request payload must be a string containing a json, it converts a generic value
+   * to its json representation by using a proper converter.
+   */
   implicit private def payloadContentCreator[T](value: T)(implicit jsonFormatter: RootJsonFormat[T]): String =
     jsonFormatter write value toString
-
 
   def getRooms(serverUri: String)(filterOptions: FilterOptions): HttpRequest = HttpRequest(
     method = HttpMethods.GET,

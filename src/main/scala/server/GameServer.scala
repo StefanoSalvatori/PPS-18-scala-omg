@@ -40,7 +40,6 @@ trait GameServer {
    */
   def stop(): Future[Unit]
 
-
   /**
    * Terminate the game server permanently
    */
@@ -60,7 +59,6 @@ trait GameServer {
    */
   def onStop(callback: => Unit)
 
-
   /**
    *
    * @param roomFactory the function to create the room given the room id
@@ -73,8 +71,6 @@ trait GameServer {
    * @param roomType the type of room to create
    */
   def createRoom(roomType: String, properties: Set[RoomProperty] = Set.empty): Unit
-
-
 }
 
 

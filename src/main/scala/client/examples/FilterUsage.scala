@@ -17,10 +17,10 @@ object SimpleFilters extends App {
   val prop4 = RoomProperty("D", 0.1) // Double room option
   // Create simple filter option
   val simple = prop1 =!= 2
-  // Create filter options, i.e. concatenation of clauses
+  // Create filter options, i.e. concatenation of single filter option
   val empty = FilterOptions.empty // Empty filter
   val short = FilterOptions just prop4 > 0.5 // Filter with 1 clause
-  val filters = FilterOptions just prop1 > 2 andThen prop2 =!= "asc" andThen simple // Filter with more concatenated clauses
+  val filters = FilterOptions just prop1 > 2 and prop2 =!= "asc" and simple // Filter with more concatenated clauses
   val combined = short ++ filters ++ empty // Combine more filters in one single filter (union of the clauses)
 
   println(empty.options)
@@ -38,7 +38,7 @@ object FiltersRoomIntegration extends App {
   val client = Client("localhost", 8080) //scalastyle:ignore magic.number
   client createPublicRoom "test_room" onComplete {
     case Success(room) =>
-      val filter = room.propertyOf("a") > 0 andThen room.propertyOf("b") =:= "abc"
+      val filter = room.propertyOf("a") > 0 and room.propertyOf("b") =:= "abc"
       println(filter)
     case Failure(_) =>
   }

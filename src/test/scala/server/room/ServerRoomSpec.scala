@@ -43,10 +43,10 @@ class ServerRoomSpec extends AnyWordSpecLike
 
     testRoom = new ServerRoom {
       override val roomId: RoomId = "id"
-      @RoomPropertyAnn var a: Int = valueA
-      @RoomPropertyAnn var b: String = valueB
-      @RoomPropertyAnn var c: Boolean = valueC
-      @RoomPropertyAnn var d: Double = valueD
+      @RoomPropertyMarker var a: Int = valueA
+      @RoomPropertyMarker var b: String = valueB
+      @RoomPropertyMarker var c: Boolean = valueC
+      @RoomPropertyMarker var d: Double = valueD
       val e: Int = valueE
 
       def onCreate(): Unit = {}
@@ -156,7 +156,8 @@ class ServerRoomSpec extends AnyWordSpecLike
       testRoom valueOf nameB shouldEqual "qwe"
     }
 
-    "notify the error when trying to read a non existing property" in {
+    "notify the error when trying to read a non existing property but there is a field that has the same name" +
+      "without being a property" in {
       assertThrows[NoSuchPropertyException] {
         testRoom valueOf nameE
       }
@@ -166,6 +167,24 @@ class ServerRoomSpec extends AnyWordSpecLike
       assertThrows[NoSuchPropertyException] {
         testRoom propertyOf nameE
       }
+    }
+
+    "notify the error when trying to read a not existing property and there is no field that has the same name" +
+      "without being a property" in {
+      assertThrows[NoSuchPropertyException] {
+        testRoom valueOf "randomName"
+      }
+      assertThrows[NoSuchPropertyException] {
+        testRoom `valueOf~AsPropertyValue` "randomName"
+      }
+      assertThrows[NoSuchPropertyException] {
+        testRoom propertyOf "randomName"
+      }
+    }
+
+    "not expose errors when trying to set a not existing property" in {
+      testRoom setProperties Set(RoomProperty("RandomName", 0))
+      noException
     }
 
     "be safely handled when trying to write a non existing property" in {
