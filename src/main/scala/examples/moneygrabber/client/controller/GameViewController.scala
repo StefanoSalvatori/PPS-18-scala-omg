@@ -19,6 +19,7 @@ object GameViewController {
     case Key.Right => Right
     case Key.Up => Up
     case Key.Down => Down
+    case _ => Down
   }
 }
 
@@ -57,6 +58,7 @@ case class GameViewController(private val frame: GameFrame, private val room: Cl
       view.clearTiles()
       gameState.coins.foreach(c => view.colorCoinTile(c.position))
       gameState.players.foreach(p => view.colorPlayerTile(p.id, p.position))
+      gameState.hunters.foreach(p => view.colorHunterTile(p.position))
       view.showPlayersPoints(gameState.players.map(p => (p.id, p.points)).toMap)
     })
   }

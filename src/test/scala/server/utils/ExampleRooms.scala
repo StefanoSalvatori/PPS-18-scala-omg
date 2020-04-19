@@ -55,7 +55,7 @@ object ExampleRooms {
 
     override def onMessageReceived(client: Client, message: Any): Unit = {}
 
-    override def updateWorld(): Unit = {
+    override def updateWorld(elapsed: Long): Unit = {
       count = count + 1
       receivedTicks = receivedTicks + 1
     }

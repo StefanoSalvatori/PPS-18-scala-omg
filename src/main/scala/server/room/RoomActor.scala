@@ -33,7 +33,7 @@ object RoomActor {
   /**
    * It triggers the update of the room state.
    */
-  case class WorldUpdateTick()
+  case class WorldUpdateTick(lastUpdate: Long)
 }
 
 /**
@@ -98,7 +98,10 @@ class RoomActor(private val serverRoom: ServerRoom,
     case StateSyncTick(onTick) =>
       serverRoom.connectedClients foreach onTick
 
-    case WorldUpdateTick() =>
-      serverRoom.asInstanceOf[GameLoop].updateWorld()
+    case WorldUpdateTick(0) =>
+      serverRoom.asInstanceOf[GameLoop].updateWorld(0)
+
+    case WorldUpdateTick(lastUpdate) =>
+      serverRoom.asInstanceOf[GameLoop].updateWorld(System.currentTimeMillis() - lastUpdate)
   }
 }

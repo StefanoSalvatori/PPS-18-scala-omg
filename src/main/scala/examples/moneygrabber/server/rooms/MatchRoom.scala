@@ -2,18 +2,20 @@ package examples.moneygrabber.server.rooms
 
 import examples.moneygrabber.common.Entities.{Direction, Player}
 import examples.moneygrabber.common.{Board, GameModes}
-import server.room.{Client, RoomPropertyMarker, ServerRoom, SynchronizedRoomState}
+import server.room.{Client, GameLoop, RoomPropertyMarker, ServerRoom, SynchronizedRoomState}
 
-case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
-  @RoomPropertyMarker val boardSize: Int = 20
+case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] with GameLoop {
+  @RoomPropertyMarker val boardSize: Int = 50
   @RoomPropertyMarker val mode: String = GameModes.Max2.name
   @RoomPropertyMarker var gameStarted: Boolean = false
 
-  private var gameState = Board.withRandomCoins((boardSize, boardSize), coinRatio = 0.1) // initial state
+  private var gameState = Board.withRandomCoins((boardSize, boardSize), 25, coinRatio = 0.1) // initial state
   //map clientId -> playerId to keep the link between clients and players
   private var players: Map[String, Int] = Map.empty
 
   override val autoClose: Boolean = true
+  override val worldUpdateRate: Int = 60
+  override val stateUpdateRate: Int = 60
 
   override def onCreate(): Unit = {}
 
@@ -27,6 +29,7 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
     if (canStart) {
       this.gameStarted = true
       this.startStateSynchronization()
+      this.startWorldUpdate()
     }
   }
 
@@ -39,13 +42,19 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
     if (this.gameStarted) {
       val direction: Direction = message.asInstanceOf[Direction]
       val playerId: Int = this.players(client.id)
-      this.gameState = this.gameState.movePlayer(playerId, direction).takeCoins()
+      this.gameState = this.gameState.movePlayer(playerId, direction)
       if (this.gameState.gameEnded) {
         broadcast(gameState)
         this.close()
       }
     }
   }
+
+  /**
+   * Function called at each tick to update the world
+   */
+  override def updateWorld(elapsed: Long): Unit =
+    this.gameState = this.gameState.moveHunters(elapsed)
 
   override def currentState: Board = this.gameState
 
@@ -66,5 +75,4 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
     case 3 => (boardSize - 1, 0)
     case 4 => (0, boardSize - 1) // scalastyle:ignore magic.number
   }
-
 }

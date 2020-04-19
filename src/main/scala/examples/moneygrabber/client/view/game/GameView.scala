@@ -20,6 +20,7 @@ class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPa
   private val TileSize = 20
   private val PlayerInfoColorSize = 10
   private val CoinColor = Color.yellow
+  private val HunterColor = Color.black
   val PlayerIdToColor: PartialFunction[Int, Color] = {
     case 0 => Color.red
     case 1 => Color.blue
@@ -48,7 +49,7 @@ class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPa
     contents += playerInfo
     contents += pointsInfo
   }
-  private val gameGrid: GameGrid = GameGrid(worldSize, TileSize)
+  private val gameGrid: GameGrid = GameGrid(worldSize, TileSize * TileSize / worldSize._1 )
 
   contents += topPanel
   contents += gameGrid
@@ -60,6 +61,10 @@ class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPa
 
   def clearTiles(): Unit = {
     this.gameGrid.resetGrid()
+  }
+
+  def colorHunterTile(position: (Int, Int)): Unit = {
+    this.gameGrid.colorButton(position, HunterColor)
   }
 
   def colorCoinTile(tile: (Int, Int)): Unit = {

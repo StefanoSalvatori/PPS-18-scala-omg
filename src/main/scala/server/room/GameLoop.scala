@@ -11,6 +11,8 @@ trait GameLoop extends ServerRoom {
 
   private val worldTimer: Timer = Timer.withExecutor()
 
+  private var lastUpdate: Long = 0
+
   /**
    * How often the world will be updated (time expressed in milliseconds)
    */
@@ -35,23 +37,30 @@ trait GameLoop extends ServerRoom {
   /**
    * Function called at each tick to update the world
    */
-  def updateWorld(): Unit
+  def updateWorld(elapsed: Long): Unit
 
   private def generateWorldUpdateTick(): Unit = {
-    this.roomActor.foreach(_ ! WorldUpdateTick())
+    this.roomActor.foreach(_ ! WorldUpdateTick(this.lastUpdate))
+    this.lastUpdate = System.currentTimeMillis()
   }
 }
 
 object GameLoop {
 
   private case class BasicServerRoomWithGameLoop() extends ServerRoom with GameLoop {
-    override def onCreate(): Unit = { }
-    override def onClose(): Unit = { }
-    override def onJoin(client: Client): Unit = { }
-    override def onLeave(client: Client): Unit = { }
-    override def onMessageReceived(client: Client, message: Any): Unit = { }
+    override def onCreate(): Unit = {}
+
+    override def onClose(): Unit = {}
+
+    override def onJoin(client: Client): Unit = {}
+
+    override def onLeave(client: Client): Unit = {}
+
+    override def onMessageReceived(client: Client, message: Any): Unit = {}
+
     override def joinConstraints: Boolean = true
-    override def updateWorld(): Unit = { }
+
+    override def updateWorld(elapsed: Long): Unit = {}
   }
 
   private def apply(): BasicServerRoomWithGameLoop = BasicServerRoomWithGameLoop()
