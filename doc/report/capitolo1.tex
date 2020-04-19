@@ -88,7 +88,7 @@ Those properties can be defined on room creation and are public to clients, eith
 \\
 A room property is made up of a name and a value; the value can be of four basic types: integer, double, string, boolean. 
 \\
-The room public/private state is considered a room property as well, and there is by default.
+The room public/private state is considered a room property as well, and there it is by default.
 \\
 Few examples of room property may be max number of clients in the room, min/max Elo required to join, fiendly fire.
 
@@ -104,9 +104,9 @@ A room must provide two possible mechanisms usefull for communication with joine
 
 \subsection{Server}
 
-A server-side developer should be able to create and launch a game server that is listening on a provided address and port. The server will transparently handle communication and routing between server itself and clients. The server should be able to also accept user defined routes. This may be usefull when handling features that leave aside the ones provided from the library, such as login, marketing and so on.
+A server-side developer should be able to create and launch a game server that is listening on a provided address and port. The server will transparently handle communication and routing between server itself and clients. The server should also be able to accept user defined routes. This may be usefull when handling features that leave aside the ones provided from the library, such as login, marketing and so on.
 \\
-The game server can be stopped or terminated both. In the first case the server is temporarily suspended, and its execution can be resumed; in the latter case, the server is permanently stopped.
+The game server can be stopped or terminated both. In the first case the server is temporarily suspended, and it's execution can be resumed; in the latter case, the server is permanently stopped.
 \\
 It must be possible to define server behavior on starting and stopping.
 
@@ -127,7 +127,7 @@ If the same room type is defined more than once, the first one will be considere
 \bigskip
 \textit{Room creation}
 \\
-The server can instantiate public room of a certain given type if required. Obviously, the room contains no clients at the beginning.
+The server can instantiate public rooms if required. Obviously, the just created room contains no clients at the beginning.
 
 \bigskip
 \textit{Define matchmaking}
@@ -178,7 +178,7 @@ There are three ways a client can join a room, that is:
 \bigskip
 \textit{Leave}
 \\
-A client can leave a room. Obviously, the operation is not allowed if the client didn't previously join the room. 
+A client can leave a room. Obviously, this operation is not allowed if the client didn't previously join the room. 
 
 \bigskip
 \textit{Reconnect}
@@ -191,12 +191,12 @@ By default the reconnection feature is disabled. The reconnection period is spec
 \bigskip
 \textit{Visualize properties}
 \\
-From a given room, a client should have the possibility to visualize all its properties. A client can also retrieve a single property value by specifying the right property name. An error should be notified if the property does not exist.
+From a given room, a client should have the possibility to visualize all its properties. A client can also retrieve a single property value by specifying the right property name. An error should be notified if the sought property does not exist in the room.
 
 \bigskip
 \textit{Send message}
 \\
-A client can send a message to the room. No reply from the room is expected.
+A client can send messages to the room. No reply from the room is expected.
 This feature is enabled once the client joined the room.
 
 \bigskip

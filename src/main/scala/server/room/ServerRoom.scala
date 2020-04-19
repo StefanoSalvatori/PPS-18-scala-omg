@@ -310,7 +310,7 @@ trait ServerRoom extends BasicRoom
   private def -->(field: Field): AnyRef = field get this // Get the value of the field
 
   private def isProperty(field: Field): Boolean =
-    field.getDeclaredAnnotations collectFirst { case ann: RoomPropertyAnn => ann } nonEmpty
+    field.getDeclaredAnnotations collectFirst { case ann: RoomPropertyMarker => ann } nonEmpty
 }
 
 object ServerRoom {

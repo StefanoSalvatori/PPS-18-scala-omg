@@ -43,10 +43,10 @@ class ServerRoomSpec extends AnyWordSpecLike
 
     testRoom = new ServerRoom {
       override val roomId: RoomId = "id"
-      @RoomPropertyAnn var a: Int = valueA
-      @RoomPropertyAnn var b: String = valueB
-      @RoomPropertyAnn var c: Boolean = valueC
-      @RoomPropertyAnn var d: Double = valueD
+      @RoomPropertyMarker var a: Int = valueA
+      @RoomPropertyMarker var b: String = valueB
+      @RoomPropertyMarker var c: Boolean = valueC
+      @RoomPropertyMarker var d: Double = valueD
       val e: Int = valueE
 
       def onCreate(): Unit = {}
