@@ -8,7 +8,7 @@ import client.utils.MessageDictionary._
 import common.room.Room.{BasicRoom, RoomId, RoomPassword}
 import akka.pattern.ask
 import common.room.{NoSuchPropertyException, Room, RoomProperty, RoomPropertyValue}
-import scala.concurrent.{ ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -63,6 +63,13 @@ trait ClientRoom extends BasicRoom {
   def onClose(callback: => Unit): Unit
 
   /**
+   * This event is triggered when an error occurs
+   *
+   * @param callback callback to handle the event
+   */
+  def onError(callback: Throwable => Unit): Unit
+
+  /**
    * Properties of the room.
    *
    * @return a map containing property names as keys (name -> value)
@@ -78,8 +85,6 @@ object ClientRoom {
     } else {
       ClientRoomImpl(coreClient, httpServerUri, roomId, properties, Some(sessionId))
     }
-
-  def mock()(implicit system: ActorSystem): ClientRoom = ClientRoomImpl(ActorRef.noSender, "", "", Map.empty, None)
 }
 
 case class ClientRoomImpl(private val coreClient: ActorRef,
@@ -97,6 +102,7 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
   private var onMessageCallback: Option[Any => Unit] = None
   private var onStateChangedCallback: Option[Any => Unit] = None
   private var onCloseCallback: Option[() => Unit] = None
+  private var onErrorCallback: Option[Throwable => Unit] = None
 
   override def properties: Map[String, Any] = _properties.map(e => (e._1, RoomPropertyValue valueOf e._2))
 
@@ -138,15 +144,22 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
       case None => this.onMessageCallback = Some(callback)
     }
 
-  override def onStateChanged(callback: Any => Unit): Unit = this.innerActor match {
-    case Some(ref) => ref ! OnStateChangedCallback(callback)
-    case None => this.onStateChangedCallback = Some(callback)
-  }
+  override def onStateChanged(callback: Any => Unit): Unit =
+    this.innerActor match {
+      case Some(ref) => ref ! OnStateChangedCallback(callback)
+      case None => this.onStateChangedCallback = Some(callback)
+    }
 
   override def onClose(callback: => Unit): Unit =
     this.innerActor match {
       case Some(ref) => ref ! OnCloseCallback(() => callback)
       case None => this.onCloseCallback = Some(() => callback)
+    }
+
+  override def onError(callback: Throwable => Unit): Unit =
+    this.innerActor match {
+      case Some(ref) => ref ! OnErrorCallback(callback)
+      case None => this.onErrorCallback = Some(callback)
     }
 
 
@@ -170,6 +183,8 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
     this.onCloseCallback.foreach(ref ! OnCloseCallback(_))
     this.onStateChangedCallback.foreach(ref ! OnStateChangedCallback(_))
     this.onMessageCallback.foreach(ref ! OnMsgCallback(_))
+    this.onErrorCallback.foreach(ref ! OnErrorCallback(_))
+
   }
 
   private def tryReadingProperty[T](propertyName: String)(f: Function[String, T]): T = try {
@@ -177,6 +192,7 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
   } catch {
     case _: NoSuchElementException => throw NoSuchPropertyException()
   }
+
 }
 
 

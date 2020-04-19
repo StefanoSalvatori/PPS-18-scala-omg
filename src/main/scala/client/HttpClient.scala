@@ -67,7 +67,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
             parser.parseFromSocket(x).recover { case _ => null } // scalastyle:ignore null
             // null values are not passed downstream
           )
-          .to(Sink.actorRef(sender, PartialFunction.empty, PartialFunction.empty))
+          .to(Sink.actorRef(sender, PartialFunction.empty, SocketError))
 
       val (sourceRef, publisher) =
         Source.actorRef(

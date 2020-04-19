@@ -89,6 +89,20 @@ object MessageDictionary {
   case class SendStrictMessage(msg: Any with java.io.Serializable)
 
   /**
+   * Sent to the actor when an error occurs on the socket
+   * @param exception exception thrown
+   */
+  case class SocketError(exception: Throwable)
+
+  /**
+   * Define a callback that will be execute by the actor after an error occurs on the socket
+   *
+   * @param callback the callback that handles the error
+   */
+  case class OnErrorCallback(callback: Throwable => Unit)
+
+
+  /**
    * Define a callback that will be execute by the actor after a message received from the socket
    *
    * @param callback the callback that handles the message
