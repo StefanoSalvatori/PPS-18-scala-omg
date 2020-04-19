@@ -31,7 +31,7 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
 
   private val MaxAwaitSocketMessages = 2 seconds
   private val IdleConnectionTimeout = 2 seconds
-  private val KeepAliveRate = 100 millis
+  private val KeepAliveRate = 300 millis
 
 
   private var room: ServerRoom = _
@@ -117,13 +117,12 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
       Await.ready(flowTerminated.future, MaxAwaitSocketMessages)
     }
 
-    "keep the socket alive if the client respond to heartbeat" in {
+    "keep the socket alive if the client responds to heartbeat" in {
       roomSocketFlow = RoomSocket(roomActor, TextProtocolSerializer, ConnectionConfigurations(keepAlive = KeepAliveRate))
-      flow = roomSocketFlow.createFlow()
       flowTerminated = Promise[Boolean]()
       // send a lot of pong messages to simulate a client that is responding to ping
       val client = this.heartbeat(KeepAliveRate / 5)
-      flow.runWith(client, Sink.onComplete(_ => flowTerminated.success(true)))
+      roomSocketFlow.createFlow().runWith(client, Sink.onComplete(_ => flowTerminated.success(true)))
       assertThrows[TimeoutException] {
         Await.ready(flowTerminated.future, MaxAwaitSocketMessages)
       }
