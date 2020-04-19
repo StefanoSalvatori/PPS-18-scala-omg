@@ -20,18 +20,15 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     private val idJsonPropertyName = "id"
     private val propertiesJsonPropertyName = "properties"
 
-    def write(a: SharedRoom): JsValue = JsObject(
-      idJsonPropertyName -> JsString(a.roomId),
-      propertiesJsonPropertyName -> roomPropertySetJsonFormat.write(a.sharedProperties)
+    def write(room: SharedRoom): JsValue = JsObject(
+      idJsonPropertyName -> JsString(room.roomId),
+      propertiesJsonPropertyName -> (roomPropertySetJsonFormat write room.sharedProperties)
     )
 
     def read(value: JsValue): SharedRoom = value match {
       case JsObject(json) =>
         json(idJsonPropertyName) match {
-          case s: JsString =>
-            val room = SharedRoom(s.value)
-            json(propertiesJsonPropertyName).convertTo[Set[RoomProperty]].foreach(room addSharedProperty)
-            room
+          case id: JsString => SharedRoom(id.value, json(propertiesJsonPropertyName).convertTo[Set[RoomProperty]])
           case _ => deserializationError("Error while reading shared room id")
         }
       case _ => deserializationError("Error while reading shared room")

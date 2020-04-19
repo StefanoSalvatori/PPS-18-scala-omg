@@ -1,6 +1,5 @@
 package server.room
 
-
 import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.room.RoomProperty
@@ -40,14 +39,14 @@ trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends ServerRo
   def stopStateSynchronization(): Unit = stateTimer.stopTimer()
 
   /**
-   * This is the function that is called at each update to get the most recent state that will be sent to clients
+   * This is the function that is called at each update to get the most recent state that will be sent to clients.
    *
    * @return the current state of the game
    */
   def currentState: T
 
   private def generateStateSyncTick(): Unit =
-    if(this.lastStateSent==null || this.lastStateSent != currentState) {
+    if (this.lastStateSent == null || this.lastStateSent != currentState) {
       this.lastStateSent = currentState
       this.roomActor.foreach(_ ! StateSyncTick(c => c send RoomProtocolMessage(StateUpdate, c.id, currentState)))
     }

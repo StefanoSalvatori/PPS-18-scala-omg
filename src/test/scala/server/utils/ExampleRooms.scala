@@ -1,7 +1,7 @@
 package server.utils
 
+import server.room.{Client, GameLoop, ServerRoom, SynchronizedRoomState, RoomPropertyMarker}
 import server.room.socket.ConnectionConfigurations
-import server.room.{Client, GameLoop, RoomPropertyAnn, ServerRoom, SynchronizedRoomState}
 
 /**
  * Rooms used for testing purpose.
@@ -159,8 +159,8 @@ object ExampleRooms {
 
   case class RoomWithProperty() extends ServerRoom {
 
-    @RoomPropertyAnn private val a: Int = 0
-    @RoomPropertyAnn private val b: String = "abc"
+    @RoomPropertyMarker private val a: Int = 0
+    @RoomPropertyMarker private val b: String = "abc"
     private val c: Int = 0
 
     override def onCreate(): Unit = {}
@@ -184,9 +184,9 @@ object ExampleRooms {
 
   case class RoomWithProperty2() extends ServerRoom {
 
-    @RoomPropertyAnn private var a: Int = 1
-    @RoomPropertyAnn private var b: String = "a"
-    @RoomPropertyAnn private var c: Boolean = true
+    @RoomPropertyMarker private var a: Int = 1
+    @RoomPropertyMarker private var b: String = "a"
+    @RoomPropertyMarker private var c: Boolean = true
     private var d: Int = 0
 
     override def onCreate(): Unit = {}

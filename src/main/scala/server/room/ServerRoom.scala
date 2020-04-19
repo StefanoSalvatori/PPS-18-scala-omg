@@ -1,7 +1,7 @@
 package server.room
 
 import java.lang.reflect.Field
-import java.util.{NoSuchElementException, UUID}
+import java.util.UUID
 
 import akka.actor.ActorRef
 import com.typesafe.scalalogging.LazyLogging
@@ -84,7 +84,7 @@ trait ServerRoom extends BasicRoom
   protected var roomActor: Option[ActorRef] = None
   private var clients: Seq[Client] = Seq.empty
   //clients that are allowed to reconnect with the associate expiration timer
-  //TODO: need to be syncronized if it's immutable?
+  //TODO: need to be synchronized if it's immutable?
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
   def setAssociatedActor(actor: ActorRef): Unit = roomActor = Some(actor)
@@ -228,8 +228,8 @@ trait ServerRoom extends BasicRoom
 
   /**
    * Getter of the value of a property
-   *
    * @param propertyName The name of the property
+   * @throws NoSuchPropertyException if the requested property does not exist
    * @return The value of the property, expressed as a RoomPropertyValue
    */
   def `valueOf~AsPropertyValue`(propertyName: String): RoomPropertyValue =
@@ -244,10 +244,9 @@ trait ServerRoom extends BasicRoom
    * @param properties A set containing the properties to set
    */
   def setProperties(properties: Set[RoomProperty]): Unit =
-    properties.filter(p => isProperty(this fieldFrom p.name))
+    properties.filter(p => try { isProperty(this fieldFrom p.name) } catch { case _: NoSuchFieldException => false })
       .map(ServerRoom.propertyToPair)
       .foreach(property => operationOnField(property.name)(f => f set(this, property.value)))
-
 
   /**
    * Called as soon as the room is created by the server
@@ -281,12 +280,23 @@ trait ServerRoom extends BasicRoom
    */
   def onMessageReceived(client: Client, message: Any)
 
-  private def operationOnProperty[T](propertyName: String)(f: Function[Field, T]): T = {
+  /**
+   * Tries to perform an operation on a property. If the property exists, the operation will be successfully completed,
+   *  otherwise an error will be notified.
+   * @param propertyName the name of the property
+   * @param f            the operation to execute on such property
+   * @tparam T           the type of return of the operation to execute
+   * @throws NoSuchPropertyException if the requested property does not exist
+   * @return             it return whatever the given function returns
+   */
+  private def operationOnProperty[T](propertyName: String)(f: Field => T): T = try {
     if (isProperty(this fieldFrom propertyName)) {
       operationOnField(propertyName)(f)
     } else {
       throw NoSuchPropertyException()
     }
+  } catch {
+    case _: NoSuchFieldException => throw NoSuchPropertyException()
   }
 
   /**
@@ -295,9 +305,10 @@ trait ServerRoom extends BasicRoom
    * @param fieldName the name of the field to use
    * @param f         the operation to execute, expressed as a function
    * @tparam T the type of return of the operation to execute
+   * @throws NoSuchFieldException if the requested field doe not exist
    * @return it returns whatever the given function f returns
    */
-  private def operationOnField[T](fieldName: String)(f: Function[Field, T]): T = {
+  private def operationOnField[T](fieldName: String)(f: Field => T): T = {
     val field = this fieldFrom fieldName
     field setAccessible true
     val result = f(field)
@@ -312,7 +323,7 @@ trait ServerRoom extends BasicRoom
   private def -->(field: Field): AnyRef = field get this // Get the value of the field
 
   private def isProperty(field: Field): Boolean =
-    field.getDeclaredAnnotations collectFirst { case ann: RoomPropertyAnn => ann } nonEmpty
+    field.getDeclaredAnnotations collectFirst { case ann: RoomPropertyMarker => ann } nonEmpty
 }
 
 object ServerRoom {
@@ -329,11 +340,10 @@ object ServerRoom {
    * @return the created SharedRoom
    */
   implicit def serverRoomToSharedRoom[T <: ServerRoom]: T => SharedRoom = room => {
-    // Create the shared room
-    val sharedRoom = SharedRoom(room.roomId)
 
     // Calculate properties of the room
     var runtimeOnlyProperties = propertyDifferenceFrom(room)
+
     // Edit properties if the room uses game loop and/or synchronized state functionality
     if (room.isInstanceOf[GameLoop]) {
       val gameLoopOnlyPropertyNames = GameLoop.defaultProperties.map(_ name)
@@ -344,12 +354,11 @@ object ServerRoom {
       runtimeOnlyProperties = runtimeOnlyProperties.filterNot(syncStateOnlyPropertyNames contains _.name)
     }
 
-    // Add selected properties to the shared room
-    runtimeOnlyProperties.foreach(sharedRoom addSharedProperty)
     // Add public/private state to room properties
     import common.room.RoomPropertyValueConversions._
-    sharedRoom addSharedProperty RoomProperty(Room.roomPrivateStatePropertyName, room.isPrivate)
-    sharedRoom
+    runtimeOnlyProperties = runtimeOnlyProperties + RoomProperty(Room.roomPrivateStatePropertyName, room.isPrivate)
+
+    SharedRoom(room.roomId, runtimeOnlyProperties)
   }
 
   /**

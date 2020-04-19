@@ -11,11 +11,9 @@ import org.scalatest.matchers.should.Matchers
 import server.RoomHandler
 import server.route_service.RouteService
 import server.utils.ExampleRooms._
-// Filters on basic room option values: Int, String, Boolean
 import common.room.RoomPropertyValueConversions._
 
 import scala.concurrent.ExecutionContextExecutor
-
 
 class RouteServiceRoutesSpec extends AnyFlatSpec
   with Matchers
@@ -45,13 +43,11 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
     }
   }
 
-
   it should " reject requests if the given room type  does not exists" in {
     Get("/" + Routes.roomsByType("wrong-type")) ~> route ~> check {
       handled shouldBe false
     }
   }
-
 
   it should " reject requests if the given id does not exists" in {
     Get(RoomWithType + "/wrong-id") ~> route ~> check {
@@ -77,7 +73,6 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
     }
   }
 
-
   /// --- POST rooms/{type}
   it should "handle POST request on path 'rooms/{type}' with room properties as payload" in {
     postRoomWithEmptyProperties ~> route ~> check {
@@ -93,7 +88,6 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
       responseAs[Seq[SharedRoom]] should have size 1
     }
   }
-
 
   /// GET rooms/{type}/{id}
   it should "handle GET request on path 'rooms/{type}/{id}' if such id exists " in {
@@ -141,8 +135,5 @@ it should "handle PUT request on path 'rooms/{type}' with no payload " in {
 }
 
  */
-
-
-
 }
 

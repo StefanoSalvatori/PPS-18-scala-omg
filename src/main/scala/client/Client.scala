@@ -69,7 +69,6 @@ sealed trait Client {
    */
   def getAvailableRoomsByType(roomType: String, filterOptions: FilterOptions): Future[Seq[ClientRoom]]
 
-
   /**
    * Reconnects the client into a room he was previously connected with.
    * The room should allow reconnection server-side

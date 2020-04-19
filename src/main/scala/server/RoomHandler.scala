@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
 import common.communication.BinaryProtocolSerializer
 import common.room.Room.{RoomId, RoomPassword, SharedRoom}
-import common.room.{FilterOptions, NoSuchPropertyException, RoomProperty, RoomPropertyValue}
+import common.room.{FilterOptions, NoSuchPropertyException, Room, RoomProperty, RoomPropertyValue}
 import server.room.socket.RoomSocket
 import server.room.{RoomActor, ServerRoom}
 
@@ -127,8 +127,8 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
 
     // Set room properties and password
-    if (roomProperties.map(_ name) contains SharedRoom.roomPasswordPropertyName) {
-      val splitProperties = roomProperties.groupBy(_.name == SharedRoom.roomPasswordPropertyName)
+    if (roomProperties.map(_ name) contains Room.roomPasswordPropertyName) {
+      val splitProperties = roomProperties.groupBy(_.name == Room.roomPasswordPropertyName)
       val password = splitProperties(true)
       val properties = splitProperties.getOrElse(false, Set.empty[RoomProperty])
       newRoom setProperties properties

@@ -66,7 +66,6 @@ private case class JavaUtilTimer() extends Timer {
 
   def stopTimer(): Unit = {
     this.timer foreach stop
-
   }
 
   private def schedule(task: () => Unit, delay: Long): Unit = {
@@ -74,7 +73,6 @@ private case class JavaUtilTimer() extends Timer {
     this.timer.get.schedule(new TimerTask {
       override def run(): Unit = task()
     }, delay)
-
   }
 
   private def schedulePeriodic(task: () => Unit, delay: Long, period: Long): Unit = {
@@ -82,7 +80,6 @@ private case class JavaUtilTimer() extends Timer {
     this.timer.get.scheduleAtFixedRate(new TimerTask {
       override def run(): Unit = task()
     }, delay, period)
-
   }
 
   private def stop(timer: java.util.Timer) = {
@@ -97,7 +94,6 @@ private case class ExecutorTimer() extends Timer {
 
   override def scheduleAtFixedRate(task: () => Unit, delay: Long, period: Long): Unit =
     getOrCreate().scheduleAtFixedRate(() => task(), delay, period, TimeUnit.MILLISECONDS)
-
 
   override def scheduleOnce(task: () => Unit, delay: Long): Unit = {
     getOrCreate().schedule(new Runnable {

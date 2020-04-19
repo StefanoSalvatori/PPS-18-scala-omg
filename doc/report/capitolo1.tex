@@ -3,9 +3,10 @@
 \section{Conditions of satisfaction}
 
 \begin{itemize}
-\item The project must end up within 50 days from the starting date. 
-\item The project must be developed using Scala language.
-\item The developing process must be an agile one, in particular Scrum.
+\item Project must end up within 50 days from the starting date. 
+\item Project must be developed using Scala language.
+\item Developing process must be an agile one, in particular Scrum.
+\item At least two working examples of application realized using the library must be provided.
 \end{itemize}
 
 \section{Analisys of requirements}
@@ -49,11 +50,20 @@ Instead, when auto close in on, the room would close if there is no client in th
 By default, the auto close is off.
 
 \bigskip
+\textit{Client liveness} 
+\\
+The room must be aware of unreachable and/or inactive clients, and may kick them out after an established period of time. There are two possible ways to handle client liveness monitoring, that is:
+\begin{itemize}
+\item Client and server periodically exchange pings. Inactive clients are never kicked.  
+\item The room kicks a client out if no message flew between such client and the room(both directions) within a certain period of time. The length of the period must be configurable. This is considered as a leave event.
+\end{itemize}
+
+\bigskip
 \textit{Room state}
 \\
 The room state is made up of items that can be everything, from simple numbers to objects.   
 \\
-The state can be split in private and public one about visibility to clients. By default the state is private and never automatically communicated to clients in the room. Part (or the totality) of the state can be made public and periodically synchronized between all connected clients in the room.
+The state can be split in private and public one about visibility to clients. By default the state is private and never automatically communicated to clients in the room. Part (or the totality) of the state can be made public, and periodically synchronized between all connected clients in the room. The state is synchronized between clients and server only if it changed from the last update. 
 
 \bigskip
 \textit{Room behavior}
@@ -76,9 +86,9 @@ In the end, the room can have properties, i.e. metadata values that describe roo
 \\
 Those properties can be defined on room creation and are public to clients, either the ones in the room or not.
 \\
-Room properties can be of four basic types: integer, double, string, boolean. 
+A room property is made up of a name and a value; the value can be of four basic types: integer, double, string, boolean. 
 \\
-The room public/private state is considered a room property as well, and there is by default.
+The room public/private state is considered a room property as well, and there it is by default.
 \\
 Few examples of room property may be max number of clients in the room, min/max Elo required to join, fiendly fire.
 
@@ -94,11 +104,39 @@ A room must provide two possible mechanisms usefull for communication with joine
 
 \subsection{Server}
 
+A server-side developer should be able to create and launch a game server that is listening on a provided address and port. The server will transparently handle communication and routing between server itself and clients. The server should also be able to accept user defined routes. This may be usefull when handling features that leave aside the ones provided from the library, such as login, marketing and so on.
+\\
+The game server can be stopped or terminated both. In the first case the server is temporarily suspended, and it's execution can be resumed; in the latter case, the server is permanently stopped.
+\\
+It must be possible to define server behavior on starting and stopping.
+
+\bigskip
+Once the server has been created, it must be possible to execute three main operations, that is:
+\begin{itemize}
+\item Define room
+\item Create room
+\item Define matchmaking 
+\end{itemize}
+
+\bigskip
+\textit{Room definition}
+\\
+It must be possible to define a new type of room, i.e. a room with its own state and custom behavior.
+If the same room type is defined more than once, the first one will be considered as the correct one, and from the second on it will be ignored.
+
+\bigskip
+\textit{Room creation}
+\\
+The server can instantiate public rooms if required. Obviously, the just created room contains no clients at the beginning.
+
+\bigskip
+\textit{Define matchmaking}
+\\
 
 
 \subsection{Client}
 
-A client should, in primis, display all existing rooms of a given type and their properties, both for public and private rooms. Currently locked rooms must not be displayed.
+A client should, in primis, display all existing rooms of a given type, both for public and private rooms. Currently locked rooms must not be displayed.
 \\
 Room visualization must include the possibility for clients to filter rooms using their properties. A client can specify a property name, a value and a strategy to be used to evaluate the property. Operations allowed on room properties while filtering are:
 \begin{itemize}
@@ -108,19 +146,77 @@ Room visualization must include the possibility for clients to filter rooms usin
 \item \textbf{Lower}: the property value must be lower than the provided one.
 \end{itemize}
 
-Moreover, a client can display just its joined rooms (and their properties) as well.
+Moreover, a client can display just its joined rooms as well.
 
 \bigskip
-A client can create a public or private room of a certain type. If the room is private, the provision of a password is mandatory.
+\textit{Room creation}
+\\
+A client can create a room of a certain type. If the room is private, the provision of a password is mandatory.
 The client must fail on creating the room if its type is not already defined server side.
 When creating a room, a client can optionally specify a set of starting properties; each property will be set in the room if present or, otherwise, it will be ignored.
+
+\bigskip
+Allowed actions that a client can do on a room are:
+\begin{itemize}
+\item Join
+\item Leave (precondition: Join)
+\item Reconnect
+\item Visualize properties
+\item Send message (precondition: Join)
+\end{itemize}
+
+\bigskip
+\textit{Join}
 \\
-When successfully creating a room, the client should automatically join it.
+There are three ways a client can join a room, that is:
+\begin{itemize}
+\item \textbf{Radom join}: a client joins a random public room of a certain type; filter options may be used to provide some directives.
+\item \textbf{Join by Id}: a client joins a room using its id, and optionally a password(required if the room is private, any provided password will be ignored if the room is public).
+\item \textbf{Auto join}: when successfully creating a room, the client should automatically join it.
+\end{itemize}  
+
+\bigskip
+\textit{Leave}
 \\
-When a client leaves a room, the client can reconnect to the room. It is not considered as a join event.
+A client can leave a room. Obviously, this operation is not allowed if the client didn't previously join the room. 
+
+\bigskip
+\textit{Reconnect}
+\\
+When a client leaves a room, the client can reconnect to such room. It is not considered as a join event.
 The reconnection fails if the client has not previously joined the room or if it took too long to reconnect. Indeed, there is a fixed period within a client can reconnect to the room.
 \\
 By default the reconnection feature is disabled. The reconnection period is specified when enabling the reconnection feature.
+
+\bigskip
+\textit{Visualize properties}
+\\
+From a given room, a client should have the possibility to visualize all its properties. A client can also retrieve a single property value by specifying the right property name. An error should be notified if the sought property does not exist in the room.
+
+\bigskip
+\textit{Send message}
+\\
+A client can send messages to the room. No reply from the room is expected.
+This feature is enabled once the client joined the room.
+
+\bigskip
+\textit{Reactive behavior}
+\\
+In the end, a client can specify a reactive behavior too. Possible events are:
+\begin{itemize}
+\item \textbf{Receive message}: the client receives a message from the room.
+\item \textbf{State change}: the client is notified with the new public state of the world.
+\item \textbf{Close room}: the client is notified that the room has been closed.
+\end{itemize}  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  
 
  

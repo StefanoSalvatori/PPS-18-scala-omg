@@ -3,7 +3,6 @@ package client.room
 import java.util.NoSuchElementException
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
-import akka.util.Timeout
 import client.utils.MessageDictionary._
 import common.room.Room.{BasicRoom, RoomId, RoomPassword}
 import akka.pattern.ask
@@ -25,7 +24,6 @@ trait ClientRoom extends BasicRoom {
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
   def join(password: RoomPassword = Room.defaultPublicPassword): Future[Any]
-
 
   /**
    * Leave this room server side
@@ -94,6 +92,7 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
                           private var _sessionId: Option[String])
                          (implicit val system: ActorSystem) extends ClientRoom {
 
+  import akka.util.Timeout
   private implicit val timeout: Timeout = 5 seconds
   private implicit val executionContext: ExecutionContextExecutor = system.dispatcher
   private implicit var innerActor: Option[ActorRef] = None
@@ -162,7 +161,6 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
       case None => this.onErrorCallback = Some(callback)
     }
 
-
   private def spawnInnerActor(): ActorRef = {
     val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
     //if callbacks were defined before actor spawning we set them now
@@ -170,7 +168,6 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
     this.innerActor = Some(ref)
     ref
   }
-
 
   private def killInnerActor(): Unit = {
     this.innerActor match {
@@ -187,7 +184,7 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
 
   }
 
-  private def tryReadingProperty[T](propertyName: String)(f: Function[String, T]): T = try {
+  private def tryReadingProperty[T](propertyName: String)(f: String => T): T = try {
     f(propertyName)
   } catch {
     case _: NoSuchElementException => throw NoSuchPropertyException()

@@ -21,8 +21,7 @@ class JsonSerializationSpec extends AnyFlatSpec
 
   "Shared rooms" must "be correctly JSON encoded and decoded" in {
     val properties = Set(RoomProperty("A", 1), RoomProperty("B", 2))
-    val room = SharedRoom("randomId")
-    properties.foreach(room addSharedProperty)
+    val room = SharedRoom("randomId", properties)
     checkCorrectJsonEncoding(room,
       (room: SharedRoom, decodedRoom: SharedRoom) => room.roomId == decodedRoom.roomId && room.sharedProperties == decodedRoom.sharedProperties
     )
@@ -121,7 +120,7 @@ class JsonSerializationSpec extends AnyFlatSpec
   }
 
   "A generic filter" must "be correctly JSON encoded and decoded" in {
-    val filter = FilterOptions just RoomProperty("A", 1) < 2 andThen RoomProperty("B", true) =:= true
+    val filter = FilterOptions just RoomProperty("A", 1) < 2 and RoomProperty("B", true) =:= true
     checkCorrectJsonEncoding(filter)
   }
 
