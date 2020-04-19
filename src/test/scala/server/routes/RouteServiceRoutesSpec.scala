@@ -85,8 +85,6 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
     }
   }
 
-  // TODO
-
   it should "create only one room after a single POST request" in {
     val testProperty = RoomProperty("a", 1)
     createRoomRequest(Set(testProperty))

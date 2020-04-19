@@ -23,7 +23,6 @@ class ClassicMatchRoom() extends ServerRoom {
   override def onJoin(client: Client): Unit = {
     //start the game as soon as we reach max players
     if (reachedMaxPlayers) {
-      //TODO: lock the room
       //notify connected clients that the game started
       this.broadcast("start")
     }

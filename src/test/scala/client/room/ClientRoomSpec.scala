@@ -21,6 +21,9 @@ import server.utils.ExampleRooms.ClosableRoomWithState
 import scala.concurrent.{Await, ExecutionContextExecutor, Promise}
 import scala.util.Try
 import common.room.RoomPropertyValueConversions._
+import server.room.socket.ConnectionConfigurations
+
+import scala.concurrent.duration._
 
 class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with TestConfig
@@ -151,20 +154,28 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       clientRoom.onStateChanged { _ => p.success(true) }
       Await.ready(clientRoom.join(), DefaultDuration)
       clientRoom.send(ClosableRoomWithState.ChangeStateMessage)
-      val res = Await.result(p.future, DefaultDuration)
-      res shouldBe true
+      assert(Await.result(p.future, DefaultDuration))
+
     }
 
     "define a callback to handle room closed changed" in {
       val p = Promise[Boolean]()
 
       Await.ready(clientRoom.join(), DefaultDuration)
-      clientRoom.onClose {
-        p.success(true)
-      }
+      clientRoom.onClose { p.success(true) }
       clientRoom.send(ClosableRoomWithState.CloseRoomMessage)
-      val res = Await.result(p.future, DefaultDuration)
-      res shouldBe true
+      assert(Await.result(p.future, DefaultDuration))
+    }
+
+    "define a callback to handle socket errors" in {
+      val p = Promise[Boolean]()
+      clientRoom.onError { _ => p.success(true) }
+      Await.ready(clientRoom.join(), DefaultDuration)
+
+      //not sending any message should close the socket
+      assert(Await.result(p.future, DefaultDuration))
+
     }
   }
+
 }
