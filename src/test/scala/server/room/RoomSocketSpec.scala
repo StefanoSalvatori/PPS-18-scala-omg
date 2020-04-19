@@ -69,7 +69,9 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
       ).iterator)
       flow.runWith(joinAndLeave, Sink.onComplete(_ => flowTerminated.success(true)))
       Await.result(flowTerminated.future, MaxAwaitSocketMessages)
-      assert(room.connectedClients.isEmpty)
+      eventually {
+        assert(room.connectedClients.isEmpty)
+      }
     }
 
     "make sure that messages from different sockets are linked to different clients" in {

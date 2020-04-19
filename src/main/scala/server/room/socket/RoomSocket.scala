@@ -1,10 +1,9 @@
 package server.room.socket
 
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicInteger
 
 import akka.NotUsed
-import akka.actor.{ActorRef, Cancellable, PoisonPill}
+import akka.actor.{ActorRef, PoisonPill}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.stream.{Materializer, OverflowStrategy}
@@ -15,7 +14,7 @@ import server.room.Client
 import server.room.RoomActor.{Join, Leave, Msg}
 import server.utils.Timer
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.{FiniteDuration, _}
 
 object RoomSocket {
@@ -33,7 +32,10 @@ object RoomSocket {
  * forwarded to a room actor.
  * It parses the messages with the parser specified in the constructor
  *
- * @param room the actor that will receive the messages
+ * @param room the room actor that will receive the messages
+ * @param parser the parsers to use for socket messages
+ * @param connectionConfig socket connection configurations, see [[server.room.socket.ConnectionConfigurations]]
+ * @param materializer an implicit materializer to run futures
  */
 case class RoomSocket(private val room: ActorRef,
                       private val parser: RoomProtocolMessageSerializer,
@@ -45,7 +47,6 @@ case class RoomSocket(private val room: ActorRef,
   private implicit val executor: ExecutionContextExecutor = materializer.executionContext
   private val heartbeatTimer = Timer.withExecutor()
   private var heartbeatService: Option[ActorRef] = None
-
   private var socketPublisher: Option[ActorRef] = None
 
   def createFlow(overflowStrategy: OverflowStrategy = OverflowStrategy.dropHead,
@@ -61,7 +62,7 @@ case class RoomSocket(private val room: ActorRef,
     val client = Client.asActor(UUID.randomUUID.toString, socketActor)
     //start heartbeat service
     if (connectionConfig.isKeepAliveActive) {
-      this.heartbeatService = Some(startHeartbeat(client, connectionConfig.keepAlive.toSeconds seconds))
+      this.startHeartbeat(client, connectionConfig.keepAlive.toSeconds seconds)
     }
 
     //Input (From client to room)
@@ -90,10 +91,9 @@ case class RoomSocket(private val room: ActorRef,
     Flow.fromSinkAndSourceCoupled(sink, Source.fromPublisher(publisher))
   }
 
-  private def startHeartbeat(client: Client, rate: FiniteDuration): ActorRef = {
+  private def startHeartbeat(client: Client, rate: FiniteDuration): Unit = {
     val heartbeatActor =
-      Source.actorRef[ProtocolMessageType](PartialFunction.empty, PartialFunction.empty, Int.MaxValue,
-        OverflowStrategy.fail)
+      Source.actorRef[ProtocolMessageType](PartialFunction.empty, PartialFunction.empty, Int.MaxValue, OverflowStrategy.fail)
         .toMat(Sink.fold(true) { (pongRcv, msg) => {
           msg match {
             case Ping if pongRcv => client.send(RoomProtocolMessage(Ping)); false
@@ -103,7 +103,7 @@ case class RoomSocket(private val room: ActorRef,
         }
         })(Keep.left).run()
     heartbeatTimer.scheduleAtFixedRate(() => heartbeatActor ! Ping, 0, connectionConfig.keepAlive.toMillis)
-    heartbeatActor
+    this.heartbeatService = Some(heartbeatActor)
   }
 
   private def closeSocket(): Unit = {
