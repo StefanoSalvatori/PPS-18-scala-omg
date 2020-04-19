@@ -2,7 +2,7 @@ package server.room
 
 import akka.actor.{Actor, ActorLogging, PoisonPill, Props, Timers}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.communication.CommunicationProtocol.{RoomProtocolMessage, SessionId}
 import common.room.Room.RoomPassword
 import server.RoomHandler
 
@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContextExecutor
 
 object RoomActor {
   sealed trait RoomCommand
-  case class Join(client: Client, sessionId: String, password: RoomPassword) extends RoomCommand
+  case class Join(client: Client, sessionId: SessionId, password: RoomPassword) extends RoomCommand
   case class Leave(client: Client) extends RoomCommand
   case class Msg(client: Client, payload: Any) extends RoomCommand
   case object Close extends RoomCommand
@@ -38,7 +38,6 @@ class RoomActor(private val serverRoom: ServerRoom,
                 private val roomHandler: RoomHandler) extends Actor with ActorLogging with Timers {
 
   import RoomActor._
-  import scala.concurrent.duration._
 
   implicit val executionContext: ExecutionContextExecutor = this.context.system.dispatcher
 
@@ -57,15 +56,15 @@ class RoomActor(private val serverRoom: ServerRoom,
   }
 
   override def receive: Receive = {
-    case Join(client, sessionId, password) =>
+    case Join(client, "", password) => //client first join
       this.timers.cancel(AutoCloseRoomTimer)
-      if (sessionId.isEmpty) {
-        val joined = serverRoom tryAddClient(client, password)
-        sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
-      } else { //if sessionId not empty means reconnection
-        val reconnected = serverRoom tryReconnectClient client
-        sender ! (if (reconnected) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
-      }
+      val joined = serverRoom tryAddClient(client, password)
+      sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
+
+    case Join(client, _, _) => //if sessionId is not empty means reconnection
+      this.timers.cancel(AutoCloseRoomTimer)
+      val reconnected = serverRoom tryReconnectClient client
+      sender ! (if (reconnected) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
 
     case Leave(client) =>
       this.serverRoom.removeClient(client)

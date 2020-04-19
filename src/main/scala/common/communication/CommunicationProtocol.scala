@@ -3,6 +3,7 @@ package common.communication
 import common.communication.CommunicationProtocol.ProtocolMessageType.ProtocolMessageType
 
 object CommunicationProtocol {
+  type SessionId = String
   object ProtocolMessageType extends Enumeration {
     type ProtocolMessageType = Value
     /**
@@ -12,16 +13,19 @@ object CommunicationProtocol {
     val LeaveRoom: ProtocolMessageType = Value(1) // scalastyle:ignore magic.number
     val MessageRoom: ProtocolMessageType = Value(2) // scalastyle:ignore magic.number
     val CloseRoom: ProtocolMessageType = Value(3) // scalastyle:ignore magic.number
+    val Pong: ProtocolMessageType = Value(4) // scalastyle:ignore magic.number
+
     /**
      * Type of messages that rooms can send to clients
      */
-    val JoinOk: ProtocolMessageType = Value(4) // scalastyle:ignore magic.number
-    val ClientNotAuthorized: ProtocolMessageType = Value(5) // scalastyle:ignore magic.number
-    val Broadcast: ProtocolMessageType = Value(6) // scalastyle:ignore magic.number
-    val Tell: ProtocolMessageType = Value(7) // scalastyle:ignore magic.number
-    val StateUpdate: ProtocolMessageType = Value(8) // scalastyle:ignore magic.number
-    val RoomClosed: ProtocolMessageType = Value(9) // scalastyle:ignore magic.number
-    val LeaveOk: ProtocolMessageType = Value(10) // scalastyle:ignore magic.number
+    val JoinOk: ProtocolMessageType = Value(5) // scalastyle:ignore magic.number
+    val ClientNotAuthorized: ProtocolMessageType = Value(6) // scalastyle:ignore magic.number
+    val Broadcast: ProtocolMessageType = Value(7) // scalastyle:ignore magic.number
+    val Tell: ProtocolMessageType = Value(8) // scalastyle:ignore magic.number
+    val StateUpdate: ProtocolMessageType = Value(9) // scalastyle:ignore magic.number
+    val RoomClosed: ProtocolMessageType = Value(10) // scalastyle:ignore magic.number
+    val LeaveOk: ProtocolMessageType = Value(11) // scalastyle:ignore magic.number
+    val Ping: ProtocolMessageType = Value(12) // scalastyle:ignore magic.number
   }
 
   /**
@@ -31,7 +35,7 @@ object CommunicationProtocol {
    * @param payload     an optional payload
    */
   @SerialVersionUID(1234L) // scalastyle:ignore magic.number
-  case class RoomProtocolMessage(messageType: ProtocolMessageType, sessionId: String = "", payload: java.io.Serializable = "")
+  case class RoomProtocolMessage(messageType: ProtocolMessageType, sessionId: SessionId = "", payload: java.io.Serializable = "")
     extends java.io.Serializable
 
   /**

@@ -2,12 +2,12 @@ package examples.moneygrabber.server.rooms
 
 import examples.moneygrabber.common.Entities.{Direction, Player}
 import examples.moneygrabber.common.{Board, GameModes}
-import server.room.{Client, ServerRoom, SynchronizedRoomState}
+import server.room.{Client, RoomPropertyAnn, ServerRoom, SynchronizedRoomState}
 
 case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] {
-  val boardSize: Int = 20
-  val mode: String = GameModes.Max2.name
-  var gameStarted: Boolean = false
+  @RoomPropertyAnn val boardSize: Int = 20
+  @RoomPropertyAnn val mode: String = GameModes.Max2.name
+  @RoomPropertyAnn var gameStarted: Boolean = false
 
   private var gameState = Board.withRandomCoins((boardSize, boardSize), coinRatio = 0.1) // initial state
   //map clientId -> playerId to keep the link between clients and players

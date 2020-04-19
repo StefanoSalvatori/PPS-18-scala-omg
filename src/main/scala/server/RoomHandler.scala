@@ -3,9 +3,9 @@ package server
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
+import common.communication.BinaryProtocolSerializer
 import common.room.Room.{RoomId, RoomPassword, SharedRoom}
 import common.room.{FilterOptions, NoSuchPropertyException, RoomProperty, RoomPropertyValue}
-import common.communication.BinaryProtocolSerializer
 import server.room.socket.RoomSocket
 import server.room.{RoomActor, ServerRoom}
 
@@ -100,7 +100,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     this.roomsByType
       .flatMap(_._2)
       .find(_._1.roomId == roomId)
-      .map(room => RoomSocket(room._2, BinaryProtocolSerializer()).createFlow())
+      .map(room => RoomSocket(room._2, BinaryProtocolSerializer(), room._1.socketConfigurations).createFlow())
   }
 
   override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {

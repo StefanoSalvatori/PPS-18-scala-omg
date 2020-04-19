@@ -6,7 +6,6 @@ import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import common.room.RoomProperty
-import server.GameServer.ConnectionConfigurations
 import server.ServerActor._
 import server.room.ServerRoom
 import server.route_service.RouteService
@@ -95,16 +94,8 @@ object GameServer {
    * @param existingRoutes (optional) additional routes that will be used by the server
    * @return an instance if a [[server.GameServer]]
    */
-  def apply(host: String, port: Int, existingRoutes: Route = reject, configurations: ConnectionConfigurations = ConnectionConfigurations()): GameServer =
-    new GameServerImpl(host, port, existingRoutes, configurations)
-
-  /**
-   *
-   * @param idleConnectionTimeout time after which an idle connections  to a client should be closed
-   * @param keepAlive             if set to a duration, enables heartbeat service to clients
-   */
-  case class ConnectionConfigurations(idleConnectionTimeout: FiniteDuration = 60 seconds,
-                                      keepAlive: Duration = Duration.Inf)
+  def apply(host: String, port: Int, existingRoutes: Route = reject): GameServer =
+    new GameServerImpl(host, port, existingRoutes)
 }
 
 /**
@@ -116,8 +107,7 @@ object GameServer {
  **/
 private class GameServerImpl(override val host: String,
                              override val port: Int,
-                             private val additionalRoutes: Route = reject,
-                             private val configurations: ConnectionConfigurations = ConnectionConfigurations()) extends GameServer
+                             private val additionalRoutes: Route = reject) extends GameServer
   with LazyLogging {
 
   import GameServer._
@@ -126,7 +116,7 @@ private class GameServerImpl(override val host: String,
 
   private implicit val ActorRequestTimeout: Timeout = 10 seconds
 
-  implicit val actorSystem: ActorSystem = ActorSystem("GameServerActorSystem", this.serverConfigurations)
+  implicit val actorSystem: ActorSystem = ActorSystem()
   implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
 
   private val roomHandler = RoomHandler()
@@ -174,22 +164,6 @@ private class GameServerImpl(override val host: String,
       _ <- this.stop()
       _ <- this.actorSystem.terminate()
     } yield {}
-
-
-  private def serverConfigurations = {
-    val keepAliveString = configurations.keepAlive match {
-      case Duration.Inf => "infinite"
-      case other => s"${other.toSeconds} s"
-    }
-
-    ConfigFactory.parseString({
-      s"""{
-         |akka.http.server.idle-timeout: ${configurations.idleConnectionTimeout.toSeconds} s
-         |akka.http.websocket.periodic-keep-alive-max-idle = $keepAliveString
-         |}
-         |""".stripMargin
-    }).withFallback(ConfigFactory.load())
-  }
 }
 
 
