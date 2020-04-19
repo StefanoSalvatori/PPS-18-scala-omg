@@ -88,6 +88,17 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
       assert(this.checkCallback(RoomClosed))
     }
 
+    "should react to socket errors" in {
+      val promise = Promise[Boolean]()
+      clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
+      expectMsgType[Success[_]]
+
+      clientRoomActor ! OnErrorCallback(_ => promise.success(true))
+      clientRoomActor ! SocketError(new Exception("error"))
+
+      assert(Await.result(promise.future, DefaultDuration))
+    }
+
     "should handle callbacks defined before joining" in {
       val onMsgPromise = Promise[Boolean]()
       val onStateChangePromise = Promise[Boolean]()
@@ -153,3 +164,4 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
   }
 
 }
+

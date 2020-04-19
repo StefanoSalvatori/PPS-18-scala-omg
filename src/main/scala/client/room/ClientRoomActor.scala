@@ -28,22 +28,35 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
   private var onMessageCallback: Option[Any => Unit] = None
   private var onStateChangedCallback: Option[Any => Unit] = None
   private var onCloseCallback: Option[() => Unit] = None
+  private var onErrorCallback: Option[Throwable => Unit] = None
 
   private var joinPassword: RoomPassword = _
 
-  override def receive: Receive = waitJoinRequest orElse callbackDefinition /*orElse fallbackReceive*/
+  override def receive: Receive = waitJoinRequest orElse callbackDefinition orElse handleErrors orElse fallbackReceive
 
   def waitSocketResponse(replyTo: ActorRef, sessionId: Option[String]): Receive =
-    onWaitSocketResponse(replyTo, sessionId) orElse callbackDefinition /*orElse fallbackReceive*/
+    onWaitSocketResponse(replyTo, sessionId) orElse callbackDefinition orElse handleErrors orElse fallbackReceive
 
   def socketOpened(outRef: ActorRef, replyTo: ActorRef): Receive =
-    onSocketOpened(outRef, replyTo) orElse callbackDefinition /*orElse fallbackReceive*/
+    onSocketOpened(outRef, replyTo) orElse
+      callbackDefinition orElse
+      heartbeatResponse(outRef) orElse
+      handleErrors orElse
+      fallbackReceive
 
   def roomJoined(outRef: ActorRef): Receive =
-    onRoomJoined(outRef) orElse callbackDefinition orElse heartbeatResponse(outRef) orElse fallbackReceive
+    onRoomJoined(outRef) orElse
+      callbackDefinition orElse
+      heartbeatResponse(outRef) orElse
+      handleErrors orElse
+      fallbackReceive
 
   def waitLeaveResponse(replyTo: ActorRef, outRef: ActorRef): Receive =
-    onWaitLeaveResponse(replyTo, outRef) orElse callbackDefinition orElse heartbeatResponse(outRef) /*orElse fallbackReceive*/
+    onWaitLeaveResponse(replyTo, outRef) orElse
+      callbackDefinition orElse
+      heartbeatResponse(outRef) orElse
+      handleErrors orElse
+      fallbackReceive
 
   //actor states
   def waitJoinRequest: Receive = {
@@ -87,7 +100,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     case RoomProtocolMessage(Tell, _, _) => stash()
     case RoomProtocolMessage(Broadcast, _, _) => stash()
     case RoomProtocolMessage(RoomClosed, _, _) => stash()
-    case RoomProtocolMessage(Ping, _, _) => stash()
+
   }
 
   def onRoomJoined(outRef: ActorRef): Receive = {
@@ -124,6 +137,19 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
   //private utilities
 
+  private def handleErrors: Receive = {
+    case SocketError(ex) =>
+      onErrorCallback match {
+        case Some(value) => value(ex)
+        case None => stash()
+      }
+
+  }
+
+  private def heartbeatResponse(roomSocket: ActorRef): Receive = {
+    case RoomProtocolMessage(Ping, _, _) => roomSocket ! RoomProtocolMessage(Pong)
+  }
+
   private def callbackDefinition: Receive = {
     case OnMsgCallback(callback) =>
       onMessageCallback = Some(callback)
@@ -136,21 +162,22 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     case OnCloseCallback(callback) =>
       onCloseCallback = Some(callback)
       unstashAll()
+
+    case OnErrorCallback(callback) =>
+      onErrorCallback = Some(callback)
+      unstashAll()
   }
 
   private def handleMessageReceived(msg: Any): Unit = {
-    //stash messages if callback is not defined
-    //They will be handled as soon as the callback is defined
     handleIfDefinedOrStash(this.onMessageCallback, msg)
-
   }
 
   private def handleStateChangedReceived(state: Any): Unit = {
-    //stash messages if callback is not defined
-    //They will be handled as soon as the callback is defined
     handleIfDefinedOrStash(this.onStateChangedCallback, state)
   }
 
+  //stash messages if callback is not defined
+  //They will be handled as soon as the callback is defined
   private def handleIfDefinedOrStash(callback: Option[Any => Unit], msg: Any): Unit = {
     callback match {
       case Some(value) => value(msg)
@@ -158,9 +185,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     }
   }
 
-  private def heartbeatResponse(roomSocket: ActorRef): Receive = {
-    case RoomProtocolMessage(Ping, _, _) => roomSocket ! RoomProtocolMessage(Pong)
-  }
+
 
 
 }
