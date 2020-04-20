@@ -36,6 +36,7 @@ object JoinableRoom {
             properties: Set[RoomProperty])
            (implicit system: ActorSystem): JoinableRoom =
     new JoinableRoomImpl(roomId, coreClient, httpServerUri, properties)
+
 }
 
 private class JoinableRoomImpl(override val roomId: RoomId,
@@ -50,7 +51,6 @@ private class JoinableRoomImpl(override val roomId: RoomId,
 
   override def join(password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom] = {
     this.joinFuture(None, password)
-
   }
 
   override def joinWithSessionId(sessionId: SessionId, password: RoomPassword): Future[JoinedRoom] = {
@@ -60,8 +60,8 @@ private class JoinableRoomImpl(override val roomId: RoomId,
   private def joinFuture(sessionId: Option[SessionId], password: RoomPassword): Future[JoinedRoom] = {
     val ref = this.spawnInnerActor()
     (ref ? SendJoin(sessionId, password)) flatMap {
-      case Success(responseId) =>
-        Future.successful(responseId.asInstanceOf[JoinedRoom])
+      case Success(response) =>
+        Future.successful(response.asInstanceOf[JoinedRoom])
       case Failure(ex) =>
         this.killInnerActor()
         Future.failed(ex)

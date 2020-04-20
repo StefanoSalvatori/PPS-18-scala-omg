@@ -9,6 +9,11 @@ object Routes {
    */
   def connectionRoute: String = "connection"
 
+  /**
+   * @return route name for web socket request to enter matchmaking
+   */
+  def matchmakeRoute: String = "matchmake"
+
   def roomsByType(roomType: String): String = rooms + "/" + roomType
 
   def roomByTypeAndId(roomType: String, roomId: String): String = roomsByType(roomType) + "/" + roomId

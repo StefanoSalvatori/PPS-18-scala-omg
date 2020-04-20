@@ -91,7 +91,7 @@ object Client {
   def apply(serverAddress: String, serverPort: Int): ClientImpl = new ClientImpl(serverAddress, serverPort)
 }
 
-private class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
+class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
 
   private val requestTimeout = 5 // Seconds
 

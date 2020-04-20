@@ -3,6 +3,6 @@ package examples.moneygrabber.server
 object ServerConfig {
 
   val ServerHost = "localhost"
-  val ServerPort = 8080
+  val ServerPort = 80
 
 }

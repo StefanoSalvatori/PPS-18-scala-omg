@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 
 
 /**
- * Define a room client side
+ * Define client side room
  */
 trait ClientRoom extends BasicRoom {
   /**
