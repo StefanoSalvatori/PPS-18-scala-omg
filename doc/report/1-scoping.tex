@@ -1,26 +1,19 @@
 \chapter{Scoping}
 
-\section{Conditions of satisfaction}
-
-\begin{itemize}
-\item Project must end up within 50 days from the starting date. 
-\item Project must be developed using Scala language.
-\item Developing process must be an agile one, in particular Scrum.
-\item At least two working examples of application realized using the library must be provided.
-\end{itemize}
-
-\section{Analisys of requirements}
+\section{Introduction}
 
 The deliverable should consist of a library that simplifies the development of distributed client-server applications based upon a concept of room. Videogames largely use rooms in every feature (match, lobby, trading room etc.) but there are lots of potential different domains where such idea can be applied (chatrooms, for instance).
 \\
 The main idea of the product is to provide a low level support that handles all aspects of communication, so that developers that use the library can focus on program logic itself, without concerning about issues due to networking, serialization, synchronization between clients, integration of clients and rooms, and so on.
 \\
-Hence, the library provides two main notions of:
+Hence, the library provides three main notions of:
 \begin{itemize}
 \item \textbf{Room}: place where clients can gather to do something.
 \item \textbf{Server}: a game server where rooms can be hosted.
 \item \textbf{Client}: entity that might do operation on rooms, such as joining, sending messages etc.
 \end{itemize} 
+
+\section{Requirements Analisys}
 
 \subsection{Room}
 
@@ -79,11 +72,6 @@ Regarding reactive behavior, events that could occur, and that will be handled b
 \end{itemize} 
 
 \bigskip
-\textit{Room joining}
-\\
-When a client tries to join, as well as password if room is private and locking state, the room checks possible custom joining constraints defined in the room. Such custom constraints depend upon room properties and room state. The client successfully joins the room only if all joining constraint are satisfied. Differently from room locking, where joining procedure always fails while room is locked, those constraints can result on different outcomes from request to request. 
-
-\bigskip
 \textit{Room property}
 \\  
 In the end, the room can have properties, i.e. metadata values that describe room features and that can be used for several purposes, such as room filtering, joining constraints etc.
@@ -95,6 +83,11 @@ A room property is made up of a name and a value; the value can be of four basic
 The room public/private state is considered a room property as well, and there it is by default.
 \\
 Few examples of room property may be max number of clients in the room, min/max Elo required to join, friendly fire.
+
+\bigskip
+\textit{Room joining}
+\\
+When a client tries to join, as well as password if room is private and locking state, the room checks possible custom joining constraints defined in the room. Such custom constraints depend upon room properties and room state. The client successfully joins the room only if all joining constraint are satisfied. Differently from room locking, where joining procedure always fails while room is locked, those constraints can result on different outcomes from request to request. 
 
 \bigskip
 \textit{Communication}
@@ -115,34 +108,38 @@ The game server can be stopped or terminated both. In the first case the server 
 It must be possible to define server behavior on starting and stopping.
 
 \bigskip
-Once the server has been created, it must be possible to execute three main operations, that is:
+Once the server has been created, it must be possible to execute two main operations, that is:
 \begin{itemize}
-\item Define room
+\item Define room: the room defining can be split in two components, namely:
+  \begin{itemize}
+  \item Define room type.
+  \item Define matchmaking on such room type.
+  \end{itemize}
 \item Create room
-\item Define matchmaking 
 \end{itemize}
 
 \bigskip
-\textit{Room definition}
+\textit{Room type definition}
 \\
-It must be possible to define a new type of room, i.e. a room with its own state and custom behavior.
+It must be possible to define a new type of room, i.e. a room with its own state and custom behavior. Of course, properties can be added to room type too.
 If the same room type is defined more than once, the first one will be considered as the correct one, and from the second on it will be ignored.
+
+\bigskip
+\textit{Matchmaking definition}
+\\
+Matchmaking is the functionality that permits to balance clients out about their own traits. Indeed, clients can no more freely join any room, but they need to be grouped in a fair way. Matchmaking is allowed on public rooms only.   
+\\
+A trait is a characteristic owned by a client that describes one of its aspects. Hence, each client, when requesting to join through matchmaking, provides its piece of information. The developer should have the possibility to provide custom defined client traits. Concrete and frequent examples of traits used worldwide are ranking, Elo, nationality (used for geographical grouping), teaming (join the room as a team of more than one client) and so on.
+\\
+Obviously, matchmaking logic changes room by room, depending on room type. Developer should be able to define its own logic.
+When the room type is defined, a matchmaking service can be supplied in order to enable that feature on such rooms. Therefore, the just defined type of room would be used for games with and without matchmaking both. Otherwise, if no matchmaker is provided, the room will reject any request for matchmaking coming from clients.
+Given a type of room, clients that requested for matchmaking and the others which din't must be kept separated and not be blent in the same room.
 
 \bigskip
 \textit{Room creation}
 \\
 The server can instantiate public rooms if required. Obviously, the just created room contains no clients at the beginning.
-
-\bigskip
-\textit{Define matchmaking}
-\\
-Matchmaking is the functionality that permits to balance clients out about their own traits. Indeed, clients can no more freely join any room, but they need to be grouped in a fair way. Matchmaking is allowed on public rooms only.   
-\\
-A trait is a characteristics owned by a client that describes one of its aspects. Hence, each client, when requesting to join through matchmaking, provides its information. The developer should have the possibility to provide custom defined client traits. Concrete and frequent examples of traits used worldwide are ranking, Elo, nationality (used for geographical grouping), teaming (join the room as a team of more than one client) and so on.
-\\
-Obviously, matchmaking logic changes room by room, depending on room type. Developer should be able to define its own logic.
-When the room type is defined, a matchmaking service can be supplied in order to enable that feature on such rooms. Therefore, the just defined type of room would be used for games with and without matchmaking both. Otherwise, if no matchmaker is provided, the room will reject any request for matchmaking coming from clients.
-Given a type of room, clients that requested for matchmaking and the others that din't must be kept separated and not be blent in the same room.
+Moreover, the server has the clearance to allocate rooms using matchmaking. Those rooms start with no clients too, but clients chosen by matchmaker are the only one allowed to join.
 
 \subsection{Client} \label{client}
 
@@ -183,6 +180,7 @@ Allowed actions that a client can do on a room are:
 \textit{Join}
 \\
 The main difference is given by the possible use of matchmaking.
+\\
 Regarding rooms without matchmaking, there are three ways a client can join a room, that is:
 \begin{itemize}
 \item \textbf{Radom join}: a client joins a random public room of a certain type; filter options may be used to provide some directives.
@@ -190,7 +188,7 @@ Regarding rooms without matchmaking, there are three ways a client can join a ro
 \item \textbf{Auto join}: when successfully creating a room, the client should automatically join it.
 \end{itemize} 
 
-About rooms with matchmaking, clients shall not have any control on the room that will join. Thus, no join on specific room is allowed, and no filter options can be provided. 
+About rooms with matchmaking, clients shall not have any control on the room that will enter into. Thus, no join on specific room is allowed, and no filter options can be provided. 
 
 \bigskip
 \textit{Leave}

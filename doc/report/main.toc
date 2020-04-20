@@ -1,7 +1,11 @@
 \babel@toc {english}{}
 \contentsline {chapter}{\numberline {1}Scoping}{1}% 
-\contentsline {section}{\numberline {1.1}Conditions of satisfaction}{1}% 
-\contentsline {section}{\numberline {1.2}Analisys of requirements}{1}% 
-\contentsline {subsection}{\numberline {1.2.1}Room}{2}% 
+\contentsline {section}{\numberline {1.1}Introduction}{1}% 
+\contentsline {section}{\numberline {1.2}Requirements Analisys}{1}% 
+\contentsline {subsection}{\numberline {1.2.1}Room}{1}% 
 \contentsline {subsection}{\numberline {1.2.2}Server}{4}% 
 \contentsline {subsection}{\numberline {1.2.3}Client}{5}% 
+\contentsline {chapter}{\numberline {2}Planning}{9}% 
+\contentsline {chapter}{\numberline {3}System architecture}{11}% 
+\contentsline {chapter}{\numberline {4}Detailed desing}{13}% 
+\contentsline {chapter}{\numberline {5}Implementation}{15}% 
