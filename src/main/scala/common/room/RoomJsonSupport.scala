@@ -22,7 +22,7 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
     def write(room: SharedRoom): JsValue = JsObject(
       idJsonPropertyName -> JsString(room.roomId),
-      propertiesJsonPropertyName -> (roomPropertySetJsonFormat write room.sharedProperties)
+      propertiesJsonPropertyName -> (roomPropertySetJsonFormat write room.properties)
     )
 
     def read(value: JsValue): SharedRoom = value match {

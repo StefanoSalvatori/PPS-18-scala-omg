@@ -1,11 +1,11 @@
 package client.utils
 
 import akka.actor.ActorRef
-import client.room.ClientRoom
-import common.communication.CommunicationProtocol.RoomProtocolMessage
+import client.room.{ClientRoom, JoinedRoom}
+import common.communication.CommunicationProtocol.{RoomProtocolMessage, SocketSerializable}
 import common.communication.SocketSerializer
 import common.room.{FilterOptions, RoomProperty}
-import common.room.Room.{SharedRoom, RoomId, RoomPassword, RoomType}
+import common.room.Room.{RoomId, RoomPassword, RoomType, SharedRoom}
 
 object MessageDictionary {
 
@@ -21,7 +21,7 @@ object MessageDictionary {
 
   case class GetJoinedRooms()
 
-  case class JoinedRooms(joinedRooms: Set[ClientRoom])
+  case class JoinedRooms(joinedRooms: Set[JoinedRoom])
 
   case class ClientRoomActorLeft(clientRoomActor: ActorRef)
 
@@ -80,13 +80,13 @@ object MessageDictionary {
 
   //ClientRoomActor
 
-  case class ClientRoomResponse(clientRoom: ClientRoom)
+  case class ClientRoomResponse(clientRoom: JoinedRoom)
 
   case class SendJoin(sessionId: Option[String], password: RoomPassword)
 
   case class SendLeave()
 
-  case class SendStrictMessage(msg: Any with java.io.Serializable)
+  case class SendStrictMessage(msg: SocketSerializable)
 
   /**
    * Sent to the actor when an error occurs on the socket

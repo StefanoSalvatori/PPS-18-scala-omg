@@ -1,7 +1,7 @@
 package examples.rock_paper_scissor.client
 
 import client.Client
-import client.room.ClientRoom
+import client.room.{ClientRoom, JoinedRoom}
 import common.room.FilterOptions
 import javafx.scene.control.{Button, Label}
 import javafx.scene.layout.VBox
@@ -24,7 +24,7 @@ class HomeController {
   private val client: Client = Client(Host, Port)
 
 
-  private def goToMatchScene(room: ClientRoom, gameMode: String) = {
+  private def goToMatchScene(room: JoinedRoom, gameMode: String) = {
     Platform.runLater {
       val loader = new jfxf.FXMLLoader(getClass.getResource("./resources/match.fxml"))
       val root: jfxs.Parent = loader.load()

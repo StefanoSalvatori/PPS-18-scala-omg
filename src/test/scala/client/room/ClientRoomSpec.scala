@@ -40,7 +40,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private var gameServer: GameServer = _
   private var coreClient: ActorRef = _
-  private var clientRoom: ClientRoom = _
+  private var joinableClientRoom: JoinableRoom = _
 
   before {
     gameServer = GameServer(ServerAddress, ServerPort)
@@ -51,8 +51,8 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     logger debug s"Server started at $ServerAddress:$ServerPort"
     coreClient = system actorOf CoreClient(Routes.httpUri(ServerAddress, ServerPort))
     val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.closableRoomWithStateType, Set.empty))
-      .mapTo[Try[ClientRoom]], DefaultDuration)
-    clientRoom = res.get
+      .mapTo[Try[JoinableRoom]], DefaultDuration)
+    joinableClientRoom = res.get
   }
 
   after {
@@ -61,14 +61,14 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   "A client room" must {
     "join and notify the core client" in {
-      Await.result(clientRoom.join(), DefaultDuration)
+      Await.result(joinableClientRoom.join(), DefaultDuration)
       val res = Await.result((coreClient ? GetJoinedRooms).mapTo[JoinedRooms], DefaultDuration).joinedRooms
       res should have size 1
     }
 
     "leave and notify the core client" in {
-      Await.result(clientRoom.join(), DefaultDuration)
-      Await.result(clientRoom.leave(), DefaultDuration)
+      val joinedRoom = Await.result(joinableClientRoom.join(), DefaultDuration)
+      Await.result(joinedRoom.leave(), DefaultDuration)
 
       val res = Await.result((coreClient ? GetJoinedRooms).mapTo[JoinedRooms], DefaultDuration).joinedRooms
       res should have size 0
@@ -83,9 +83,9 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     "show correct default room properties when those are not overridden" in {
       val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.roomWithPropertyType, Set.empty)).mapTo[Try[ClientRoom]], DefaultDuration)
       val room = res.get
-      room.properties should have size 3 // a, b, private
-      room.properties should contain("a", 0)
-      room.properties should contain("b", "abc")
+      room.propertyValues should have size 3 // a, b, private
+      room.propertyValues should contain("a", 0)
+      room.propertyValues should contain("b", "abc")
     }
 
     "show correct room properties when default values are overridden" in {
@@ -107,10 +107,10 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       val properties = Set(RoomProperty("a", 1), RoomProperty("b", "qwe"))
       val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.roomWithPropertyType, properties)).mapTo[Try[ClientRoom]], DefaultDuration)
       val room = res.get
-      room.properties should have size 3 // a, b, private
-      room.properties should contain("a", 1)
-      room.properties should contain("b", "qwe")
-      room.properties should contain(Room.roomPrivateStatePropertyName, false)
+      room.propertyValues should have size 3 // a, b, private
+      room.propertyValues should contain("a", 1)
+      room.propertyValues should contain("b", "qwe")
+      room.propertyValues should contain(Room.roomPrivateStatePropertyName, false)
     }
 
     "throw an error when trying to access a non existing property" in {
@@ -138,12 +138,12 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
     "define a callback to handle messages from server room" in {
       val p = Promise[String]()
-      Await.ready(clientRoom.join(), DefaultDuration)
+      val joinedRoom = Await.result(joinableClientRoom.join(), DefaultDuration)
 
-      clientRoom.onMessageReceived { m =>
+      joinedRoom.onMessageReceived { m =>
         p.success(m.toString)
       }
-      clientRoom.send(ClosableRoomWithState.PingMessage)
+      joinedRoom.send(ClosableRoomWithState.PingMessage)
 
       val res = Await.result(p.future, DefaultDuration)
       res shouldEqual ClosableRoomWithState.PongResponse
@@ -151,9 +151,10 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
     "define a callback to handle state changed" in {
       val p = Promise[Boolean]()
-      clientRoom.onStateChanged { _ => p.success(true) }
-      Await.ready(clientRoom.join(), DefaultDuration)
-      clientRoom.send(ClosableRoomWithState.ChangeStateMessage)
+      val joinedRoom = Await.result(joinableClientRoom.join(), DefaultDuration)
+      joinedRoom.onStateChanged { _ => p.success(true) }
+
+      joinedRoom.send(ClosableRoomWithState.ChangeStateMessage)
       assert(Await.result(p.future, DefaultDuration))
 
     }
@@ -161,16 +162,16 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     "define a callback to handle room closed changed" in {
       val p = Promise[Boolean]()
 
-      Await.ready(clientRoom.join(), DefaultDuration)
-      clientRoom.onClose { p.success(true) }
-      clientRoom.send(ClosableRoomWithState.CloseRoomMessage)
+      val joinedRoom = Await.result(joinableClientRoom.join(), DefaultDuration)
+      joinedRoom.onClose { p.success(true) }
+      joinedRoom.send(ClosableRoomWithState.CloseRoomMessage)
       assert(Await.result(p.future, DefaultDuration))
     }
 
     "define a callback to handle socket errors" in {
       val p = Promise[Boolean]()
-      clientRoom.onError { _ => p.success(true) }
-      Await.ready(clientRoom.join(), DefaultDuration)
+      val joinedRoom = Await.result(joinableClientRoom.join(), DefaultDuration)
+      joinedRoom.onError { _ => p.success(true) }
 
       //not sending any message should close the socket
       assert(Await.result(p.future, DefaultDuration))
