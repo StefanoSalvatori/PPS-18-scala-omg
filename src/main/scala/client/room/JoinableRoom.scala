@@ -38,7 +38,7 @@ object JoinableRoom {
     new JoinableRoomImpl(roomId, coreClient, httpServerUri, properties)
 }
 
-class JoinableRoomImpl(override val roomId: RoomId,
+private class JoinableRoomImpl(override val roomId: RoomId,
                        private val coreClient: ActorRef,
                        private val httpServerUri: String,
                        override val properties: Set[RoomProperty])

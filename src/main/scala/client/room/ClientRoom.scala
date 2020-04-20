@@ -51,7 +51,7 @@ object ClientRoom {
     JoinableRoom(roomId, coreClient, httpServerUri, properties)
 }
 
-class ClientRoomImpl(override val roomId: RoomId,
+private class ClientRoomImpl(override val roomId: RoomId,
                      override val properties: Set[RoomProperty])
                     (implicit val system: ActorSystem) extends ClientRoom {
   protected implicit val timeout: Timeout = 5 seconds

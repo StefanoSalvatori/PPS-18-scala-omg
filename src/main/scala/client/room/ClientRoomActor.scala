@@ -85,7 +85,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
   def onSocketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
     case RoomProtocolMessage(JoinOk, sessionId, _) =>
       coreClient ! ClientRoomActorJoined
-      this.joinedRoom = new JoinedRoomImpl(self, sessionId, room.roomId, room.properties)
+      this.joinedRoom = JoinedRoom(self, sessionId, room.roomId, room.properties)
       replyTo ! Success(this.joinedRoom)
       context.become(roomJoined(outRef))
       unstashAll()

@@ -1,7 +1,5 @@
 package common.room
 
-import java.util.NoSuchElementException
-
 object Room {
 
   type RoomId = String

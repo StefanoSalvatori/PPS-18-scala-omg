@@ -72,7 +72,7 @@ object JoinedRoom {
 }
 
 
-class JoinedRoomImpl(private val innerActor: ActorRef,
+private class JoinedRoomImpl(private val innerActor: ActorRef,
                      val sessionId: SessionId,
                      override val roomId: RoomId,
                      override val properties: Set[RoomProperty])
