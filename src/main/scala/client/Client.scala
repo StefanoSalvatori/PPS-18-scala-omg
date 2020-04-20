@@ -93,11 +93,11 @@ object Client {
 
 class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
 
-  private val requestTimeout = 5 // Seconds
+  private val RequestTimeout = 5 // Seconds
 
   import akka.util.Timeout
 
-  implicit val timeout: Timeout = requestTimeout seconds
+  implicit val timeout: Timeout = RequestTimeout seconds
 
   private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
 

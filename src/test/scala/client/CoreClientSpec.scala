@@ -98,8 +98,7 @@ class MockClientRoomActor(room: ClientRoom) extends Actor {
 
   override def receive: Receive = {
     case RetrieveClientRoom =>
-      sender ! ClientRoomResponse(
-        new JoinedRoomImpl(self, "", room.roomId, Set()))
+      sender ! ClientRoomResponse(JoinedRoom(self, "", room.roomId, Set()))
   }
 }
 

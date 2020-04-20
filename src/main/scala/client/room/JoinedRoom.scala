@@ -8,7 +8,7 @@ import common.room.RoomProperty
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 import akka.pattern.ask
-import common.communication.CommunicationProtocol.SessionId
+import common.communication.CommunicationProtocol.{SocketSerializable, SessionId}
 
 /**
  * Room that is joined
@@ -32,7 +32,7 @@ trait JoinedRoom extends ClientRoom {
    *
    * @param msg the message to send
    */
-  def send(msg: Any with java.io.Serializable): Unit
+  def send(msg: SocketSerializable): Unit
 
   /**
    * Callback that handle  message received from the server room
@@ -86,7 +86,7 @@ private class JoinedRoomImpl(private val innerActor: ActorRef,
       case Failure(ex) => Future.failed(ex)
     }
 
-  override def send(msg: Any with java.io.Serializable): Unit = this.innerActor ! SendStrictMessage(msg)
+  override def send(msg: SocketSerializable): Unit = this.innerActor ! SendStrictMessage(msg)
 
   override def onMessageReceived(callback: Any => Unit): Unit = this.innerActor ! OnMsgCallback(callback)
 

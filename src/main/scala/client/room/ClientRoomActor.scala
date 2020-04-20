@@ -5,7 +5,7 @@ import client.utils.MessageDictionary._
 import client.{BasicActor, HttpClient}
 import common.communication.BinaryProtocolSerializer
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage, SessionId}
+import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage, SocketSerializable, SessionId}
 import common.room.Room.RoomPassword
 
 import scala.util.{Failure, Success}
@@ -93,7 +93,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     case RoomProtocolMessage(ClientNotAuthorized, _, _) =>
       replyTo ! Failure(new Exception("Can't join"))
 
-    case SendStrictMessage(_: Any with java.io.Serializable) => stash()
+    case SendStrictMessage(_: SocketSerializable) => stash()
     case RoomProtocolMessage(Tell, _, _) => stash()
     case RoomProtocolMessage(Broadcast, _, _) => stash()
     case RoomProtocolMessage(RoomClosed, _, _) => stash()
@@ -115,7 +115,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
       outRef ! RoomProtocolMessage(LeaveRoom)
       context.become(waitLeaveResponse(sender, outRef))
 
-    case SendStrictMessage(msg: Any with java.io.Serializable) =>
+    case SendStrictMessage(msg: SocketSerializable) =>
       outRef ! RoomProtocolMessage(MessageRoom, "", msg)
 
     case RetrieveClientRoom => sender ! ClientRoomResponse(this.joinedRoom)

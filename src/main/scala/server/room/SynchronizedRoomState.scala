@@ -1,6 +1,6 @@
 package server.room
 
-import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.communication.CommunicationProtocol.{RoomProtocolMessage, SocketSerializable}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.room.RoomProperty
 import server.room.RoomActor.StateSyncTick
@@ -12,7 +12,7 @@ import server.utils.Timer
  * @tparam T generic type for the state. It must extends [[java.io.Serializable]] so that it can be serialized and
  *           sent to clients
  */
-trait SynchronizedRoomState[T <: Any with java.io.Serializable] extends ServerRoom {
+trait SynchronizedRoomState[T <: SocketSerializable] extends ServerRoom {
 
   private val stateTimer = Timer.withExecutor()
   private var lastStateSent: T  = _

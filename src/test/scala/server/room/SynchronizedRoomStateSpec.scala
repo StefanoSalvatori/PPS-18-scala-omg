@@ -3,7 +3,7 @@ package server.room
 import akka.actor.{ActorRef, ActorSystem}
 import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.communication.CommunicationProtocol.{RoomProtocolMessage, SocketSerializable}
 import common.room.Room
 import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
@@ -117,7 +117,7 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
     }).nonEmpty
   }
 
-  private def receivedState(client: TestClient, state: Any with java.io.Serializable): Boolean = {
+  private def receivedState(client: TestClient, state: SocketSerializable): Boolean = {
     client1.allMessagesReceived.collect({
       case msg: RoomProtocolMessage if msg.messageType == StateUpdate => msg
     }).contains(RoomProtocolMessage(StateUpdate, client.id, state))
