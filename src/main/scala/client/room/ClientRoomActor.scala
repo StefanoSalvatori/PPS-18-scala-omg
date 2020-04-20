@@ -22,8 +22,7 @@ object ClientRoomActor {
  * Handles the connection with the server side room.
  * Notify the coreClient if the associated room is left or joined.
  */
-case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends ClientRoomActor
-  with Stash {
+case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends ClientRoomActor with Stash {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
   private var onMessageCallback: Option[Any => Unit] = None
   private var onStateChangedCallback: Option[Any => Unit] = None
@@ -31,6 +30,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
   private var onErrorCallback: Option[Throwable => Unit] = None
 
   private var joinPassword: RoomPassword = _
+  private var joinedRoom : JoinedRoom = _
 
   override def receive: Receive = waitJoinRequest orElse callbackDefinition orElse handleErrors orElse fallbackReceive
 
@@ -89,7 +89,8 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
   def onSocketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
     case RoomProtocolMessage(JoinOk, sessionId, _) =>
       coreClient ! ClientRoomActorJoined
-      replyTo ! Success(sessionId)
+      this.joinedRoom = new JoinedRoomImpl(self, sessionId, room.roomId, room.properties)
+      replyTo ! Success(this.joinedRoom)
       context.become(roomJoined(outRef))
       unstashAll()
 
@@ -121,7 +122,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     case SendStrictMessage(msg: Any with java.io.Serializable) =>
       outRef ! RoomProtocolMessage(MessageRoom, "", msg)
 
-    case RetrieveClientRoom => sender ! ClientRoomResponse(this.room)
+    case RetrieveClientRoom => sender ! ClientRoomResponse(this.joinedRoom)
   }
 
   def onWaitLeaveResponse(replyTo: ActorRef, outRef: ActorRef): Receive = {

@@ -1,29 +1,42 @@
 package client.room
 
+import java.io
 import java.util.NoSuchElementException
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
+import akka.util.Timeout
 import client.utils.MessageDictionary._
 import common.room.Room.{BasicRoom, RoomId, RoomPassword}
 import akka.pattern.ask
 import common.room.{NoSuchPropertyException, Room, RoomProperty, RoomPropertyValue}
+
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-trait ClientRoom extends BasicRoom {
 
-  /**
-   * @return if present the session id of this client when the room is joined.
-   */
-  def sessionId: Option[String]
-
+trait JoinableRoom extends ClientRoom {
   /**
    * Open web socket with server room and try to join
    *
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
-  def join(password: RoomPassword = Room.defaultPublicPassword): Future[Any]
+  def join(password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom]
+
+  /**
+   * Open web socket with server room and try to join with the given session id
+   *
+   * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
+   */
+  def joinWithSessionId(sessionId: String, password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom]
+}
+
+trait JoinedRoom extends ClientRoom {
+  /**
+   * @return if present the session id of this client when the room is joined.
+   */
+  def sessionId: String
+
 
   /**
    * Leave this room server side
@@ -67,24 +80,100 @@ trait ClientRoom extends BasicRoom {
    */
   def onError(callback: Throwable => Unit): Unit
 
-  /**
-   * Properties of the room.
-   *
-   * @return a map containing property names as keys (name -> value)
-   */
-  def properties: Map[String, Any]
+
 }
+
+trait ClientRoom extends BasicRoom {
+
+}
+
+class ClientRoomImpl(override val roomId: RoomId,
+                     override val properties: Set[RoomProperty])
+                    (implicit val system: ActorSystem) extends ClientRoom {
+  protected implicit val timeout: Timeout = 5 seconds
+  protected implicit val executionContext: ExecutionContextExecutor = system.dispatcher
+}
+
+class JoinedRoomImpl(private val innerActor: ActorRef,
+                     val sessionId: String,
+                     override val roomId: RoomId,
+                     override val properties: Set[RoomProperty])
+                    (override implicit val system: ActorSystem)
+  extends ClientRoomImpl(roomId, properties) with JoinedRoom {
+
+
+  override def leave(): Future[Any] =
+    this.innerActor ? SendLeave flatMap {
+      case Success(_) => Future.successful()
+      case Failure(ex) => Future.failed(ex)
+    }
+
+  override def send(msg: Any with java.io.Serializable): Unit = this.innerActor ! SendStrictMessage(msg)
+
+  override def onMessageReceived(callback: Any => Unit): Unit = this.innerActor ! OnMsgCallback(callback)
+
+  override def onStateChanged(callback: Any => Unit): Unit = this.innerActor ! OnStateChangedCallback(callback)
+
+  override def onClose(callback: => Unit): Unit = this.innerActor ! OnCloseCallback(() => callback)
+
+  override def onError(callback: Throwable => Unit): Unit = this.innerActor ! OnErrorCallback(callback)
+}
+
+class JoinableRoomImpl(override val roomId: RoomId,
+                       private val coreClient: ActorRef,
+                       private val httpServerUri: String,
+                       override val properties: Set[RoomProperty])
+                      (override implicit val system: ActorSystem)
+  extends ClientRoomImpl(roomId, properties) with JoinableRoom {
+
+  private var innerActor: Option[ActorRef] = None
+
+
+  override def join(password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom] = {
+    this.joinFuture(None, password)
+
+  }
+
+  override def joinWithSessionId(sessionId: String, password: RoomPassword): Future[JoinedRoom] = {
+    this.joinFuture(Some(sessionId), password)
+  }
+
+  private def joinFuture(sessionId: Option[String], password: RoomPassword) = {
+    val ref = this.spawnInnerActor()
+    (ref ? SendJoin(sessionId, password)) flatMap {
+      case Success(responseId) =>
+        Future.successful(responseId.asInstanceOf[JoinedRoom])
+      case Failure(ex) =>
+        this.killInnerActor()
+        Future.failed(ex)
+    }
+  }
+
+
+  private def spawnInnerActor(): ActorRef = {
+    val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
+    this.innerActor = Some(ref)
+    ref
+  }
+
+
+  private def killInnerActor(): Unit = {
+    this.innerActor match {
+      case Some(value) => value ! PoisonPill
+      case None =>
+    }
+  }
+
+}
+
 
 object ClientRoom {
-  def apply(coreClient: ActorRef, httpServerUri: String, roomId: RoomId, properties: Map[String, RoomPropertyValue],
-            sessionId: String = "")(implicit system: ActorSystem): ClientRoom =
-    if (sessionId.isEmpty) {
-      ClientRoomImpl(coreClient, httpServerUri, roomId, properties, None)
-    } else {
-      ClientRoomImpl(coreClient, httpServerUri, roomId, properties, Some(sessionId))
-    }
+  def apply(coreClient: ActorRef, httpServerUri: String, roomId: RoomId, properties: Set[RoomProperty])
+           (implicit system: ActorSystem): JoinableRoom =
+    new JoinableRoomImpl(roomId, coreClient, httpServerUri, properties)
 }
 
+/*
 case class ClientRoomImpl(private val coreClient: ActorRef,
                           private val httpServerUri: String,
                           override val roomId: RoomId,
@@ -92,7 +181,6 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
                           private var _sessionId: Option[String])
                          (implicit val system: ActorSystem) extends ClientRoom {
 
-  import akka.util.Timeout
   private implicit val timeout: Timeout = 5 seconds
   private implicit val executionContext: ExecutionContextExecutor = system.dispatcher
   private implicit var innerActor: Option[ActorRef] = None
@@ -161,6 +249,7 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
       case None => this.onErrorCallback = Some(callback)
     }
 
+
   private def spawnInnerActor(): ActorRef = {
     val ref = system actorOf ClientRoomActor(coreClient, httpServerUri, this)
     //if callbacks were defined before actor spawning we set them now
@@ -168,6 +257,7 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
     this.innerActor = Some(ref)
     ref
   }
+
 
   private def killInnerActor(): Unit = {
     this.innerActor match {
@@ -184,14 +274,14 @@ case class ClientRoomImpl(private val coreClient: ActorRef,
 
   }
 
-  private def tryReadingProperty[T](propertyName: String)(f: String => T): T = try {
+  private def tryReadingProperty[T](propertyName: String)(f: Function[String, T]): T = try {
     f(propertyName)
   } catch {
     case _: NoSuchElementException => throw NoSuchPropertyException()
   }
 
 }
-
+*/
 
 
 

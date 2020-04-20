@@ -23,7 +23,7 @@ class JsonSerializationSpec extends AnyFlatSpec
     val properties = Set(RoomProperty("A", 1), RoomProperty("B", 2))
     val room = SharedRoom("randomId", properties)
     checkCorrectJsonEncoding(room,
-      (room: SharedRoom, decodedRoom: SharedRoom) => room.roomId == decodedRoom.roomId && room.sharedProperties == decodedRoom.sharedProperties
+      (room: SharedRoom, decodedRoom: SharedRoom) => room.roomId == decodedRoom.roomId && room.properties == decodedRoom.properties
     )
   }
 
