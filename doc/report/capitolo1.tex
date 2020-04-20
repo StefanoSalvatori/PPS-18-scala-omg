@@ -18,6 +18,7 @@ The main idea of the product is to provide a low level support that handles all 
 Hence, the library provides two main notions of:
 \begin{itemize}
 \item \textbf{Room}: place where clients can gather to do something.
+\item \textbf{Server}: a game server where rooms can be hosted.
 \item \textbf{Client}: entity that might do operation on rooms, such as joining, sending messages etc.
 \end{itemize} 
 
@@ -27,7 +28,7 @@ A room is something that clients can join and interact with.
 \\
 Rooms have a type and are distinguishable by an univocal id.
 \\
-A room possesses a behavior and a state that embed the custom logic of the program. Obviously those vary from room to room, so the developer will be able to flexibly define its own type of room, namely a room that possesses its own state and behavior.
+A room possesses a behavior and a state that embed the custom logic of the game. Obviously those vary from room to room, so the developer will be able to flexibly define its own type of room, namely a room that possesses its own state and behavior.
 
 \bigskip
 Rooms can be public or private. A public room can be joined by everyone; on the contrary, private rooms need a specific password to be joined.
@@ -37,7 +38,7 @@ It must be possible to make a public room private, and so to set a password in s
 
 \bigskip
 Rooms must expose a locking feature that permits to lock/unlock them. While locked, the room can not be joined by any new client. By default room are unlocked.
-Both clients in the room and server by itself should have the possibility to lock/unlock a given room.
+Server should have the possibility to lock/unlock a given room.
 
 \bigskip
 Rooms closing can be automatic or not. A room is closed when it's going to be deleted, and so no client can join the room. Clients in the room must be notified that the room has been closed. 
@@ -46,8 +47,6 @@ Auto closing can be specified when creating the room, and by default it is off.
 \\
 When the auto close is off, the room would close only in front of an explicit close calling.
 Instead, when auto close in on, the room would close if there is no client in the room for a certain period of time. Obviously, it would close in front of an explicit close calling too.
-\\
-By default, the auto close is off.
 
 \bigskip
 \textit{Client liveness} 
@@ -55,7 +54,7 @@ By default, the auto close is off.
 The room must be aware of unreachable and/or inactive clients, and may kick them out after an established period of time. There are two possible ways to handle client liveness monitoring, that is:
 \begin{itemize}
 \item Client and server periodically exchange pings. Inactive clients are never kicked.  
-\item The room kicks a client out if no message flew between such client and the room(both directions) within a certain period of time. The length of the period must be configurable. This is considered as a leave event.
+\item The room kicks a client out if no message flew between such client and the room (both directions) within a certain period of time. The length of the period must be configurable. This is considered as a leave event.
 \end{itemize}
 
 \bigskip
@@ -74,10 +73,15 @@ Regarding reactive behavior, events that could occur, and that will be handled b
 \begin{itemize}
 \item \textbf{Creation}: the room is created.
 \item \textbf{Closing}: the room is closed, intended as imminent deletion. No more client can join the room in this state. 
-\item \textbf{Joinin}: a client joins the room. The room knows the client that is joining. When a client tries to join, as well as password if room is private and locking state, the room checks possible custom joining constraints defined in the room. The client successfully joins the room only if all joining constraint are satisfied.
+\item \textbf{Joinin}: a client joins the room.
 \item \textbf{Leaving}: a client exits the room. The room knows the client that is leaving.
 \item \textbf{Receiving a message}: the room receives a message from a client.
 \end{itemize} 
+
+\bigskip
+\textit{Room joining}
+\\
+When a client tries to join, as well as password if room is private and locking state, the room checks possible custom joining constraints defined in the room. Such custom constraints depend upon room properties and room state. The client successfully joins the room only if all joining constraint are satisfied. Differently from room locking, where joining procedure always fails while room is locked, those constraints can result on different outcomes from request to request. 
 
 \bigskip
 \textit{Room property}
@@ -90,7 +94,7 @@ A room property is made up of a name and a value; the value can be of four basic
 \\
 The room public/private state is considered a room property as well, and there it is by default.
 \\
-Few examples of room property may be max number of clients in the room, min/max Elo required to join, fiendly fire.
+Few examples of room property may be max number of clients in the room, min/max Elo required to join, friendly fire.
 
 \bigskip
 \textit{Communication}
@@ -132,11 +136,17 @@ The server can instantiate public rooms if required. Obviously, the just created
 \bigskip
 \textit{Define matchmaking}
 \\
+Matchmaking is the functionality that permits to balance clients out about their own traits. Indeed, clients can no more freely join any room, but they need to be grouped in a fair way. Matchmaking is allowed on public rooms only.   
+\\
+A trait is a characteristics owned by a client that describes one of its aspects. Hence, each client, when requesting to join through matchmaking, provides its information. The developer should have the possibility to provide custom defined client traits. Concrete and frequent examples of traits used worldwide are ranking, Elo, nationality (used for geographical grouping), teaming (join the room as a team of more than one client) and so on.
+\\
+Obviously, matchmaking logic changes room by room, depending on room type. Developer should be able to define its own logic.
+When the room type is defined, a matchmaking service can be supplied in order to enable that feature on such rooms. Therefore, the just defined type of room would be used for games with and without matchmaking both. Otherwise, if no matchmaker is provided, the room will reject any request for matchmaking coming from clients.
+Given a type of room, clients that requested for matchmaking and the others that din't must be kept separated and not be blent in the same room.
 
+\subsection{Client} \label{client}
 
-\subsection{Client}
-
-A client should, in primis, display all existing rooms of a given type, both for public and private rooms. Currently locked rooms must not be displayed.
+A client should, in primis, display all existing rooms of a given type, both for public and private rooms. Currently locked rooms and room created using matchmaking must not be displayed.
 \\
 Room visualization must include the possibility for clients to filter rooms using their properties. A client can specify a property name, a value and a strategy to be used to evaluate the property. Operations allowed on room properties while filtering are:
 \begin{itemize}
@@ -146,14 +156,18 @@ Room visualization must include the possibility for clients to filter rooms usin
 \item \textbf{Lower}: the property value must be lower than the provided one.
 \end{itemize}
 
-Moreover, a client can display just its joined rooms as well.
+Moreover, a client can display just its joined rooms. Those contain locked rooms and rooms that use matchmaking as well. 
 
 \bigskip
 \textit{Room creation}
 \\
 A client can create a room of a certain type. If the room is private, the provision of a password is mandatory.
+\\
 The client must fail on creating the room if its type is not already defined server side.
+\\
 When creating a room, a client can optionally specify a set of starting properties; each property will be set in the room if present or, otherwise, it will be ignored.
+\\
+The room created won't use matchmaking.
 
 \bigskip
 Allowed actions that a client can do on a room are:
@@ -168,12 +182,15 @@ Allowed actions that a client can do on a room are:
 \bigskip
 \textit{Join}
 \\
-There are three ways a client can join a room, that is:
+The main difference is given by the possible use of matchmaking.
+Regarding rooms without matchmaking, there are three ways a client can join a room, that is:
 \begin{itemize}
 \item \textbf{Radom join}: a client joins a random public room of a certain type; filter options may be used to provide some directives.
-\item \textbf{Join by Id}: a client joins a room using its id, and optionally a password(required if the room is private, any provided password will be ignored if the room is public).
+\item \textbf{Join by Id}: a client joins a room using its id, and optionally a password (required if the room is private, any provided password will be ignored if the room is public).
 \item \textbf{Auto join}: when successfully creating a room, the client should automatically join it.
-\end{itemize}  
+\end{itemize} 
+
+About rooms with matchmaking, clients shall not have any control on the room that will join. Thus, no join on specific room is allowed, and no filter options can be provided. 
 
 \bigskip
 \textit{Leave}
