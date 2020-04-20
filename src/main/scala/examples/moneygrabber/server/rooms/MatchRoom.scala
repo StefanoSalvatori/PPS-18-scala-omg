@@ -5,8 +5,8 @@ import examples.moneygrabber.common.{Board, GameModes}
 import server.room.{Client, GameLoop, RoomPropertyMarker, ServerRoom, SynchronizedRoomState}
 
 case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] with GameLoop {
-  @RoomPropertyMarker val boardSize: Int = 50
-  @RoomPropertyMarker val numHunters: Int = 25
+  @RoomPropertyMarker val boardSize: Int = 40
+  @RoomPropertyMarker val numHunters: Int = 20
   @RoomPropertyMarker val coinRatio: Double = 0.1
   @RoomPropertyMarker val mode: String = GameModes.Max2.name
   @RoomPropertyMarker var gameStarted: Boolean = false

@@ -4,7 +4,9 @@ import java.awt.Color
 
 import examples.moneygrabber.client.view.game.GameGrid.ButtonPressedEvent
 import examples.moneygrabber.client.view.game.GameView.{GameStatus, WaitingPlayers}
+import examples.moneygrabber.common.Board
 
+import scala.swing.GridBagPanel.Anchor
 import scala.swing._
 import scala.swing.event.KeyPressed
 
@@ -19,7 +21,12 @@ object GameView {
 class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPanel(Orientation.Vertical) {
   private val TileSize = 20
   private val PlayerInfoColorSize = 10
-  private val CoinColor = Color.yellow
+
+  private def CoinColor(value: Int) = value match {
+    case Board.CoinBasicValue => Color.yellow
+    case Board.HunterDropValue => Color.white
+  }
+
   private val HunterColor = Color.black
   val PlayerIdToColor: PartialFunction[Int, Color] = {
     case 0 => Color.red
@@ -44,12 +51,21 @@ class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPa
       contents += new PointsInfo(id)
     }
   }
-  private val topPanel: Panel = new GridPanel(1, 3) {
-    contents += gameStatus
-    contents += playerInfo
-    contents += pointsInfo
+  private val topPanel: Panel = new GridBagPanel {
+    val c1 = new Constraints
+    c1.grid = (0, 0); c1.weightx = 0.5
+    layout(gameStatus) = c1
+    c1.grid = (1, 0)
+    layout(playerInfo) = c1
+    val c2 = new Constraints
+    c2.gridy = 1
+    c2.gridwidth = 3
+    c2.anchor = Anchor.Center
+    c2.weightx = 0.5
+    layout(pointsInfo) = c2
+
   }
-  private val gameGrid: GameGrid = GameGrid(worldSize, TileSize * TileSize / worldSize._1 )
+  private val gameGrid: GameGrid = GameGrid(worldSize, TileSize * TileSize / worldSize._1)
 
   contents += topPanel
   contents += gameGrid
@@ -67,8 +83,8 @@ class GameView(private val worldSize: (Int, Int), numPlayers: Int) extends BoxPa
     this.gameGrid.colorButton(position, HunterColor)
   }
 
-  def colorCoinTile(tile: (Int, Int)): Unit = {
-    this.gameGrid.colorButton(tile, CoinColor)
+  def colorCoinTile(tile: (Int, Int), value: Int): Unit = {
+    this.gameGrid.colorButton(tile, CoinColor(value))
   }
 
   def colorPlayerTile(playerId: Int, tile: (Int, Int)): Unit = {

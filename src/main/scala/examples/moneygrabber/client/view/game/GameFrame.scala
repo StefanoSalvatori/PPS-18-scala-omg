@@ -1,5 +1,7 @@
 package examples.moneygrabber.client.view.game
 
+import java.awt.Dimension
+
 import examples.moneygrabber.client.view.game.GameFrame.GameFrameClosed
 
 import scala.swing.Frame

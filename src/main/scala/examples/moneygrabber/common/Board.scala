@@ -8,8 +8,11 @@ import scala.util.Random
 
 object Board {
 
-  private val CoinBasicValue = 10
-  private val HunterVelocity = 3.5
+  val CoinBasicValue = 10
+  val HunterDropValue = 30
+  val HunterVelocity = 3.5
+  val HunterChangeDirectionProbability = 0.2
+  val HunterDropProbability = 0.008 //every time an hunter moves has a certain probability to drop coins
 
 
   def withRandomCoins(size: (Int, Int), numHunters: Int, coinRatio: Double): Board = {
@@ -27,13 +30,15 @@ object Board {
   }
 
   private def hunters(size: (Int, Int), numHunters: Int): List[Hunter] = {
-    (0 until numHunters).map(_ => Hunter((size._1 / 2, size._2 / 2), RandomDirection, HunterVelocity)).toList
+    (0 until numHunters).map(_ => Hunter((size._1 / 2, size._2 / 2), randomDirection, HunterVelocity)).toList
   }
 }
 
 @SerialVersionUID(1111L) // scalastyle:ignore magic.number
 case class Board(players: List[Player], coins: List[Coin], hunters: List[Hunter], size: (Int, Int))
   extends java.io.Serializable {
+
+  import Board._
 
   def gameEnded: Boolean = this.coins.isEmpty || this.players.size == 1
 
@@ -64,17 +69,19 @@ case class Board(players: List[Player], coins: List[Coin], hunters: List[Hunter]
     })).takeCoins().catchPlayers()
   }
 
-  //Return the board with hunters that moved randomly
+  //Return the board with hunters that moved randomly and possibly drop coins
   def moveHunters(elapsed: Long): Board = {
-    this.copy(hunters = this.hunters.map(h => {
-      val next = h.copy(continuousPosition = h.moveContinuous(elapsed))
-      if (next.position == h.position) {
-        next
-      } else {
-        next.copy(continuousPosition = this.keepInsideBorders(next.position),
-          currentDirection = if (Random.nextDouble > 0.8) RandomDirection else next.currentDirection)
-      }
-    })).catchPlayers()
+    var dropped: List[Coin] = List.empty
+    this.copy(hunters = this.hunters.collect({
+      case h if continuousToDiscrete(h.moveContinuous(elapsed)) == h.position =>
+        h.copy(continuousPosition = h.moveContinuous(elapsed))
+      case h =>
+        if (hunterDropped) {
+          dropped = Coin(h.position, HunterDropValue) :: dropped
+        }
+        h.copy(continuousPosition = this.keepInsideBorders(continuousToDiscrete(h.moveContinuous(elapsed))),
+          direction = randomlyChangeDirection(h))
+    }), coins = this.coins ++ dropped).catchPlayers()
   }
 
   //Return the world with players score updated according to taken coins
@@ -92,6 +99,16 @@ case class Board(players: List[Player], coins: List[Coin], hunters: List[Hunter]
     this.copy(players = this.players.filter(!playerCatched(_)))
   }
 
+  private def randomlyChangeDirection(hunter: Hunter): Direction = {
+    if (Random.nextDouble < HunterChangeDirectionProbability) {
+      randomDirection
+    }
+    else {
+      hunter.direction
+    }
+  }
+
+  private def hunterDropped = Random.nextDouble < HunterDropProbability
 
   private def playerCatched(player: Player) = hunters.map(_.position).contains(player.position)
 
