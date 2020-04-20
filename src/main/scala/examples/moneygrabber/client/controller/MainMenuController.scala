@@ -33,7 +33,7 @@ class MainMenuController(private val menu: MainMenu) extends Publisher {
     val gameStarted = RoomProperty("gameStarted", false)
     val filters = FilterOptions just gameMode =:= mode.name and gameStarted =:= false
     val room = Await.result(client.joinOrCreate("game", filters, Set(gameMode)), 10 seconds)
-    val size = room.properties("boardSize").asInstanceOf[Int]
+    val size = room.propertyValues("boardSize").asInstanceOf[Int]
     val view = new GameView((size, size), mode.numPlayers)
     new GameViewController(GameFrame(view), room).openGameView()
   }

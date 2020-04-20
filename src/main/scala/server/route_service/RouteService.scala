@@ -2,6 +2,7 @@ package server.route_service
 
 import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.server.Route
+import akka.stream.scaladsl.Flow
 import com.typesafe.scalalogging.LazyLogging
 import common.http.Routes
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
@@ -43,7 +44,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
       if (this.roomTypes.contains(roomType)) {
         pathEnd {
           getRoomsByTypeRoute(roomType) ~
-            //putRoomsByTypeRoute(roomType) ~
             postRoomsByTypeRoute(roomType)
         } ~ pathPrefix(Segment) { roomId =>
           getRoomByTypeAndId(roomType, roomId)
@@ -55,9 +55,14 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
   }
 
   /**
-   * Handle web socket connection on path /[[Routes#connectionRoute]]/{roomId}
+   * Handel web socket routes
    */
-  def webSocketRoute: Route = pathPrefix(Routes.connectionRoute / Segment) { roomId =>
+  def webSocketRoutes: Route = webSocketConnectionRoute ~ matchmakingRoute
+
+  /**
+   * Handle web socket connection on path /[[common.http.Routes.connectionRoute]]/{roomId}
+   */
+  def webSocketConnectionRoute: Route = pathPrefix(Routes.connectionRoute / Segment) { roomId =>
     get {
       this.roomHandler.handleClientConnection(roomId) match {
         case Some(handler) => handleWebSocketMessages(handler)
@@ -66,7 +71,21 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
     }
   }
 
-  val route: Route = restHttpRoute ~ webSocketRoute
+  /**
+   * Handle web socket connection on path /[[common.http.Routes.matchmakeRoute]]/{type}
+   */
+  def matchmakingRoute: Route = pathPrefix(Routes.matchmakeRoute / Segment) { roomType =>
+    get {
+      if (this.roomTypes.contains(roomType)) {
+        println("matchmake request on type -> " + roomType)
+        handleWebSocketMessages(Flow.fromFunction(identity))
+      } else {
+        reject
+      }
+    }
+  }
+
+  val route: Route = restHttpRoute ~ webSocketRoutes
 
   def addRouteForRoomType(roomTypeName: String, roomFactory: () => ServerRoom): Unit = {
     this.roomTypes = this.roomTypes + roomTypeName
@@ -116,22 +135,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
         case None => reject //TODO: how to handle this? Wrong id in rooms/{type}/{id}
       }
     }
-
-  /**
-   * PUT rooms/{type}
-
-  private def putRoomsByTypeRoute(roomType: String): Route =
-    put {
-      entity(as[FilterOptions]) { filterOptions =>
-        val rooms = this.roomHandler.getOrCreate(roomType, filterOptions)
-        complete(rooms) //return a list containing only the created room if no room is available
-      } ~ {
-        //if payload is not parsable as room options we just accept the request as with empty room options
-        val rooms = this.roomHandler.getOrCreate(roomType)
-        complete(rooms)
-      }
-    }
-   */
 }
 
 

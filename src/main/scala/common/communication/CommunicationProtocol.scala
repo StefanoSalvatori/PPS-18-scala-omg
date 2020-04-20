@@ -8,6 +8,12 @@ object CommunicationProtocol {
     val empty: SessionId = ""
   }
 
+  /**
+   * Anything that can be serialized and sent to the socket
+   */
+  type SocketSerializable = Any with java.io.Serializable
+
+
   object ProtocolMessageType extends Enumeration {
     type ProtocolMessageType = Value
     /**
