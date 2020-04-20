@@ -134,7 +134,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   override def joinById(roomId: RoomId, password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom] = {
     ifNotJoined(roomId, {
-      val clientRoom = ClientRoom(coreClient, httpServerUri, roomId, Set())
+      val clientRoom = ClientRoom.createJoinable(coreClient, httpServerUri, roomId, Set())
       clientRoom.join(password)
     })
   }
@@ -148,7 +148,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   override def reconnect(roomId: String, sessionId: String): Future[JoinedRoom] = {
     ifNotJoined(roomId, {
-      val clientRoom = ClientRoom(coreClient, httpServerUri, roomId, Set())
+      val clientRoom = ClientRoom.createJoinable(coreClient, httpServerUri, roomId, Set())
       clientRoom.joinWithSessionId(sessionId)
     })
   }

@@ -65,7 +65,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "keep track of joined rooms" in {
-      val rooms = (0 to 3).map(i => ClientRoom(coreClient, "", i.toString, Set()))
+      val rooms = (0 to 3).map(i => ClientRoom.createJoinable(coreClient, "", i.toString, Set()))
       val refs = rooms.map(r => system.actorOf(MockClientRoomActor(r)))
 
       refs foreach { t =>

@@ -77,7 +77,7 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
     case HttpRoomSequenceResponse(rooms) =>
       context.become(onReceive)
       replyTo ! Success(rooms.map(room =>
-        ClientRoom(
+        ClientRoom.createJoinable(
           self,
           httpServerUri,
           room.roomId,
@@ -90,7 +90,7 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
     case HttpRoomResponse(room) =>
       context.become(onReceive)
       replyTo ! Success(
-        ClientRoom(
+        ClientRoom.createJoinable(
           self,
           httpServerUri,
           room.roomId,

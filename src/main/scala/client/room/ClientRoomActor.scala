@@ -5,7 +5,7 @@ import client.utils.MessageDictionary._
 import client.{BasicActor, HttpClient}
 import common.communication.BinaryProtocolSerializer
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
+import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage, SessionId}
 import common.room.Room.RoomPassword
 
 import scala.util.{Failure, Success}
@@ -34,7 +34,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
   override def receive: Receive = waitJoinRequest orElse callbackDefinition orElse handleErrors orElse fallbackReceive
 
-  def waitSocketResponse(replyTo: ActorRef, sessionId: Option[String]): Receive =
+  def waitSocketResponse(replyTo: ActorRef, sessionId: Option[SessionId]): Receive =
     onWaitSocketResponse(replyTo, sessionId) orElse callbackDefinition orElse handleErrors orElse fallbackReceive
 
   def socketOpened(outRef: ActorRef, replyTo: ActorRef): Receive =
@@ -60,13 +60,13 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
 
   //actor states
   def waitJoinRequest: Receive = {
-    case SendJoin(sessionId: Option[String], password: RoomPassword) =>
+    case SendJoin(sessionId: Option[SessionId], password: RoomPassword) =>
       joinPassword = password
       httpClient ! HttpSocketRequest(this.room.roomId, BinaryProtocolSerializer())
       context.become(waitSocketResponse(sender, sessionId))
   }
 
-  def onWaitSocketResponse(replyTo: ActorRef, sessionId: Option[String]): Receive = {
+  def onWaitSocketResponse(replyTo: ActorRef, sessionId: Option[SessionId]): Receive = {
     case RoomProtocolMessage => stash()
 
     case HttpSocketFail(code) =>
@@ -76,13 +76,9 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     case HttpSocketSuccess(outRef) =>
       context.become(socketOpened(outRef, replyTo))
       unstashAll()
-      val stringId: String = sessionId match {
-        case Some(value) => value
-        case None => "" //empty string if no id is specified
-      }
       outRef ! RoomProtocolMessage(
         messageType = JoinRoom,
-        sessionId = stringId,
+        sessionId = sessionId.getOrElse(SessionId.empty),
         payload = joinPassword)
   }
 
