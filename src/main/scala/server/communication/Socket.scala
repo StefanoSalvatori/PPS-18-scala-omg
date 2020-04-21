@@ -7,7 +7,6 @@ import akka.actor.{ActorRef, PoisonPill}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.stream.{ActorAttributes, Materializer, OverflowStrategy, Supervision}
-import common.communication.CommunicationProtocol.ProtocolMessageType.ProtocolMessageType
 import common.communication.SocketSerializer
 import server.room.Client
 import server.utils.Timer
@@ -97,13 +96,7 @@ trait Socket[T] {
       .collect(onPongMessage.orElse(onMessageFromSocket))
   }
 
-  /**
-   * Start heartbeat to a specific client
-   *
-   * @param client       the client that will receive heartbeat messages
-   * @param rate         the rate of heartbeat messages
-   * @param materializer implicit materializer to run the heartbeat service
-   */
+  //Start heartbeat to a specific client
   private def startHeartbeat(client: Client, rate: FiniteDuration)
                             (implicit materializer: Materializer): Unit = {
     val heartbeatActor =
@@ -113,16 +106,14 @@ trait Socket[T] {
             case this.pingMessage if pongRcv => client.send(pingMessage); false
             case this.pingMessage => this.close(); false
             case this.pongMessage => true
-            case _ => true
           }
         }))(Keep.left).run()
     this.heartbeatServiceActor = Some(heartbeatActor)
     heartbeatTimer.scheduleAtFixedRate(() => heartbeatActor ! this.pingMessage, 0, connectionConfig.keepAlive.toMillis)
-
   }
 
 
   private def onPongMessage: PartialFunction[T, Any] = {
-    case this.pongMessage => this.heartbeatServiceActor.foreach(_ ! pongMessage)
+    case this.pongMessage => this.heartbeatServiceActor.foreach(_ ! this.pongMessage)
   }
 }
