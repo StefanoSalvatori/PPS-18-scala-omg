@@ -1,11 +1,15 @@
 \babel@toc {english}{}
-\contentsline {chapter}{\numberline {1}Scoping}{1}% 
-\contentsline {section}{\numberline {1.1}Introduction}{1}% 
-\contentsline {section}{\numberline {1.2}Requirements Analisys}{1}% 
-\contentsline {subsection}{\numberline {1.2.1}Room}{1}% 
-\contentsline {subsection}{\numberline {1.2.2}Server}{4}% 
-\contentsline {subsection}{\numberline {1.2.3}Client}{5}% 
-\contentsline {chapter}{\numberline {2}Planning}{9}% 
-\contentsline {chapter}{\numberline {3}System architecture}{11}% 
-\contentsline {chapter}{\numberline {4}Detailed desing}{13}% 
-\contentsline {chapter}{\numberline {5}Implementation}{15}% 
+\contentsline {chapter}{\numberline {1}Development process}{1}% 
+\contentsline {chapter}{\numberline {2}Scoping}{3}% 
+\contentsline {section}{\numberline {2.1}Introduction}{3}% 
+\contentsline {section}{\numberline {2.2}System Requirements}{3}% 
+\contentsline {subsection}{\numberline {2.2.1}Room}{3}% 
+\contentsline {subsection}{\numberline {2.2.2}Server}{6}% 
+\contentsline {subsection}{\numberline {2.2.3}Client}{7}% 
+\contentsline {section}{\numberline {2.3}Requirements formalization}{10}% 
+\contentsline {subsection}{\numberline {2.3.1}...}{10}% 
+\contentsline {subsection}{\numberline {2.3.2}Use cases}{10}% 
+\contentsline {chapter}{\numberline {3}System architecture}{13}% 
+\contentsline {chapter}{\numberline {4}Detailed desing}{15}% 
+\contentsline {chapter}{\numberline {5}Implementation}{17}% 
+\contentsline {chapter}{\numberline {6}Conclusions}{19}% 
