@@ -14,14 +14,14 @@ class RoomSpec extends AnyFlatSpec
 
   it should "start with no properties at all" in {
     val room = SharedRoom("randomId", Set.empty[RoomProperty])
-    assert(room.sharedProperties.isEmpty)
+    assert(room.properties.isEmpty)
   }
 
   it should "add the right property" in {
     val n = 10
     val properties = (0 until n).map(i => RoomProperty(s"$i", i)).toSet
     val room = SharedRoom("RandomId", properties)
-    room.sharedProperties should have size n
-    (0 until n).foreach(i => assert(room.sharedProperties contains RoomProperty(s"$i", i)))
+    room.properties should have size n
+    (0 until n).foreach(i => assert(room.properties contains RoomProperty(s"$i", i)))
   }
 }

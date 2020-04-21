@@ -1,6 +1,6 @@
 package examples.rock_paper_scissor.client
 
-import client.room.ClientRoom
+import client.room.{ClientRoom, JoinedRoom}
 import javafx.scene.control.{Label, SplitPane}
 import javafx.scene.layout.GridPane
 import javafx.{event => jfxEvent, fxml => jfxf}
@@ -14,9 +14,9 @@ class MatchController {
   @jfxf.FXML private var splitPaneButtons: SplitPane = _
   @jfxf.FXML private var gridPaneAdvancedMoves: GridPane = _
 
-  private var room: ClientRoom = _
+  private var room: JoinedRoom = _
 
-  def init(room: ClientRoom, gameType: String): Unit = {
+  def init(room: JoinedRoom, gameType: String): Unit = {
     this.splitPaneButtons.setVisible(false)
     gameType match {
       case "classic" => this.gridPaneAdvancedMoves.setDisable(true)

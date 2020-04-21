@@ -46,7 +46,7 @@ object ExampleRooms {
 
     override def joinConstraints: Boolean = true
 
-    override def updateWorld(): Unit = {
+    override def updateWorld(elapsed: Long): Unit = {
       count = count + 1
       if (count % 10 == 0) {
         println(count)

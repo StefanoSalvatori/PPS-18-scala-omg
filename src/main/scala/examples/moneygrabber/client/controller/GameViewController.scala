@@ -1,6 +1,6 @@
 package examples.moneygrabber.client.controller
 
-import client.room.ClientRoom
+import client.room.{ClientRoom, JoinedRoom}
 import examples.moneygrabber.client.view.game.GameFrame.GameFrameClosed
 import examples.moneygrabber.client.view.game.GameGrid.ButtonPressedEvent
 import examples.moneygrabber.client.view.game.GameView.{GameEnd, GameStarted}
@@ -19,10 +19,11 @@ object GameViewController {
     case Key.Right => Right
     case Key.Up => Up
     case Key.Down => Down
+    case _ => Down
   }
 }
 
-case class GameViewController(private val frame: GameFrame, private val room: ClientRoom) extends Publisher {
+case class GameViewController(private val frame: GameFrame, private val room: JoinedRoom) extends Publisher {
 
   import GameViewController._
   implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
@@ -55,8 +56,9 @@ case class GameViewController(private val frame: GameFrame, private val room: Cl
   private def updateView(gameState: Board): Unit = {
     SwingUtilities.invokeLater(() => {
       view.clearTiles()
-      gameState.coins.foreach(c => view.colorCoinTile(c.position))
+      gameState.coins.foreach(c => view.colorCoinTile(c.position, c.value))
       gameState.players.foreach(p => view.colorPlayerTile(p.id, p.position))
+      gameState.hunters.foreach(p => view.colorHunterTile(p.position))
       view.showPlayersPoints(gameState.players.map(p => (p.id, p.points)).toMap)
     })
   }

@@ -4,6 +4,16 @@ import common.communication.CommunicationProtocol.ProtocolMessageType.ProtocolMe
 
 object CommunicationProtocol {
   type SessionId = String
+  object SessionId {
+    val empty: SessionId = ""
+  }
+
+  /**
+   * Anything that can be serialized and sent to the socket
+   */
+  type SocketSerializable = Any with java.io.Serializable
+
+
   object ProtocolMessageType extends Enumeration {
     type ProtocolMessageType = Value
     /**
@@ -35,7 +45,8 @@ object CommunicationProtocol {
    * @param payload     an optional payload
    */
   @SerialVersionUID(1234L) // scalastyle:ignore magic.number
-  case class RoomProtocolMessage(messageType: ProtocolMessageType, sessionId: SessionId = "", payload: java.io.Serializable = "")
+  case class RoomProtocolMessage(messageType: ProtocolMessageType, sessionId: SessionId = SessionId.empty, payload: java.io
+  .Serializable = "")
     extends java.io.Serializable
 
   /**

@@ -6,7 +6,7 @@ import java.util.UUID
 import akka.actor.ActorRef
 import com.typesafe.scalalogging.LazyLogging
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
+import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage, SocketSerializable}
 import common.room.Room.{BasicRoom, RoomId, RoomPassword, SharedRoom}
 import common.room._
 import server.room.RoomActor.{Close, StartAutoCloseTimeout}
@@ -187,7 +187,7 @@ trait ServerRoom extends BasicRoom
    * @param client  the client that will receive the message
    * @param message the message to send
    */
-  def tell(client: Client, message: Any with java.io.Serializable): Unit =
+  def tell(client: Client, message: SocketSerializable): Unit =
     this.clients.filter(_.id == client.id).foreach(_.send(RoomProtocolMessage(ProtocolMessageType.Tell, client.id, message)))
 
   /**
@@ -195,7 +195,7 @@ trait ServerRoom extends BasicRoom
    *
    * @param message the message to send
    */
-  def broadcast(message: Any with java.io.Serializable): Unit =
+  def broadcast(message: SocketSerializable): Unit =
     this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)))
 
   /**

@@ -8,7 +8,7 @@ import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.stream.{Materializer, OverflowStrategy}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{RoomProtocolMessage, RoomProtocolMessageSerializer}
+import common.communication.CommunicationProtocol.{RoomProtocolMessage, RoomProtocolMessageSerializer, SessionId}
 import common.room.Room.RoomPassword
 import server.room.Client
 import server.room.RoomActor.{Join, Leave, Msg}
@@ -73,8 +73,8 @@ case class RoomSocket(private val room: ActorRef,
           case _ => null // scalastyle:ignore null, null values are not passed downstream
         }
       }).collect({
-      case RoomProtocolMessage(JoinRoom, "", payload) =>
-        room ! Join(client, "", payload.asInstanceOf[RoomPassword])
+      case RoomProtocolMessage(JoinRoom, SessionId.empty, payload) =>
+        room ! Join(client, SessionId.empty, payload.asInstanceOf[RoomPassword])
       case RoomProtocolMessage(JoinRoom, sessionId, payload) =>
         room ! Join(Client.asActor(sessionId, socketActor), sessionId, payload.asInstanceOf[RoomPassword])
       case RoomProtocolMessage(LeaveRoom, _, _) =>

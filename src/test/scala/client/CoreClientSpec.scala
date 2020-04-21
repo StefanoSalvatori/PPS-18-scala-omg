@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
-import client.room.{ClientRoom, ClientRoomActor}
+import client.room.{ClientRoom, ClientRoomActor, JoinedRoom, JoinedRoomImpl}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
@@ -65,7 +65,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "keep track of joined rooms" in {
-      val rooms = (0 to 2).map(i => ClientRoom(coreClient, "", i.toString, Map()))
+      val rooms = (0 to 3).map(i => ClientRoom.createJoinable(coreClient, "", i.toString, Set()))
       val refs = rooms.map(r => system.actorOf(MockClientRoomActor(r)))
 
       refs foreach { t =>
@@ -75,7 +75,7 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
       coreClient ! GetJoinedRooms
       val res = expectMsgType[JoinedRooms]
-      res.joinedRooms should have size 2
+      res.joinedRooms should have size 3
 
     }
 
@@ -91,13 +91,14 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 }
 
 object MockClientRoomActor {
-  def apply(room: ClientRoom) = Props(classOf[MockClientRoomActor],  room)
+  def apply(room: ClientRoom): Props = Props(classOf[MockClientRoomActor],  room)
 }
 class MockClientRoomActor(room: ClientRoom) extends Actor {
+  private implicit val system = context.system
 
   override def receive: Receive = {
     case RetrieveClientRoom =>
-      sender ! ClientRoomResponse(this.room)
+      sender ! ClientRoomResponse(JoinedRoom(self, "", room.roomId, Set()))
   }
 }
 

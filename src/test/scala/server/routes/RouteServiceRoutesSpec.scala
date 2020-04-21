@@ -97,7 +97,11 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
     }
   }
 
+
+
   /// --- Web socket  ---
+
+  //Connection
   it should "handle web socket request on path 'connection/{id}'" in {
     val room = createRoomRequest()
     val wsClient = WSProbe()
@@ -107,9 +111,29 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
       }
   }
 
-  it should "reject web socket request on path 'connection/{id}'" in {
+
+  it should "reject web socket request on path 'connection/{id}' if id doesnt exists" in {
     val wsClient = WSProbe()
     WS("/" + Routes.connectionRoute + "/wrong-id", wsClient.flow) ~> route ~>
+      check {
+        handled shouldBe false
+      }
+  }
+
+
+  //Matchmake
+
+  it should "handle web socket request on path  'matchmake/{type}' if such type exists " in {
+    val wsClient = WSProbe()
+    WS("/" + Routes.matchmakeRoute + "/" + TestRoomType, wsClient.flow) ~> route ~>
+      check {
+        isWebSocketUpgrade shouldBe true
+      }
+  }
+
+  it should "reject web socket request on path  'matchmake/{type}' if such type doesn't exists " in {
+    val wsClient = WSProbe()
+    WS("/" + Routes.matchmakeRoute + "/" + "wrong-type", wsClient.flow) ~> route ~>
       check {
         handled shouldBe false
       }

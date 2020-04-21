@@ -25,6 +25,7 @@ object RoomActor {
 
   /**
    * It triggers the synchronization of public room state between clients.
+   *
    * @param onTick A consumer that specifies how to sync a given client
    */
   case class StateSyncTick(onTick: Client => Unit)
@@ -32,7 +33,7 @@ object RoomActor {
   /**
    * It triggers the update of the room state.
    */
-  case class WorldUpdateTick()
+  case class WorldUpdateTick(lastUpdate: Long)
 }
 
 /**
@@ -62,7 +63,7 @@ class RoomActor(private val serverRoom: ServerRoom,
   }
 
   override def receive: Receive = {
-    case Join(client, "", password) => //client first join
+    case Join(client, SessionId.empty, password) => //client first join
       this.timers.cancel(AutoCloseRoomTimer)
       val joined = serverRoom tryAddClient(client, password)
       sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
@@ -97,7 +98,10 @@ class RoomActor(private val serverRoom: ServerRoom,
     case StateSyncTick(onTick) =>
       serverRoom.connectedClients foreach onTick
 
-    case WorldUpdateTick() =>
-      serverRoom.asInstanceOf[GameLoop].updateWorld()
+    case WorldUpdateTick(0) =>
+      serverRoom.asInstanceOf[GameLoop].updateWorld(0)
+
+    case WorldUpdateTick(lastUpdate) =>
+      serverRoom.asInstanceOf[GameLoop].updateWorld(System.currentTimeMillis() - lastUpdate)
   }
 }

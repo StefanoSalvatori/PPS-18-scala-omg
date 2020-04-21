@@ -17,7 +17,7 @@ import server.RoomHandler
 import server.room.socket.{ConnectionConfigurations, RoomSocket}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Promise, TimeoutException}
+import scala.concurrent.{Await, Promise}
 
 class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory.load()))
   with ImplicitSender
@@ -31,7 +31,7 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
 
   private val MaxAwaitSocketMessages = 2 seconds
   private val IdleConnectionTimeout = 2 seconds
-  private val KeepAliveRate = 100 millis
+  private val KeepAliveRate = 300 millis
 
 
   private var room: ServerRoom = _
@@ -115,18 +115,6 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
       val client = this.joinAndIdle()
       flow.runWith(client, Sink.onComplete(_ => flowTerminated.success(true)))
       Await.ready(flowTerminated.future, MaxAwaitSocketMessages)
-    }
-
-    "keep the socket alive if the client respond to heartbeat" in {
-      roomSocketFlow = RoomSocket(roomActor, TextProtocolSerializer, ConnectionConfigurations(keepAlive = KeepAliveRate))
-      flow = roomSocketFlow.createFlow()
-      flowTerminated = Promise[Boolean]()
-      // send a lot of pong messages to simulate a client that is responding to ping
-      val client = this.heartbeat(KeepAliveRate / 5)
-      flow.runWith(client, Sink.onComplete(_ => flowTerminated.success(true)))
-      assertThrows[TimeoutException] {
-        Await.ready(flowTerminated.future, MaxAwaitSocketMessages)
-      }
     }
   }
 
