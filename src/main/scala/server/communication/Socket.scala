@@ -48,7 +48,7 @@ trait Socket[T] {
   private val heartbeatTimer = Timer.withExecutor()
   private var heartbeatServiceActor: Option[ActorRef] = None
 
-  def createFlow()(implicit materializer: Materializer): Flow[Message, Message, NotUsed] = {
+  def open()(implicit materializer: Materializer): Flow[Message, Message, NotUsed] = {
     implicit val executor: ExecutionContextExecutor = materializer.executionContext
     val (socketOutputActor, publisher) = this.outputStream.run()
 
@@ -67,6 +67,12 @@ trait Socket[T] {
         this.onSocketClosed()
       }))
     Flow.fromSinkAndSourceCoupled(sink, Source.fromPublisher(publisher))
+  }
+
+  def close(): Unit = {
+    if (this.clientActor != null) {
+      this.clientActor ! PoisonPill
+    }
   }
 
   protected val onMessageFromSocket: PartialFunction[T, Unit]
@@ -105,7 +111,7 @@ trait Socket[T] {
         .toMat(Sink.fold(true)((pongRcv, msg) => {
           msg match {
             case this.pingMessage if pongRcv => client.send(pingMessage); false
-            case this.pingMessage => this.closeSocket(); false
+            case this.pingMessage => this.close(); false
             case this.pongMessage => true
             case _ => true
           }
@@ -115,11 +121,6 @@ trait Socket[T] {
 
   }
 
-  protected def closeSocket(): Unit = {
-    if (this.clientActor != null) {
-      this.clientActor ! PoisonPill
-    }
-  }
 
   private def onPongMessage: PartialFunction[T, Any] = {
     case this.pongMessage => this.heartbeatServiceActor.foreach(_ ! pongMessage)

@@ -49,7 +49,7 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
     room = ServerRoom()
     roomActor = system actorOf RoomActor(room, RoomHandler())
     roomSocketFlow = communication.RoomSocket(roomActor, TextProtocolSerializer, ConnectionConfigurations(IdleConnectionTimeout))
-    flow = roomSocketFlow.createFlow()
+    flow = roomSocketFlow.open()
     flowTerminated = Promise[Boolean]()
   }
 
@@ -82,7 +82,7 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
       }
       //Create a different client
       val client2Socket = communication.RoomSocket(roomActor, TextProtocolSerializer)
-      val client2Flow = client2Socket.createFlow()
+      val client2Flow = client2Socket.open()
       val flow2Terminated = Promise[Boolean]()
       val client2 = Source.single(TextProtocolSerializer.prepareToSocket(ProtocolMessage(LeaveRoom)))
       client2Flow.runWith(client2, Sink.onComplete(_ => flow2Terminated.success(true)))
@@ -110,7 +110,7 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
 
     "close the socket if heartbeat is configured and client doesn't respond" in {
       roomSocketFlow = communication.RoomSocket(roomActor, TextProtocolSerializer, ConnectionConfigurations(keepAlive = KeepAliveRate))
-      flow = roomSocketFlow.createFlow()
+      flow = roomSocketFlow.open()
       flowTerminated = Promise[Boolean]()
       val client = this.joinAndIdle()
       flow.runWith(client, Sink.onComplete(_ => flowTerminated.success(true)))
