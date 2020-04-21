@@ -1,6 +1,6 @@
 package server.room
 
-import common.communication.CommunicationProtocol.{RoomProtocolMessage, SocketSerializable}
+import common.communication.CommunicationProtocol.{ProtocolMessage, SocketSerializable}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.room.RoomProperty
 import server.room.RoomActor.StateSyncTick
@@ -48,7 +48,7 @@ trait SynchronizedRoomState[T <: SocketSerializable] extends ServerRoom {
   private def generateStateSyncTick(): Unit =
     if (this.lastStateSent == null || this.lastStateSent != currentState) {
       this.lastStateSent = currentState
-      this.roomActor.foreach(_ ! StateSyncTick(c => c send RoomProtocolMessage(StateUpdate, c.id, currentState)))
+      this.roomActor.foreach(_ ! StateSyncTick(c => c send ProtocolMessage(StateUpdate, c.id, currentState)))
     }
 
 }

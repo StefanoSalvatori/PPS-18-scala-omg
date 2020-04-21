@@ -6,11 +6,11 @@ import java.util.UUID
 import akka.actor.ActorRef
 import com.typesafe.scalalogging.LazyLogging
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage, SocketSerializable}
+import common.communication.CommunicationProtocol.{ProtocolMessageType, ProtocolMessage, SocketSerializable}
 import common.room.Room.{BasicRoom, RoomId, RoomPassword, SharedRoom}
 import common.room._
+import server.communication.ConnectionConfigurations
 import server.room.RoomActor.{Close, StartAutoCloseTimeout}
-import server.room.socket.ConnectionConfigurations
 import server.utils.Timer
 
 import scala.concurrent.duration.FiniteDuration
@@ -99,10 +99,10 @@ trait ServerRoom extends BasicRoom
     val canJoin = checkPasswordCorrectness(providedPassword) && !isLocked && joinConstraints
     if (canJoin) {
       this.clients = client +: this.clients
-      client send RoomProtocolMessage(JoinOk, client.id)
+      client send ProtocolMessage(JoinOk, client.id)
       this.onJoin(client)
     } else {
-      client send RoomProtocolMessage(ClientNotAuthorized)
+      client send ProtocolMessage(ClientNotAuthorized)
     }
     canJoin
   }
@@ -119,9 +119,9 @@ trait ServerRoom extends BasicRoom
       reconnectingClient.get._2.stopTimer()
       this.reconnectingClients = this.reconnectingClients.filter(_._1.id != client.id)
       this.clients = client +: this.clients
-      client.send(RoomProtocolMessage(JoinOk, client.id))
+      client.send(ProtocolMessage(JoinOk, client.id))
     } else {
-      client.send(RoomProtocolMessage(ClientNotAuthorized, client.id))
+      client.send(ProtocolMessage(ClientNotAuthorized, client.id))
     }
     reconnectingClient.nonEmpty
   }
@@ -163,7 +163,7 @@ trait ServerRoom extends BasicRoom
   def removeClient(client: Client): Unit = {
     this.clients = this.clients.filter(_.id != client.id)
     this.onLeave(client)
-    client send RoomProtocolMessage(LeaveOk)
+    client send ProtocolMessage(LeaveOk)
     if (this.checkAutoClose()) {
       this.roomActor.foreach(_ ! StartAutoCloseTimeout)
     }
@@ -188,7 +188,7 @@ trait ServerRoom extends BasicRoom
    * @param message the message to send
    */
   def tell(client: Client, message: SocketSerializable): Unit =
-    this.clients.filter(_.id == client.id).foreach(_.send(RoomProtocolMessage(ProtocolMessageType.Tell, client.id, message)))
+    this.clients.filter(_.id == client.id).foreach(_.send(ProtocolMessage(ProtocolMessageType.Tell, client.id, message)))
 
   /**
    * Broadcast a message to all clients connected
@@ -196,14 +196,14 @@ trait ServerRoom extends BasicRoom
    * @param message the message to send
    */
   def broadcast(message: SocketSerializable): Unit =
-    this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)))
+    this.clients.foreach(client => client.send(ProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)))
 
   /**
    * Close this room
    */
   def close(): Unit = {
     this.lock()
-    this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.RoomClosed, client.id)))
+    this.clients.foreach(client => client.send(ProtocolMessage(ProtocolMessageType.RoomClosed, client.id)))
     this.roomActor.foreach(_ ! Close)
     this.onClose()
   }

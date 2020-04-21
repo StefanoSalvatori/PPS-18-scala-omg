@@ -4,7 +4,7 @@ import java.util.UUID
 
 import common.room.Room.RoomId
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.communication.CommunicationProtocol.ProtocolMessage
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -82,21 +82,21 @@ class ServerRoomSpec extends AnyWordSpecLike
     "send specific messages to clients using the room protocol" in {
       serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
       serverRoom.tell(testClient, "Hello")
-      val received = testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
+      val received = testClient.lastMessageReceived.get.asInstanceOf[ProtocolMessage]
       received.messageType shouldBe Tell
       received.payload shouldBe "Hello"
     }
 
     "send a JoinOk message when the client correctly joins the room" in {
       serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
-      testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage].messageType shouldBe JoinOk
+      testClient.lastMessageReceived.get.asInstanceOf[ProtocolMessage].messageType shouldBe JoinOk
     }
 
     "send a ClientNotAuthorized when the client can't join the room" in {
       testRoom.tryAddClient(testClient, Room.defaultPublicPassword)
       testRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
       testRoom.tryAddClient(testClient3, Room.defaultPublicPassword)
-      testClient3.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage].messageType shouldBe ClientNotAuthorized
+      testClient3.lastMessageReceived.get.asInstanceOf[ProtocolMessage].messageType shouldBe ClientNotAuthorized
 
     }
 
@@ -104,10 +104,10 @@ class ServerRoomSpec extends AnyWordSpecLike
       serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
       serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
       serverRoom.broadcast("Hello Everybody")
-      val receivedFrom1 = testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
+      val receivedFrom1 = testClient.lastMessageReceived.get.asInstanceOf[ProtocolMessage]
       receivedFrom1.messageType shouldBe Broadcast
       receivedFrom1.payload shouldBe "Hello Everybody"
-      val receivedFrom2 = testClient2.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
+      val receivedFrom2 = testClient2.lastMessageReceived.get.asInstanceOf[ProtocolMessage]
       receivedFrom2.messageType shouldBe Broadcast
       receivedFrom2.payload shouldBe "Hello Everybody"
     }
@@ -116,9 +116,9 @@ class ServerRoomSpec extends AnyWordSpecLike
       serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
       serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
       serverRoom.close()
-      val receivedFrom1 = testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
+      val receivedFrom1 = testClient.lastMessageReceived.get.asInstanceOf[ProtocolMessage]
       receivedFrom1.messageType shouldBe RoomClosed
-      val receivedFrom2 = testClient2.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
+      val receivedFrom2 = testClient2.lastMessageReceived.get.asInstanceOf[ProtocolMessage]
       receivedFrom2.messageType shouldBe RoomClosed
     }
 
@@ -198,7 +198,7 @@ class ServerRoomSpec extends AnyWordSpecLike
 
     "not check the password if the room is public" in {
       serverRoom.tryAddClient(testClient, "uslessPassword")
-      testClient.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage].messageType shouldBe JoinOk
+      testClient.lastMessageReceived.get.asInstanceOf[ProtocolMessage].messageType shouldBe JoinOk
       assert(serverRoom.connectedClients.contains(testClient))
 
     }

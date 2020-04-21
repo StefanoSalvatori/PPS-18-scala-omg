@@ -2,7 +2,7 @@ package client.utils
 
 import akka.actor.ActorRef
 import client.room.{ClientRoom, JoinedRoom}
-import common.communication.CommunicationProtocol.{RoomProtocolMessage, SocketSerializable}
+import common.communication.CommunicationProtocol.{ProtocolMessage, SocketSerializable}
 import common.communication.SocketSerializer
 import common.room.{FilterOptions, RoomProperty}
 import common.room.Room.{RoomId, RoomPassword, RoomType, SharedRoom}

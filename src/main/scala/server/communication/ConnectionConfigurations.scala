@@ -1,7 +1,6 @@
-package server.room.socket
+package server.communication
 
-import scala.concurrent.duration._
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration.{Duration, _}
 
 
 object ConnectionConfigurations {
@@ -15,7 +14,9 @@ object ConnectionConfigurations {
  * @param keepAlive             if set to a finite duration it will send heartbeat messages to client at the
  *                              specified rate. Duration.Inf means no heartbeat
  */
-case class ConnectionConfigurations(idleConnectionTimeout: FiniteDuration = 60 seconds,
+case class ConnectionConfigurations(idleConnectionTimeout: Duration = 60 seconds,
                                     keepAlive: Duration = Duration.Inf) {
-  val isKeepAliveActive: Boolean = this.keepAlive != Duration.Inf
+  val isKeepAliveActive: Boolean = this.keepAlive.isFinite
+
+  val isIdleTimeoutActive: Boolean = this.idleConnectionTimeout.isFinite
 }

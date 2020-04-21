@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.ws.{Message, WebSocketRequest}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import client.Client
-import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
+import common.communication.CommunicationProtocol.{ProtocolMessageType, ProtocolMessage}
 import common.http.Routes
 import common.communication.TextProtocolSerializer
 import server.GameServer
@@ -62,11 +62,11 @@ object ChatRoomWithWebSockets extends App {
   System.exit(0)
 
   private def sendToRoom(message: String): Unit = {
-    this.queue.offer(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(ProtocolMessageType.MessageRoom, message)))
+    this.queue.offer(TextProtocolSerializer.prepareToSocket(ProtocolMessage(ProtocolMessageType.MessageRoom, message)))
   }
 
   private def joinRoom() = {
-    queue.offer(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(ProtocolMessageType.JoinRoom)))
+    queue.offer(TextProtocolSerializer.prepareToSocket(ProtocolMessage(ProtocolMessageType.JoinRoom)))
 
 
   }

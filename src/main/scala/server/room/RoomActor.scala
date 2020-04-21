@@ -2,7 +2,7 @@ package server.room
 
 import akka.actor.{Actor, ActorLogging, PoisonPill, Props, Timers}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{RoomProtocolMessage, SessionId}
+import common.communication.CommunicationProtocol.{ProtocolMessage, SessionId}
 import common.room.Room.RoomPassword
 import server.RoomHandler
 
@@ -66,23 +66,23 @@ class RoomActor(private val serverRoom: ServerRoom,
     case Join(client, SessionId.empty, password) => //client first join
       this.timers.cancel(AutoCloseRoomTimer)
       val joined = serverRoom tryAddClient(client, password)
-      sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
+      sender ! (if (joined) ProtocolMessage(JoinOk, client.id) else ProtocolMessage(ClientNotAuthorized, client.id))
 
     case Join(client, _, _) => //if sessionId is not empty means reconnection
       this.timers cancel AutoCloseRoomTimer
       val reconnected = serverRoom tryReconnectClient client
-      sender ! (if (reconnected) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
+      sender ! (if (reconnected) ProtocolMessage(JoinOk, client.id) else ProtocolMessage(ClientNotAuthorized, client.id))
 
     case Leave(client) =>
       this.serverRoom removeClient client
-      sender ! RoomProtocolMessage(LeaveOk)
+      sender ! ProtocolMessage(LeaveOk)
 
     case Msg(client, payload) =>
       if (this.serverRoom.clientAuthorized(client)) {
         this.serverRoom.onMessageReceived(client, payload)
       } else {
         client.send(ClientNotAuthorized)
-        sender ! RoomProtocolMessage(ClientNotAuthorized, client.id)
+        sender ! ProtocolMessage(ClientNotAuthorized, client.id)
       }
 
     case Close =>

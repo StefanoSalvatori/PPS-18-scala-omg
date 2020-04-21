@@ -36,6 +36,19 @@ object CommunicationProtocol {
     val RoomClosed: ProtocolMessageType = Value(10) // scalastyle:ignore magic.number
     val LeaveOk: ProtocolMessageType = Value(11) // scalastyle:ignore magic.number
     val Ping: ProtocolMessageType = Value(12) // scalastyle:ignore magic.number
+
+    /**
+     * type of messages that client can send to matchmaking service
+     */
+    val JoinQueue: ProtocolMessageType = Value(13) // scalastyle:ignore magic.number
+    val LeaveQueue: ProtocolMessageType = Value(14) // scalastyle:ignore magic.number
+
+    /**
+     * type of messages that matchmaking service can send to clients
+     */
+    val MatchCreated: ProtocolMessageType = Value(15) // scalastyle:ignore magic.number
+
+
   }
 
   /**
@@ -45,13 +58,13 @@ object CommunicationProtocol {
    * @param payload     an optional payload
    */
   @SerialVersionUID(1234L) // scalastyle:ignore magic.number
-  case class RoomProtocolMessage(messageType: ProtocolMessageType, sessionId: SessionId = SessionId.empty, payload: java.io
+  case class ProtocolMessage(messageType: ProtocolMessageType, sessionId: SessionId = SessionId.empty, payload: java.io
   .Serializable = "")
     extends java.io.Serializable
 
   /**
-   * A socket serializer for room protocol messages
+   * A socket serializer for socket protocol messages
    */
-  trait RoomProtocolMessageSerializer extends SocketSerializer[RoomProtocolMessage]
+  trait ProtocolMessageSerializer extends SocketSerializer[ProtocolMessage]
 }
 

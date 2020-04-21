@@ -21,7 +21,7 @@ import server.utils.ExampleRooms.ClosableRoomWithState
 import scala.concurrent.{Await, ExecutionContextExecutor, Promise}
 import scala.util.Try
 import common.room.RoomPropertyValueConversions._
-import server.room.socket.ConnectionConfigurations
+import server.communication.ConnectionConfigurations
 
 import scala.concurrent.duration._
 

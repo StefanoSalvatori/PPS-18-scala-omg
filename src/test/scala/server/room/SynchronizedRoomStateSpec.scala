@@ -3,7 +3,7 @@ package server.room
 import akka.actor.{ActorRef, ActorSystem}
 import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{RoomProtocolMessage, SocketSerializable}
+import common.communication.CommunicationProtocol.{ProtocolMessage, SocketSerializable}
 import common.room.Room
 import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
@@ -113,18 +113,18 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
 
   private def receivedStateUpdated(client: TestClient): Boolean = {
     client1.allMessagesReceived.collect({
-      case msg: RoomProtocolMessage if msg.messageType == StateUpdate => msg
+      case msg: ProtocolMessage if msg.messageType == StateUpdate => msg
     }).nonEmpty
   }
 
   private def receivedState(client: TestClient, state: SocketSerializable): Boolean = {
     client1.allMessagesReceived.collect({
-      case msg: RoomProtocolMessage if msg.messageType == StateUpdate => msg
-    }).contains(RoomProtocolMessage(StateUpdate, client.id, state))
+      case msg: ProtocolMessage if msg.messageType == StateUpdate => msg
+    }).contains(ProtocolMessage(StateUpdate, client.id, state))
   }
 
-  private def lastReceivedMessageOf(client: TestClient): RoomProtocolMessage = {
-    client.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
+  private def lastReceivedMessageOf(client: TestClient): ProtocolMessage = {
+    client.lastMessageReceived.get.asInstanceOf[ProtocolMessage]
   }
 
 

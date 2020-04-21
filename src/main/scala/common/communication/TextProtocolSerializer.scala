@@ -13,25 +13,25 @@ import scala.util.{Failure, Success, Try}
  * <br>
  * It handles them as text strings in the form <em>action{separator}sessionId{separator}payload</em>
  */
-object TextProtocolSerializer extends RoomProtocolMessageSerializer {
+object TextProtocolSerializer extends ProtocolMessageSerializer {
   val SEPARATOR = ":"
   private val ProtocolFieldsCount = 3
 
 
-  override def parseFromSocket(msg: Message): Future[RoomProtocolMessage] = msg match {
+  override def parseFromSocket(msg: Message): Future[ProtocolMessage] = msg match {
     case TextMessage.Strict(message) => parseMessage(message)
     case msg => Future.failed(new ParseException(msg.toString, -1))
   }
 
-  override def prepareToSocket(msg: RoomProtocolMessage): Message = {
+  override def prepareToSocket(msg: ProtocolMessage): Message = {
     TextMessage.Strict(msg.messageType.id.toString + SEPARATOR + msg.sessionId + SEPARATOR + msg.payload)
   }
 
-  private def parseMessage(msg: String): Future[RoomProtocolMessage] = {
+  private def parseMessage(msg: String): Future[ProtocolMessage] = {
     try {
       msg.split(SEPARATOR, ProtocolFieldsCount).toList match {
         case List(code, sessionId, payload) =>
-          Future.successful(RoomProtocolMessage(ProtocolMessageType(code.toInt), sessionId, payload))
+          Future.successful(ProtocolMessage(ProtocolMessageType(code.toInt), sessionId, payload))
       }
     } catch {
       case e: NoSuchElementException => Future.failed(e)

@@ -1,7 +1,7 @@
 package server.utils
 
-import server.room.{Client, GameLoop, ServerRoom, SynchronizedRoomState, RoomPropertyMarker}
-import server.room.socket.ConnectionConfigurations
+import server.communication.ConnectionConfigurations
+import server.room.{Client, GameLoop, RoomPropertyMarker, ServerRoom, SynchronizedRoomState}
 
 /**
  * Rooms used for testing purpose.

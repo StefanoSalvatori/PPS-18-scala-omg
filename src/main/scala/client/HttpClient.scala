@@ -9,7 +9,7 @@ import akka.pattern.pipe
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import client.utils.MessageDictionary._
-import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.communication.CommunicationProtocol.ProtocolMessage
 import common.http.{HttpRequests, Routes}
 import common.room.RoomJsonSupport
 import common.room.Room.SharedRoom
@@ -72,7 +72,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
       val (sourceRef, publisher) =
         Source.actorRef(
           PartialFunction.empty, PartialFunction.empty, Int.MaxValue, OverflowStrategy.dropHead)
-          .map((x: RoomProtocolMessage) => {
+          .map((x: ProtocolMessage) => {
             parser.prepareToSocket(x)
           })
           .toMat(Sink.asPublisher(false))(Keep.both).run()

@@ -5,7 +5,7 @@ import client.utils.MessageDictionary._
 import client.{BasicActor, HttpClient}
 import common.communication.BinaryProtocolSerializer
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage, SocketSerializable, SessionId}
+import common.communication.CommunicationProtocol.{ProtocolMessageType, ProtocolMessage, SocketSerializable, SessionId}
 import common.room.Room.RoomPassword
 
 import scala.util.{Failure, Success}
@@ -67,7 +67,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
   }
 
   def onWaitSocketResponse(replyTo: ActorRef, sessionId: Option[SessionId]): Receive = {
-    case RoomProtocolMessage => stash()
+    case ProtocolMessage => stash()
 
     case HttpSocketFail(code) =>
       replyTo ! Failure(new Exception(code.toString))
@@ -76,58 +76,58 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
     case HttpSocketSuccess(outRef) =>
       context.become(socketOpened(outRef, replyTo))
       unstashAll()
-      outRef ! RoomProtocolMessage(
+      outRef ! ProtocolMessage(
         messageType = JoinRoom,
         sessionId = sessionId.getOrElse(SessionId.empty),
         payload = joinPassword)
   }
 
   def onSocketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
-    case RoomProtocolMessage(JoinOk, sessionId, _) =>
+    case ProtocolMessage(JoinOk, sessionId, _) =>
       coreClient ! ClientRoomActorJoined
       this.joinedRoom = JoinedRoom(self, sessionId, room.roomId, room.properties)
       replyTo ! Success(this.joinedRoom)
       context.become(roomJoined(outRef))
       unstashAll()
 
-    case RoomProtocolMessage(ClientNotAuthorized, _, _) =>
+    case ProtocolMessage(ClientNotAuthorized, _, _) =>
       replyTo ! Failure(new Exception("Can't join"))
 
     case SendStrictMessage(_: SocketSerializable) => stash()
-    case RoomProtocolMessage(Tell, _, _) => stash()
-    case RoomProtocolMessage(Broadcast, _, _) => stash()
-    case RoomProtocolMessage(RoomClosed, _, _) => stash()
+    case ProtocolMessage(Tell, _, _) => stash()
+    case ProtocolMessage(Broadcast, _, _) => stash()
+    case ProtocolMessage(RoomClosed, _, _) => stash()
 
   }
 
   def onRoomJoined(outRef: ActorRef): Receive = {
-    case RoomProtocolMessage(ClientNotAuthorized, _, _) =>
-    case RoomProtocolMessage(Tell, _, payload) => handleMessageReceived(payload)
-    case RoomProtocolMessage(Broadcast, _, payload) => handleMessageReceived(payload)
-    case RoomProtocolMessage(StateUpdate, _, payload) => handleStateChangedReceived(payload)
-    case RoomProtocolMessage(RoomClosed, _, _) =>
+    case ProtocolMessage(ClientNotAuthorized, _, _) =>
+    case ProtocolMessage(Tell, _, payload) => handleMessageReceived(payload)
+    case ProtocolMessage(Broadcast, _, payload) => handleMessageReceived(payload)
+    case ProtocolMessage(StateUpdate, _, payload) => handleStateChangedReceived(payload)
+    case ProtocolMessage(RoomClosed, _, _) =>
       this.onCloseCallback match {
         case Some(value) => value()
         case None => stash()
       }
 
     case SendLeave =>
-      outRef ! RoomProtocolMessage(LeaveRoom)
+      outRef ! ProtocolMessage(LeaveRoom)
       context.become(waitLeaveResponse(sender, outRef))
 
     case SendStrictMessage(msg: SocketSerializable) =>
-      outRef ! RoomProtocolMessage(MessageRoom, "", msg)
+      outRef ! ProtocolMessage(MessageRoom, "", msg)
 
     case RetrieveClientRoom => sender ! ClientRoomResponse(this.joinedRoom)
   }
 
   def onWaitLeaveResponse(replyTo: ActorRef, outRef: ActorRef): Receive = {
-    case RoomProtocolMessage(ProtocolMessageType.LeaveOk, _, _) =>
+    case ProtocolMessage(ProtocolMessageType.LeaveOk, _, _) =>
       coreClient ! ClientRoomActorLeft
       replyTo ! Success()
       context.become(receive)
 
-    case RoomProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
+    case ProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
       replyTo ! Failure(new Exception("Can't leave"))
       context.become(roomJoined(outRef))
   }
@@ -144,7 +144,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
   }
 
   private def heartbeatResponse(roomSocket: ActorRef): Receive = {
-    case RoomProtocolMessage(Ping, _, _) => roomSocket ! RoomProtocolMessage(Pong)
+    case ProtocolMessage(Ping, _, _) => roomSocket ! ProtocolMessage(Pong)
   }
 
   private def callbackDefinition: Receive = {

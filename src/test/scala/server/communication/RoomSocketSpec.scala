@@ -1,4 +1,4 @@
-package server.room
+package server.communication
 
 import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem}
@@ -6,15 +6,15 @@ import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.{Concat, Flow, Sink, Source}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
+import common.communication.CommunicationProtocol.ProtocolMessage
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.RoomProtocolMessage
 import common.communication.TextProtocolSerializer
 import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.RoomHandler
-import server.room.socket.{ConnectionConfigurations, RoomSocket}
+import server.room.{RoomActor, ServerRoom}
+import server.{RoomHandler, communication}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Promise}
@@ -48,7 +48,7 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
   before {
     room = ServerRoom()
     roomActor = system actorOf RoomActor(room, RoomHandler())
-    roomSocketFlow = RoomSocket(roomActor, TextProtocolSerializer, ConnectionConfigurations(IdleConnectionTimeout))
+    roomSocketFlow = communication.RoomSocket(roomActor, TextProtocolSerializer, ConnectionConfigurations(IdleConnectionTimeout))
     flow = roomSocketFlow.createFlow()
     flowTerminated = Promise[Boolean]()
   }
@@ -64,8 +64,8 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
 
     "make sure that messages from the same socket are linked to the same client" in {
       val joinAndLeave = Source.fromIterator(() => Seq(
-        TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom)),
-        TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(LeaveRoom))
+        TextProtocolSerializer.prepareToSocket(ProtocolMessage(JoinRoom)),
+        TextProtocolSerializer.prepareToSocket(ProtocolMessage(LeaveRoom))
       ).iterator)
       flow.runWith(joinAndLeave, Sink.onComplete(_ => flowTerminated.success(true)))
       Await.result(flowTerminated.future, MaxAwaitSocketMessages)
@@ -81,10 +81,10 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
         assert(room.connectedClients.size == 1)
       }
       //Create a different client
-      val client2Socket = RoomSocket(roomActor, TextProtocolSerializer)
+      val client2Socket = communication.RoomSocket(roomActor, TextProtocolSerializer)
       val client2Flow = client2Socket.createFlow()
       val flow2Terminated = Promise[Boolean]()
-      val client2 = Source.single(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(LeaveRoom)))
+      val client2 = Source.single(TextProtocolSerializer.prepareToSocket(ProtocolMessage(LeaveRoom)))
       client2Flow.runWith(client2, Sink.onComplete(_ => flow2Terminated.success(true)))
       Await.result(flow2Terminated.future, MaxAwaitSocketMessages)
       assert(room.connectedClients.size == 1)
@@ -109,7 +109,7 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
     }
 
     "close the socket if heartbeat is configured and client doesn't respond" in {
-      roomSocketFlow = RoomSocket(roomActor, TextProtocolSerializer, ConnectionConfigurations(keepAlive = KeepAliveRate))
+      roomSocketFlow = communication.RoomSocket(roomActor, TextProtocolSerializer, ConnectionConfigurations(keepAlive = KeepAliveRate))
       flow = roomSocketFlow.createFlow()
       flowTerminated = Promise[Boolean]()
       val client = this.joinAndIdle()
@@ -119,10 +119,10 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
   }
 
   def joinAndIdle(idleTime: FiniteDuration = 10000 seconds): Source[Message, NotUsed] = Source.combine(
-    Source.single(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(JoinRoom))),
+    Source.single(TextProtocolSerializer.prepareToSocket(ProtocolMessage(JoinRoom))),
     Source.single(TextMessage("")).delay(idleTime))(Concat(_))
 
   def heartbeat(heartBeatRate: FiniteDuration): Source[Message, NotUsed] =
-    Source.repeat(TextProtocolSerializer.prepareToSocket(RoomProtocolMessage(Pong)))
+    Source.repeat(TextProtocolSerializer.prepareToSocket(ProtocolMessage(Pong)))
       .throttle(1, heartBeatRate)
 }

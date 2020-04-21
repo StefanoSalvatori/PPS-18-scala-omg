@@ -9,7 +9,7 @@ import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
+import common.communication.CommunicationProtocol.{ProtocolMessageType, ProtocolMessage}
 import common.http.Routes
 import common.room.Room
 import org.scalatest.matchers.should.Matchers
@@ -159,7 +159,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
     clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
     expectMsgType[Try[Any]]
 
-    clientRoomActor ! RoomProtocolMessage(msgType)
+    clientRoomActor ! ProtocolMessage(msgType)
     Await.result(promise.future, DefaultDuration)
   }
 
