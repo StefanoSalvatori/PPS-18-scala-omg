@@ -44,7 +44,7 @@ class MatchmakingService(private val matchmaker: Matchmaker,
   }
 
   // apply the matchmaking strategy to the current list of clients. If the strategy can be applied, the room is
-  // created and the clients are reomved from the quue
+  // created and the clients are removed from the queue
   private def applyMatchmakingStrategy(): Unit = {
     this.matchmaker(this.clients.toList).foreach(grouping => {
       val room = this.roomHandler.createRoom(roomType)

@@ -92,6 +92,12 @@ class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigF
       assert(receivedMatchCreatedMessage(client1))
       assert(receivedMatchCreatedMessage(client2))
     }
+
+    "create the room when some clients match the matchmaking strategy" in {
+      matchmakingServiceActor ! JoinQueue(client1)
+      matchmakingServiceActor ! JoinQueue(client2)
+      assert(roomHandler.getAvailableRooms().nonEmpty)
+    }
   }
 
   private def receivedMatchCreatedMessage(client: TestClient) = {
