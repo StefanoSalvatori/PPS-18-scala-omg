@@ -13,7 +13,7 @@ Hence, the library provides three main notions of:
 \item \textbf{Client}: entity that might do operation on rooms, such as joining, sending messages etc.
 \end{itemize} 
 
-\section{System Requirements}
+\section{System Requirements Gathering}
 
 \subsection{Room}
 
@@ -46,7 +46,7 @@ Instead, when auto close in on, the room would close if there is no client in th
 \\
 The room must be aware of unreachable and/or inactive clients, and may kick them out after an established period of time. There are two possible ways to handle client liveness monitoring, that is:
 \begin{itemize}
-\item Client and server periodically exchange pings. Inactive clients are never kicked.  
+\item Heartbeat service: clients and server periodically exchange pings. Inactive clients are never kicked.  
 \item The room kicks a client out if no message flew between such client and the room (both directions) within a certain period of time. The length of the period must be configurable. This is considered as a leave event.
 \end{itemize}
 
@@ -228,9 +228,29 @@ In the end, a client can specify a reactive behavior too. Possible events are:
 
 \section{Requirements formalization}
 
-\subsection{...}
+\subsection{Business Requirements}
+
+\subsection{User Requirements}
+
+\subsubsection{RBS}
+
+The requirements breakdown structure diagrams in figure \ref{fig:client-RBS} and \ref{fig:server-RBS} show stakeholders requirements for server and client programmers respectively.  
+
+\begin{figure}[H]
+  \includegraphics[scale=0.5]{images/2-scoping/server-RBS.png}
+   \centering  
+   \caption{\textit{RBS for srrver side user requirements.}}
+  \label{fig:server-RBS}
+\end{figure}
+
+\begin{figure}[H]
+  \includegraphics[scale=0.5]{images/2-scoping/client-RBS.png}
+   \centering  
+   \caption{\textit{RBS for client side user requirements.}}
+  \label{fig:client-RBS}
+\end{figure}
  
-\subsection{Use cases}
+\subsubsection{Use Cases}
 
 We can split use cases in two scenarios about role played by clients: clients that joined a room and clients that didn't. In the first case, the whole system is the context, and it explains high level functionalities of the system. In the latter case, the context is the interaction between a client in a room and such room.
 
@@ -252,12 +272,112 @@ This is shown in UML use case diagram in figure \ref{fig:room-use_cases}.
 \begin{figure}[H]
   \includegraphics[scale=0.5]{images/2-scoping/room-use_cases.png}
    \centering  
-   \caption{\textit{Use case diagrams of the system.}}
+   \caption{\textit{Use case diagram about room interaction scope.}}
   \label{fig:room-use_cases}
 \end{figure} 
  
+\subsection{Functional Requirements}
+
+Functional requirements, i.e. capabilities that the system should provide, are expressed in table \ref{table:server-f-req} and \ref{table:client-f-req} for server and client respectively.
+
+\begin{center}
+\begin{longtable}{|c|c|} 
+  \caption{\textit{Functional requirements for server.}} \label{table:server-f-req} \\
+  
+\hline
+\multicolumn{2}{|c|}{Server Functional Requirements}\\
+\hline
+ID   &  Specification \\
+\hline
+\hline
+1         & Create and handle game server \\
+2         & Launch game server on provided address and port \\
+2.1       & Define on start behavior \\
+3         & Suspend/terminate server \\
+3.1       & Define on stop behavior \\
+4         & Resume suspended server \\
+5         & Accept user defined routes \\
+6         & Define room type \\
+6.1       & Define room behavior \\
+6.1.1     & Define room reactive behavior \\
+6.1.1.1   & Define on create behavior \\
+6.1.1.2   & Define on join behavior \\
+6.1.1.3   & Define on message received behavior \\
+6.1.1.4   & Define on leave behavior \\
+6.1.1.5   & Define on close behavior \\
+6.1.2     & Define room proactive behavior \\
+6.1.2.1   & Handle public state synchronization between clients \\
+6.1.2.1.1 & Start state synchronization between clients \\
+6.1.2.1.2 & Stop state synchronization between clients \\
+6.1.2.1.3 & Resume state synchronization between clients \\
+6.1.2.2   & Handle room state periodic update (gameloop)  \\ 
+6.1.2.2.1 & Start room state periodic update (gameloop) \\
+6.1.2.2.2 & Stop room state periodic update (gameloop) \\
+6.1.2.2.3 & Resume room state periodic update (gameloop) \\
+6.2       & Define room properties \\
+6.2.1     & Public/private property should be given by default \\
+6.3       & Define room state \\
+6.4       & Define room type matchmaker \\
+6.5       & Ignore multiple room type definitions from second on \\
+6.6       & Define custom join constraints depending on room type \\
+7         & Lock/unlock room \\
+7.1       & Rooms are unlocked by default \\
+8         & Close room \\
+8.1       & Directly close the room from server \\
+8.2       & Expose possibility to close a room for clients \\
+8.3       & Notify a client that the room has been closed \\
+8.4       & Room auto closing \\
+8.4.1     & Allow room auto closing \\
+8.4.2     & Auto closing is off by default \\
+8.4.3     & Close as auto close timeout expires \\
+8.4.4     & Close in front of direct close request even if auto close is on \\
+9         & Create room \\
+9.1       & Create public room \\
+9.2       & Create room with matchmaking \\
+10        & Display room properties \\
+11        & Send messages to clients in a room \\
+11.1      & Send a message to one specific client (tell) \\
+11.2      & Send a same message to all clients in the room (broadcast) \\
+12        & Monitor client liveness \\
+12.1      & Heartbeat service \\
+12.2      & Inactive clients kicking on timeout \\
+13        & Deny join to room under certain circumstances \\
+13.1      & Deny join to private room if no correct password is provided \\
+13.2      & Deny join to a locked room \\
+13.3      & Deny join to closed room \\
+13.4      & Deny join to matchmaking room if not in expected players \\
+14        & Allow reconnection for clients to a room \\
+14.1      & Allow configurationofa reconnection period length \\
+14.2      & Deny reconnection to room if client din't previously join the room \\
+15        & Expose possibility to create rooms for clients \\
+15.1      & Expose possibility to create public rooms for clients \\
+15.2      & Expose possibility to create private rooms for clients \\
+16        & Expose possibility to make room public/private for clients \\
+\hline
+
+\end{longtable}
+\end{center}
+
+\begin{center}
+\begin{longtable}{|c|c|} 
+  \caption{\textit{Functional requirements for client.}} \label{table:client-f-req} \\
  
+\hline
+\multicolumn{2}{|c|}{Client Functional Requirements}\\
+\hline
+ID   &  Specification \\
+\hline
+\hline
+
+\hline
+
+\end{longtable}
+\end{center}
+
+
+\subsection{Non functional Requirements} 
  
+\subsection{Implementation Requirements}
  
  
  
