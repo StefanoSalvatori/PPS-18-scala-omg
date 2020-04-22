@@ -149,10 +149,10 @@ private class GameServerImpl(override val host: String,
   override def onStop(callback: => Unit): Unit = this.onShutdown = () => callback
 
   override def defineRoom(roomTypeName: String, roomFactory: () => ServerRoom): Unit =
-    serverActor ! AddRoute(roomTypeName, roomFactory)
+    Await.ready(serverActor ? AddRoute(roomTypeName, roomFactory), ActorRequestTimeout.duration)
 
   override def createRoom(roomType: String, properties: Set[RoomProperty] = Set.empty): Unit =
-    serverActor ! CreateRoom(roomType, properties)
+    Await.ready(serverActor ? CreateRoom(roomType, properties), ActorRequestTimeout.duration)
 
   override def terminate(): Future[Unit] =
     for {
