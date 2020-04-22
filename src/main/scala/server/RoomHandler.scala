@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
 import common.communication.BinaryProtocolSerializer
-import common.room.Room.{RoomId, RoomPassword, SharedRoom}
+import common.room.Room.{RoomId, RoomPassword, RoomType, SharedRoom}
 import common.room.{FilterOptions, NoSuchPropertyException, Room, RoomProperty, RoomPropertyValue}
 import server.communication.RoomSocket
 import server.room.{RoomActor, ServerRoom}
@@ -28,7 +28,7 @@ trait RoomHandler {
    * @param roomProperties room properties
    * @return the created room
    */
-  def createRoom(roomType: String, roomProperties: Set[RoomProperty] = Set.empty): SharedRoom
+  def createRoom(roomType: RoomType, roomProperties: Set[RoomProperty] = Set.empty): SharedRoom
 
   /**
    * All available rooms filtered by type
@@ -36,7 +36,7 @@ trait RoomHandler {
    * @param roomType rooms type
    * @return the list of rooms of given type
    */
-  def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom]
+  def getRoomsByType(roomType: RoomType, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom]
 
   /**
    * Get specific room with type and id
@@ -44,7 +44,7 @@ trait RoomHandler {
    * @param roomType rooms type
    * @return the list of rooms of given type
    */
-  def getRoomByTypeAndId(roomType: String, roomId: RoomId): Option[SharedRoom]
+  def getRoomByTypeAndId(roomType: RoomType, roomId: RoomId): Option[SharedRoom]
 
   /**
    * Define a new room type that will be used in room creation.
@@ -52,7 +52,7 @@ trait RoomHandler {
    * @param roomType    the name of the room's type
    * @param roomFactory the factory to create a room of given type from an id
    */
-  def defineRoomType(roomType: String, roomFactory: () => ServerRoom): Unit
+  def defineRoomType(roomType: RoomType, roomFactory: () => ServerRoom): Unit
 
   /**
    * Remove the room with the id in input
@@ -76,22 +76,22 @@ object RoomHandler {
 
 case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandler {
 
-  private var roomTypesHandlers: Map[String, () => ServerRoom] = Map.empty
+  private var roomTypesHandlers: Map[RoomType, () => ServerRoom] = Map.empty
 
-  private var roomsByType: Map[String, Map[ServerRoom, ActorRef]] = Map.empty
+  private var roomsByType: Map[RoomType, Map[ServerRoom, ActorRef]] = Map.empty
 
   override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
     roomsByType.values.flatMap(_ keys).filter(roomOptionsFilter(filterOptions)).toSeq
   }
 
-  override def createRoom(roomType: String, roomProperties: Set[RoomProperty]): SharedRoom = {
+  override def createRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): SharedRoom = {
     this.handleRoomCreation(roomType, roomProperties)
   }
 
-  override def getRoomByTypeAndId(roomType: String, roomId: RoomId): Option[SharedRoom] =
+  override def getRoomByTypeAndId(roomType: RoomType, roomId: RoomId): Option[SharedRoom] =
     this.getRoomsByType(roomType).find(_.roomId == roomId)
 
-  override def defineRoomType(roomTypeName: String, roomFactory: () => ServerRoom): Unit = {
+  override def defineRoomType(roomTypeName: RoomType, roomFactory: () => ServerRoom): Unit = {
     this.roomsByType = this.roomsByType + (roomTypeName -> Map.empty)
     this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
   }
@@ -103,7 +103,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       .map(room => RoomSocket(room._2, BinaryProtocolSerializer(), room._1.socketConfigurations).open())
   }
 
-  override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
+  override def getRoomsByType(roomType: RoomType, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
     this.roomsByType.get(roomType) match {
       case Some(value) => value.keys.filter(roomOptionsFilter(filterOptions)).toSeq
       case None => Seq.empty
@@ -119,7 +119,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     })
   }
 
-  private def handleRoomCreation(roomType: String, roomProperties: Set[RoomProperty]): SharedRoom = {
+  private def handleRoomCreation(roomType: RoomType, roomProperties: Set[RoomProperty]): SharedRoom = {
     // Create room and room actor
     val roomMap = this.roomsByType(roomType)
     val newRoom = this.roomTypesHandlers(roomType)()
