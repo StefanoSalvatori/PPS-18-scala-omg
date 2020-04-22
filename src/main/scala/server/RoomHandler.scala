@@ -4,12 +4,17 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
 import common.communication.BinaryProtocolSerializer
-import common.room.Room.{RoomId, RoomPassword, SharedRoom}
+import common.room.Room.{RoomId, RoomPassword, RoomType, SharedRoom}
 import common.room.{FilterOptions, NoSuchPropertyException, Room, RoomProperty, RoomPropertyValue}
 import server.communication.RoomSocket
 import server.room.{RoomActor, ServerRoom}
 
 trait RoomHandler {
+
+  /**
+   * @return all defined room types
+   */
+  def definedRoomTypes: Set[RoomType]
 
   /**
    * Return all available rooms filterd by the given filter options
@@ -79,6 +84,8 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
   private var roomTypesHandlers: Map[String, () => ServerRoom] = Map.empty
 
   private var roomsByType: Map[String, Map[ServerRoom, ActorRef]] = Map.empty
+
+  override def definedRoomTypes: Set[RoomType] = this.roomsByType.keySet
 
   override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
     roomsByType.values.flatMap(_ keys).filter(roomOptionsFilter(filterOptions)).toSeq
@@ -157,4 +164,5 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       }
     }
   }
+
 }

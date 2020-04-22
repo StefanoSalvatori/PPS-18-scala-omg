@@ -1,12 +1,16 @@
 package server.route_service
 
+import akka.actor.ActorRef
 import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Flow
 import com.typesafe.scalalogging.LazyLogging
 import common.http.Routes
+import common.room.Room.{RoomId, RoomType}
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import server.RoomHandler
+import server.matchmaking.{MatchmakingHandler, MatchmakingService}
+import server.matchmaking.MatchmakingService.Matchmaker
 import server.room.ServerRoom
 
 trait RouteService {
@@ -18,30 +22,61 @@ trait RouteService {
 
   /**
    * Add a route for a new type of rooms.
+   *
    * @param roomTypeName room type name used as the route name
-   * @param roomFactory a factory to create rooms of that type
+   * @param roomFactory  a factory to create rooms of that type
    */
-  def addRouteForRoomType(roomTypeName:String, roomFactory: () => ServerRoom)
+  def addRouteForRoomType(roomTypeName: String, roomFactory: () => ServerRoom)
+
+  /**
+   * Add a route for a type of room that enable matchmaking
+   *
+   * @param roomTypeName room type name used as the route name
+   */
+  def addRouteForMatchmaking(roomTypeName: String, roomFactory: () => ServerRoom, matchmaker: Matchmaker)
 }
 
 object RouteService {
-  def apply(roomHandler: RoomHandler): RouteService = new RouteServiceImpl(roomHandler)
+  def apply(roomHandler: RoomHandler, matchmakeHandler: MatchmakingHandler): RouteService =
+    new RouteServiceImpl(roomHandler, matchmakeHandler)
 
 }
 
 
-class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteService with RoomJsonSupport with LazyLogging {
+class RouteServiceImpl(private val roomHandler: RoomHandler,
+                       private val matchmakingHandler: MatchmakingHandler) extends RouteService with RoomJsonSupport
+  with LazyLogging {
 
-  private var roomTypes: Set[String] = Set.empty
+  private var roomTypesRoutes: Set[RoomType] = Set()
+  private var matchmakingTypesRoutes: Set[RoomType] = Set()
+
+
+
+
+  override val route: Route = restHttpRoute ~ webSocketRoutes
+
+  override def addRouteForRoomType(roomTypeName: RoomType, roomFactory: () => ServerRoom): Unit = {
+    this.roomTypesRoutes = this.roomTypesRoutes + roomTypeName
+    this.roomHandler.defineRoomType(roomTypeName, roomFactory)
+  }
+
+  override def addRouteForMatchmaking(roomTypeName: RoomType, roomFactory: () => ServerRoom, matchmaker: Matchmaker): Unit = {
+    this.matchmakingTypesRoutes = this.matchmakingTypesRoutes + roomTypeName
+
+    this.matchmakingHandler.defineMatchmaker(roomTypeName, matchmaker)
+
+    //define also the type in the room handler so that the room can be created by the matchmaker
+    this.roomHandler.defineRoomType(roomTypeName, roomFactory)
+  }
 
   /**
    * rest api for rooms.
    */
-  def restHttpRoute: Route = pathPrefix(Routes.rooms) {
+  private def restHttpRoute: Route = pathPrefix(Routes.rooms) {
     pathEnd {
       getAllRoomsRoute
-    } ~ pathPrefix(Segment) { roomType: String =>
-      if (this.roomTypes.contains(roomType)) {
+    } ~ pathPrefix(Segment) { roomType: RoomType =>
+      if (this.roomTypesRoutes.contains(roomType)) {
         pathEnd {
           getRoomsByTypeRoute(roomType) ~
             postRoomsByTypeRoute(roomType)
@@ -49,7 +84,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
           getRoomByTypeAndId(roomType, roomId)
         }
       } else {
-        reject //TODO: how to handle this? Wrong type in rooms/{type}
+        reject
       }
     }
   }
@@ -57,12 +92,12 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
   /**
    * Handel web socket routes
    */
-  def webSocketRoutes: Route = webSocketConnectionRoute ~ matchmakingRoute
+  private def webSocketRoutes: Route = webSocketConnectionRoute ~ matchmakingRoute
 
   /**
    * Handle web socket connection on path /[[common.http.Routes.connectionRoute]]/{roomId}
    */
-  def webSocketConnectionRoute: Route = pathPrefix(Routes.connectionRoute / Segment) { roomId =>
+  private def webSocketConnectionRoute: Route = pathPrefix(Routes.connectionRoute / Segment) { roomId =>
     get {
       this.roomHandler.handleClientConnection(roomId) match {
         case Some(handler) => handleWebSocketMessages(handler)
@@ -74,22 +109,13 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
   /**
    * Handle web socket connection on path /[[common.http.Routes.matchmakeRoute]]/{type}
    */
-  def matchmakingRoute: Route = pathPrefix(Routes.matchmakeRoute / Segment) { roomType =>
+  private def matchmakingRoute: Route = pathPrefix(Routes.matchmakeRoute / Segment) { roomType =>
     get {
-      if (this.roomTypes.contains(roomType)) {
-        println("matchmake request on type -> " + roomType)
-        handleWebSocketMessages(Flow.fromFunction(identity))
-      } else {
-        reject
+      this.matchmakingHandler.handleClientConnection(roomType) match {
+        case Some(handler) => handleWebSocketMessages(handler)
+        case None => reject
       }
     }
-  }
-
-  val route: Route = restHttpRoute ~ webSocketRoutes
-
-  def addRouteForRoomType(roomTypeName: String, roomFactory: () => ServerRoom): Unit = {
-    this.roomTypes = this.roomTypes + roomTypeName
-    this.roomHandler.defineRoomType(roomTypeName, roomFactory)
   }
 
   /**
@@ -106,7 +132,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
   /**
    * GET rooms/{type}
    */
-  private def getRoomsByTypeRoute(roomType: String): Route =
+  private def getRoomsByTypeRoute(roomType: RoomType): Route =
     get {
       entity(as[FilterOptions]) { filterOptions =>
         val rooms = this.roomHandler.getRoomsByType(roomType, filterOptions)
@@ -117,7 +143,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
   /**
    * POST rooms/{type}
    */
-  private def postRoomsByTypeRoute(roomType: String): Route =
+  private def postRoomsByTypeRoute(roomType: RoomType): Route =
     post {
       entity(as[Set[RoomProperty]]) { roomProperties =>
         val room = this.roomHandler.createRoom(roomType, roomProperties)
@@ -128,13 +154,15 @@ class RouteServiceImpl(private val roomHandler: RoomHandler) extends RouteServic
   /**
    * GET rooms/{type}/{id}
    */
-  private def getRoomByTypeAndId(roomType: String, roomId: String): Route =
+  private def getRoomByTypeAndId(roomType: RoomType, roomId: RoomId): Route =
     get {
       this.roomHandler.getRoomByTypeAndId(roomType, roomId) match {
         case Some(room) => complete(room)
-        case None => reject //TODO: how to handle this? Wrong id in rooms/{type}/{id}
+        case None => reject
       }
     }
+
+
 }
 
 

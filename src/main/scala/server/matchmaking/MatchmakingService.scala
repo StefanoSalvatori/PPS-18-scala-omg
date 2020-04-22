@@ -2,17 +2,22 @@ package server.matchmaking
 
 import akka.actor.{Actor, Props}
 import common.communication.CommunicationProtocol.ProtocolMessage
+import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.room.Room.RoomType
 import server.RoomHandler
 import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue, Matchmaker}
 import server.room.Client
-import common.communication.CommunicationProtocol.ProtocolMessageType._
+
+
+
 
 object MatchmakingService {
   type Matchmaker = List[Client] => Option[Map[Client, Int]]
 
   trait MatchmakingRequest
+
   case class JoinQueue(client: Client) extends MatchmakingRequest
+
   case class LeaveQueue(client: Client) extends MatchmakingRequest
 
 

@@ -12,6 +12,7 @@ import server.RoomHandler
 import server.route_service.RouteService
 import server.utils.ExampleRooms._
 import common.room.RoomPropertyValueConversions._
+import server.matchmaking.MatchmakingHandler
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -23,7 +24,8 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
   with RoomJsonSupport {
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
-  private val routeService = RouteService(RoomHandler())
+  private val roomHandler = RoomHandler()
+  private val routeService = RouteService(roomHandler, MatchmakingHandler(roomHandler))
   private val route = routeService.route
 
   behavior of "Route Service routing"
@@ -31,6 +33,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
   before {
     //ensure to have at least one room-type
     routeService.addRouteForRoomType(TestRoomType, RoomWithProperty)
+    routeService.addRouteForMatchmaking(TestRoomType, RoomWithProperty, _ => None)
   }
 
   override def afterAll(): Unit = {
@@ -119,6 +122,8 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
         handled shouldBe false
       }
   }
+
+
 
 
   //Matchmake

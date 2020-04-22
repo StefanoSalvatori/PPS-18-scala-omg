@@ -7,6 +7,8 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import common.room.RoomProperty
 import server.ServerActor._
+import server.matchmaking.MatchmakingHandler
+import server.matchmaking.MatchmakingService.Matchmaker
 import server.room.ServerRoom
 import server.route_service.RouteService
 
@@ -61,9 +63,16 @@ trait GameServer {
 
   /**
    *
-   * @param roomFactory the function to create the room given the room id
+   * @param roomFactory the function to create the room
    */
   def defineRoom(roomTypeName: String, roomFactory: () => ServerRoom)
+
+
+  /**
+   * Define a type of room that enable matchmaking functions
+   */
+  def defineRoomWithMatchmaking(roomTypeName: String, roomFactory: () => ServerRoom,
+                                matchmaker: Matchmaker)
 
   /**
    * Creates a room of a given type. The type should be defined before calling this method
@@ -120,7 +129,9 @@ private class GameServerImpl(override val host: String,
   implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
 
   private val roomHandler = RoomHandler()
-  private val routeService = RouteService(roomHandler)
+  private val matchmakingHandler = MatchmakingHandler(roomHandler)
+
+  private val routeService = RouteService(roomHandler, matchmakingHandler)
   private val roomsRoutes = routeService.route
 
   private val serverActor = actorSystem actorOf ServerActor(ServerTerminationDeadline, roomsRoutes ~ additionalRoutes)
@@ -155,6 +166,11 @@ private class GameServerImpl(override val host: String,
 
   override def defineRoom(roomTypeName: String, roomFactory: () => ServerRoom): Unit =
     this.routeService.addRouteForRoomType(roomTypeName, roomFactory)
+
+  override def defineRoomWithMatchmaking(roomTypeName: String,
+                                         roomFactory: () => ServerRoom,
+                                         matchmaker: Matchmaker): Unit =
+    this.routeService.addRouteForMatchmaking(roomTypeName, roomFactory, matchmaker)
 
   override def createRoom(roomType: String, properties: Set[RoomProperty] = Set.empty): Unit =
     this.roomHandler.createRoom(roomType, properties)
