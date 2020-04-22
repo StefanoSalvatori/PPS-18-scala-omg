@@ -85,16 +85,20 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
   }
 
   override def createRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): SharedRoom = {
-    this.handleRoomCreation(roomType, roomProperties)
+    this.synchronized {
+      this.handleRoomCreation(roomType, roomProperties)
+    }
+  }
+
+  override def defineRoomType(roomTypeName: RoomType, roomFactory: () => ServerRoom): Unit = {
+    this.synchronized {
+      this.roomsByType = this.roomsByType + (roomTypeName -> Map.empty)
+      this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
+    }
   }
 
   override def getRoomByTypeAndId(roomType: RoomType, roomId: RoomId): Option[SharedRoom] =
     this.getRoomsByType(roomType).find(_.roomId == roomId)
-
-  override def defineRoomType(roomTypeName: RoomType, roomFactory: () => ServerRoom): Unit = {
-    this.roomsByType = this.roomsByType + (roomTypeName -> Map.empty)
-    this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
-  }
 
   override def handleClientConnection(roomId: RoomId): Option[Flow[Message, Message, Any]] = {
     this.roomsByType
