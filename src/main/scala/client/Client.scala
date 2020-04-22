@@ -2,6 +2,7 @@ package client
 
 import akka.actor.ActorSystem
 import akka.pattern.ask
+import client.matchmake.ClientMatchmaker
 import client.room.{ClientRoom, JoinableRoom, JoinedRoom}
 import client.utils.MessageDictionary._
 import common.http.Routes
@@ -13,7 +14,10 @@ import scala.concurrent.{Await, ExecutionContextExecutor, Future, Promise}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
+
 sealed trait Client {
+
+  val matchmaker: ClientMatchmaker
 
   /**
    * Create a new public room to join
@@ -79,6 +83,7 @@ sealed trait Client {
    */
   def reconnect(roomId: String, sessionId: String): Future[JoinedRoom]
 
+
   /**
    * @return the set of currently joined rooms
    */
@@ -90,6 +95,8 @@ sealed trait Client {
 object Client {
   def apply(serverAddress: String, serverPort: Int): ClientImpl = new ClientImpl(serverAddress, serverPort)
 }
+
+
 
 class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
 
@@ -104,6 +111,9 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   private implicit val actorSystem: ActorSystem = ActorSystem()
   private implicit val executor: ExecutionContextExecutor = actorSystem.dispatcher
   private val coreClient = actorSystem actorOf CoreClient(httpServerUri)
+
+  override val matchmaker: ClientMatchmaker = ClientMatchmaker(coreClient, httpServerUri)
+
 
   override def joinedRooms(): Set[JoinedRoom] = {
     Await.result(coreClient ? GetJoinedRooms, 5 seconds).asInstanceOf[JoinedRooms].joinedRooms
@@ -144,6 +154,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       case Success(room) => Future.successful(room.asInstanceOf[Seq[JoinableRoom]])
       case Failure(ex) => Future.failed(ex)
     }
+
 
 
   override def reconnect(roomId: String, sessionId: String): Future[JoinedRoom] = {
@@ -193,4 +204,5 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       case Nil => Future.failed(new Exception("no room to join"))
 
     }
+
 }

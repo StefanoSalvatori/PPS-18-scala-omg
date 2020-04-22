@@ -10,6 +10,10 @@ import common.room.Room.RoomPassword
 
 import scala.util.{Failure, Success}
 
+/**
+ * Handles the connection with the server side room.
+ * Notify the coreClient if the associated room is left or joined.
+ */
 sealed trait ClientRoomActor extends BasicActor
 
 
@@ -18,10 +22,7 @@ object ClientRoomActor {
     Props(classOf[ClientRoomActorImpl], coreClient, serverUri, room)
 }
 
-/**
- * Handles the connection with the server side room.
- * Notify the coreClient if the associated room is left or joined.
- */
+
 case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends ClientRoomActor with Stash {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
   private var onMessageCallback: Option[Any => Unit] = None
@@ -62,7 +63,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
   def waitJoinRequest: Receive = {
     case SendJoin(sessionId: Option[SessionId], password: RoomPassword) =>
       joinPassword = password
-      httpClient ! HttpSocketRequest(this.room.roomId, BinaryProtocolSerializer())
+      httpClient ! HttpRoomSocketRequest(this.room.roomId, BinaryProtocolSerializer())
       context.become(waitSocketResponse(sender, sessionId))
   }
 

@@ -126,6 +126,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     })
   }
 
+  //TODO: this function should be thread safe because is used concurrently among matchmakers
   private def handleRoomCreation(roomType: String, roomProperties: Set[RoomProperty]): SharedRoom = {
     // Create room and room actor
     val roomMap = this.roomsByType(roomType)

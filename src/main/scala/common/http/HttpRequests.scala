@@ -41,5 +41,5 @@ object HttpRequests extends RoomJsonSupport {
   )
 
   def connectToRoom(serverUri: String)(roomId: RoomId): WebSocketRequest =
-    WebSocketRequest(s"ws://$serverUri/${Routes.webSocketConnection(roomId)}")
+    WebSocketRequest(s"ws://$serverUri/${Routes.roomSocketConnection(roomId)}")
 }
