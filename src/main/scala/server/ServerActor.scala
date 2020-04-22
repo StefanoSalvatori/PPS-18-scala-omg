@@ -34,7 +34,6 @@ object ServerActor {
   sealed trait ServerResponse
   case object Started extends ServerResponse
   case object Stopped extends ServerResponse
-  case object Done extends ServerResponse
   case class ServerFailure(exception: Throwable) extends ServerResponse
 
   case class StateError(msg: String) extends ServerResponse
@@ -105,12 +104,8 @@ class ServerActor(private val terminationDeadline: FiniteDuration,
 
 
   private def roomHandling: Receive = {
-    case AddRoute(roomType, room) =>
-      this.routeService.addRouteForRoomType(roomType, room)
-      sender ! Done
-    case CreateRoom(roomType, properties) =>
-      this.roomHandler.createRoom(roomType, properties)
-      sender ! Done
+    case AddRoute(roomType, room) => this.routeService.addRouteForRoomType(roomType, room)
+    case CreateRoom(roomType, properties) => this.roomHandler.createRoom(roomType, properties)
   }
 
 }
