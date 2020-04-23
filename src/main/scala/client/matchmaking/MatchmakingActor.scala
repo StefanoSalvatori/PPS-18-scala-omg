@@ -5,8 +5,8 @@ import client.matchmaking.MatchmakingActor.{JoinMatchmaking, LeaveMatchmaking}
 import client.utils.MessageDictionary.{HttpMatchmakingSocketRequest, HttpSocketFail, HttpSocketSuccess, SocketError}
 import client.{BasicActor, HttpClient}
 import common.communication.BinaryProtocolSerializer
-import common.communication.CommunicationProtocol.ProtocolMessage
-import common.communication.CommunicationProtocol.ProtocolMessageType.{JoinQueue, LeaveQueue, MatchCreated, Ping, Pong}
+import common.communication.CommunicationProtocol.{ProtocolMessage, SessionId}
+import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.room.Room.RoomType
 
 import scala.util.{Failure, Success}
@@ -25,13 +25,14 @@ object MatchmakingActor {
 
   import akka.actor.Props
 
-  def apply(roomType: RoomType, httpServerUri: String): Props =
-    Props(classOf[MatchmakingActorImpl], roomType, httpServerUri)
+  def apply(roomType: RoomType, httpServerUri: String, clientInfo: Any with java.io.Serializable): Props =
+    Props(classOf[MatchmakingActorImpl], roomType, httpServerUri, clientInfo)
 }
 
 
 class MatchmakingActorImpl(private val roomType: RoomType,
-                           private val httpServerUri: String) extends MatchmakingActor with Stash {
+                           private val httpServerUri: String,
+                           private val clientInfo: Any with java.io.Serializable) extends MatchmakingActor with Stash {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
 
   override def receive: Receive = onReceive orElse fallbackReceive
@@ -60,7 +61,7 @@ class MatchmakingActorImpl(private val roomType: RoomType,
       context.become(receive)
 
     case HttpSocketSuccess(outRef) =>
-      outRef ! ProtocolMessage(JoinQueue)
+      outRef ! ProtocolMessage(JoinQueue,  payload = clientInfo)
       context.become(socketOpened(outRef, replyTo))
       unstashAll()
 

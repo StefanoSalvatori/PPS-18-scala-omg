@@ -5,7 +5,7 @@ import akka.testkit.{ImplicitSender, TestKit}
 import client.matchmaking.MatchmakingActor.{JoinMatchmaking, LeaveMatchmaking}
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
-import common.communication.CommunicationProtocol.MatchmakeTicket
+import common.communication.CommunicationProtocol.MatchmakingInfo
 import common.http.Routes
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -38,8 +38,8 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
   before {
-    matchmakeActor1 = system actorOf MatchmakingActor(ExampleRooms.closableRoomWithStateType, serverUri)
-    matchmakeActor2 = system actorOf MatchmakingActor(ExampleRooms.closableRoomWithStateType, serverUri)
+    matchmakeActor1 = system actorOf MatchmakingActor(ExampleRooms.closableRoomWithStateType, serverUri, "")
+    matchmakeActor2 = system actorOf MatchmakingActor(ExampleRooms.closableRoomWithStateType, serverUri, "")
 
     gameServer = GameServer(serverAddress, serverPort)
 
@@ -70,7 +70,7 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
       matchmakeActor2 ! JoinMatchmaking
       expectMsgPF() {
         case Success(res) =>
-          assert(res.isInstanceOf[MatchmakeTicket])
+          assert(res.isInstanceOf[MatchmakingInfo])
         case Failure(ex) =>
           println(ex.toString)
       }

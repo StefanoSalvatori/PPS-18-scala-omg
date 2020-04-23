@@ -8,17 +8,16 @@ import client.room.JoinedRoom
 import com.typesafe.scalalogging.LazyLogging
 import common.TestConfig
 import common.http.Routes
-import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.matchmaking.MatchmakingService.MatchmakingStrategy
-import server.utils.ExampleRooms
+import server.room.ServerRoom
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContextExecutor, Promise}
-import scala.concurrent.duration._
+
 
 class ClientMatchmakerSpec extends AnyWordSpecLike
   with Matchers
@@ -40,6 +39,12 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
 
 
   implicit val timeoutToDuration: Timeout => Duration = timeout => timeout.duration
+  private val RoomType1 = "test1"
+  private val RoomType2 = "test2"
+  private val RoomType3 = "test3"
+
+
+
 
   before {
     gameServer = GameServer(serverAddress, serverPort)
@@ -50,15 +55,15 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
       case _ => None
     }
 
-    gameServer.defineRoomWithMatchmaking(
-      ExampleRooms.closableRoomWithStateType,
-      () => ExampleRooms.ClosableRoomWithState(),
-      matchmakingStrategy)
+    //matchmaking strategy that match client that have the same info
+    def matchmakingEqualStrategy: MatchmakingStrategy = map => map.toList match {
+      case (c1, c1Info) :: (c2, c2Info) :: _ if c1Info.equals(c2Info) => Some(Map(c1 -> 0, c2 -> 1))
+      case _ => None
+    }
 
-    gameServer.defineRoomWithMatchmaking(
-      ExampleRooms.roomWithPropertyType,
-      () => ExampleRooms.ClosableRoomWithState(),
-      matchmakingStrategy)
+    gameServer.defineRoomWithMatchmaking(RoomType1,  () => ServerRoom(),  matchmakingStrategy)
+    gameServer.defineRoomWithMatchmaking(RoomType2,  () => ServerRoom(), matchmakingStrategy)
+    gameServer.defineRoomWithMatchmaking(RoomType3, () => ServerRoom(), matchmakingEqualStrategy)
 
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
 
@@ -76,50 +81,60 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
 
   "Client Matchmaker" should {
     "join a match making queue for a given type" in {
-      this.matchmaker1.joinMatchmaking(ExampleRooms.closableRoomWithStateType)
-      val room = Await.result(this.matchmaker2.joinMatchmaking(ExampleRooms.closableRoomWithStateType), DefaultTimeout)
+      this.matchmaker1.joinMatchmaking(RoomType1)
+      val room = Await.result(this.matchmaker2.joinMatchmaking(RoomType1), DefaultTimeout)
       assert(room.isInstanceOf[JoinedRoom])
     }
 
     "fail the join future when leaving the matchmaking queue" in {
       val p = Promise[JoinedRoom]()
-      p.completeWith(this.matchmaker1.joinMatchmaking(ExampleRooms.closableRoomWithStateType))
+      p.completeWith(this.matchmaker1.joinMatchmaking(RoomType1))
 
-      Await.result(this.matchmaker1.leaveMatchmaking(ExampleRooms.closableRoomWithStateType), DefaultTimeout)
+      Await.result(this.matchmaker1.leaveMatchmaking(RoomType1), DefaultTimeout)
       assert(p.isCompleted)
     }
 
     "handle multiple matchmake requests" in {
       //matchmake request 1
-      this.matchmaker2.joinMatchmaking(ExampleRooms.closableRoomWithStateType)
-      val room = Await.result(this.matchmaker1.joinMatchmaking(ExampleRooms.closableRoomWithStateType), DefaultTimeout)
+      this.matchmaker2.joinMatchmaking(RoomType1)
+      val room = Await.result(this.matchmaker1.joinMatchmaking(RoomType1), DefaultTimeout)
       assert(room.isInstanceOf[JoinedRoom])
 
       //matchmake request 2
-      this.matchmaker2.joinMatchmaking(ExampleRooms.roomWithPropertyType)
-      val room2 = Await.result(this.matchmaker1.joinMatchmaking(ExampleRooms.roomWithPropertyType), DefaultTimeout)
+      this.matchmaker2.joinMatchmaking(RoomType2)
+      val room2 = Await.result(this.matchmaker1.joinMatchmaking(RoomType2), DefaultTimeout)
       assert(room2.isInstanceOf[JoinedRoom])
 
     }
 
     "return the same future on multiple requests on the same room type" in {
-      this.matchmaker2.joinMatchmaking(ExampleRooms.roomWithPropertyType)
+      this.matchmaker2.joinMatchmaking(RoomType2)
 
-      this.matchmaker1.joinMatchmaking(ExampleRooms.roomWithPropertyType)
-      val room2 = Await.result(this.matchmaker1.joinMatchmaking(ExampleRooms.roomWithPropertyType), DefaultTimeout)
+      this.matchmaker1.joinMatchmaking(RoomType2)
+      val room2 = Await.result(this.matchmaker1.joinMatchmaking(RoomType2), DefaultTimeout)
       assert(room2.isInstanceOf[JoinedRoom])
     }
 
     "successfully completes when leaving a matchmake that was never joined" in {
-      Await.result(this.matchmaker1.leaveMatchmaking(ExampleRooms.roomWithPropertyType), DefaultTimeout)
+      Await.result(this.matchmaker1.leaveMatchmaking(RoomType2), DefaultTimeout)
     }
 
     "fail if the matchmaking time exceeds the specified time" in {
       assertThrows[Exception] {
-        Await.result(this.matchmaker1.joinMatchmaking(ExampleRooms.roomWithPropertyType, 5 seconds), DefaultTimeout)
+        Await.result(this.matchmaker1.joinMatchmaking(RoomType2, 5 seconds), DefaultTimeout)
       }
+    }
+
+    "send client info to the matchmaker" in {
+      val clientInfo = ClientInfo(1)
+      this.matchmaker1.joinMatchmaking(RoomType3, clientInfo)
+      val room = Await.result(this.matchmaker2.joinMatchmaking(RoomType3, clientInfo), DefaultTimeout)
+      assert(room.isInstanceOf[JoinedRoom])
     }
   }
 
-
 }
+
+
+@SerialVersionUID(12345L)
+private[this] case class ClientInfo(a: Int) extends java.io.Serializable

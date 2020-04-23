@@ -5,7 +5,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import client.matchmaking.MatchmakingActor.{JoinMatchmaking, LeaveMatchmaking}
 import client.room.{ClientRoom, JoinedRoom}
-import common.communication.CommunicationProtocol.{MatchmakeTicket, SessionId}
+import common.communication.CommunicationProtocol.{MatchmakingInfo, SessionId, SocketSerializable}
 import common.room.Room.{RoomId, RoomType}
 
 import scala.concurrent.duration._
@@ -21,9 +21,11 @@ trait ClientMatchmaker {
    *
    * @param roomType matchmaking room type to join
    * @param requestTimeout how much time to wait before failing, defualt is 5 minutes
-   * @return a future that completes sucessfully when the matchmaker server side creates the match
+   * @return a future that completes successfully when the matchmaker server side creates the match
    */
-  def joinMatchmaking(roomType: RoomType, requestTimeout: FiniteDuration = DefaultMatchmakingTimeout): Future[JoinedRoom]
+  def joinMatchmaking(roomType: RoomType,
+                      clientInfo: SocketSerializable = "",
+                      requestTimeout: FiniteDuration = DefaultMatchmakingTimeout): Future[JoinedRoom]
 
   /**
    * Leave the serverside matchmaking queue for this type of room serverside
@@ -52,13 +54,14 @@ class ClientMatchmakerImpl(private val coreClient: ActorRef,
   private var matchmakingConnections: Map[RoomType, ActorRef] = Map()
   private var promises: Map[RoomType, Promise[JoinedRoom]] = Map()
 
-  override def joinMatchmaking(roomType: RoomType, requestTimeout: FiniteDuration): Future[JoinedRoom] = {
+  override def joinMatchmaking(roomType: RoomType, clientInfo: SocketSerializable,
+                               requestTimeout: FiniteDuration): Future[JoinedRoom] = {
     this.matchmakingConnections.get(roomType) match {
       case Some(_) => // if already exists an active matchmaking connection for the room type, return that future
         promises(roomType).future
       case None =>
         val joinMatchmakingPromise = createPromise(roomType)
-        val ref = system.actorOf(MatchmakingActor(roomType, this.httpServerUri))
+        val ref = system.actorOf(MatchmakingActor(roomType, this.httpServerUri, clientInfo))
         this.matchmakingConnections = this.matchmakingConnections.updated(roomType, ref)
         joinMatchmakingPromise.completeWith(createJoinMatchmakingFuture(ref, roomType, requestTimeout)).future
     }
@@ -70,7 +73,7 @@ class ClientMatchmakerImpl(private val coreClient: ActorRef,
         (ref ? LeaveMatchmaking).map { _ =>
           //make the join future fail
           this.promises(roomType).failure(new Exception("matchmaking left"))
-          this.removeMatchmakeConnection(roomType)
+          this.removeMatchmakingConnection(roomType)
         }
       case None =>
         //if there are no matchmaking connections for that room type just complete successfully
@@ -85,9 +88,9 @@ class ClientMatchmakerImpl(private val coreClient: ActorRef,
   private def createJoinMatchmakingFuture(matchmakingActor: ActorRef, roomType: RoomType, time: FiniteDuration): Future[JoinedRoom] = {
     matchmakingActor.ask(JoinMatchmaking)(Timeout.durationToTimeout(time)).flatMap {
       case Success(res) =>
-        val ticket = res.asInstanceOf[MatchmakeTicket]
+        val ticket = res.asInstanceOf[MatchmakingInfo]
         val room = ClientRoom.createJoinable(coreClient, httpServerUri, ticket.roomId, Set())
-        removeMatchmakeConnection(roomType)
+        removeMatchmakingConnection(roomType)
         room.joinWithSessionId(ticket.sessionId)
       case Failure(ex) =>
         matchmakingActor ! LeaveMatchmaking
@@ -96,7 +99,7 @@ class ClientMatchmakerImpl(private val coreClient: ActorRef,
     }
   }
 
-  private def removeMatchmakeConnection(roomType: RoomType) = {
+  private def removeMatchmakingConnection(roomType: RoomType) = {
     this.promises = this.promises - roomType
     this.matchmakingConnections(roomType) ! PoisonPill
     this.matchmakingConnections = this.matchmakingConnections - roomType

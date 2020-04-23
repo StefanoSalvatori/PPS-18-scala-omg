@@ -7,7 +7,7 @@ import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{MatchmakeTicket, ProtocolMessage}
+import common.communication.CommunicationProtocol.{MatchmakingInfo, ProtocolMessage}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -101,7 +101,7 @@ class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigF
 
   private def receivedMatchCreatedMessage(client: TestClient) = {
     client.allMessagesReceived.collect({
-      case msg@ProtocolMessage(MatchCreated, id, ticket: MatchmakeTicket)
+      case msg@ProtocolMessage(MatchCreated, id, ticket: MatchmakingInfo)
         if id == client.id && ticket.roomId.nonEmpty => msg
     }).nonEmpty
 

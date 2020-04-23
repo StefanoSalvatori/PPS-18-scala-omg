@@ -21,11 +21,13 @@ object CommunicationProtocol {
 
 
   /**
-   * Informations sent by the matchmaker to the clients when the match is created
+   * Information sent by the matchmaker to the clients when the match is created
+   *
    * @param sessionId id associated to the client
-   * @param roomId id of the  room that the client should join
+   * @param roomId    id of the  room that the client should join
    */
-  case class MatchmakeTicket(sessionId: SessionId, roomId: RoomId) extends java.io.Serializable
+  @SerialVersionUID(1213L) // scalastyle:ignore magic.number
+  case class MatchmakingInfo(sessionId: SessionId, roomId: RoomId) extends java.io.Serializable
 
   object ProtocolMessageType extends Enumeration {
     type ProtocolMessageType = Value
@@ -73,13 +75,14 @@ object CommunicationProtocol {
    * @param payload     an optional payload
    */
   @SerialVersionUID(1234L) // scalastyle:ignore magic.number
-  case class ProtocolMessage(messageType: ProtocolMessageType, sessionId: SessionId = SessionId.empty,
-                             payload: java.io.Serializable = "")
-    extends java.io.Serializable
+  case class ProtocolMessage(messageType: ProtocolMessageType,
+                             sessionId: SessionId = SessionId.empty,
+                             payload: java.io.Serializable = "") extends java.io.Serializable
 
   /**
    * A socket serializer for socket protocol messages
    */
   trait ProtocolMessageSerializer extends SocketSerializer[ProtocolMessage]
+
 }
 

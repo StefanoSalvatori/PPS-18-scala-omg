@@ -86,11 +86,9 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
         ).to(Sink.actorRef(sender, PartialFunction.empty, SocketError))
 
     val (sourceRef, publisher) =
-      Source.actorRef(
+      Source.actorRef[ProtocolMessage](
         PartialFunction.empty, PartialFunction.empty, Int.MaxValue, OverflowStrategy.dropHead)
-        .map((x: ProtocolMessage) => {
-          parser.prepareToSocket(x)
-        })
+        .map(parser.prepareToSocket)
         .toMat(Sink.asPublisher(false))(Keep.both).run()
 
     val flow = Http() webSocketClientFlow WebSocketRequest(wsRoute)
