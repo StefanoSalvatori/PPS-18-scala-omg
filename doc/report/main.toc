@@ -1,15 +1,24 @@
 \babel@toc {english}{}
-\contentsline {chapter}{\numberline {1}Development process}{1}% 
-\contentsline {chapter}{\numberline {2}Scoping}{3}% 
-\contentsline {section}{\numberline {2.1}Introduction}{3}% 
-\contentsline {section}{\numberline {2.2}System Requirements}{3}% 
-\contentsline {subsection}{\numberline {2.2.1}Room}{3}% 
-\contentsline {subsection}{\numberline {2.2.2}Server}{6}% 
-\contentsline {subsection}{\numberline {2.2.3}Client}{7}% 
-\contentsline {section}{\numberline {2.3}Requirements formalization}{10}% 
-\contentsline {subsection}{\numberline {2.3.1}...}{10}% 
-\contentsline {subsection}{\numberline {2.3.2}Use cases}{10}% 
-\contentsline {chapter}{\numberline {3}System architecture}{13}% 
-\contentsline {chapter}{\numberline {4}Detailed desing}{15}% 
-\contentsline {chapter}{\numberline {5}Implementation}{17}% 
-\contentsline {chapter}{\numberline {6}Conclusions}{19}% 
+\contentsline {chapter}{\numberline {1}Scoping}{1}% 
+\contentsline {section}{\numberline {1.1}Introduction}{1}% 
+\contentsline {section}{\numberline {1.2}System Requirements Gathering}{1}% 
+\contentsline {subsection}{\numberline {1.2.1}Room}{1}% 
+\contentsline {subsection}{\numberline {1.2.2}Server}{4}% 
+\contentsline {subsection}{\numberline {1.2.3}Client}{5}% 
+\contentsline {section}{\numberline {1.3}Requirements formalization}{8}% 
+\contentsline {subsection}{\numberline {1.3.1}Business Requirements}{8}% 
+\contentsline {subsection}{\numberline {1.3.2}User Requirements}{8}% 
+\contentsline {subsubsection}{RBS}{8}% 
+\contentsline {subsubsection}{Use Cases}{10}% 
+\contentsline {subsection}{\numberline {1.3.3}Functional Requirements}{11}% 
+\contentsline {subsection}{\numberline {1.3.4}Non functional Requirements}{14}% 
+\contentsline {subsection}{\numberline {1.3.5}Implementation Requirements}{15}% 
+\contentsline {chapter}{\numberline {2}Development process}{17}% 
+\contentsline {section}{\numberline {2.1}Interactions planning}{17}% 
+\contentsline {section}{\numberline {2.2}Tasks split and assignment}{17}% 
+\contentsline {section}{\numberline {2.3}Development tools: Build, Testing, CI}{18}% 
+\contentsline {subsection}{\numberline {2.3.1}Ensure system portability}{18}% 
+\contentsline {chapter}{\numberline {3}System architecture}{19}% 
+\contentsline {chapter}{\numberline {4}Detailed desing}{21}% 
+\contentsline {chapter}{\numberline {5}Implementation}{23}% 
+\contentsline {chapter}{\numberline {6}Conclusions}{25}% 

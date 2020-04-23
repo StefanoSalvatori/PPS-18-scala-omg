@@ -14,11 +14,15 @@ case class MatchmakingSocket(private val matchmakingService: ActorRef,
   override protected val pingMessage: ProtocolMessage = ProtocolMessage(ProtocolMessageType.Ping)
   override protected val pongMessage: ProtocolMessage = ProtocolMessage(ProtocolMessageType.Pong)
 
+  //no idle timeout since we don't know how much it will take to match a player with other ones. We only check that
+  // client is still active with an heartbeat every 5 seconds
   override val connectionConfig: ConnectionConfigurations = ConnectionConfigurations(Duration.Inf, 5 seconds)
 
   override protected val onMessageFromSocket: PartialFunction[ProtocolMessage, Unit] = {
-    case ProtocolMessage(ProtocolMessageType.JoinQueue, _, _) => matchmakingService ! JoinQueue(this.client)
-    case ProtocolMessage(ProtocolMessageType.LeaveQueue, _, _) => matchmakingService ! LeaveQueue(this.client)
+    case ProtocolMessage(ProtocolMessageType.JoinQueue, _, clientInfo) =>
+      matchmakingService ! JoinQueue(this.client, clientInfo)
+    case ProtocolMessage(ProtocolMessageType.LeaveQueue, _, _) =>
+      matchmakingService ! LeaveQueue(this.client)
   }
 
   override protected def onSocketClosed(): Unit = matchmakingService ! LeaveQueue(this.client)

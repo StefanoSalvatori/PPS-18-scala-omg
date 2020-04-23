@@ -6,45 +6,41 @@ import common.communication.CommunicationProtocol.{MatchmakeTicket, ProtocolMess
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.room.Room.RoomType
 import server.RoomHandler
-import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue, Matchmaker}
+import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue, MatchmakingStrategy}
 import server.room.Client
 
 
 object MatchmakingService {
-  type Matchmaker = List[Client] => Option[Map[Client, Int]]
+  type MatchmakingStrategy = Map[Client, Any] => Option[Map[Client, Int]]
 
   trait MatchmakingRequest
-
-  case class JoinQueue(client: Client) extends MatchmakingRequest
-
+  case class JoinQueue(client: Client, clientInfo: Any) extends MatchmakingRequest
   case class LeaveQueue(client: Client) extends MatchmakingRequest
 
 
-  def apply(matchmaker: Matchmaker, room: RoomType, roomHandler: RoomHandler): Props =
+  def apply(matchmaker: MatchmakingStrategy, room: RoomType, roomHandler: RoomHandler): Props =
     Props(classOf[MatchmakingService], matchmaker, room, roomHandler)
 
 }
 
 /**
  *
- * @param matchmaker  the matchmaking strategy
+ * @param matchmakingStrategy  the matchmaking strategy
  * @param roomType    teh type of room that will be created
  * @param roomHandler the room handler where to spawn the room
  */
-class MatchmakingService(private val matchmaker: Matchmaker,
+class MatchmakingService(private val matchmakingStrategy: MatchmakingStrategy,
                          private val roomType: RoomType,
-                         private val roomHandler: RoomHandler) extends Actor with LazyLogging {
+                         private val roomHandler: RoomHandler) extends Actor {
 
-  var clients: Set[Client] = Set.empty
+  var clients: Map[Client, Any] = Map.empty
 
   override def receive: Receive = {
-    case JoinQueue(client) =>
-      logger.debug("client connected " + client.id)
-      this.clients = this.clients + client
+    case JoinQueue(client, info) =>
+      this.clients = this.clients + (client -> info)
       this.applyMatchmakingStrategy()
 
     case LeaveQueue(client) =>
-      logger.debug("client left")
       this.clients = this.clients - client
 
   }
@@ -52,7 +48,7 @@ class MatchmakingService(private val matchmaker: Matchmaker,
   // apply the matchmaking strategy to the current list of clients. If the strategy can be applied, the room is
   // created and the clients are removed from the queue
   private def applyMatchmakingStrategy(): Unit = {
-    this.matchmaker(this.clients.toList).foreach(grouping => {
+    this.matchmakingStrategy(this.clients).foreach(grouping => {
       val room = this.roomHandler.createRoom(roomType)
       grouping.keys.foreach(c => c.send(ProtocolMessage(MatchCreated, c.id, MatchmakeTicket(c.id, room.roomId))))
       this.clients = this.clients -- grouping.keys

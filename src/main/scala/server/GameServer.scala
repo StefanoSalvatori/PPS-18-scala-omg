@@ -10,10 +10,9 @@ import server.ServerActor._
 import server.matchmaking.MatchmakingHandler
 import server.matchmaking.MatchmakingService.Matchmaker
 import server.room.ServerRoom
-import server.route_service.RouteService
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.language.postfixOps
 
 trait GameServer {
@@ -120,14 +119,15 @@ private class GameServerImpl(override val host: String,
   with LazyLogging {
 
   import GameServer._
+  import server.ServerActor._
   import akka.pattern.ask
-  import com.typesafe.config.ConfigFactory
 
   private implicit val ActorRequestTimeout: Timeout = 10 seconds
 
   implicit val actorSystem: ActorSystem = ActorSystem()
   implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
 
+  private val serverActor = actorSystem actorOf ServerActor(ServerTerminationDeadline, additionalRoutes)
   private val roomHandler = RoomHandler()
   private val matchmakingHandler = MatchmakingHandler(roomHandler)
 
@@ -138,16 +138,13 @@ private class GameServerImpl(override val host: String,
   private var onStart: () => Unit = () => {}
   private var onShutdown: () => Unit = () => {}
 
-  override def onStart(callback: => Unit): Unit = this.onStart = () => callback
-
-  override def onStop(callback: => Unit): Unit = this.onShutdown = () => callback
 
   override def start(): Future[Unit] = {
     (serverActor ? StartServer(host, port))
       .asInstanceOf[Future[ServerResponse]]
       .flatMap {
         case Started => this.onStart(); Future.successful()
-        case Error(msg) => Future.failed(new IllegalStateException(msg))
+        case StateError(msg) => Future.failed(new IllegalStateException(msg))
         case ServerFailure(exception) => Future.failed(exception)
         case _ => Future.failed(new IllegalStateException())
       }
@@ -158,14 +155,18 @@ private class GameServerImpl(override val host: String,
       .asInstanceOf[Future[ServerResponse]]
       .flatMap {
         case Stopped => this.onShutdown(); Future.successful()
-        case Error(msg) => Future.failed(new IllegalStateException(msg))
+        case StateError(msg) => Future.failed(new IllegalStateException(msg))
         case ServerFailure(exception) => Future.failed(exception)
         case _ => Future.failed(new IllegalStateException())
       }
   }
 
+  override def onStart(callback: => Unit): Unit = this.onStart = () => callback
+
+  override def onStop(callback: => Unit): Unit = this.onShutdown = () => callback
+
   override def defineRoom(roomTypeName: String, roomFactory: () => ServerRoom): Unit =
-    this.routeService.addRouteForRoomType(roomTypeName, roomFactory)
+    Await.ready(serverActor ? AddRoute(roomTypeName, roomFactory), ActorRequestTimeout.duration)
 
   override def defineRoomWithMatchmaking(roomTypeName: String,
                                          roomFactory: () => ServerRoom,
@@ -173,7 +174,7 @@ private class GameServerImpl(override val host: String,
     this.routeService.addRouteForMatchmaking(roomTypeName, roomFactory, matchmaker)
 
   override def createRoom(roomType: String, properties: Set[RoomProperty] = Set.empty): Unit =
-    this.roomHandler.createRoom(roomType, properties)
+    Await.ready(serverActor ? CreateRoom(roomType, properties), ActorRequestTimeout.duration)
 
   override def terminate(): Future[Unit] =
     for {
