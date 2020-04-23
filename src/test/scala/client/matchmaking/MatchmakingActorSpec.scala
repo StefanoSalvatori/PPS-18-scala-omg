@@ -2,25 +2,20 @@ package client.matchmaking
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
-import client.matchmaking.ClientMatchmaker.MatchmakeTicket
 import client.matchmaking.MatchmakingActor.{JoinMatchmake, LeaveMatchmake}
-import client.{Client, CoreClient}
-import client.room.{ClientRoom, ClientRoomActor}
-import client.utils.MessageDictionary.{CreatePublicRoom, FailResponse, HttpRoomResponse}
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
-import common.communication.CommunicationProtocol.SessionId
+import common.communication.CommunicationProtocol.MatchmakeTicket
 import common.http.Routes
-import common.room.Room.{RoomId, SharedRoom}
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
-import server.matchmaking.MatchmakingService.{JoinQueue, Matchmaker}
+import server.matchmaking.MatchmakingService.Matchmaker
 import server.utils.ExampleRooms
 
 import scala.concurrent.{Await, ExecutionContext}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with ImplicitSender
@@ -81,16 +76,14 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
     }
 
     "leave a matchmaking queue" in {
-
       matchmakeActor1 ! JoinMatchmake
-      Thread.sleep(1000) //wait join complete
       matchmakeActor1 ! LeaveMatchmake
       expectMsgType[Any]
+      matchmakeActor1 ! PoisonPill
 
 
-      //this should never respond beacause the other actor left the matchmake
+      //this should never respond because the other actor left the matchmake
       matchmakeActor2 ! JoinMatchmake
-
       expectNoMessage()
 
     }

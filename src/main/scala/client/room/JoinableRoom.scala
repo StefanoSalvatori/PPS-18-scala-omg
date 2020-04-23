@@ -6,7 +6,7 @@ import common.room.{Room, RoomProperty}
 import common.room.Room.{RoomId, RoomPassword}
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 import akka.pattern.ask
 import common.communication.CommunicationProtocol.SessionId
 
@@ -47,10 +47,10 @@ object JoinableRoom {
 }
 
 private class JoinableRoomImpl(override val roomId: RoomId,
-                       private val coreClient: ActorRef,
-                       private val httpServerUri: String,
-                       override val properties: Set[RoomProperty])
-                      (override implicit val system: ActorSystem)
+                               private val coreClient: ActorRef,
+                               private val httpServerUri: String,
+                               override val properties: Set[RoomProperty])
+                              (override implicit val system: ActorSystem)
   extends ClientRoomImpl(roomId, properties) with JoinableRoom {
 
   private var innerActor: Option[ActorRef] = None
@@ -65,18 +65,24 @@ private class JoinableRoomImpl(override val roomId: RoomId,
   }
 
   override def reconnect(sessionId: SessionId, password: RoomPassword): Future[JoinedRoom] = {
-    val ref = this.spawnInnerActor()
-    (ref ? SendReconnect(Some(sessionId), password)) flatMap {
-      case Success(response) =>
-        Future.successful(response.asInstanceOf[JoinedRoom])
-      case Failure(ex) =>
-        this.killInnerActor()
-        Future.failed(ex)
-    }  }
+    reconnectFuture(Some(sessionId), password)
+  }
+
+
 
   private def joinFuture(sessionId: Option[SessionId], password: RoomPassword): Future[JoinedRoom] = {
+    this.spawnAndAskActor(_ ? SendJoin(sessionId, password), sessionId, password)
+
+  }
+
+  private def reconnectFuture(sessionId: Option[SessionId], password: RoomPassword): Future[JoinedRoom] = {
+    this.spawnAndAskActor(_ ? SendReconnect(sessionId, password), sessionId, password)
+  }
+
+  private def spawnAndAskActor(ask: ActorRef => Future[Any],
+                       sessionId: Option[SessionId], password: RoomPassword): Future[JoinedRoom] = {
     val ref = this.spawnInnerActor()
-    (ref ? SendJoin(sessionId, password)) flatMap {
+    ask(ref) flatMap {
       case Success(response) =>
         Future.successful(response.asInstanceOf[JoinedRoom])
       case Failure(ex) =>

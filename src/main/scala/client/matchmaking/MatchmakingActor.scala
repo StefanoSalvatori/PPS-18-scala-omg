@@ -1,6 +1,6 @@
 package client.matchmaking
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, Stash}
 import client.matchmaking.MatchmakingActor.{JoinMatchmake, LeaveMatchmake}
 import client.utils.MessageDictionary.{HttpMatchmakingSocketRequest, HttpSocketFail, HttpSocketSuccess, SocketError}
 import client.{BasicActor, HttpClient}
@@ -19,7 +19,6 @@ sealed trait MatchmakingActor extends BasicActor
 
 object MatchmakingActor {
 
-
   case class JoinMatchmake()
 
   case class LeaveMatchmake()
@@ -32,7 +31,7 @@ object MatchmakingActor {
 
 
 class MatchmakingActorImpl(private val roomType: RoomType,
-                           private val httpServerUri: String) extends MatchmakingActor {
+                           private val httpServerUri: String) extends MatchmakingActor with Stash {
   private val httpClient = context.system actorOf HttpClient(httpServerUri)
 
   override def receive: Receive = onReceive orElse fallbackReceive
@@ -65,12 +64,14 @@ class MatchmakingActorImpl(private val roomType: RoomType,
       logger.debug("socket success")
       outRef ! ProtocolMessage(JoinQueue)
       context.become(socketOpened(outRef, replyTo))
+      unstashAll()
+
+    case LeaveMatchmake => stash()
   }
 
   def onSocketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
-    case ProtocolMessage(MatchCreated, clientId, roomId) =>
-      logger.debug("match created")
-      replyTo ! Success((clientId, roomId))
+    case ProtocolMessage(MatchCreated, _, ticket) =>
+      replyTo ! Success(ticket)
 
     case LeaveMatchmake =>
       outRef ! ProtocolMessage(LeaveQueue)
@@ -80,7 +81,7 @@ class MatchmakingActorImpl(private val roomType: RoomType,
   private def handleErrors(replyTo: ActorRef): Receive = {
     case SocketError(ex) =>
       logger.debug("socket error " + ex.toString)
-      replyTo ! Failure(new Exception(ex.toString))
+      //replyTo ! Failure(new Exception(ex.toString))
 
   }
 
@@ -88,9 +89,7 @@ class MatchmakingActorImpl(private val roomType: RoomType,
    * Keep the socket alive
    */
   private def heartbeatResponse(roomSocket: ActorRef): Receive = {
-    case ProtocolMessage(Ping, _, _) =>
-      roomSocket ! ProtocolMessage(Pong)
-      logger.debug("pong")
+    case ProtocolMessage(Ping, _, _) => roomSocket ! ProtocolMessage(Pong)
 
   }
 

@@ -6,7 +6,7 @@ import akka.actor.{ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
-import common.communication.CommunicationProtocol.ProtocolMessage
+import common.communication.CommunicationProtocol.{MatchmakeTicket, ProtocolMessage}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.room.Room.RoomId
 import org.scalatest.matchers.should.Matchers
@@ -101,7 +101,8 @@ class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigF
 
   private def receivedMatchCreatedMessage(client: TestClient) = {
     client.allMessagesReceived.collect({
-      case msg@ProtocolMessage(MatchCreated, id, room: RoomId) if id == client.id && room.nonEmpty => msg
+      case msg@ProtocolMessage(MatchCreated, id, ticket: MatchmakeTicket)
+        if id == client.id && ticket.roomId.nonEmpty => msg
     }).nonEmpty
 
   }

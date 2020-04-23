@@ -2,14 +2,12 @@ package server.matchmaking
 
 import akka.actor.{Actor, Props}
 import com.typesafe.scalalogging.LazyLogging
-import common.communication.CommunicationProtocol.ProtocolMessage
+import common.communication.CommunicationProtocol.{MatchmakeTicket, ProtocolMessage}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.room.Room.RoomType
 import server.RoomHandler
 import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue, Matchmaker}
 import server.room.Client
-
-
 
 
 object MatchmakingService {
@@ -35,7 +33,7 @@ object MatchmakingService {
  */
 class MatchmakingService(private val matchmaker: Matchmaker,
                          private val roomType: RoomType,
-                         private val roomHandler: RoomHandler) extends Actor with LazyLogging{
+                         private val roomHandler: RoomHandler) extends Actor with LazyLogging {
 
   var clients: Set[Client] = Set.empty
 
@@ -56,10 +54,9 @@ class MatchmakingService(private val matchmaker: Matchmaker,
   private def applyMatchmakingStrategy(): Unit = {
     this.matchmaker(this.clients.toList).foreach(grouping => {
       val room = this.roomHandler.createRoom(roomType)
-      grouping.keys.foreach(c => c.send(ProtocolMessage(MatchCreated, c.id, room.roomId)))
+      grouping.keys.foreach(c => c.send(ProtocolMessage(MatchCreated, c.id, MatchmakeTicket(c.id, room.roomId))))
       this.clients = this.clients -- grouping.keys
     })
-
   }
 
 }

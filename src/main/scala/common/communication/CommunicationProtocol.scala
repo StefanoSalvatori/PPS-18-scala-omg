@@ -1,9 +1,15 @@
 package common.communication
 
 import common.communication.CommunicationProtocol.ProtocolMessageType.ProtocolMessageType
+import common.room.Room.RoomId
 
 object CommunicationProtocol {
+
+  /**
+   * Id associated to clients connected to a room
+   */
   type SessionId = String
+
   object SessionId {
     val empty: SessionId = ""
   }
@@ -13,6 +19,13 @@ object CommunicationProtocol {
    */
   type SocketSerializable = Any with java.io.Serializable
 
+
+  /**
+   * Informations sent by the matchmaker to the clients when the match is created
+   * @param sessionId id associated to the client
+   * @param roomId id of the  room that the client should join
+   */
+  case class MatchmakeTicket(sessionId: SessionId, roomId: RoomId) extends java.io.Serializable
 
   object ProtocolMessageType extends Enumeration {
     type ProtocolMessageType = Value
@@ -60,8 +73,8 @@ object CommunicationProtocol {
    * @param payload     an optional payload
    */
   @SerialVersionUID(1234L) // scalastyle:ignore magic.number
-  case class ProtocolMessage(messageType: ProtocolMessageType, sessionId: SessionId = SessionId.empty, payload: java.io
-  .Serializable = "")
+  case class ProtocolMessage(messageType: ProtocolMessageType, sessionId: SessionId = SessionId.empty,
+                             payload: java.io.Serializable = "")
     extends java.io.Serializable
 
   /**
