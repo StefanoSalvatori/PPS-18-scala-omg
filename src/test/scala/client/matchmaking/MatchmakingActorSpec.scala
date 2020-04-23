@@ -2,7 +2,7 @@ package client.matchmaking
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
-import client.matchmaking.MatchmakingActor.{JoinMatchmake, LeaveMatchmake}
+import client.matchmaking.MatchmakingActor.{JoinMatchmaking, LeaveMatchmaking}
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
 import common.communication.CommunicationProtocol.MatchmakeTicket
@@ -66,8 +66,8 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
   "MatchmakingActor" should {
     "join a matchmaking queue and return a MatchmakeTicket when the match is created" in {
 
-      matchmakeActor1 ! JoinMatchmake
-      matchmakeActor2 ! JoinMatchmake
+      matchmakeActor1 ! JoinMatchmaking
+      matchmakeActor2 ! JoinMatchmaking
       expectMsgPF() {
         case Success(res) =>
           assert(res.isInstanceOf[MatchmakeTicket])
@@ -77,14 +77,14 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
     }
 
     "leave a matchmaking queue" in {
-      matchmakeActor1 ! JoinMatchmake
-      matchmakeActor1 ! LeaveMatchmake
+      matchmakeActor1 ! JoinMatchmaking
+      matchmakeActor1 ! LeaveMatchmaking
       expectMsgType[Any]
       matchmakeActor1 ! PoisonPill
 
 
       //this should never respond because the other actor left the matchmake
-      matchmakeActor2 ! JoinMatchmake
+      matchmakeActor2 ! JoinMatchmaking
       expectNoMessage()
 
     }
