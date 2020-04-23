@@ -231,6 +231,35 @@ The feature is enabled once the client joined the room.
 
 \subsection{Business Requirements}
 
+Table \ref{table:buss-req} shows bussiness requirements of the system.
+
+\begin{center}
+  \begin{longtable}{|l|l|} 
+  \caption{\textit{System bussiness requirements.}} \label{table:buss-req} \\
+   
+\hline
+ID   &  Specification \\
+\hline
+\multicolumn{2}{|c|}{} \\
+\hline
+1   & The library should allow to create a client-server based game without concerning \\ 
+    & about low level aspects \\
+1.1 & The library should transparently handle communication between clients and server \\
+1.2 & The library should transparently handle routing \\
+1.3 & The library should transparently handle serialization \\
+1.4 & The library should transparently handle synchronization between clients and server \\
+1.5 & The library should transparently handle gameloop \\
+2   & The library should be generic and flexible in order to allow a pervasive usage \\
+    & upon different games \\    
+3   & The library should expose a concept of a room \\
+3.1 & Clients can join a room \\
+3.2 & Clients in a room can interact with the room \\
+3.3 & Clients in a room can interact with each other \\
+\hline
+
+  \end{longtable}
+\end{center}
+
 \subsection{User Requirements}
 
 \subsubsection{RBS}
@@ -282,8 +311,8 @@ This is shown in UML use case diagram in figure \ref{fig:room-use_cases}.
 Functional requirements, i.e. capabilities that the system should provide, are expressed in table \ref{table:server-f-req} and \ref{table:client-f-req} for server and client respectively.
 
 \begin{center}
-\begin{longtable}{|c|l|} 
-  \caption{\textit{Server functional requirements.}} \label{table:server-f-req} \\
+  \begin{longtable}{|l|l|} 
+    \caption{\textit{Server functional requirements.}} \label{table:server-f-req} \\
   
 \hline
 ID   &  Specification \\
@@ -363,12 +392,12 @@ ID   &  Specification \\
 16        & Expose possibility to make room public/private for clients \\
 \hline
 
-\end{longtable}
+  \end{longtable}
 \end{center}
 
 \begin{center}
-\begin{longtable}{|c|l|} 
-  \caption{\textit{Client functional requirements.}} \label{table:client-f-req} \\
+  \begin{longtable}{|l|l|} 
+    \caption{\textit{Client functional requirements.}} \label{table:client-f-req} \\
  
 \hline
 ID   &  Specification \\
@@ -421,7 +450,7 @@ ID   &  Specification \\
 11.2    & Make a private room public \\
 \hline
 
-\end{longtable}
+  \end{longtable}
 \end{center}
 
 
