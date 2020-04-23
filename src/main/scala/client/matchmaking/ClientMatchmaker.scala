@@ -43,7 +43,9 @@ class ClientMatchmakerImpl(private val coreClient: ActorRef,
                            private val httpServerUri: String)
                           (implicit val system: ActorSystem) extends ClientMatchmaker {
 
-  private implicit val timeout: Timeout = 5 seconds
+  private  val longTimeout: Timeout = 1 hour
+
+  private implicit val timeout: Timeout = 20 seconds
   private implicit val executor: ExecutionContextExecutor = system.dispatcher
 
   //keeps track of active matchmake connections
@@ -82,7 +84,7 @@ class ClientMatchmakerImpl(private val coreClient: ActorRef,
    * Creates a future that completes when matchmake completes and the room is joined
    */
   private def createJoinMatchmakeFuture(matchmakeActor: ActorRef, roomType: RoomType): Future[JoinedRoom] = {
-    (matchmakeActor ? JoinMatchmake).flatMap {
+    matchmakeActor.ask(JoinMatchmake)(longTimeout).flatMap {
       case Success(res) =>
         val ticket = res.asInstanceOf[MatchmakeTicket]
         val room = ClientRoom.createJoinable(coreClient, httpServerUri, ticket.roomId, Set())

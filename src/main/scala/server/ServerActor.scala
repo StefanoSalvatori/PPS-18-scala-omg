@@ -8,6 +8,8 @@ import akka.pattern.pipe
 import akka.stream.scaladsl.Sink
 import common.room.Room.RoomType
 import common.room.RoomProperty
+import server.matchmaking.MatchmakingHandler
+import server.matchmaking.MatchmakingService.MatchmakingStrategy
 import server.room.ServerRoom
 import server.route_service.RouteService
 
@@ -25,6 +27,9 @@ object ServerActor {
   case class StartServer(host: String, port: Int) extends Command
   case object StopServer extends Command
   case class AddRoute(routeName: String, room: () => ServerRoom) extends Command
+  case class AddRouteForMatchmaking(routeName: String, room: () => ServerRoom,
+                                    matchmaker: MatchmakingStrategy) extends Command
+
   case class CreateRoom(roomType: RoomType, properties: Set[RoomProperty] = Set.empty)
 
   private sealed trait InternalMessage extends ServerEvent
@@ -56,7 +61,8 @@ class ServerActor(private val terminationDeadline: FiniteDuration,
   implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
 
   private val roomHandler = RoomHandler()
-  private val routeService = RouteService(roomHandler)
+  private val matchmakingHandler = MatchmakingHandler(roomHandler)
+  private val routeService = RouteService(roomHandler, matchmakingHandler)
 
   override def receive: Receive = idle orElse roomHandling
 
@@ -109,6 +115,11 @@ class ServerActor(private val terminationDeadline: FiniteDuration,
     case AddRoute(roomType, room) =>
       this.routeService.addRouteForRoomType(roomType, room)
       sender ! RouteAdded
+
+    case AddRouteForMatchmaking(roomType, room, matchmaker) =>
+      this.routeService.addRouteForMatchmaking(roomType, room, matchmaker)
+      sender ! RouteAdded
+
     case CreateRoom(roomType, properties) =>
       this.roomHandler.createRoom(roomType, properties)
       sender ! RoomCreated

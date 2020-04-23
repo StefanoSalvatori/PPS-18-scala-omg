@@ -10,7 +10,7 @@ import common.room.Room.{RoomId, RoomType}
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import server.RoomHandler
 import server.matchmaking.{MatchmakingHandler, MatchmakingService}
-import server.matchmaking.MatchmakingService.Matchmaker
+import server.matchmaking.MatchmakingService.{MatchmakingStrategy}
 import server.room.ServerRoom
 
 trait RouteService {
@@ -33,7 +33,7 @@ trait RouteService {
    *
    * @param roomTypeName room type name used as the route name
    */
-  def addRouteForMatchmaking(roomTypeName: String, roomFactory: () => ServerRoom, matchmaker: Matchmaker)
+  def addRouteForMatchmaking(roomTypeName: String, roomFactory: () => ServerRoom, matchmaker: MatchmakingStrategy)
 }
 
 object RouteService {
@@ -60,7 +60,8 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
     this.roomHandler.defineRoomType(roomTypeName, roomFactory)
   }
 
-  override def addRouteForMatchmaking(roomTypeName: RoomType, roomFactory: () => ServerRoom, matchmaker: Matchmaker): Unit = {
+  override def addRouteForMatchmaking(roomTypeName: RoomType, roomFactory: () => ServerRoom,
+                                      matchmaker: MatchmakingStrategy): Unit = {
     this.matchmakingTypesRoutes = this.matchmakingTypesRoutes + roomTypeName
     this.matchmakingHandler.defineMatchmaker(roomTypeName, matchmaker)
 

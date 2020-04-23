@@ -56,12 +56,10 @@ class MatchmakingActorImpl(private val roomType: RoomType,
 
   def onWaitSocketResponse(replyTo: ActorRef): Receive = {
     case HttpSocketFail(code) =>
-      logger.debug("socket fail")
       replyTo ! Failure(new Exception(code.toString))
       context.become(receive)
 
     case HttpSocketSuccess(outRef) =>
-      logger.debug("socket success")
       outRef ! ProtocolMessage(JoinQueue)
       context.become(socketOpened(outRef, replyTo))
       unstashAll()

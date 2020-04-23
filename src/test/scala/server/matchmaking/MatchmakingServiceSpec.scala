@@ -6,18 +6,13 @@ import akka.actor.{ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
-import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType}
-import common.room.Room.RoomId
-import common.communication.CommunicationProtocol.{MatchmakeTicket, ProtocolMessage}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.room.Room.RoomId
+import common.communication.CommunicationProtocol.{MatchmakeTicket, ProtocolMessage}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.matchmaking.MatchmakingService
-import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue, MatchmakingStrategy}
 import server.RoomHandler
-import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue, Matchmaker}
+import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue, MatchmakingStrategy}
 import server.utils.{ExampleRooms, TestClient}
 
 
