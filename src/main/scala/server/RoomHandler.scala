@@ -91,14 +91,15 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     roomsByType.values.flatMap(_ keys).filter(roomOptionsFilter(filterOptions)).toSeq
   }
 
+  //TODO: this function should be thread safe because is used concurrently among matchmakers
   override def createRoom(roomType: String, roomProperties: Set[RoomProperty]): SharedRoom = {
     this.handleRoomCreation(roomType, roomProperties)
   }
 
-  override def getRoomByTypeAndId(roomType: String, roomId: RoomId): Option[SharedRoom] =
+  override def getRoomByTypeAndId(roomType: RoomType, roomId: RoomId): Option[SharedRoom] =
     this.getRoomsByType(roomType).find(_.roomId == roomId)
 
-  override def defineRoomType(roomTypeName: String, roomFactory: () => ServerRoom): Unit = {
+  override def defineRoomType(roomTypeName: RoomType, roomFactory: () => ServerRoom): Unit = {
     this.roomsByType = this.roomsByType + (roomTypeName -> Map.empty)
     this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
   }
@@ -110,7 +111,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       .map(room => RoomSocket(room._2, BinaryProtocolSerializer(), room._1.socketConfigurations).createFlow())
   }
 
-  override def getRoomsByType(roomType: String, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
+  override def getRoomsByType(roomType: RoomType, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
     this.roomsByType.get(roomType) match {
       case Some(value) => value.keys.filter(roomOptionsFilter(filterOptions)).toSeq
       case None => Seq.empty
@@ -126,14 +127,12 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     })
   }
 
-  //TODO: this function should be thread safe because is used concurrently among matchmakers
-  private def handleRoomCreation(roomType: String, roomProperties: Set[RoomProperty]): SharedRoom = {
+  private def handleRoomCreation(roomType: RoomType, roomProperties: Set[RoomProperty]): SharedRoom = {
     // Create room and room actor
     val roomMap = this.roomsByType(roomType)
     val newRoom = this.roomTypesHandlers(roomType)()
     val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
-
     // Set room properties and password
     if (roomProperties.map(_ name) contains Room.roomPasswordPropertyName) {
       val splitProperties = roomProperties.groupBy(_.name == Room.roomPasswordPropertyName)

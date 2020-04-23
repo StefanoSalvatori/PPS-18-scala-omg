@@ -1,15 +1,17 @@
-package client.matchmake
+package client.matchmaking
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.pattern.ask
 import akka.util.Timeout
-import client.matchmake.MatchmakingActor.{JoinMatchmake, LeaveMatchmake}
+import client.matchmaking.ClientMatchmaker.MatchmakeTicket
+import client.matchmaking.MatchmakingActor.{JoinMatchmake, LeaveMatchmake}
 import client.room.{ClientRoom, JoinedRoom}
 import common.communication.CommunicationProtocol.SessionId
 import common.room.Room.{RoomId, RoomType}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future, Promise}
+import scala.util.{Failure, Success, Try}
 
 
 trait ClientMatchmaker {
@@ -27,11 +29,13 @@ trait ClientMatchmaker {
    *
    * @param roomType matchmake room room type to leave
    */
-  def leaveMatchmake(roomType: RoomType): Future[Unit]
+  def leaveMatchmake(roomType: RoomType): Future[Any]
 
 }
 
 object ClientMatchmaker {
+  type MatchmakeTicket = (SessionId, RoomId)
+
   def apply(coreClient: ActorRef, httpServerUri: String)
            (implicit system: ActorSystem): ClientMatchmaker = new ClientMatchmakerImpl(coreClient, httpServerUri)
 }
@@ -52,18 +56,24 @@ class ClientMatchmakerImpl(private val coreClient: ActorRef,
       val p = createPromise(roomType)
       val ref = system.actorOf(MatchmakingActor(roomType, this.httpServerUri))
       this.matchmakeConnections = this.matchmakeConnections.updated(roomType, ref)
-      (ref ? JoinMatchmake).flatMap { res =>
-        val (cId, rId) = res.asInstanceOf[(SessionId, RoomId)]
-        val room = ClientRoom.createJoinable(coreClient, httpServerUri, rId, Set())
-        removeMatchmakeConnection(roomType)
-        p.completeWith(room.joinWithSessionId(cId)).future
+
+      println("actor created")
+      (ref ? JoinMatchmake).flatMap {
+        case Success(res) =>
+          val (cId, rId) = res.asInstanceOf[MatchmakeTicket]
+          val room = ClientRoom.createJoinable(coreClient, httpServerUri, rId, Set())
+          removeMatchmakeConnection(roomType)
+          p.completeWith(room.joinWithSessionId(cId)).future
+        case Failure(ex) =>
+          Future.failed(ex)
       }
+
     } else {
       promises(roomType).future
     }
   }
 
-  override def leaveMatchmake(roomType: RoomType): Future[Unit] = {
+  override def leaveMatchmake(roomType: RoomType): Future[Any] = {
     this.matchmakeConnections.get(roomType) match {
       case Some(ref) =>
         (ref ? LeaveMatchmake).map { _ =>

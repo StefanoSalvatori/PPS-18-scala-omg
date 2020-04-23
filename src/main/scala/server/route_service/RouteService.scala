@@ -62,7 +62,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
 
   override def addRouteForMatchmaking(roomTypeName: RoomType, roomFactory: () => ServerRoom, matchmaker: Matchmaker): Unit = {
     this.matchmakingTypesRoutes = this.matchmakingTypesRoutes + roomTypeName
-
     this.matchmakingHandler.defineMatchmaker(roomTypeName, matchmaker)
 
     //define also the type in the room handler so that the room can be created by the matchmaker

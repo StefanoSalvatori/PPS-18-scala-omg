@@ -8,6 +8,7 @@ import common.room.Room.RoomType
 import server.RoomHandler
 import server.communication.MatchmakingSocket
 import server.matchmaking.MatchmakingService.Matchmaker
+import server.room.ServerRoom
 
 trait MatchmakingHandler {
 

@@ -34,7 +34,7 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers
     routeService = RouteService(roomHandler, MatchmakingHandler(roomHandler))
     route = routeService.route
 
-    //define two room type for test
+    //define room type for test
     routeService.addRouteForRoomType(TestRoomType, () => ServerRoom())
   }
 

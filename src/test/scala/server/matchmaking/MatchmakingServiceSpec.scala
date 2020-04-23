@@ -1,21 +1,20 @@
-package server
+package server.matchmaking
 
 import java.util.UUID
 
-import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill}
+import akka.actor.{ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessage
+import common.communication.CommunicationProtocol.ProtocolMessageType._
+import common.room.Room.RoomId
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.matchmaking.MatchmakingService
+import server.RoomHandler
 import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue, Matchmaker}
-import server.room.{Client, ServerRoom}
 import server.utils.{ExampleRooms, TestClient}
-import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.room.Room.RoomId
 
 
 class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.load()))

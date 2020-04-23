@@ -1,7 +1,7 @@
-package client.matchmake
+package client.matchmaking
 
 import akka.actor.ActorRef
-import client.matchmake.MatchmakingActor.{JoinMatchmake, LeaveMatchmake}
+import client.matchmaking.MatchmakingActor.{JoinMatchmake, LeaveMatchmake}
 import client.utils.MessageDictionary.{HttpMatchmakingSocketRequest, HttpSocketFail, HttpSocketSuccess, SocketError}
 import client.{BasicActor, HttpClient}
 import common.communication.BinaryProtocolSerializer
@@ -18,6 +18,7 @@ import scala.util.{Failure, Success}
 sealed trait MatchmakingActor extends BasicActor
 
 object MatchmakingActor {
+
 
   case class JoinMatchmake()
 
@@ -56,24 +57,29 @@ class MatchmakingActorImpl(private val roomType: RoomType,
 
   def onWaitSocketResponse(replyTo: ActorRef): Receive = {
     case HttpSocketFail(code) =>
+      logger.debug("socket fail")
       replyTo ! Failure(new Exception(code.toString))
       context.become(receive)
 
     case HttpSocketSuccess(outRef) =>
+      logger.debug("socket success")
       outRef ! ProtocolMessage(JoinQueue)
       context.become(socketOpened(outRef, replyTo))
   }
 
   def onSocketOpened(outRef: ActorRef, replyTo: ActorRef): Receive = {
     case ProtocolMessage(MatchCreated, clientId, roomId) =>
+      logger.debug("match created")
       replyTo ! Success((clientId, roomId))
-    case LeaveMatchmake => outRef ! ProtocolMessage(LeaveQueue)
+    case LeaveMatchmake =>
+      outRef ! ProtocolMessage(LeaveQueue)
+      sender ! Success
   }
 
   private def handleErrors(replyTo: ActorRef): Receive = {
     case SocketError(ex) =>
+      logger.debug("socket error " + ex.toString)
       replyTo ! Failure(new Exception(ex.toString))
-      logger.debug("error " + ex.toString)
 
   }
 
@@ -81,7 +87,10 @@ class MatchmakingActorImpl(private val roomType: RoomType,
    * Keep the socket alive
    */
   private def heartbeatResponse(roomSocket: ActorRef): Receive = {
-    case ProtocolMessage(Ping, _, _) => roomSocket ! ProtocolMessage(Pong)
+    case ProtocolMessage(Ping, _, _) =>
+      roomSocket ! ProtocolMessage(Pong)
+      logger.debug("pong")
+
   }
 
 }
