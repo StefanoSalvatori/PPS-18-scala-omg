@@ -2,7 +2,7 @@ package client
 
 import akka.actor.ActorSystem
 import akka.pattern.ask
-import client.matchmake.ClientMatchmaker
+import client.matchmaking.ClientMatchmaker
 import client.room.{ClientRoom, JoinableRoom, JoinedRoom}
 import client.utils.MessageDictionary._
 import common.http.Routes
@@ -17,6 +17,9 @@ import scala.util.{Failure, Success, Try}
 
 sealed trait Client {
 
+  /**
+   * Handle matchmaking requests
+   */
   val matchmaker: ClientMatchmaker
 
   /**
@@ -114,7 +117,6 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
 
   override val matchmaker: ClientMatchmaker = ClientMatchmaker(coreClient, httpServerUri)
 
-
   override def joinedRooms(): Set[JoinedRoom] = {
     Await.result(coreClient ? GetJoinedRooms, 5 seconds).asInstanceOf[JoinedRooms].joinedRooms
   }
@@ -160,7 +162,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   override def reconnect(roomId: String, sessionId: String): Future[JoinedRoom] = {
     ifNotJoined(roomId, {
       val clientRoom = ClientRoom.createJoinable(coreClient, httpServerUri, roomId, Set())
-      clientRoom.joinWithSessionId(sessionId)
+      clientRoom.reconnect(sessionId)
     })
   }
 

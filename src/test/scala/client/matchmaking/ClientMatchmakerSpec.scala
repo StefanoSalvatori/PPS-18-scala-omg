@@ -46,7 +46,7 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
 
     //dummy matchmaking strategy that only consider one client
     def matchmakingStrategy: Matchmaker = {
-      case c1 ::  _ => Some(Map(c1 -> 0))
+      case c1 :: c2 :: _ => Some(Map(c1 -> 0, c2 -> 1))
       case _ => None
     }
 
@@ -68,12 +68,13 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
 
   override def afterAll(): Unit = TestKit.shutdownActorSystem(system)
 
-  /*"Client Matchmaker" should {
+  "Client Matchmaker" should {
     "join a match making queue for a given type" in {
+      this.matchmaker2.joinMatchmake(ExampleRooms.closableRoomWithStateType)
       val room = Await.result(this.matchmaker1.joinMatchmake(ExampleRooms.closableRoomWithStateType), DefaultTimeout)
       assert(room.isInstanceOf[JoinedRoom])
     }
-  }*/
+  }
 
 
 }

@@ -71,6 +71,7 @@ class MatchmakingActorImpl(private val roomType: RoomType,
     case ProtocolMessage(MatchCreated, clientId, roomId) =>
       logger.debug("match created")
       replyTo ! Success((clientId, roomId))
+
     case LeaveMatchmake =>
       outRef ! ProtocolMessage(LeaveQueue)
       sender ! Success

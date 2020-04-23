@@ -94,6 +94,8 @@ object MessageDictionary {
 
   case class SendJoin(sessionId: Option[String], password: RoomPassword)
 
+  case class SendReconnect(sessionId: Option[String], password: RoomPassword)
+
   case class SendLeave()
 
   case class SendStrictMessage(msg: SocketSerializable)
