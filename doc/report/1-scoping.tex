@@ -19,7 +19,7 @@ Hence, the library provides three main notions of:
 
 A room is something that clients can join and interact with.
 \\
-Rooms have a type and are distinguishable by an univocal id.
+Rooms have a type and are distinguishable by an univocal Id visible by clients.
 \\
 A room possesses a behavior and a state that embed the custom logic of the game. Obviously those vary from room to room, so the developer will be able to flexibly define its own type of room, namely a room that possesses its own state and behavior.
 
@@ -219,12 +219,13 @@ This feature is enabled once the client joined the room.
 \bigskip
 \textit{Reactive behavior}
 \\
-In the end, a client can specify a reactive behavior too. Possible events are:
+In the end, a client can specify a reactive behavior associated to room events too. Possible events are:
 \begin{itemize}
 \item \textbf{Receive message}: the client receives a message from the room.
 \item \textbf{State change}: the client is notified with the new public state of the world.
 \item \textbf{Close room}: the client is notified that the room has been closed.
-\end{itemize}  
+\end{itemize} 
+The feature is enabled once the client joined the room. 
 
 \section{Requirements formalization}
 
@@ -281,14 +282,13 @@ This is shown in UML use case diagram in figure \ref{fig:room-use_cases}.
 Functional requirements, i.e. capabilities that the system should provide, are expressed in table \ref{table:server-f-req} and \ref{table:client-f-req} for server and client respectively.
 
 \begin{center}
-\begin{longtable}{|c|c|} 
-  \caption{\textit{Functional requirements for server.}} \label{table:server-f-req} \\
+\begin{longtable}{|c|l|} 
+  \caption{\textit{Server functional requirements.}} \label{table:server-f-req} \\
   
-\hline
-\multicolumn{2}{|c|}{Server Functional Requirements}\\
 \hline
 ID   &  Specification \\
 \hline
+\multicolumn{2}{|c|}{} \\
 \hline
 1         & Create and handle game server \\
 2         & Launch game server on provided address and port \\
@@ -314,8 +314,9 @@ ID   &  Specification \\
 6.1.2.2.1 & Start room state periodic update (gameloop) \\
 6.1.2.2.2 & Stop room state periodic update (gameloop) \\
 6.1.2.2.3 & Resume room state periodic update (gameloop) \\
-6.2       & Define room properties \\
+6.2       & Define room properties\\
 6.2.1     & Public/private property should be given by default \\
+6.2.2     & Room property types could be int, string, boolean, double \\ 
 6.3       & Define room state \\
 6.4       & Define room type matchmaker \\
 6.5       & Ignore multiple room type definitions from second on \\
@@ -334,21 +335,28 @@ ID   &  Specification \\
 9         & Create room \\
 9.1       & Create public room \\
 9.2       & Create room with matchmaking \\
+9.2.1     & Room with matchmaking should define clients allowed to join \\
+9.3       & Rooms create be the server should contain no client at the beginning \\
 10        & Display room properties \\
 11        & Send messages to clients in a room \\
 11.1      & Send a message to one specific client (tell) \\
 11.2      & Send a same message to all clients in the room (broadcast) \\
 12        & Monitor client liveness \\
-12.1      & Heartbeat service \\
-12.2      & Inactive clients kicking on timeout \\
+12.1      & Heartbeat service (if activated) \\
+12.2      & Inactive clients kicking on timeout (if activated) \\
 13        & Deny join to room under certain circumstances \\
 13.1      & Deny join to private room if no correct password is provided \\
 13.2      & Deny join to a locked room \\
 13.3      & Deny join to closed room \\
 13.4      & Deny join to matchmaking room if not in expected players \\
 14        & Allow reconnection for clients to a room \\
-14.1      & Allow configurationofa reconnection period length \\
-14.2      & Deny reconnection to room if client din't previously join the room \\
+14.1      & Allow configuration of a reconnection period length \\
+14.2      & Fail reconnection to room under certain circumstances \\
+14.2.1    & Fail reconnection to room if client din't previously join the room \\
+14.2.2    & Fail reconnection to room if it took too long for the client to reconnect \\
+14.2.3    & Reconnection feature is disable by default \\
+14.2.3.1  & Allow reconnection timeout length configuration when enabling such feature \\
+14.3      & Reconnetion is not considered as a join event \\
 15        & Expose possibility to create rooms for clients \\
 15.1      & Expose possibility to create public rooms for clients \\
 15.2      & Expose possibility to create private rooms for clients \\
@@ -359,16 +367,58 @@ ID   &  Specification \\
 \end{center}
 
 \begin{center}
-\begin{longtable}{|c|c|} 
-  \caption{\textit{Functional requirements for client.}} \label{table:client-f-req} \\
+\begin{longtable}{|c|l|} 
+  \caption{\textit{Client functional requirements.}} \label{table:client-f-req} \\
  
-\hline
-\multicolumn{2}{|c|}{Client Functional Requirements}\\
 \hline
 ID   &  Specification \\
 \hline
+\multicolumn{2}{|c|}{} \\
 \hline
-
+1       & Display all rooms of a given type, private and public both \\
+1.1     & Locked rooms should not be displayed \\
+1.2     & Matchkaing room should not be displayed \\
+1.3     & Rooms can be filtered on their properties \\
+1.4     & Room Ids should be visible to clients \\
+1.3.1   & Allowed filter straegies are equal, not equal, grater, lower \\
+2       & Display all joined rooms, locked and with matchmaking too \\
+2       & Create a room \\
+2.1     & Create a public room \\
+2.2     & Create a private room \\
+2.3     & Fail on  create the room if its type is not already defined server side \\
+2.4     & Define starting room properties values \\
+2.4.1   & Ignore a given room property if such property is not defined in the room \\
+3       & Join room \\
+3.1     & Join without matchmaking \\
+3.1.1   & Random join to public room \\
+3.1.1.1 & Allow to specify filters on joinable rooms \\
+3.1.2   & Join by room Id \\
+3.1.2.1 & When joining by ID, give possibility to provide a password \\
+3.1.2.2 & When joining by ID, a provided password will be ignored if the room is public \\
+3.1.3   & Auto join a room when creating such room \\
+3.2     & Join with matchmaking \\
+3.2.1   & Join by Id is not allowed \\
+3.2.2   & Filters on rooms with mathcmaking is not allowed \\
+4       & Leave a room \\
+4.1     & Leaving a room is allowed only if such room has been previously joined \\
+5       & Reconnect to room \\
+6       & Visualize room properties \\
+6.1     & Visualize all properties in a room \\
+6.2     & Retrieve value of a single property \\
+6.2.1   & Notify error if the specified property does not exist \\
+7       & Send messages to a room \\
+7.1     & Sending messages to room is enabled once the client joined the room \\
+7.2     & When sending amessage to a room, no reply is expected \\
+8       & Define reactive behavior to room events \\
+8.1     & Define behavior on received message from the room \\
+8.2     & Define behavior on state update \\
+8.3     & Deifne behavior on room closing \\
+8.4     & Definition of reactive behavior is allowed once the client joined the room \\
+9       & Close a room \\
+11      & Change public/private state of a room \\
+11.1    & Make a public room private \\
+11.1.1  & When making a public room private, the provision of a password is mandatory \\ 
+11.2    & Make a private room public \\
 \hline
 
 \end{longtable}
