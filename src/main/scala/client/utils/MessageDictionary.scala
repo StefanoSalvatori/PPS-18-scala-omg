@@ -12,10 +12,9 @@ object MessageDictionary {
   //CoreClient
 
   trait CreateRoomMessage
-
   case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty]) extends CreateRoomMessage
-
   case class CreatePrivateRoom(roomType: RoomType, roomOption: Set[RoomProperty], password: RoomPassword) extends CreateRoomMessage
+
 
   case class GetAvailableRooms(roomType: RoomType, roomOption: FilterOptions)
 
@@ -60,10 +59,21 @@ object MessageDictionary {
    * @param parser messages received on the socket will be parsed with this parser before sending them to the
    *               receiver actor
    */
-  case class HttpSocketRequest[T](roomId: RoomId, parser: SocketSerializer[T])
+  case class HttpRoomSocketRequest[T](roomId: RoomId, parser: SocketSerializer[T])
 
   /**
-   * Successful response of an [[client.utils.MessageDictionary.HttpSocketRequest]].
+   * Perform a web socket request to open a connection with the server side matchmaking service.
+   * If the connection is successful respond with message [[client.utils.MessageDictionary.HttpSocketSuccess]]
+   * otherwise [[client.utils.MessageDictionary.HttpSocketFail]]
+   *
+   * @param roomType id of the room to connect to
+   * @param parser messages received on the socket will be parsed with this parser before sending them to the
+   *               receiver actor
+   */
+  case class HttpMatchmakingSocketRequest[T](roomType: RoomType, parser: SocketSerializer[T])
+
+  /**
+   * Successful response of an [[client.utils.MessageDictionary.HttpRoomSocketRequest]].
    * Contains an actor ref.
    *
    * @param outRef Sending messages to this actor means sending them in the socket
@@ -71,7 +81,7 @@ object MessageDictionary {
   case class HttpSocketSuccess(outRef: ActorRef)
 
   /**
-   * Failure response of an [[HttpSocketRequest]].
+   * Failure response of an [[HttpRoomSocketRequest]].
    *
    * @param cause what caused the failure
    */
@@ -83,6 +93,8 @@ object MessageDictionary {
   case class ClientRoomResponse(clientRoom: JoinedRoom)
 
   case class SendJoin(sessionId: Option[String], password: RoomPassword)
+
+  case class SendReconnect(sessionId: Option[String], password: RoomPassword)
 
   case class SendLeave()
 

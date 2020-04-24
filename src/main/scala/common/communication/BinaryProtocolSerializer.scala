@@ -38,10 +38,6 @@ case class BinaryProtocolSerializer(implicit val materializer: Materializer) ext
     BinaryMessage.Strict(ByteString(SerializationUtils.serialize(msg)))
 
 
-  private def parseIgnoreStream(bm: BinaryMessage.Streamed): Unit = {
-    bm.dataStream.runWith(Sink.ignore)
-  }
-
   private def parseBinaryMessage(msg: ByteString): Future[ProtocolMessage] = {
     try {
       Future.successful(SerializationUtils.deserialize(msg.toArray).asInstanceOf[ProtocolMessage])

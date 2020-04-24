@@ -1,12 +1,14 @@
 package server.matchmaking
 
 import akka.actor.{Actor, Props}
-import common.communication.CommunicationProtocol.ProtocolMessage
+import com.typesafe.scalalogging.LazyLogging
+import common.communication.CommunicationProtocol.{MatchmakingInfo, ProtocolMessage}
+import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.room.Room.RoomType
 import server.RoomHandler
 import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue, MatchmakingStrategy}
 import server.room.Client
-import common.communication.CommunicationProtocol.ProtocolMessageType._
+
 
 object MatchmakingService {
   type MatchmakingStrategy = Map[Client, Any] => Option[Map[Client, Int]]
@@ -48,7 +50,7 @@ class MatchmakingService(private val matchmakingStrategy: MatchmakingStrategy,
   private def applyMatchmakingStrategy(): Unit = {
     this.matchmakingStrategy(this.clients).foreach(grouping => {
       val room = this.roomHandler.createRoom(roomType)
-      grouping.keys.foreach(c => c.send(ProtocolMessage(MatchCreated, c.id, room.roomId)))
+      grouping.keys.foreach(c => c.send(ProtocolMessage(MatchCreated, c.id, MatchmakingInfo(c.id, room.roomId))))
       this.clients = this.clients -- grouping.keys
     })
   }

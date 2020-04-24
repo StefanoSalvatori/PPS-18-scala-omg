@@ -4,7 +4,11 @@ import akka.actor.{ActorRef, Stash}
 import akka.util.Timeout
 import client.room.{ClientRoom, JoinedRoom}
 import client.utils.MessageDictionary._
-import common.room.{Room, RoomJsonSupport, RoomProperty, RoomPropertyValue}
+import common.communication.BinaryProtocolSerializer
+import common.communication.CommunicationProtocol.ProtocolMessage
+import common.room.Room.RoomType
+import common.room.{Room, RoomJsonSupport, RoomProperty}
+import common.communication.CommunicationProtocol.ProtocolMessageType._
 
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -18,6 +22,9 @@ object CoreClient {
 
   def apply(httpServerUri: String): Props = Props(classOf[CoreClientImpl], httpServerUri)
 }
+
+
+
 
 class CoreClientImpl(private val httpServerUri: String) extends CoreClient with RoomJsonSupport with Stash {
 

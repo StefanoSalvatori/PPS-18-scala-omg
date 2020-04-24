@@ -5,7 +5,7 @@ import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageSerializer, SessionId}
 import common.room.Room.RoomPassword
 import server.room.Client
-import server.room.RoomActor.{Join, Leave, Msg}
+import server.room.RoomActor.{Join, Leave, Msg, Reconnect}
 
 /**
  * Define a socket flow that parse incoming messages as RoomProtocolMessages and convert them to messages that are
@@ -30,6 +30,9 @@ case class RoomSocket(private val room: ActorRef,
     case ProtocolMessage(JoinRoom, sessionId, payload) =>
       this.client = Client.asActor(sessionId, this.clientActor)
       room ! Join(this.client, sessionId, payload.asInstanceOf[RoomPassword])
+    case ProtocolMessage(ReconnectRoom, sessionId, payload) =>
+      this.client = Client.asActor(sessionId, this.clientActor)
+      room ! Reconnect(this.client, sessionId, payload.asInstanceOf[RoomPassword])
     case ProtocolMessage(LeaveRoom, _, _) =>
       room ! Leave(this.client)
     case ProtocolMessage(MessageRoom, _, payload) =>

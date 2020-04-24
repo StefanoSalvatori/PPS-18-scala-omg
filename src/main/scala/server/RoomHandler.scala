@@ -84,17 +84,17 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     roomsByType.values.flatMap(_ keys).filter(roomOptionsFilter(filterOptions)).toSeq
   }
 
+
   override def createRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): SharedRoom = {
+    //synchronized because can be used concurrently by multiple matchmakers
     this.synchronized {
       this.handleRoomCreation(roomType, roomProperties)
     }
   }
 
   override def defineRoomType(roomTypeName: RoomType, roomFactory: () => ServerRoom): Unit = {
-    this.synchronized {
-      this.roomsByType = this.roomsByType + (roomTypeName -> Map.empty)
-      this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
-    }
+    this.roomsByType = this.roomsByType + (roomTypeName -> Map.empty)
+    this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
   }
 
   override def getRoomByTypeAndId(roomType: RoomType, roomId: RoomId): Option[SharedRoom] =
@@ -129,7 +129,6 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     val newRoom = this.roomTypesHandlers(roomType)()
     val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
     this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
-
     // Set room properties and password
     if (roomProperties.map(_ name) contains Room.roomPasswordPropertyName) {
       val splitProperties = roomProperties.groupBy(_.name == Room.roomPasswordPropertyName)

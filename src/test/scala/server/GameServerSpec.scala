@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, get, _}
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
@@ -44,9 +44,13 @@ class GameServerSpec extends AnyFlatSpec
       }
     }
 
-  private val server: GameServer = GameServer(Host, Port, AdditionalTestRoutes)
+  private var server: GameServer = GameServer(Host, Port, AdditionalTestRoutes)
 
   behavior of "Game Server facade"
+
+  before {
+    this.server =  GameServer(Host, Port, AdditionalTestRoutes)
+  }
 
 
   after {
@@ -170,9 +174,8 @@ class GameServerSpec extends AnyFlatSpec
     val roomsList = Await.result(Unmarshal(httpResult).to[Seq[SharedRoom]], MaxWaitRequests)
     roomsList should have size 1
     Await.result(this.server.stop(), ServerShutdownAwaitTime)
-
-
   }
+
 
 
   private def makeEmptyRequest(): Future[HttpResponse] = {
