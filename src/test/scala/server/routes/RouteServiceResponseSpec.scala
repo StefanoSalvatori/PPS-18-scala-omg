@@ -10,6 +10,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import server.RoomHandler
+import server.matchmaking.MatchmakingHandler
 import server.room.ServerRoom
 import server.route_service.RouteService
 
@@ -22,16 +23,18 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers
   with BeforeAndAfter {
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
-  private var routeService = RouteService(RoomHandler())
+  private var roomHandler = RoomHandler()
+  private var routeService = RouteService(roomHandler, MatchmakingHandler(roomHandler))
   private var route = routeService.route
 
   behavior of "Route Service routing with room handling"
 
   before {
-    routeService = RouteService(RoomHandler())
+    roomHandler = RoomHandler()
+    routeService = RouteService(roomHandler, MatchmakingHandler(roomHandler))
     route = routeService.route
 
-    //define two room type for test
+    //define room type for test
     routeService.addRouteForRoomType(TestRoomType, () => ServerRoom())
   }
 

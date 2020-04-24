@@ -1,12 +1,12 @@
 package client.room
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
-import client.utils.MessageDictionary.SendJoin
+import client.utils.MessageDictionary.{SendJoin, SendReconnect}
 import common.room.{Room, RoomProperty}
 import common.room.Room.{RoomId, RoomPassword}
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 import akka.pattern.ask
 import common.communication.CommunicationProtocol.SessionId
 
@@ -27,6 +27,13 @@ trait JoinableRoom extends ClientRoom {
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
   def joinWithSessionId(sessionId: SessionId, password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom]
+
+  /**
+   * Open web socket with server room and try to reconnect to the room
+   *
+   * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
+   */
+  def reconnect(sessionId: SessionId, password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom]
 }
 
 object JoinableRoom {
@@ -40,10 +47,10 @@ object JoinableRoom {
 }
 
 private class JoinableRoomImpl(override val roomId: RoomId,
-                       private val coreClient: ActorRef,
-                       private val httpServerUri: String,
-                       override val properties: Set[RoomProperty])
-                      (override implicit val system: ActorSystem)
+                               private val coreClient: ActorRef,
+                               private val httpServerUri: String,
+                               override val properties: Set[RoomProperty])
+                              (override implicit val system: ActorSystem)
   extends ClientRoomImpl(roomId, properties) with JoinableRoom {
 
   private var innerActor: Option[ActorRef] = None
@@ -57,9 +64,25 @@ private class JoinableRoomImpl(override val roomId: RoomId,
     this.joinFuture(Some(sessionId), password)
   }
 
+  override def reconnect(sessionId: SessionId, password: RoomPassword): Future[JoinedRoom] = {
+    reconnectFuture(Some(sessionId), password)
+  }
+
+
+
   private def joinFuture(sessionId: Option[SessionId], password: RoomPassword): Future[JoinedRoom] = {
+    this.spawnAndAskActor(_ ? SendJoin(sessionId, password), sessionId, password)
+
+  }
+
+  private def reconnectFuture(sessionId: Option[SessionId], password: RoomPassword): Future[JoinedRoom] = {
+    this.spawnAndAskActor(_ ? SendReconnect(sessionId, password), sessionId, password)
+  }
+
+  private def spawnAndAskActor(ask: ActorRef => Future[Any],
+                       sessionId: Option[SessionId], password: RoomPassword): Future[JoinedRoom] = {
     val ref = this.spawnInnerActor()
-    (ref ? SendJoin(sessionId, password)) flatMap {
+    ask(ref) flatMap {
       case Success(response) =>
         Future.successful(response.asInstanceOf[JoinedRoom])
       case Failure(ex) =>

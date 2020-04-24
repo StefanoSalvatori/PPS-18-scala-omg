@@ -1,5 +1,7 @@
 package common.http
 
+import common.room.Room.{RoomId, RoomType}
+
 object Routes {
 
   def rooms: String = "rooms"
@@ -14,9 +16,9 @@ object Routes {
    */
   def matchmakeRoute: String = "matchmake"
 
-  def roomsByType(roomType: String): String = rooms + "/" + roomType
+  def roomsByType(roomType: RoomType): String = rooms + "/" + roomType
 
-  def roomByTypeAndId(roomType: String, roomId: String): String = roomsByType(roomType) + "/" + roomId
+  def roomByTypeAndId(roomType: RoomType, roomId: RoomId): String = roomsByType(roomType) + "/" + roomId
 
   def httpUri(address: String, port: Int): String = "http://" + address + ":" + port
 
@@ -25,12 +27,16 @@ object Routes {
   def wsUri(httpUri: String): String = httpUri.replace("http", "ws")
 
   /**
-   * Route for web socket connection to a room
-   *
    * @param roomId room id
-   * @return
+   * @return route for web socket connection to a room
    */
-  def webSocketConnection(roomId: String): String = connectionRoute + "/" + roomId
+  def roomSocketConnection(roomId: RoomId): String = connectionRoute + "/" + roomId
+
+  /**
+   * @param roomType room type
+   * @return route for web socket connection to the matchmaking service
+   */
+  def matchmakingSocketConnection(roomType: RoomType): String = matchmakeRoute + "/" + roomType
 }
 
 

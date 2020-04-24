@@ -1,4 +1,4 @@
-package server
+package server.matchmaking
 
 import java.util.UUID
 
@@ -6,12 +6,12 @@ import akka.actor.{ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import common.TestConfig
-import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType}
-import common.room.Room.RoomId
+import common.communication.CommunicationProtocol.ProtocolMessageType._
+import common.communication.CommunicationProtocol.{MatchmakingInfo, ProtocolMessage}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.matchmaking.MatchmakingService
+import server.RoomHandler
 import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue, MatchmakingStrategy}
 import server.utils.{ExampleRooms, TestClient}
 
@@ -99,10 +99,10 @@ class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigF
     }
   }
 
-  private def receivedMatchCreatedMessage(client: TestClient): Boolean = {
+  private def receivedMatchCreatedMessage(client: TestClient) = {
     client.allMessagesReceived.collect({
-      case msg@ProtocolMessage(ProtocolMessageType.MatchCreated, id, room: RoomId)
-        if id == client.id && room.nonEmpty => msg
+      case msg@ProtocolMessage(MatchCreated, id, ticket: MatchmakingInfo)
+        if id == client.id && ticket.roomId.nonEmpty => msg
     }).nonEmpty
 
   }

@@ -77,7 +77,7 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       room.allowReconnection(testClient, 5000) //scalastyle:ignore magic.number
       val fakeClient = makeClient(res.sessionId)
 
-      roomActor ! Join(fakeClient, fakeClient.id, Room.defaultPublicPassword)
+      roomActor ! Reconnect(fakeClient, fakeClient.id, Room.defaultPublicPassword)
       val reconnectResponse = expectMsgType[ProtocolMessage]
       reconnectResponse.messageType shouldBe JoinOk
       assert(room.connectedClients.contains(testClient))
@@ -92,7 +92,7 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       //do not allow reconnection
       val fakeClient = makeClient(res.sessionId)
 
-      roomActor ! Join(fakeClient, fakeClient.id, Room.defaultPublicPassword)
+      roomActor ! Reconnect(fakeClient, fakeClient.id, Room.defaultPublicPassword)
       val reconnectResponse = expectMsgType[ProtocolMessage]
       reconnectResponse.messageType shouldBe ClientNotAuthorized
     }
