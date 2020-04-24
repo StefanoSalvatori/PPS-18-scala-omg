@@ -7,13 +7,13 @@ object Group {
   type GroupId = Int // Must be serializable
 }
 
-trait Matchmaker {
+trait Matchmaker[T] {
   /**
    * It tries to create a fair group of clients from the waiting ones.
    * @return An optional containing each chosen client and its assigned group; If the group could not be created it
    *         returns an empty optional
    */
-  def createFairGroup(waitingClients: Map[Client, Any]): Option[Map[Client, GroupId]]
+  def createFairGroup(waitingClients: Map[Client, T]): Option[Map[Client, GroupId]]
 }
 
 object Matchmaker {
@@ -23,10 +23,10 @@ object Matchmaker {
    * @param groups metadata of groups having, for each group, the group Id and its size
    * @return A matchmaker that handles such matchmaking strategy
    */
-  def defaultMatchmaker(groups: Map[GroupId, Int]): Matchmaker = DefaultMatchmaker(groups)
+  def defaultMatchmaker(groups: Map[GroupId, Int]): Matchmaker[Any] = DefaultMatchmaker(groups)
 }
 
-private case class DefaultMatchmaker(groupsMetadata: Map[GroupId, Int]) extends Matchmaker {
+private case class DefaultMatchmaker(groupsMetadata: Map[GroupId, Int]) extends Matchmaker[Any] {
 
   override def createFairGroup(waitingClients: Map[Client, Any]): Option[Map[Client, GroupId]] =
     if (waitingClients.size >= groupsMetadata.values.sum) {

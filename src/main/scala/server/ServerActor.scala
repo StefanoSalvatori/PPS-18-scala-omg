@@ -26,8 +26,8 @@ object ServerActor {
   case class StartServer(host: String, port: Int) extends Command
   case object StopServer extends Command
   case class AddRoute(routeName: String, room: () => ServerRoom) extends Command
-  case class AddRouteForMatchmaking(routeName: String, room: () => ServerRoom,
-                                    matchmaker: Matchmaker) extends Command
+  case class AddRouteForMatchmaking[T](routeName: String, room: () => ServerRoom,
+                                    matchmaker: Matchmaker[T]) extends Command
 
   case class CreateRoom(roomType: RoomType, properties: Set[RoomProperty] = Set.empty)
 

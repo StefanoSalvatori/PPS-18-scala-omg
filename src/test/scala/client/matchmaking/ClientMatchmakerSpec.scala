@@ -50,13 +50,13 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
     gameServer = GameServer(serverAddress, serverPort)
 
     //dummy matchmaking strategy that only consider one client
-    def matchmaker: Matchmaker = map => map.toList match {
+    def matchmaker[T]: Matchmaker[T] = map => map.toList match {
       case c1 :: c2 :: _ => Some(Map(c1._1 -> 0, c2._1 -> 1))
       case _ => None
     }
 
     //matchmaking strategy that match client that have the same info
-    def matchmakingEqualStrategy: Matchmaker = map => map.toList match {
+    def matchmakingEqualStrategy[T]: Matchmaker[T] = map => map.toList match {
       case (c1, c1Info) :: (c2, c2Info) :: _ if c1Info.equals(c2Info) => Some(Map(c1 -> 0, c2 -> 1))
       case _ => None
     }

@@ -8,7 +8,7 @@ import server.utils.TestClient
 class MatchmakerSpec extends AnyFlatSpec
   with Matchers {
 
-  private var matchmaker: Matchmaker = _
+  private var matchmaker: Matchmaker[Any] = _
   private var clients: Map[Client, Any] = _
 
   behavior of "default matchmaker"

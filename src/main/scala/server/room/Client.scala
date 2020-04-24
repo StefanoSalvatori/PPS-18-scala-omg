@@ -25,6 +25,8 @@ object Client {
    * @return the client instance
    */
   def asActor(id: String, actor: ActorRef): Client = new ClientImpl(id, actor)
+
+  def mock(id: String = ""): Client = MockClient(id)
 }
 
 /**
@@ -36,4 +38,8 @@ object Client {
 
 private class ClientImpl(override val id: String, private val clientActor: ActorRef) extends Client {
   override def send[T](msg: T): Unit = this.clientActor ! msg
+}
+
+private case class MockClient(override val id: String) extends Client {
+  override def send[T](msg: T): Unit = {}
 }

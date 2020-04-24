@@ -26,14 +26,14 @@ class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigF
 
   import akka.testkit.TestActorRef
 
-  private var matchmakingServiceActor: TestActorRef[MatchmakingService] = _
-  private var matchmakingServiceState: MatchmakingService = _
+  private var matchmakingServiceActor: TestActorRef[MatchmakingService[_]] = _
+  private var matchmakingServiceState: MatchmakingService[_] = _
   private var roomHandler: RoomHandler = _
   private var client1: TestClient = _
   private var client2: TestClient = _
 
   //dummy matchmaking strategy that only pairs two clients
-  private def matchmakingStrategy: Matchmaker =
+  private def matchmakingStrategy[T]: Matchmaker[T] =
     map => map.toList match {
       case c1 :: c2 :: _ => Some(Map(c1._1 -> 0, c2._1 -> 1))
       case _ => None

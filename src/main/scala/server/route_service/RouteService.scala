@@ -30,12 +30,12 @@ trait RouteService {
    *
    * @param roomTypeName room type name used as the route name
    */
-  def addRouteForMatchmaking(roomTypeName: String, roomFactory: () => ServerRoom, matchmaker: Matchmaker)
+  def addRouteForMatchmaking[T](roomTypeName: String, roomFactory: () => ServerRoom, matchmaker: Matchmaker[T])
 }
 
 object RouteService {
-  def apply(roomHandler: RoomHandler, matchmakeHandler: MatchmakingHandler): RouteService =
-    new RouteServiceImpl(roomHandler, matchmakeHandler)
+  def apply(roomHandler: RoomHandler, matchmakerHandler: MatchmakingHandler): RouteService =
+    new RouteServiceImpl(roomHandler, matchmakerHandler)
 
 }
 
@@ -57,8 +57,8 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
     this.roomHandler.defineRoomType(roomTypeName, roomFactory)
   }
 
-  override def addRouteForMatchmaking(roomTypeName: RoomType, roomFactory: () => ServerRoom,
-                                      matchmaker: Matchmaker): Unit = {
+  override def addRouteForMatchmaking[T](roomTypeName: RoomType, roomFactory: () => ServerRoom,
+                                      matchmaker: Matchmaker[T]): Unit = {
     this.matchmakingTypesRoutes = this.matchmakingTypesRoutes + roomTypeName
     this.matchmakingHandler.defineMatchmaker(roomTypeName, matchmaker)
 

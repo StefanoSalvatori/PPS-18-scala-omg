@@ -67,8 +67,8 @@ trait GameServer {
   /**
    * Define a type of room that enable matchmaking functions
    */
-  def defineRoomWithMatchmaking(roomTypeName: String, roomFactory: () => ServerRoom,
-                                matchmaker: Matchmaker)
+  def defineRoomWithMatchmaking[T](roomTypeName: String, roomFactory: () => ServerRoom,
+                                matchmaker: Matchmaker[T])
 
 
   /**
@@ -159,9 +159,9 @@ private class GameServerImpl(override val host: String,
   override def defineRoom(roomTypeName: String, roomFactory: () => ServerRoom): Unit =
     Await.ready(serverActor ? AddRoute(roomTypeName, roomFactory), ActorRequestTimeout.duration)
 
-  override def defineRoomWithMatchmaking(roomTypeName: String,
+  override def defineRoomWithMatchmaking[T](roomTypeName: String,
                                          roomFactory: () => ServerRoom,
-                                         matchmaker: Matchmaker): Unit =
+                                         matchmaker: Matchmaker[T]): Unit =
     Await.ready(serverActor ? AddRouteForMatchmaking(roomTypeName, roomFactory, matchmaker), ActorRequestTimeout.duration)
 
 
