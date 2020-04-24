@@ -1,14 +1,12 @@
 package client.examples
 
-import server.matchmaking.{DefaultMatchMakingStrategy, MatchMakingStrategy}
+import server.matchmaking.Matchmaker
 
 object Prova extends App {
 
-  private val m = DefaultMatchMakingStrategy(Map(1 -> 1, 2 -> 2, 3 -> 1))
+  private val m = Matchmaker defaultMatchmaker Map(1 -> 1, 2 -> 2, 3 -> 1)
 
-  var clients = Map[server.room.Client, Any]()
-  for (i <- 0 until 10) clients = clients + (server.room.Client.empty(s"$i") -> 0)
+  var clients = (0 until 10).map(i => server.room.Client.placeholder(s"$i") -> 0).toMap
 
-
-  println(m.createFairGroupStrategy(clients))
+  println(m createFairGroup clients)
 }

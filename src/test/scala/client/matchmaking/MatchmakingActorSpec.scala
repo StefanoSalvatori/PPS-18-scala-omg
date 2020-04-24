@@ -11,7 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
-import server.matchmaking.MatchmakingService.MatchmakingStrategy
+import server.matchmaking.Matchmaker
 import server.utils.ExampleRooms
 
 import scala.concurrent.{Await, ExecutionContext}
@@ -44,7 +44,7 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
     gameServer = GameServer(serverAddress, serverPort)
 
     //dummy matchmaking strategy that only pairs two clients
-    def matchmakingStrategy: MatchmakingStrategy = map => map.toList match {
+    def matchmaker: Matchmaker = map => map.toList match {
       case c1 :: c2 :: _ => Some(Map(c1._1 -> 0, c2._1 -> 1))
       case _ => None
     }
@@ -52,7 +52,7 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
     gameServer.defineRoomWithMatchmaking(
       ExampleRooms.closableRoomWithStateType,
       () => ExampleRooms.ClosableRoomWithState(),
-      matchmakingStrategy)
+      matchmaker)
     Await.ready(gameServer.start(), DefaultDuration)
   }
 

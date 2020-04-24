@@ -12,7 +12,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
-import server.matchmaking.MatchmakingService.MatchmakingStrategy
+import server.matchmaking.Matchmaker
 import server.room.ServerRoom
 
 import scala.concurrent.duration.{Duration, _}
@@ -50,19 +50,19 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
     gameServer = GameServer(serverAddress, serverPort)
 
     //dummy matchmaking strategy that only consider one client
-    def matchmakingStrategy: MatchmakingStrategy = map => map.toList match {
+    def matchmaker: Matchmaker = map => map.toList match {
       case c1 :: c2 :: _ => Some(Map(c1._1 -> 0, c2._1 -> 1))
       case _ => None
     }
 
     //matchmaking strategy that match client that have the same info
-    def matchmakingEqualStrategy: MatchmakingStrategy = map => map.toList match {
+    def matchmakingEqualStrategy: Matchmaker = map => map.toList match {
       case (c1, c1Info) :: (c2, c2Info) :: _ if c1Info.equals(c2Info) => Some(Map(c1 -> 0, c2 -> 1))
       case _ => None
     }
 
-    gameServer.defineRoomWithMatchmaking(RoomType1,  () => ServerRoom(),  matchmakingStrategy)
-    gameServer.defineRoomWithMatchmaking(RoomType2,  () => ServerRoom(), matchmakingStrategy)
+    gameServer.defineRoomWithMatchmaking(RoomType1,  () => ServerRoom(),  matchmaker)
+    gameServer.defineRoomWithMatchmaking(RoomType2,  () => ServerRoom(), matchmaker)
     gameServer.defineRoomWithMatchmaking(RoomType3, () => ServerRoom(), matchmakingEqualStrategy)
 
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)

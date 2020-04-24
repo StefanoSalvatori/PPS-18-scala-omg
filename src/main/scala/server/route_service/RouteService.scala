@@ -1,16 +1,13 @@
 package server.route_service
 
-import akka.actor.ActorRef
 import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.server.Route
-import akka.stream.scaladsl.Flow
 import com.typesafe.scalalogging.LazyLogging
 import common.http.Routes
 import common.room.Room.{RoomId, RoomType}
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import server.RoomHandler
-import server.matchmaking.{MatchmakingHandler, MatchmakingService}
-import server.matchmaking.MatchmakingService.{MatchmakingStrategy}
+import server.matchmaking.{Matchmaker, MatchmakingHandler}
 import server.room.ServerRoom
 
 trait RouteService {
@@ -33,7 +30,7 @@ trait RouteService {
    *
    * @param roomTypeName room type name used as the route name
    */
-  def addRouteForMatchmaking(roomTypeName: String, roomFactory: () => ServerRoom, matchmaker: MatchmakingStrategy)
+  def addRouteForMatchmaking(roomTypeName: String, roomFactory: () => ServerRoom, matchmaker: Matchmaker)
 }
 
 object RouteService {
@@ -61,7 +58,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
   }
 
   override def addRouteForMatchmaking(roomTypeName: RoomType, roomFactory: () => ServerRoom,
-                                      matchmaker: MatchmakingStrategy): Unit = {
+                                      matchmaker: Matchmaker): Unit = {
     this.matchmakingTypesRoutes = this.matchmakingTypesRoutes + roomTypeName
     this.matchmakingHandler.defineMatchmaker(roomTypeName, matchmaker)
 

@@ -26,7 +26,12 @@ object Client {
    */
   def asActor(id: String, actor: ActorRef): Client = new ClientImpl(id, actor)
 
-  def empty(id: String = ""): Client = EmptyClient(id)
+  /**
+   * It creates a mock client that can't send any message.
+   * @param id The client id or an empty one if it's not specified
+   * @return The mocked client
+   */
+  def placeholder(id: String = ""): Client = EmptyClient(id)
 }
 
 /**

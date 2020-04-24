@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import common.room.RoomProperty
-import server.matchmaking.MatchmakingService.MatchmakingStrategy
+import server.matchmaking.Matchmaker
 import server.room.ServerRoom
 
 import scala.concurrent.duration._
@@ -68,7 +68,7 @@ trait GameServer {
    * Define a type of room that enable matchmaking functions
    */
   def defineRoomWithMatchmaking(roomTypeName: String, roomFactory: () => ServerRoom,
-                                matchmaker: MatchmakingStrategy)
+                                matchmaker: Matchmaker)
 
 
   /**
@@ -161,7 +161,7 @@ private class GameServerImpl(override val host: String,
 
   override def defineRoomWithMatchmaking(roomTypeName: String,
                                          roomFactory: () => ServerRoom,
-                                         matchmaker: MatchmakingStrategy): Unit =
+                                         matchmaker: Matchmaker): Unit =
     Await.ready(serverActor ? AddRouteForMatchmaking(roomTypeName, roomFactory, matchmaker), ActorRequestTimeout.duration)
 
 
