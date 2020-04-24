@@ -29,12 +29,12 @@ object Matchmaker {
 private case class DefaultMatchmaker(groupsMetadata: Map[GroupId, Int]) extends Matchmaker {
 
   override def createFairGroup(waitingClients: Map[Client, Any]): Option[Map[Client, GroupId]] =
-    if (waitingClients.size > groupsMetadata.keys.sum) {
+    if (waitingClients.size >= groupsMetadata.values.sum) {
       val clientIterator = waitingClients.keys.iterator
       val groups = groupsMetadata
         .toSeq
-        .flatMap(group => Seq.fill(group._2)((group._1, Client.placeholder()))) // Create a list of available slots
-        .map(slot => (clientIterator.next, slot._1)) // Fill each slot with a waiting client
+        .flatMap(group => Seq.fill(group._2)(group._1)) // Create a list of available slots
+        .map(slot => (clientIterator.next, slot)) // Fill each slot with a waiting client
         .toMap
       Option(groups)
     } else {

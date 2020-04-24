@@ -25,13 +25,6 @@ object Client {
    * @return the client instance
    */
   def asActor(id: String, actor: ActorRef): Client = new ClientImpl(id, actor)
-
-  /**
-   * It creates a mock client that can't send any message.
-   * @param id The client id or an empty one if it's not specified
-   * @return The mocked client
-   */
-  def placeholder(id: String = ""): Client = EmptyClient(id)
 }
 
 /**
@@ -43,8 +36,4 @@ object Client {
 
 private class ClientImpl(override val id: String, private val clientActor: ActorRef) extends Client {
   override def send[T](msg: T): Unit = this.clientActor ! msg
-}
-
-private case class EmptyClient(override val id: String) extends Client {
-  override def send[T](msg: T): Unit = { }
 }
