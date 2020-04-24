@@ -26,6 +26,11 @@ object Client {
    */
   def asActor(id: String, actor: ActorRef): Client = new ClientImpl(id, actor)
 
+  /**
+   * It creates a mocked client that can't send any message
+   * @param id the id of the client; if not provided it will have an empty one
+   * @return the client instance
+   */
   def mock(id: String = ""): Client = MockClient(id)
 }
 
