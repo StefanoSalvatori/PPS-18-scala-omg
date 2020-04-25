@@ -36,8 +36,8 @@ object CustomMatchmaker extends App {
   case class MyClientInfo(ranking: Int, gender: Gender)
 
   val clients =
-    (0 until 10).map(i => Client.mock(s"$i") -> MyClientInfo(i, if(Math.random() < 0.5) Male else Female)).toMap
+    (0 until 10).map(i => Client.mock(s"$i") -> MyClientInfo(i, if (Math.random() < 0.5) Male else Female)).toMap
   val matchmaker = MyMatchmaker()
   val group = matchmaker createFairGroup clients
-  println("Found group (if possible): " + group)
+  println("Found grouping (if possible): " + group)
 }

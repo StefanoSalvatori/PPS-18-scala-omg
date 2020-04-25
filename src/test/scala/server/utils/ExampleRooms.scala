@@ -203,4 +203,18 @@ object ExampleRooms {
   }
 
   val roomWithProperty2Type = "roomWithProperty2"
+
+  // ___________________________________________________________________
+
+  case class LockedRoom() extends ServerRoom {
+
+    override def onCreate(): Unit = {}
+    override def onClose(): Unit = {}
+    override def onJoin(client: Client): Unit = {}
+    override def onLeave(client: Client): Unit = {}
+    override def onMessageReceived(client: Client, message: Any): Unit = {}
+    override def isLocked: Boolean = true
+  }
+
+  val lockedRoomType = "lockedRoom"
 }

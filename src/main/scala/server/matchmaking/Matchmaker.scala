@@ -7,6 +7,10 @@ object Group {
   type GroupId = Int // Must be serializable
 }
 
+/**
+ * A matchmaker that can create fair group of clients using a certain logic.
+ * @tparam T the type of the client info
+ */
 trait Matchmaker[T] {
   /**
    * It tries to create a fair group of clients from the waiting ones.

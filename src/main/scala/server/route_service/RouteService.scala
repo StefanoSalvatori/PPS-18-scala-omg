@@ -121,7 +121,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
   private def getAllRoomsRoute: Route =
     get {
       entity(as[FilterOptions]) { filterOptions =>
-        val rooms = this.roomHandler.getAvailableRooms(filterOptions)
+        val rooms = this.roomHandler.availableRooms(filterOptions)
         complete(rooms)
       }
     }
@@ -132,7 +132,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
   private def getRoomsByTypeRoute(roomType: RoomType): Route =
     get {
       entity(as[FilterOptions]) { filterOptions =>
-        val rooms = this.roomHandler.getRoomsByType(roomType, filterOptions)
+        val rooms = this.roomHandler.roomsByType(roomType, filterOptions)
         complete(rooms)
       }
     }
@@ -153,7 +153,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
    */
   private def getRoomByTypeAndId(roomType: RoomType, roomId: RoomId): Route =
     get {
-      this.roomHandler.getRoomByTypeAndId(roomType, roomId) match {
+      this.roomHandler.roomByTypeAndId(roomType, roomId) match {
         case Some(room) => complete(room)
         case None => reject
       }

@@ -7,22 +7,13 @@ import common.communication.BinaryProtocolSerializer
 import common.room.Room.{RoomId, RoomPassword, RoomType, SharedRoom}
 import common.room.{FilterOptions, NoSuchPropertyException, Room, RoomProperty, RoomPropertyValue}
 import server.communication.RoomSocket
-import server.room.{RoomActor, ServerRoom}
+import server.matchmaking.Group.GroupId
+import server.room.{Client, RoomActor, ServerRoom}
 
 trait RoomHandler {
 
   /**
-   * Return all available rooms filterd by the given filter options
-   *
-   * @param filterOptions
-   * The filters to be applied. Empty if no specified
-   * @return
-   * A set of rooms that satisfy the filters
-   */
-  def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom]
-
-  /**
-   * Create a new room of specific type with properties
+   * Create a new room of specific type with properties.
    *
    * @param roomType       room type
    * @param roomProperties room properties
@@ -31,20 +22,38 @@ trait RoomHandler {
   def createRoom(roomType: RoomType, roomProperties: Set[RoomProperty] = Set.empty): SharedRoom
 
   /**
-   * All available rooms filtered by type
-   *
-   * @param roomType rooms type
-   * @return the list of rooms of given type
+   * Create a new room of specified type with enabled matchmaking.
+   * @param roomType room type
+   * @param matchmakingGroups client groups to use
+   * @return the created room
    */
-  def getRoomsByType(roomType: RoomType, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom]
+  def createRoomWithMatchmaking(roomType: RoomType, matchmakingGroups: Map[Client, GroupId]): SharedRoom
 
   /**
-   * Get specific room with type and id
+   * All available rooms filtered by type.
    *
    * @param roomType rooms type
    * @return the list of rooms of given type
    */
-  def getRoomByTypeAndId(roomType: RoomType, roomId: RoomId): Option[SharedRoom]
+  def roomsByType(roomType: RoomType, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom]
+
+  /**
+   * Return all available rooms filtered by the given filter options.
+   *
+   * @param filterOptions
+   * The filters to be applied. Empty if no specified
+   * @return
+   * A set of rooms that satisfy the filters
+   */
+  def availableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom]
+
+  /**
+   * Get specific room with type and id.
+   *
+   * @param roomType rooms type
+   * @return the list of rooms of given type
+   */
+  def roomByTypeAndId(roomType: RoomType, roomId: RoomId): Option[SharedRoom]
 
   /**
    * Define a new room type that will be used in room creation.
@@ -55,7 +64,7 @@ trait RoomHandler {
   def defineRoomType(roomType: RoomType, roomFactory: () => ServerRoom): Unit
 
   /**
-   * Remove the room with the id in input
+   * Remove the room with the id in input.
    *
    * @param roomId the id of the room to remove
    */
@@ -78,58 +87,16 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
 
   private var roomTypesHandlers: Map[RoomType, () => ServerRoom] = Map.empty
 
-  private var roomsByType: Map[RoomType, Map[ServerRoom, ActorRef]] = Map.empty
-
-  override def getAvailableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
-    roomsByType.values.flatMap(_ keys).filter(roomOptionsFilter(filterOptions)).toSeq
-  }
-
+  private var _roomsByType: Map[RoomType, Map[ServerRoom, ActorRef]] = Map.empty
+  private var _roomsWithMatchmakingByType: Map[RoomType, Map[ServerRoom, ActorRef]] = Map.empty
 
   override def createRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): SharedRoom = {
-    //synchronized because can be used concurrently by multiple matchmakers
-    this.synchronized {
-      this.handleRoomCreation(roomType, roomProperties)
-    }
-  }
-
-  override def defineRoomType(roomTypeName: RoomType, roomFactory: () => ServerRoom): Unit = {
-    this.roomsByType = this.roomsByType + (roomTypeName -> Map.empty)
-    this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
-  }
-
-  override def getRoomByTypeAndId(roomType: RoomType, roomId: RoomId): Option[SharedRoom] =
-    this.getRoomsByType(roomType).find(_.roomId == roomId)
-
-  override def handleClientConnection(roomId: RoomId): Option[Flow[Message, Message, Any]] = {
-    this.roomsByType
-      .flatMap(_._2)
-      .find(_._1.roomId == roomId)
-      .map(room => RoomSocket(room._2, BinaryProtocolSerializer(), room._1.socketConfigurations).open())
-  }
-
-  override def getRoomsByType(roomType: RoomType, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] = {
-    this.roomsByType.get(roomType) match {
-      case Some(value) => value.keys.filter(roomOptionsFilter(filterOptions)).toSeq
-      case None => Seq.empty
-    }
-  }
-
-  override def removeRoom(roomId: RoomId): Unit = {
-    this.roomsByType find (_._2.keys.map(_.roomId) exists (_ == roomId)) foreach (entry => {
-      val room = entry._2.find(_._1.roomId == roomId)
-      room foreach { r =>
-        this.roomsByType = this.roomsByType.updated(entry._1, entry._2 - r._1)
-      }
-    })
-  }
-
-  private def handleRoomCreation(roomType: RoomType, roomProperties: Set[RoomProperty]): SharedRoom = {
-    // Create room and room actor
-    val roomMap = this.roomsByType(roomType)
-    val newRoom = this.roomTypesHandlers(roomType)()
+    val newRoom = roomTypesHandlers(roomType)()
     val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
-    this.roomsByType = this.roomsByType.updated(roomType, roomMap + (newRoom -> newRoomActor))
-    // Set room properties and password
+    _roomsByType = _roomsByType + (
+      roomType -> (_roomsByType(roomType) + (newRoom -> newRoomActor))
+      )
+    // Set property and password
     if (roomProperties.map(_ name) contains Room.roomPasswordPropertyName) {
       val splitProperties = roomProperties.groupBy(_.name == Room.roomPasswordPropertyName)
       val password = splitProperties(true)
@@ -142,13 +109,61 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     newRoom
   }
 
+  override def createRoomWithMatchmaking(roomType: RoomType,
+                                         matchmakingGroups: Map[Client, GroupId]): SharedRoom = synchronized {
+    val newRoom = roomTypesHandlers(roomType)()
+    val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
+    _roomsWithMatchmakingByType = _roomsWithMatchmakingByType + (
+      roomType -> (_roomsWithMatchmakingByType(roomType) + (newRoom -> newRoomActor))
+      )
+    newRoom setGroups matchmakingGroups
+    newRoom
+  }
+
+  override def roomsByType(roomType: RoomType, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] =
+    _roomsByType get roomType match {
+      case Some(value) =>
+        value.keys
+          .filter(this filterRoomsWith filterOptions)
+          .filterNot(_ isLocked)
+          .filterNot(_ isMatchmakingEnabled)
+          .toSeq
+      case None => Seq.empty
+    }
+
+  override def availableRooms(filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] =
+    _roomsByType.keys.flatMap(roomType => roomsByType(roomType, filterOptions)).toSeq
+
+  override def roomByTypeAndId(roomType: RoomType, roomId: RoomId): Option[SharedRoom] =
+    roomsByType(roomType).find(_.roomId == roomId)
+
+  override def defineRoomType(roomTypeName: RoomType, roomFactory: () => ServerRoom): Unit = {
+    this._roomsByType = this._roomsByType + (roomTypeName -> Map.empty)
+    this.roomTypesHandlers = this.roomTypesHandlers + (roomTypeName -> roomFactory)
+  }
+
+  override def removeRoom(roomId: RoomId): Unit = {
+    this._roomsByType find (_._2.keys.map(_.roomId) exists (_ == roomId)) foreach (entry => {
+      val room = entry._2.find(_._1.roomId == roomId)
+      room foreach { r =>
+        this._roomsByType = this._roomsByType.updated(entry._1, entry._2 - r._1)
+      }
+    })
+  }
+
+  override def handleClientConnection(roomId: RoomId): Option[Flow[Message, Message, Any]] = {
+    this._roomsByType
+      .flatMap(_._2)
+      .find(_._1.roomId == roomId)
+      .map(room => RoomSocket(room._2, BinaryProtocolSerializer(), room._1.socketConfigurations).open())
+  }
+
   /**
-   * Creates a function that filters rooms based on the given filter options
-   *
+   * It checks filter constraints on a given room.
    * @param filterOptions room properties to check
    * @return the filter to be applied
    */
-  private def roomOptionsFilter(filterOptions: FilterOptions): ServerRoom => Boolean = room => {
+  private def filterRoomsWith(filterOptions: FilterOptions): ServerRoom => Boolean = room => {
     filterOptions.options forall { filterOption =>
       try {
         val propertyValue = room `valueOf~AsPropertyValue` filterOption.optionName

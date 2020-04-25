@@ -6,14 +6,12 @@ import java.util.UUID
 import akka.actor.ActorRef
 import com.typesafe.scalalogging.LazyLogging
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{ProtocolMessageType, ProtocolMessage, SocketSerializable}
+import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType, SocketSerializable}
 import common.room.Room.{BasicRoom, RoomId, RoomPassword, SharedRoom}
 import common.room._
 import server.communication.ConnectionConfigurations
 import server.room.RoomActor.{Close, StartAutoCloseTimeout}
 import server.utils.Timer
-
-import scala.concurrent.duration.FiniteDuration
 
 trait PrivateRoomSupport {
 
@@ -70,21 +68,36 @@ trait RoomLockingSupport {
   def unlock(): Unit = _isLocked = false
 }
 
+trait MatchmakingSupport {
+  import server.matchmaking.Group.GroupId
+  protected var clientGroups: Map[Client, GroupId] = Map.empty
+  private var _isMatchmakingEnabled = false
+
+  def setGroups(groups: Map[Client, GroupId]): Unit = {
+    clientGroups = groups
+    _isMatchmakingEnabled = true
+  }
+
+  def isMatchmakingEnabled: Boolean = _isMatchmakingEnabled
+}
+
 trait ServerRoom extends BasicRoom
   with PrivateRoomSupport
   with RoomLockingSupport
+  with MatchmakingSupport
   with LazyLogging {
 
-  import ServerRoom._
-
   override val roomId: RoomId = UUID.randomUUID.toString
+
   val socketConfigurations: ConnectionConfigurations = ConnectionConfigurations.Default
   val autoClose: Boolean = false
-  val autoCloseTimeout: FiniteDuration = DefaultAutomaticCloseTimeout
+  import scala.concurrent.duration._
+  val autoCloseTimeout: FiniteDuration = 5 seconds
+
   protected var roomActor: Option[ActorRef] = None
+
   private var clients: Seq[Client] = Seq.empty
-  //clients that are allowed to reconnect with the associate expiration timer
-  //TODO: need to be synchronized if it's immutable?
+  // Clients that are allowed to reconnect with the associate expiration timer
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
   def setAssociatedActor(actor: ActorRef): Unit = roomActor = Some(actor)
@@ -327,9 +340,6 @@ trait ServerRoom extends BasicRoom
 }
 
 object ServerRoom {
-
-  import scala.concurrent.duration._
-  val DefaultAutomaticCloseTimeout: FiniteDuration = 5 seconds
 
   /**
    * It creates a SharedRoom from a given ServerRoom.
