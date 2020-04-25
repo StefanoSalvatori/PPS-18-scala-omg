@@ -95,7 +95,7 @@ class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigF
     "create the room when some clients match the matchmaking strategy" in {
       matchmakingServiceActor ! JoinQueue(client1, None)
       matchmakingServiceActor ! JoinQueue(client2, None)
-      assert(roomHandler.availableRooms().nonEmpty)
+      assert(roomHandler.matchmakingRooms().nonEmpty)
     }
   }
 

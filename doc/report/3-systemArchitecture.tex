@@ -8,61 +8,92 @@ The library is based on the client-server architectural pattern and is indeed sp
 Cient and server however are not fully separated; they share some common concepts among which the most important, as emerged from the requirements, is the concept of Room.
 
 \section{Room}
-As showed in the figure, a room, at the most abstract level, has a unique id and some shared properties. This fields are visible both on the client and the server. Then each module extends his own concept of room. 
+\begin{figure}[H]
+	\includegraphics[scale=0.7]{images/3-architecture/room-class.png}
+	\caption{Room design class diagram}
+	\label{fig:room_classes}
+\end{figure}
+
+As showed in figure \ref{room_classes}, a room, at the most abstract level, has a unique id and some shared properties. This fields are visible both on the client and the server. Then each module extends his own concept of room. 
 
 \bigskip
 \textit{ServerRoom}
 \\
-The server room is the one that will be used by the server side developer. It aggregates a list of client and provides the main methods to communicate with them (i.e. tell and broadcast).  This component is meant to be abstract so that the user can extend it and define his own behavior (as expressed in requirement 2.1 of table \ref{table:server-f-req})). Since the developer may want to automatically synchronize the state of the game and have an inner game loop (requirements 2.1.2.1 and 2.1.2.2) ther are two extension of the server room: SynchronizedState and GameLoop that provide this functionalities.
+The server room is the one that will be used by the server side developer. It aggregates a list of client and provides the main methods to communicate with them (i.e. tell and broadcast).  This class is meant to be abstract so that the user can extend it and define his own behavior (as expressed in requirement 2.1 of table \ref{table:server-f-req})). Since the developer may want to automatically synchronize the state of the game and have an inner game loop (requirements 2.1.2.1 and 2.1.2.2), there are two extension of the server room: SynchronizedState and GameLoop that provide this functionalities.
 
 \bigskip
 \textit{ClientRoom}
 \\
-This is, on the other hand, the room that a client side developer will use. The user can retrieve a list of JoinableRoom from the server; these expose the method \textit{join} that sends a request to the game server to join the given room; a JoinableRoom can also be used to reconnect to a previously left room as express in requirement 5 of Table \ref{table:client-f-req}. Once the joining process to a room succedes, a JoinedRoom is created and the user can use it to perform operation on the room (requirements 4, 7, 8 of table \ref{table:client-f-req} ) 
+This is, on the other hand, the room that a client side developer will use. The user can retrieve a list of JoinableRoom from the server; these expose the method \textit{join} that sends a request to the game server to join the given room; a JoinableRoom can also be used to reconnect to a previously left room as express in requirement 5 of Table \ref{table:client-f-req}. Once the joining process to a specific room succedes, a JoinedRoom is created and the user can use it to perform operation on the room (requirements 4, 7, 8 of table \ref{table:client-f-req} ) 
 
 \section{Server architecture}
 The main components of the server side architecture are visible in figure \ref{fig:server_classes}. 
 
 \begin{figure}[H]
 	\includegraphics[scale=0.7]{images/3-architecture/server_architecture-classes.png}
-	\caption{Server components class diagram}
+	\caption{Server architecture class diagram}
 	\label{fig:server_classes}
 \end{figure}
 
 \bigskip
 \textit{GameServer}
 \\
-The GameServer is a facade component that is exposed to the server side developer and provides the functionalities to start and terminate a gameserver; define new type of rooms; create public rooms. To do so, it internally creates two other components that are the RouteService and the RoomHandler.
-
-\bigskip
-\textit{RouteService}
-\\
-The RouteService defines the routes that the server will listen on and implements all the handlers associated with them. The basic routes that the server uses are defined by the following REST protocol 
-
-\begin{itemize}
-	\item[GET]  /rooms/:id
-	\item[POST] /rooms/
-	...
-\end{itemize}
-
-Since most of them require to perform operation on rooms (get rooms, create rooms ...),a RoomHandler is used to handle them.
-
-The RouteService has also a list of MatchmakingSystems that are used to handle requests on matchmaking. Each MatchmakingSystem implements the logic expressed in section \ref{server-requirements-gathering}. 
+The GameServer is a facade component that is exposed to the user and provides the functionalities to: start and terminate a gameserver; define new type of rooms; create public rooms. To do so, it internally creates two other components that are the RouteService and the RoomHandler.
 
 \bigskip
 \textit{RoomHandler}
 \\
-As the name suggests, the RoomHandler is the handler of the rooms in the application. The purpose of this componenet is to provide functionalities regarding rooms, in particular:
+As the name suggests, the RoomHandler is the handler of the rooms in the application. The purpose of this componenet is to provide functionalities concerning rooms, in particular:
 \begin{itemize}
-	\item get the list of rooms
+	\item get the list of available rooms
 	\item define new type of rooms
-	\item create rooms
+	\item create rooms (with and without matchmaking)
 	\item query rooms by their properties
+	\item connect clients to a specific room
 \end{itemize}
 
+\bigskip
+\textit{RouteService}
+\\
+The RouteService defines the routes that the server will listen on and implements all the handlers associated with them. Some routes are fixed since they are used by the library itself and are descibed in table \ref{table:server_routes}; 
 
+
+\begin{table}[H]
+	\begin{tabular}{p{2cm}p{4cm}p{2cm}p{5.5cm}}
+		\textbf{Http Method} & \textbf{Path}	  & \textbf{Payload}  & \textbf{Result}                                                            		\\\\
+		GET                  & /rooms             & filters           & get all the rooms that match the filters in the payload                        	\\\\
+		GET                  & /rooms/:id         & empty             & get the room with the given id                                                 	\\\\
+		GET                  & /rooms/:type       & filters           & get all the rooms with the given type (filtered by filters in the payload)     	\\\\
+		GET                  & /rooms/:type/:id   & empty             & get the room with the given id searching among rooms of the given type         	\\\\
+		POST                 & /rooms/:type       & options           & create a room of the given type with the option passed in the payload          	\\\\
+		GET                  & /connection/:id    & websocket request & open a web socket connection with the room that has the given id               	\\\\
+		GET                  & /matchmaking/:type & websocket request & open a web socket with the matchmaking service relative to the given room type 	\\\\
+	\end{tabular}
+	\caption{\label{table:server_routes} \textit{Server basic routes}}
+\end{table}
+
+Since the user may want to add other
+
+
+All the routes that requires to perform operation on rooms are managed by the RoomHandler, while routes concerning matchmaking are managed by the appropriate MatchmakingSystems.
+
+
+\bigskip
+\textit{MatchmakingSystem}
+\\
+A MatchmakingSystem is a component that implements the matchmaking logic expressed in section \ref{server-requirements-gathering} for a given type of room. It use a strategy defined by the user to create client groups and uses a RoomHandler to create the room that will host the match.
 
 
 \section{Client Architecture}
 
 \section{Client-Server Interaction}
+There are two type of interaction between client and server: one that takes place when a client wants to create or get available the list of available rooms; the second one that must be set up when a client joins a room and wants to send and receive message from/to that room.
+
+The first one has been issued in our case with simple http requests that
+
+
+
+
+
+
+
