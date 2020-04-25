@@ -1,25 +1,28 @@
 \chapter{System architecture}
-The library is based on the client-server architectural pattern and is indeed split in two main modules: 
+The library is based on the client-server architectural pattern and his functionalities are indeed split in two distinct modules: 
 \begin{itemize}
-	\item[Client module] Provide the main functionalities to connect and communicate with a game server. In particular allows the client side developer to create rooms (that will be hosted on the server) and to perform operations on them (e.g join, leave, message...).
-	\item[Server module] Internally implements the logic to handle client connections and allows the developer to run a gameserver and define new type of rooms.
+	\item \textit{Client module} - Provides the main methods to connect and communicate with a game server. In particular allows the client side developer to create rooms (that will be hosted on the server) and to perform operations on them (e.g join, leave, message...).
+	\item \textit{Server module} - Internally implements the logic to handle client connections and allows the developer to run a gameserver and define new type of rooms. It also contains all the logic to handle matchmaking requests.
 \end{itemize}
 
-Cient and server however are not fully separated; they share some common concepts among which the most important, as emerged from the requirements, is the concept of Room.
+However, client and server modules are not fully separated; they share some common concepts like communication protocol used inside websockets or data seriaization utilities to parse data received from the network ecc.. that are grouped in a common packages used by both client and server.
+
+The most important concept that client and server share is anyway the concept of room that is described in detail in the next section. 
 
 \section{Room}
+
 \begin{figure}[H]
-	\includegraphics[scale=0.7]{images/3-architecture/room-class.png}
-	\caption{Room design class diagram}
+	\includegraphics[scale=0.7]{images/3-architecture/room-class-2.png}
+	\caption{Room class diagram}
 	\label{fig:room_classes}
 \end{figure}
 
-A room, at the most abstract level, is an entity wih a unique id and some shared properties. This fields are visible both on the client and the server. Then each module extends his own concept of room. 
+At the most abstract level, a room is an entity with a unique id and some shared properties (figure \ref{fig:room_classes}). This fields are accessible both on the client and the server. Then each module extends his own concept of room.
 
 \bigskip
 \textit{ServerRoom}
 \\
-The server room is the one that will be used by the server side developer. It aggregates a list of client and provides the main methods to communicate with them (i.e. tell and broadcast).  This class is meant to be abstract so that the user can extend it and define his own behavior (as expressed in requirement 2.1 of table \ref{table:server-f-req})). Since the developer may want to automatically synchronize the state of the game and have an inner game loop (requirements 2.1.2.1 and 2.1.2.2), there are two extension of the server room: SynchronizedState and GameLoop that provide this functionalities.
+The server room is the one that will be used by the server side developer. It aggregates a list of client and provides the main methods to communicate with them (i.e. tell and broadcast).  This class is meant to be abstract so that the user can extend it and define his own behavior (as expressed in requirement 2.1 of table \ref{table:server-f-req})). Since the developer may want to automatically synchronize the state of the game and have an inner game loop (requirements 2.1.2.1 and 2.1.2.2), there are two extension of the server room: SynchronizedSRoomtate and GameLoop that provide this functionalities.
 
 \bigskip
 \textit{ClientRoom}
@@ -82,6 +85,8 @@ A MatchmakingService is a component that implements the matchmaking logic expres
 
 
 \section{Client Architecture}
+
+TODO
 
 \section{Client-Server Interaction}
 \subsection{Websockets}
