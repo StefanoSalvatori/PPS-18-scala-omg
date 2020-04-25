@@ -165,7 +165,7 @@ class RoomHandlerSpec extends AnyFlatSpec
     assert(roomHandler.roomByTypeAndId(unlockedRoomType, unlockedRoom.roomId).nonEmpty)
   }
 
-  it should "not return rooms with enabled matchmaking" in {
+  it should "not show rooms with enabled matchmaking" in {
     roomHandler defineRoomType (roomWithPropertyType, RoomWithProperty)
     roomHandler createRoomWithMatchmaking (roomWithPropertyType, Map.empty)
     roomHandler.availableRooms() should have size 0

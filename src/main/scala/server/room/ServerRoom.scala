@@ -1,10 +1,7 @@
 package server.room
 
 import java.lang.reflect.Field
-import java.util.UUID
-
 import akka.actor.ActorRef
-import com.typesafe.scalalogging.LazyLogging
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType, SocketSerializable}
 import common.room.Room.{BasicRoom, RoomId, RoomPassword, SharedRoom}
@@ -13,80 +10,12 @@ import server.communication.ConnectionConfigurations
 import server.room.RoomActor.{Close, StartAutoCloseTimeout}
 import server.utils.Timer
 
-trait PrivateRoomSupport {
-
-  private var password: RoomPassword = Room.defaultPublicPassword
-
-  /**
-   * Check if the room is private.
-   *
-   * @return true if the room is private, false if it's public
-   */
-  def isPrivate: Boolean = password != Room.defaultPublicPassword
-
-  /**
-   * It makes the room public.
-   */
-  def makePublic(): Unit = password = Room.defaultPublicPassword
-
-  /**
-   * It makes the room private
-   *
-   * @param newPassword the password to be used to join the room
-   */
-  def makePrivate(newPassword: RoomPassword): Unit = password = newPassword
-
-  /**
-   * It checks if a provided password is the correct one.
-   *
-   * @param providedPassword the password provided, supposedly by a client
-   * @return true if the password is correct or if the room is public, false otherwise.
-   */
-  protected def checkPasswordCorrectness(providedPassword: RoomPassword): Boolean =
-    password == Room.defaultPublicPassword || password == providedPassword
-}
-
-trait RoomLockingSupport {
-
-  private var _isLocked = false
-
-  /**
-   * It checks if the room is currently locked.
-   *
-   * @return true if the room is locked, false otherwise
-   */
-  def isLocked: Boolean = _isLocked
-
-  /**
-   * It locks the room; it has no effect if the room was already locked.
-   */
-  def lock(): Unit = _isLocked = true
-
-  /**
-   * It unlocks the room; it has no effect if the room was already unlocked.
-   */
-  def unlock(): Unit = _isLocked = false
-}
-
-trait MatchmakingSupport {
-  import server.matchmaking.Group.GroupId
-  protected var clientGroups: Map[Client, GroupId] = Map.empty
-  private var _isMatchmakingEnabled = false
-
-  def setGroups(groups: Map[Client, GroupId]): Unit = {
-    clientGroups = groups
-    _isMatchmakingEnabled = true
-  }
-
-  def isMatchmakingEnabled: Boolean = _isMatchmakingEnabled
-}
-
 trait ServerRoom extends BasicRoom
   with PrivateRoomSupport
   with RoomLockingSupport
-  with MatchmakingSupport
-  with LazyLogging {
+  with MatchmakingSupport {
 
+  import java.util.UUID
   override val roomId: RoomId = UUID.randomUUID.toString
 
   val socketConfigurations: ConnectionConfigurations = ConnectionConfigurations.Default
@@ -100,7 +29,8 @@ trait ServerRoom extends BasicRoom
   // Clients that are allowed to reconnect with the associate expiration timer
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
-  def setAssociatedActor(actor: ActorRef): Unit = roomActor = Some(actor)
+  // By creating explicit setter, room actor can be kept "protected"
+  def setRoomActor(actor: ActorRef): Unit = roomActor = Some(actor)
 
   /**
    * Add a client to the room. It triggers the onJoin handler
@@ -256,7 +186,7 @@ trait ServerRoom extends BasicRoom
    *
    * @param properties A set containing the properties to set
    */
-  def setProperties(properties: Set[RoomProperty]): Unit =
+  def properties_=(properties: Set[RoomProperty]): Unit =
     properties.filter(p => try { isProperty(this fieldFrom p.name) } catch { case _: NoSuchFieldException => false })
       .map(ServerRoom.propertyToPair)
       .foreach(property => operationOnField(property.name)(f => f set(this, property.value)))

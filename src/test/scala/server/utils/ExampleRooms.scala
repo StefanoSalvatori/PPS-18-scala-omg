@@ -216,7 +216,7 @@ object ExampleRooms {
     override def isLocked: Boolean = _isLocked
   }
 
-  val lockedRoomType = "lockableRoom"
-  val unlockedRoomType = "lockableRoom2"
+  val lockedRoomType = "lockedRoom"
+  val unlockedRoomType = "unlockedRoom"
 }
 

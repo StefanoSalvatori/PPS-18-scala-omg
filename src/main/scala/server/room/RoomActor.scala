@@ -58,7 +58,7 @@ class RoomActor(private val serverRoom: ServerRoom,
 
   implicit val executionContext: ExecutionContextExecutor = this.context.system.dispatcher
 
-  serverRoom setAssociatedActor self
+  serverRoom setRoomActor self
 
   override def preStart(): Unit = {
     super.preStart()
