@@ -14,7 +14,7 @@ Cient and server however are not fully separated; they share some common concept
 	\label{fig:room_classes}
 \end{figure}
 
-As showed in figure \ref{room_classes}, a room, at the most abstract level, has a unique id and some shared properties. This fields are visible both on the client and the server. Then each module extends his own concept of room. 
+A room, at the most abstract level, is an entity wih a unique id and some shared properties. This fields are visible both on the client and the server. Then each module extends his own concept of room. 
 
 \bigskip
 \textit{ServerRoom}
@@ -72,24 +72,20 @@ The RouteService defines the routes that the server will listen on and implement
 	\caption{\label{table:server_routes} \textit{Server basic routes}}
 \end{table}
 
-Since the user may want to add other
-
-
-All the routes that requires to perform operation on rooms are managed by the RoomHandler, while routes concerning matchmaking are managed by the appropriate MatchmakingSystems.
+All the routes that requires to perform operation on rooms are managed by the RoomHandler, while routes concerning matchmaking are managed by the appropriate MatchmakingService.
 
 
 \bigskip
-\textit{MatchmakingSystem}
+\textit{MatchmakingService}
 \\
-A MatchmakingSystem is a component that implements the matchmaking logic expressed in section \ref{server-requirements-gathering} for a given type of room. It use a strategy defined by the user to create client groups and uses a RoomHandler to create the room that will host the match.
+A MatchmakingService is a component that implements the matchmaking logic expressed in section \ref{server-requirements-gathering} for a given type of room. It use a strategy defined by the user to create client groups and uses a RoomHandler to create the room that will host the match.
 
 
 \section{Client Architecture}
 
 \section{Client-Server Interaction}
-There are two type of interaction between client and server: one that takes place when a client wants to create or get available the list of available rooms; the second one that must be set up when a client joins a room and wants to send and receive message from/to that room.
+\subsection{Websockets}
 
-The first one has been issued in our case with simple http requests that
 
 
 
