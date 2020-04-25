@@ -314,5 +314,25 @@ class ServerRoomSpec extends AnyWordSpecLike
       serverRoom.unlock()
       assert(serverRoom.tryAddClient(testClient2, ""))
     }
+
+    "have matchmaking disabled by default" in {
+      assert(!serverRoom.isMatchmakingEnabled)
+    }
+
+    "enable matchmaking when defining client groups" in {
+      serverRoom.matchmakingGroups = Map(Client.mock("1") -> 1, Client.mock("2") -> 1)
+      assert(serverRoom.isMatchmakingEnabled)
+    }
+
+    "not enable the matchmaking if empty grouping is defined" in {
+      serverRoom.matchmakingGroups = Map.empty
+      assert(!serverRoom.isMatchmakingEnabled)
+    }
+
+    "set correct matchmaking grouping" in {
+      val grouping = Map(Client.mock("1") -> 1, Client.mock("2") -> 1)
+      serverRoom.matchmakingGroups = grouping
+      serverRoom.matchmakingGroups shouldEqual grouping
+    }
   }
 }
