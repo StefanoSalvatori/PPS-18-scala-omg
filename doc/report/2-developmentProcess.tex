@@ -1,33 +1,34 @@
 \chapter{Development process}
 
-The chosen project management lifecycle (PMLC) is an agile one, in particular Scrum.
-
+The chosen project management lifecycle (PMLC) is an agile one, in particular Scrum. 
 \section{Interactions planning}
 
-In order to end within to given deadline of 50 days from project starting, an overall of 7 sprints are scheduled. Each sprint is planned to last one week, from Sunday to Sunday.
+In order to end within the given deadline of 50 days, a total of 7 sprints is scheduled. Each sprint is planned to last one week, from Sunday to Sunday.
 \\
-As Scrum process suggests, each sprint is provided with an initial planning phase and it's concluded with review and retrospective meetings. Both current sprint closing and next sprint planning are supposed to be done on Sunday.
+As Scrum process suggests, each sprint is provided with an initial planning phase and is concluded with review and retrospective meetings . Both current sprint closing and next sprint planning are supposed to be done on Sunday.
 \\
 Moreover, daily scrum would often be required when tricky features are realized or any non negligible issue is found. Obviously, informal quick message exchange is allowed between team members all day long.
 \\
 The only exception to such organization is given by the first sprint. Indeed, requirement analysis and system design are predominantly realized at this time, and daily meetings are required to achieve these tasks so that the product backlog, required to plan each sprint from the second on, is produced.
 \\
+During all the phases of the development process software like Trello and Microsoft Teams are used to support team interaction.
+
 
 \section{Tasks split and assignment}
 
-Once the product backlog is available, each sprint planning phase produces a spint backlog containing tasks to complete before such sprint ends. Tasks are chosen from product backlog by priority (importance of a feature in term of business value), considering the estimated size of each task too, so that no sprint is excessively weighted down. Once a task is selected from product backlog, it is split in subtasks by detailing its aspects. Tasks and subtasks size is expressed using Fibonacci sequence. 
+Once the product backlog is available, each sprint planning phase produces a sprint backlog containing tasks to complete before such sprint ends. Tasks are chosen from product backlog by priority (importance of a feature in term of business value), considering the estimated size of each task too, so that no sprint is excessively weighted down. Once a task is selected from product backlog, it is split in subtasks by detailing its aspects. Tasks and subtasks size is expressed using Fibonacci sequence. 
 \\
-Once the spint backlog is built, starting tasks are agreed between all team members, and each one takes charge of a couple of tasks (2-3 approximatively). The remaining ones are assigned day by day, looking to how the development proceeds. There is no general a priori criteria when assigning tasks.
+Once the spint backlog is built, starting tasks are agreed between all team members, and each one takes charge of a couple of them (2-3 approximatively). The remaining ones are assigned day by day, looking to how the development proceeds. There is no general a priori criteria for task assignment; the only aspect considered, when possible, is to minimize the dependency between tasks assigned to different team members. 
 \\
 During sprint review, individual work of each member is examined to understand the current situation and to realize if any improvement is needed.
 
 \section{Development tools: Build, Testing, CI}
 
-The building is automated using a build tool. In particular,``sbt'' is chosen since is well integrated with Scala.
+The building system is automated using the sbt build tool since is well integrated with Scala.
 \\
-The development process is not strictly a TDD approach but tests are provided to ensure system correctness on main use cases scenarios. Those may be very useful as regression tests too. 
+The development process is not strictly a TDD approach but unit tests on single components and integration tests on use case scenarios are provided to ensure system correctness.  
 \\
-Moreover, ``Github'' combined with ``TravisCI'', are used as CI tools. Repository is handled with pull requests reviewing flow.
+Moreover,``TravisCI'' combined with ``Github'', is used as continuous integration tool to perform regression tests. Repository is handled with pull requests reviewing flow.
 \\
 In the end, another plugin/tool used would be ``scalastyle'' in order to check code style adherence to specified conventions.
 
@@ -35,7 +36,7 @@ In the end, another plugin/tool used would be ``scalastyle'' in order to check c
 
 By looking to non functional requirements, portability comes out to be a key aspect. In order to ensure this requirement, Travis is configured to build and test the library upon multiple platforms and OS. In particular:
 \begin{itemize}
-\item \textbf{OS\footnote{Travis integration with Windows in not available yet}}: 
+\item \textbf{OS\footnote{Scala integration with Windows in not available on Travis yet}}: 
   \begin{itemize}
   \item \textit{Linux}
   \item \textit{Osx (MacOS)}
