@@ -12,7 +12,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.RoomHandler
-import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue, MatchmakingStrategy}
+import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue}
 import server.utils.{ExampleRooms, TestClient}
 
 
@@ -26,14 +26,14 @@ class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigF
 
   import akka.testkit.TestActorRef
 
-  private var matchmakingServiceActor: TestActorRef[MatchmakingService] = _
-  private var matchmakingServiceState: MatchmakingService = _
+  private var matchmakingServiceActor: TestActorRef[MatchmakingService[_]] = _
+  private var matchmakingServiceState: MatchmakingService[_] = _
   private var roomHandler: RoomHandler = _
   private var client1: TestClient = _
   private var client2: TestClient = _
 
   //dummy matchmaking strategy that only pairs two clients
-  private def matchmakingStrategy: MatchmakingStrategy =
+  private def matchmakingStrategy[T]: Matchmaker[T] =
     map => map.toList match {
       case c1 :: c2 :: _ => Some(Map(c1._1 -> 0, c2._1 -> 1))
       case _ => None
@@ -59,30 +59,30 @@ class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigF
 
   "A matchmaking service" should {
     "start with no clients in the queue" in {
-      assert(matchmakingServiceState.clients.isEmpty)
+      assert(matchmakingServiceState.waitingClients.isEmpty)
     }
 
     "add clients to the matchmaking queue" in {
       matchmakingServiceActor ! JoinQueue(client1, None)
-      assert(matchmakingServiceState.clients.size == 1)
+      assert(matchmakingServiceState.waitingClients.size == 1)
     }
 
     "remove clients from the matchmaking queue" in {
       matchmakingServiceActor ! JoinQueue(client1, None)
       matchmakingServiceActor ! LeaveQueue(client1)
-      assert(matchmakingServiceState.clients.isEmpty)
+      assert(matchmakingServiceState.waitingClients.isEmpty)
     }
 
     "not add the same client twice" in {
       matchmakingServiceActor ! JoinQueue(client1, None)
       matchmakingServiceActor ! JoinQueue(client1, None)
-      assert(matchmakingServiceState.clients.size == 1)
+      assert(matchmakingServiceState.waitingClients.size == 1)
     }
 
     "remove clients when they match the matchmaking rule" in {
       matchmakingServiceActor ! JoinQueue(client1, None)
       matchmakingServiceActor ! JoinQueue(client2, None)
-      assert(matchmakingServiceState.clients.isEmpty)
+      assert(matchmakingServiceState.waitingClients.isEmpty)
     }
 
     "send clients a MatchCreated message with session id and roomId when they are matched with other players" in {
@@ -95,7 +95,7 @@ class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigF
     "create the room when some clients match the matchmaking strategy" in {
       matchmakingServiceActor ! JoinQueue(client1, None)
       matchmakingServiceActor ! JoinQueue(client2, None)
-      assert(roomHandler.getAvailableRooms().nonEmpty)
+      assert(roomHandler.availableRooms().nonEmpty)
     }
   }
 

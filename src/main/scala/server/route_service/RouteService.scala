@@ -1,16 +1,13 @@
 package server.route_service
 
-import akka.actor.ActorRef
 import akka.http.scaladsl.server.Directives.{complete, get, _}
 import akka.http.scaladsl.server.Route
-import akka.stream.scaladsl.Flow
 import com.typesafe.scalalogging.LazyLogging
 import common.http.Routes
 import common.room.Room.{RoomId, RoomType}
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import server.RoomHandler
-import server.matchmaking.{MatchmakingHandler, MatchmakingService}
-import server.matchmaking.MatchmakingService.{MatchmakingStrategy}
+import server.matchmaking.{Matchmaker, MatchmakingHandler}
 import server.room.ServerRoom
 
 trait RouteService {
@@ -33,12 +30,12 @@ trait RouteService {
    *
    * @param roomTypeName room type name used as the route name
    */
-  def addRouteForMatchmaking(roomTypeName: String, roomFactory: () => ServerRoom, matchmaker: MatchmakingStrategy)
+  def addRouteForMatchmaking[T](roomTypeName: String, roomFactory: () => ServerRoom, matchmaker: Matchmaker[T])
 }
 
 object RouteService {
-  def apply(roomHandler: RoomHandler, matchmakeHandler: MatchmakingHandler): RouteService =
-    new RouteServiceImpl(roomHandler, matchmakeHandler)
+  def apply(roomHandler: RoomHandler, matchmakerHandler: MatchmakingHandler): RouteService =
+    new RouteServiceImpl(roomHandler, matchmakerHandler)
 
 }
 
@@ -60,8 +57,8 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
     this.roomHandler.defineRoomType(roomTypeName, roomFactory)
   }
 
-  override def addRouteForMatchmaking(roomTypeName: RoomType, roomFactory: () => ServerRoom,
-                                      matchmaker: MatchmakingStrategy): Unit = {
+  override def addRouteForMatchmaking[T](roomTypeName: RoomType, roomFactory: () => ServerRoom,
+                                      matchmaker: Matchmaker[T]): Unit = {
     this.matchmakingTypesRoutes = this.matchmakingTypesRoutes + roomTypeName
     this.matchmakingHandler.defineMatchmaker(roomTypeName, matchmaker)
 
@@ -124,7 +121,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
   private def getAllRoomsRoute: Route =
     get {
       entity(as[FilterOptions]) { filterOptions =>
-        val rooms = this.roomHandler.getAvailableRooms(filterOptions)
+        val rooms = this.roomHandler.availableRooms(filterOptions)
         complete(rooms)
       }
     }
@@ -135,7 +132,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
   private def getRoomsByTypeRoute(roomType: RoomType): Route =
     get {
       entity(as[FilterOptions]) { filterOptions =>
-        val rooms = this.roomHandler.getRoomsByType(roomType, filterOptions)
+        val rooms = this.roomHandler.roomsByType(roomType, filterOptions)
         complete(rooms)
       }
     }
@@ -156,7 +153,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
    */
   private def getRoomByTypeAndId(roomType: RoomType, roomId: RoomId): Route =
     get {
-      this.roomHandler.getRoomByTypeAndId(roomType, roomId) match {
+      this.roomHandler.roomByTypeAndId(roomType, roomId) match {
         case Some(room) => complete(room)
         case None => reject
       }

@@ -17,9 +17,9 @@ object ClientStub extends App {
   val p = Set(RoomProperty("a", 1), RoomProperty("b", "qwe"))
   val filter = FilterOptions.empty
 
-  client createPublicRoom "test_room" onComplete {
+  client createPrivateRoom ("test_room", p, "pwd") onComplete {
     case Success(res) =>
-      println("POST: " + res.properties + " .. " + res.roomId)
+      println("POST: " + res.properties + " ..  " + res.roomId)
   }
 
   //client.shutdown()

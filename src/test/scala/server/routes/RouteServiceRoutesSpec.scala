@@ -12,7 +12,7 @@ import server.RoomHandler
 import server.route_service.RouteService
 import server.utils.ExampleRooms._
 import common.room.RoomPropertyValueConversions._
-import server.matchmaking.MatchmakingHandler
+import server.matchmaking.{Matchmaker, MatchmakingHandler}
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -33,7 +33,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
   before {
     //ensure to have at least one room-type
     routeService.addRouteForRoomType(TestRoomType, RoomWithProperty)
-    routeService.addRouteForMatchmaking(TestRoomType, RoomWithProperty, _ => None)
+    routeService.addRouteForMatchmaking(TestRoomType, RoomWithProperty, Matchmaker defaultMatchmaker Map())
   }
 
   override def afterAll(): Unit = {

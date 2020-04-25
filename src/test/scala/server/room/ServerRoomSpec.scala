@@ -142,7 +142,7 @@ class ServerRoomSpec extends AnyWordSpecLike
 
     "not be updated when using an empty set of properties" in {
       val p = Set.empty[RoomProperty]
-      testRoom setProperties p
+      testRoom.properties = p
       testRoom valueOf nameA shouldEqual valueA
       testRoom valueOf nameB shouldEqual valueB
       testRoom valueOf nameC shouldEqual valueC
@@ -151,7 +151,7 @@ class ServerRoomSpec extends AnyWordSpecLike
 
     "be correctly updated" in {
       val p = Set(RoomProperty(nameA, 1), RoomProperty(nameB, "qwe"))
-      testRoom setProperties p
+      testRoom.properties = p
       testRoom valueOf nameA shouldEqual 1
       testRoom valueOf nameB shouldEqual "qwe"
     }
@@ -183,12 +183,12 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "not expose errors when trying to set a not existing property" in {
-      testRoom setProperties Set(RoomProperty("RandomName", 0))
+      testRoom.properties = Set(RoomProperty("RandomName", 0))
       noException
     }
 
     "be safely handled when trying to write a non existing property" in {
-      testRoom setProperties Set(RoomProperty(nameE, 1))
+      testRoom.properties = Set(RoomProperty(nameE, 1))
       noException
     }
 
@@ -313,6 +313,26 @@ class ServerRoomSpec extends AnyWordSpecLike
       assert(!serverRoom.tryAddClient(testClient2, ""))
       serverRoom.unlock()
       assert(serverRoom.tryAddClient(testClient2, ""))
+    }
+
+    "have matchmaking disabled by default" in {
+      assert(!serverRoom.isMatchmakingEnabled)
+    }
+
+    "enable matchmaking when defining client groups" in {
+      serverRoom.matchmakingGroups = Map(Client.mock("1") -> 1, Client.mock("2") -> 1)
+      assert(serverRoom.isMatchmakingEnabled)
+    }
+
+    "not enable the matchmaking if empty grouping is defined" in {
+      serverRoom.matchmakingGroups = Map.empty
+      assert(!serverRoom.isMatchmakingEnabled)
+    }
+
+    "set correct matchmaking grouping" in {
+      val grouping = Map(Client.mock("1") -> 1, Client.mock("2") -> 1)
+      serverRoom.matchmakingGroups = grouping
+      serverRoom.matchmakingGroups shouldEqual grouping
     }
   }
 }
