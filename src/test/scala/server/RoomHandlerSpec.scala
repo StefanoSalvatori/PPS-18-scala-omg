@@ -21,8 +21,9 @@ class RoomHandlerSpec extends AnyFlatSpec
   import ExampleRooms.roomWithPropertyType
   import ExampleRooms.RoomWithProperty2
   import ExampleRooms.roomWithProperty2Type
-  import ExampleRooms.LockedRoom
+  import ExampleRooms.LockableRoom
   import ExampleRooms.lockedRoomType
+  import ExampleRooms.unlockedRoomType
 
   private var roomHandler: RoomHandler = _
 
@@ -135,16 +136,45 @@ class RoomHandlerSpec extends AnyFlatSpec
     filteredRooms should have size 1
   }
 
-  it should "not return locked rooms" in {
-    roomHandler defineRoomType (lockedRoomType, LockedRoom)
+  it should "not show locked rooms when returning all rooms" in {
+    lockedRoomsSetup()
     roomHandler createRoom lockedRoomType
     roomHandler.availableRooms() should have size 0
-    roomHandler defineRoomType (roomWithPropertyType, RoomWithProperty)
-    val room = roomHandler createRoom roomWithPropertyType
+    val room = roomHandler createRoom unlockedRoomType
     val rooms = roomHandler.availableRooms()
     rooms should have size 1
     assert(rooms.map(_ roomId) contains room.roomId)
   }
 
+  it should "not show locked rooms when returning all rooms by type" in {
+    lockedRoomsSetup()
+    roomHandler createRoom lockedRoomType
+    val room = roomHandler createRoom unlockedRoomType
+    val lockedRooms = roomHandler roomsByType lockedRoomType
+    lockedRooms should have size 0
+    val unlockedRooms = roomHandler roomsByType unlockedRoomType
+    unlockedRooms should have size 1
+    assert(unlockedRooms.map(_ roomId) contains room.roomId)
+  }
 
+  it should "not show locked room when retrieving rooms by type and Id" in {
+    lockedRoomsSetup()
+    val lockedRoom = roomHandler createRoom lockedRoomType
+    assert(roomHandler.roomByTypeAndId(lockedRoomType, lockedRoom.roomId).isEmpty)
+    val unlockedRoom = roomHandler createRoom unlockedRoomType
+    assert(roomHandler.roomByTypeAndId(unlockedRoomType, unlockedRoom.roomId).nonEmpty)
+  }
+
+  it should "not return rooms with enabled matchmaking" in {
+    roomHandler defineRoomType (roomWithPropertyType, RoomWithProperty)
+    roomHandler createRoomWithMatchmaking (roomWithPropertyType, Map.empty)
+    roomHandler.availableRooms() should have size 0
+    roomHandler createRoom roomWithPropertyType
+    roomHandler.availableRooms() should have size 1
+  }
+
+  private def lockedRoomsSetup(): Unit = {
+    roomHandler defineRoomType (lockedRoomType, () => LockableRoom(true))
+    roomHandler defineRoomType (unlockedRoomType, () => LockableRoom(false))
+  }
 }

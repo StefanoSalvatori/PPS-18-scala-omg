@@ -94,7 +94,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     val newRoom = roomTypesHandlers(roomType)()
     val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
     _roomsByType = _roomsByType + (
-      roomType -> (_roomsByType(roomType) + (newRoom -> newRoomActor))
+      roomType -> (_roomsByType.getOrElse(roomType, Map.empty) + (newRoom -> newRoomActor))
       )
     // Set property and password
     if (roomProperties.map(_ name) contains Room.roomPasswordPropertyName) {
@@ -114,7 +114,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     val newRoom = roomTypesHandlers(roomType)()
     val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
     _roomsWithMatchmakingByType = _roomsWithMatchmakingByType + (
-      roomType -> (_roomsWithMatchmakingByType(roomType) + (newRoom -> newRoomActor))
+      roomType -> (_roomsWithMatchmakingByType.getOrElse(roomType, Map.empty) + (newRoom -> newRoomActor))
       )
     newRoom setGroups matchmakingGroups
     newRoom
