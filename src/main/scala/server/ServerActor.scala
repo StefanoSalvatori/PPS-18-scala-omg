@@ -8,8 +8,7 @@ import akka.pattern.pipe
 import akka.stream.scaladsl.Sink
 import common.room.Room.RoomType
 import common.room.RoomProperty
-import server.matchmaking.MatchmakingHandler
-import server.matchmaking.MatchmakingService.MatchmakingStrategy
+import server.matchmaking.{Matchmaker, MatchmakingHandler}
 import server.room.ServerRoom
 import server.route_service.RouteService
 
@@ -27,8 +26,8 @@ object ServerActor {
   case class StartServer(host: String, port: Int) extends Command
   case object StopServer extends Command
   case class AddRoute(routeName: String, room: () => ServerRoom) extends Command
-  case class AddRouteForMatchmaking(routeName: String, room: () => ServerRoom,
-                                    matchmaker: MatchmakingStrategy) extends Command
+  case class AddRouteForMatchmaking[T](routeName: String, room: () => ServerRoom,
+                                    matchmaker: Matchmaker[T]) extends Command
 
   case class CreateRoom(roomType: RoomType, properties: Set[RoomProperty] = Set.empty)
 

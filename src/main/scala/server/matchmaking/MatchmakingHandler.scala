@@ -7,8 +7,6 @@ import common.communication.BinaryProtocolSerializer
 import common.room.Room.RoomType
 import server.RoomHandler
 import server.communication.MatchmakingSocket
-import server.matchmaking.MatchmakingService.{MatchmakingStrategy}
-import server.room.ServerRoom
 
 trait MatchmakingHandler {
 
@@ -17,7 +15,7 @@ trait MatchmakingHandler {
    * @param roomType room type
    * @param matchmaker matchmaker
    */
-  def defineMatchmaker(roomType: RoomType, matchmaker: MatchmakingStrategy)
+  def defineMatchmaker[T](roomType: RoomType, matchmaker: Matchmaker[T])
 
   /**
    * Handle a client request for the matchmaker for the given type
@@ -38,7 +36,7 @@ class MatchmakingHandlerImpl(private val roomHandler: RoomHandler)
                             (implicit actorSystem: ActorSystem) extends MatchmakingHandler {
   private var matchmakers: Map[RoomType, ActorRef] = Map()
 
-  override def defineMatchmaker(roomType: RoomType, matchmaker: MatchmakingStrategy): Unit = {
+  override def defineMatchmaker[T](roomType: RoomType, matchmaker: Matchmaker[T]): Unit = {
     val matchmakingService = actorSystem actorOf MatchmakingService(matchmaker, roomType, this.roomHandler)
     this.matchmakers = this.matchmakers.updated(roomType, matchmakingService)
   }

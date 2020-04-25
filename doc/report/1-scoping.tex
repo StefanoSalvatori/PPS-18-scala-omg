@@ -145,7 +145,14 @@ Moreover, the server has the clearance to allocate rooms using matchmaking. Thos
 
 \subsection{Client} \label{client}
 
-A client should, in primis, display all existing rooms of a given type, both for public and private rooms. Currently locked rooms and room created using matchmaking must not be displayed.
+A client should be able, in primis, to display all existing rooms of a given type, both for public and private rooms, using three different ways, that is:
+\begin{itemize}
+\item \textbf{Get all}: it gets all available rooms, possibly filtered.
+\item \textbf{Get by type}: it gets all available rooms of a given certain type, possibly filtered.
+\item \textbf{Get by type and Id}: it gets a single room of a certain given type and with a certain Id.  
+\end{itemize}
+
+Currently locked rooms and room created using matchmaking must not be displayed.
 \\
 Room visualization must include the possibility for clients to filter rooms using their properties. A client can specify a property name, a value and a strategy to be used to evaluate the property. Operations allowed on room properties while filtering are:
 \begin{itemize}
@@ -406,46 +413,49 @@ ID   &  Specification \\
 \hline
 \multicolumn{2}{|c|}{} \\
 \hline
-1       & Display all rooms of a given type, private and public both \\
-1.1     & Locked rooms should not be displayed \\
-1.2     & Matchkaing room should not be displayed \\
-1.3     & Rooms can be filtered on their properties \\
-1.4     & Room Ids should be visible to clients \\
-1.3.1   & Allowed filter straegies are equal, not equal, grater, lower \\
+1       & Display rooms, private and public both \\
+1.1     & Display all rooms \\
+1.2     & Display all rooms of a given type \\
+1.3     & Display a room of a given type and with a given Id \\ 
+1.4     & Locked rooms should not be displayed \\
+1.5     & Matchkaing room should not be displayed \\
+1.6     & Rooms can be filtered on their properties \\
+1.6.1   & Allowed filter strategies are equal, not equal, grater, lower \\
+1.7     & Room Ids should be visible to clients \\
 2       & Display all joined rooms, locked and with matchmaking too \\
-2       & Create a room \\
-2.1     & Create a public room \\
-2.2     & Create a private room \\
-2.3     & Fail on  create the room if its type is not already defined server side \\
-2.4     & Define starting room properties values \\
-2.4.1   & Ignore a given room property if such property is not defined in the room \\
-3       & Join room \\
-3.1     & Join without matchmaking \\
-3.1.1   & Random join to public room \\
-3.1.1.1 & Allow to specify filters on joinable rooms \\
-3.1.2   & Join by room Id \\
-3.1.2.1 & When joining by ID, give possibility to provide a password \\
-3.1.2.2 & When joining by ID, a provided password will be ignored if the room is public \\
-3.1.3   & Auto join a room when creating such room \\
-3.2     & Join with matchmaking \\
-3.2.1   & Join by Id is not allowed \\
-3.2.2   & Filters on rooms with mathcmaking is not allowed \\
-4       & Leave a room \\
-4.1     & Leaving a room is allowed only if such room has been previously joined \\
-5       & Reconnect to room \\
-6       & Visualize room properties \\
-6.1     & Visualize all properties in a room \\
-6.2     & Retrieve value of a single property \\
-6.2.1   & Notify error if the specified property does not exist \\
-7       & Send messages to a room \\
-7.1     & Sending messages to room is enabled once the client joined the room \\
-7.2     & When sending amessage to a room, no reply is expected \\
-8       & Define reactive behavior to room events \\
-8.1     & Define behavior on received message from the room \\
-8.2     & Define behavior on state update \\
-8.3     & Deifne behavior on room closing \\
-8.4     & Definition of reactive behavior is allowed once the client joined the room \\
-9       & Close a room \\
+3       & Create a room \\
+3.1     & Create a public room \\
+3.2     & Create a private room \\
+3.3     & Fail on  create the room if its type is not already defined server side \\
+3.4     & Define starting room properties values \\
+3.4.1   & Ignore a given room property if such property is not defined in the room \\
+4       & Join room \\
+4.1     & Join without matchmaking \\
+4.1.1   & Random join to public room \\
+4.1.1.1 & Allow to specify filters on joinable rooms \\
+4.1.2   & Join by room Id \\
+4.1.2.1 & When joining by ID, give possibility to provide a password \\
+4.1.2.2 & When joining by ID, a provided password will be ignored if the room is public \\
+4.1.3   & Auto join a room when creating such room \\
+4.2     & Join with matchmaking \\
+4.2.1   & Join by Id is not allowed \\
+4.2.2   & Filters on rooms with mathcmaking is not allowed \\
+5       & Leave a room \\
+5.1     & Leaving a room is allowed only if such room has been previously joined \\
+6       & Reconnect to room \\
+7       & Visualize room properties \\
+7.1     & Visualize all properties in a room \\
+7.2     & Retrieve value of a single property \\
+7.2.1   & Notify error if the specified property does not exist \\
+8       & Send messages to a room \\
+8.1     & Sending messages to room is enabled once the client joined the room \\
+8.2     & When sending amessage to a room, no reply is expected \\
+9       & Define reactive behavior to room events \\
+9.1     & Define behavior on received message from the room \\
+9.2     & Define behavior on state update \\
+9.3     & Deifne behavior on room closing \\
+9.4     & Definition of reactive behavior is allowed once the client joined the room \\
+10      & Close a room \\
 11      & Change public/private state of a room \\
 11.1    & Make a public room private \\
 11.1.1  & When making a public room private, the provision of a password is mandatory \\ 
@@ -460,14 +470,10 @@ ID   &  Specification \\
 \subsection{Non functional Requirements} 
 
 \begin{itemize}
-	\item[\emph{Usability}] The provided library should be easy to use by game developers that are unfamiliar with client-server interaction and newtwork communication protocols.
-	\item[\em{Portability}] The provided library should be used in both server and client environments on all major operating systems (i.e Windows, Linux and MacOS).
+  \item[\emph{Usability}] The provided library should be easy to use by game developers that are unfamiliar with client-server interaction and newtwork communication protocols.
+  \item[\em{Portability}] The provided library should be used in both server and client environments on all major operating systems (i.e Windows, Linux and MacOS).
+  \item[\em{Deployment}] The provided library should be easy to deploy, intended as easy to import and make it work on an external project. 
 \end{itemize}
-
-
-TODO
-- deployment 
-
 
 \subsection{Implementation Requirements}
 The library must be implemented using Scala as main programming language and should adhere to the style definition defined in: https://docs.scala-lang.org/style/
