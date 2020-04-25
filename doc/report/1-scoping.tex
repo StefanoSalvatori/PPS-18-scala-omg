@@ -145,7 +145,14 @@ Moreover, the server has the clearance to allocate rooms using matchmaking. Thos
 
 \subsection{Client} \label{client}
 
-A client should, in primis, display all existing rooms of a given type, both for public and private rooms. Currently locked rooms and room created using matchmaking must not be displayed.
+A client should be able, in primis, to display all existing rooms of a given type, both for public and private rooms, using three different ways, that is:
+\begin{itemize}
+\item \textbf{Get all}: it gets all available rooms, possibly filtered.
+\item \textbf{Get by type}: it gets all available rooms of a given certain type, possibly filtered.
+\item \textbf{Get by type and Id}: it gets a single room of a certain given type and with a certain Id.  
+\end{itemize}
+
+Currently locked rooms and room created using matchmaking must not be displayed.
 \\
 Room visualization must include the possibility for clients to filter rooms using their properties. A client can specify a property name, a value and a strategy to be used to evaluate the property. Operations allowed on room properties while filtering are:
 \begin{itemize}
@@ -320,76 +327,78 @@ ID   &  Specification \\
 \multicolumn{2}{|c|}{} \\
 \hline
 1         & Create and handle game server \\
-2         & Launch game server on provided address and port \\
-2.1       & Define on start behavior \\
-3         & Suspend/terminate server \\
-3.1       & Define on stop behavior \\
-4         & Resume suspended server \\
-5         & Accept user defined routes \\
-6         & Define room type \\
-6.1       & Define room behavior \\
-6.1.1     & Define room reactive behavior \\
-6.1.1.1   & Define on create behavior \\
-6.1.1.2   & Define on join behavior \\
-6.1.1.3   & Define on message received behavior \\
-6.1.1.4   & Define on leave behavior \\
-6.1.1.5   & Define on close behavior \\
-6.1.2     & Define room proactive behavior \\
-6.1.2.1   & Handle public state synchronization between clients \\
-6.1.2.1.1 & Start state synchronization between clients \\
-6.1.2.1.2 & Stop state synchronization between clients \\
-6.1.2.1.3 & Resume state synchronization between clients \\
-6.1.2.2   & Handle room state periodic update (gameloop)  \\ 
-6.1.2.2.1 & Start room state periodic update (gameloop) \\
-6.1.2.2.2 & Stop room state periodic update (gameloop) \\
-6.1.2.2.3 & Resume room state periodic update (gameloop) \\
-6.2       & Define room properties\\
-6.2.1     & Public/private property should be given by default \\
-6.2.2     & Room property types could be int, string, boolean, double \\ 
-6.3       & Define room state \\
-6.4       & Define room type matchmaker \\
-6.5       & Ignore multiple room type definitions from second on \\
-6.6       & Define custom join constraints depending on room type \\
-7         & Lock/unlock room \\
-7.1       & Rooms are unlocked by default \\
-8         & Close room \\
-8.1       & Directly close the room from server \\
-8.2       & Expose possibility to close a room for clients \\
-8.3       & Notify a client that the room has been closed \\
-8.4       & Room auto closing \\
-8.4.1     & Allow room auto closing \\
-8.4.2     & Auto closing is off by default \\
-8.4.3     & Close as auto close timeout expires \\
-8.4.4     & Close in front of direct close request even if auto close is on \\
-9         & Create room \\
-9.1       & Create public room \\
-9.2       & Create room with matchmaking \\
-9.2.1     & Room with matchmaking should define clients allowed to join \\
-9.3       & Rooms create be the server should contain no client at the beginning \\
-10        & Display room properties \\
-11        & Send messages to clients in a room \\
-11.1      & Send a message to one specific client (tell) \\
-11.2      & Send a same message to all clients in the room (broadcast) \\
-12        & Monitor client liveness \\
-12.1      & Heartbeat service (if activated) \\
-12.2      & Inactive clients kicking on timeout (if activated) \\
-13        & Deny join to room under certain circumstances \\
-13.1      & Deny join to private room if no correct password is provided \\
-13.2      & Deny join to a locked room \\
-13.3      & Deny join to closed room \\
-13.4      & Deny join to matchmaking room if not in expected players \\
-14        & Allow reconnection for clients to a room \\
-14.1      & Allow configuration of a reconnection period length \\
-14.2      & Fail reconnection to room under certain circumstances \\
-14.2.1    & Fail reconnection to room if client din't previously join the room \\
-14.2.2    & Fail reconnection to room if it took too long for the client to reconnect \\
-14.2.3    & Reconnection feature is disable by default \\
-14.2.3.1  & Allow reconnection timeout length configuration when enabling such feature \\
-14.3      & Reconnetion is not considered as a join event \\
-15        & Expose possibility to create rooms for clients \\
-15.1      & Expose possibility to create public rooms for clients \\
-15.2      & Expose possibility to create private rooms for clients \\
-16        & Expose possibility to make room public/private for clients \\
+1.1       & Launch game server on provided address and port \\
+1.2       & Define behavior on server start up \\
+1.2       & Suspend/terminate server \\
+1.4       & Define behavior on server stop \\
+1.5       & Resume suspended server \\
+1.6       & Accept user defined routes \\
+2         & Define room type \\
+2.1       & Define room behavior \\
+2.1.1     & Define room reactive behavior \\
+2.1.1.1   & Define on create behavior \\
+2.1.1.2   & Define on join behavior \\
+2.1.1.3   & Define on message received behavior \\
+2.1.1.4   & Define on leave behavior \\
+2.1.1.5   & Define on close behavior \\
+2.1.2     & Define room proactive behavior \\
+2.1.2.1   & Handle public state synchronization between clients \\
+2.1.2.1.1 & Start state synchronization between clients \\
+2.1.2.1.2 & Stop state synchronization between clients \\
+2.1.2.1.3 & Resume state synchronization between clients \\
+2.1.2.1.4 & Set state synchronization rate\\
+2.1.2.2   & Handle room state periodic update (gameloop)  \\ 
+2.1.2.2.1 & Start room state periodic update (gameloop) \\
+2.1.2.2.2 & Stop room state periodic update (gameloop) \\
+2.1.2.2.3 & Resume room state periodic update (gameloop) \\
+2.1.2.2.4 & Set state update rate (gameloop) \\
+2.2       & Define room properties\\
+2.2.1     & Public/private property should be given by default \\
+2.2.2     & Room property types could be int, string, boolean, double \\ 
+2.3       & Define room state \\
+2.4       & Define room type matchmaker \\
+2.5       & Ignore multiple room type definitions from second on \\
+2.6       & Define custom join constraints depending on room type \\
+3         & Lock/unlock room \\
+3.1       & Rooms are unlocked by default \\
+4         & Close room \\
+4.1       & Directly close the room from server \\
+4.2       & Expose possibility to close a room for clients \\
+4.3       & Notify a client that the room has been closed \\
+4.4       & Room auto closing \\
+4.4.1     & Allow room auto closing \\
+4.4.2     & Auto closing is off by default \\
+4.4.3     & Close as auto close timeout expires \\
+4.4.4     & Close in front of direct close request even if auto close is on \\
+5         & Create room \\
+5.1       & Create public room \\
+5.2       & Create room with matchmaking \\
+5.2.1     & Room with matchmaking should define clients allowed to join \\
+5.3       & Rooms create be the server should contain no client at the beginning \\
+6        & Display room properties \\
+7        & Send messages to clients in a room \\
+7.1      & Send a message to one specific client (tell) \\
+7.2      & Send a same message to all clients in the room (broadcast) \\
+8        & Monitor client liveness \\
+8.1      & Heartbeat service (if activated) \\
+8.2      & Inactive clients kicking on timeout (if activated) \\
+9        & Deny join to room under certain circumstances \\
+9.1      & Deny join to private room if no correct password is provided \\
+9.2      & Deny join to a locked room \\
+9.3      & Deny join to closed room \\
+9.4      & Deny join to matchmaking room if not in expected players \\
+10        & Allow reconnection for clients to a room \\
+10.1      & Allow configuration of a reconnection period length \\
+10.2      & Fail reconnection to room under certain circumstances \\
+10.2.1    & Fail reconnection to room if client din't previously join the room \\
+10.2.2    & Fail reconnection to room if it took too long for the client to reconnect \\
+10.2.3    & Reconnection feature is disable by default \\
+10.2.3.1  & Allow reconnection timeout length configuration when enabling such feature \\
+10.3      & Reconnetion is not considered as a join event \\
+11        & Expose possibility to create rooms for clients \\
+11.1      & Expose possibility to create public rooms for clients \\
+11.2      & Expose possibility to create private rooms for clients \\
+12        & Expose possibility to make room public/private for clients \\
 \hline
 
   \end{longtable}
@@ -404,46 +413,49 @@ ID   &  Specification \\
 \hline
 \multicolumn{2}{|c|}{} \\
 \hline
-1       & Display all rooms of a given type, private and public both \\
-1.1     & Locked rooms should not be displayed \\
-1.2     & Matchkaing room should not be displayed \\
-1.3     & Rooms can be filtered on their properties \\
-1.4     & Room Ids should be visible to clients \\
-1.3.1   & Allowed filter straegies are equal, not equal, grater, lower \\
+1       & Display rooms, private and public both \\
+1.1     & Display all rooms \\
+1.2     & Display all rooms of a given type \\
+1.3     & Display a room of a given type and with a given Id \\ 
+1.4     & Locked rooms should not be displayed \\
+1.5     & Matchkaing room should not be displayed \\
+1.6     & Rooms can be filtered on their properties \\
+1.6.1   & Allowed filter strategies are equal, not equal, grater, lower \\
+1.7     & Room Ids should be visible to clients \\
 2       & Display all joined rooms, locked and with matchmaking too \\
-2       & Create a room \\
-2.1     & Create a public room \\
-2.2     & Create a private room \\
-2.3     & Fail on  create the room if its type is not already defined server side \\
-2.4     & Define starting room properties values \\
-2.4.1   & Ignore a given room property if such property is not defined in the room \\
-3       & Join room \\
-3.1     & Join without matchmaking \\
-3.1.1   & Random join to public room \\
-3.1.1.1 & Allow to specify filters on joinable rooms \\
-3.1.2   & Join by room Id \\
-3.1.2.1 & When joining by ID, give possibility to provide a password \\
-3.1.2.2 & When joining by ID, a provided password will be ignored if the room is public \\
-3.1.3   & Auto join a room when creating such room \\
-3.2     & Join with matchmaking \\
-3.2.1   & Join by Id is not allowed \\
-3.2.2   & Filters on rooms with mathcmaking is not allowed \\
-4       & Leave a room \\
-4.1     & Leaving a room is allowed only if such room has been previously joined \\
-5       & Reconnect to room \\
-6       & Visualize room properties \\
-6.1     & Visualize all properties in a room \\
-6.2     & Retrieve value of a single property \\
-6.2.1   & Notify error if the specified property does not exist \\
-7       & Send messages to a room \\
-7.1     & Sending messages to room is enabled once the client joined the room \\
-7.2     & When sending amessage to a room, no reply is expected \\
-8       & Define reactive behavior to room events \\
-8.1     & Define behavior on received message from the room \\
-8.2     & Define behavior on state update \\
-8.3     & Deifne behavior on room closing \\
-8.4     & Definition of reactive behavior is allowed once the client joined the room \\
-9       & Close a room \\
+3       & Create a room \\
+3.1     & Create a public room \\
+3.2     & Create a private room \\
+3.3     & Fail on  create the room if its type is not already defined server side \\
+3.4     & Define starting room properties values \\
+3.4.1   & Ignore a given room property if such property is not defined in the room \\
+4       & Join room \\
+4.1     & Join without matchmaking \\
+4.1.1   & Random join to public room \\
+4.1.1.1 & Allow to specify filters on joinable rooms \\
+4.1.2   & Join by room Id \\
+4.1.2.1 & When joining by ID, give possibility to provide a password \\
+4.1.2.2 & When joining by ID, a provided password will be ignored if the room is public \\
+4.1.3   & Auto join a room when creating such room \\
+4.2     & Join with matchmaking \\
+4.2.1   & Join by Id is not allowed \\
+4.2.2   & Filters on rooms with mathcmaking is not allowed \\
+5       & Leave a room \\
+5.1     & Leaving a room is allowed only if such room has been previously joined \\
+6       & Reconnect to room \\
+7       & Visualize room properties \\
+7.1     & Visualize all properties in a room \\
+7.2     & Retrieve value of a single property \\
+7.2.1   & Notify error if the specified property does not exist \\
+8       & Send messages to a room \\
+8.1     & Sending messages to room is enabled once the client joined the room \\
+8.2     & When sending amessage to a room, no reply is expected \\
+9       & Define reactive behavior to room events \\
+9.1     & Define behavior on received message from the room \\
+9.2     & Define behavior on state update \\
+9.3     & Deifne behavior on room closing \\
+9.4     & Definition of reactive behavior is allowed once the client joined the room \\
+10      & Close a room \\
 11      & Change public/private state of a room \\
 11.1    & Make a public room private \\
 11.1.1  & When making a public room private, the provision of a password is mandatory \\ 
@@ -453,17 +465,19 @@ ID   &  Specification \\
   \end{longtable}
 \end{center}
 
+\newpage
 
 \subsection{Non functional Requirements} 
 
-TODO
-- deployment 
-- portability 
-- ...
- 
+\begin{itemize}
+  \item[\emph{Usability}] The provided library should be easy to use by game developers that are unfamiliar with client-server interaction and newtwork communication protocols.
+  \item[\em{Portability}] The provided library should be used in both server and client environments on all major operating systems (i.e Windows, Linux and MacOS).
+  \item[\em{Deployment}] The provided library should be easy to deploy, intended as easy to import and make it work on an external project. 
+\end{itemize}
+
 \subsection{Implementation Requirements}
- 
-TODO 
+The library must be implemented using Scala as programming language.
+  
  
  
 
