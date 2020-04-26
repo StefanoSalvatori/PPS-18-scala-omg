@@ -43,7 +43,7 @@ class MatchmakingService[T](private val matchmaker: Matchmaker[T],
   // created and the clients are removed from the queue
   private def tryCreateFairGroup(): Unit =
     matchmaker createFairGroup waitingClients foreach (grouping => {
-      val room = roomHandler createRoom roomType
+      val room = roomHandler createRoomWithMatchmaking (roomType, grouping)
       grouping.keys.foreach(c => c send ProtocolMessage(MatchCreated, c.id, MatchmakingInfo(c.id, room.roomId)))
       waitingClients = waitingClients -- grouping.keys
     })

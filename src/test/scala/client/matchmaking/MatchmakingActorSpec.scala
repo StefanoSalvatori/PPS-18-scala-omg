@@ -58,10 +58,9 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
 
   after {
     Await.ready(gameServer.terminate(), ServerShutdownAwaitTime)
-    matchmakeActor1 ! PoisonPill
-    matchmakeActor2 ! PoisonPill
 
   }
+
 
   "MatchmakingActor" should {
     "join a matchmaking queue and return a MatchmakeTicket when the match is created" in {

@@ -47,9 +47,6 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
   private var roomTypesRoutes: Set[RoomType] = Set()
   private var matchmakingTypesRoutes: Set[RoomType] = Set()
 
-
-
-
   override val route: Route = restHttpRoute ~ webSocketRoutes
 
   override def addRouteForRoomType(roomTypeName: RoomType, roomFactory: () => ServerRoom): Unit = {
@@ -61,9 +58,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
                                       matchmaker: Matchmaker[T]): Unit = {
     this.matchmakingTypesRoutes = this.matchmakingTypesRoutes + roomTypeName
     this.matchmakingHandler.defineMatchmaker(roomTypeName, matchmaker)
-
-    //define also the type in the room handler so that the room can be created by the matchmaker
-    this.roomHandler.defineRoomType(roomTypeName, roomFactory)
+    this.addRouteForRoomType(roomTypeName, roomFactory)
   }
 
   /**
