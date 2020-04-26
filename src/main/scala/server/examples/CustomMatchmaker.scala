@@ -7,11 +7,14 @@ object CustomMatchmaker extends App {
   import server.matchmaking.Matchmaker
   case class MyMatchmaker() extends Matchmaker[MyClientInfo] {
     override def createFairGroup(waitingClients: Map[Client, MyClientInfo]): Option[Map[Client, GroupId]] = {
+
+      // Lazy evaluation: stream combined with headOption let stop when the first admissible grouping is found
+      val clientStream = waitingClients.keys.toStream
       val admissibleGroups =
         // Create two groups, each one containing two clients
         for ( // Generate all possible combinations of 4 clients (x,y,z,w)
-             clientX <- waitingClients.keys; clientY <- waitingClients.keys;
-             clientZ <- waitingClients.keys; clientW <- waitingClients.keys
+             clientX <- clientStream; clientY <- clientStream;
+             clientZ <- clientStream; clientW <- clientStream
              // Drop combinations where 1 or more clients are the same
              if clientX != clientY && clientX != clientZ && clientX != clientW
              if clientY != clientZ && clientY != clientW
@@ -36,7 +39,7 @@ object CustomMatchmaker extends App {
   case class MyClientInfo(ranking: Int, gender: Gender)
 
   val clients =
-    (0 until 10).map(i => Client.mock(s"$i") -> MyClientInfo(i, if (Math.random() < 0.5) Male else Female)).toMap
+    (0 until 100).map(i => Client.mock(s"$i") -> MyClientInfo(i, if (Math.random() < 0.5) Male else Female)).toMap
   val matchmaker = MyMatchmaker()
   val group = matchmaker createFairGroup clients
   println("Found grouping (if possible): " + group)
