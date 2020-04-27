@@ -42,3 +42,9 @@ project/target/
 .history
 .cache
 .lib/
+
+# For latex files that can be generated
+*.pdf
+*.toc
+*.aux
+*.synctex.gz
