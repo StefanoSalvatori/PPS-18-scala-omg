@@ -12,9 +12,9 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   // Room
   implicit val roomIdJsonFormat: RootJsonFormat[RoomId] = new RootJsonFormat[RoomId] {
-    def write(a: RoomId): JsValue = JsString(a)
+    override def write(a: RoomId): JsValue = JsString(a)
 
-    def read(value: JsValue): RoomId = value match {
+    override def read(value: JsValue): RoomId = value match {
       case JsString(roomId) => roomId
       case _ => deserializationError("id expected")
     }
@@ -24,12 +24,12 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     private val idJsonPropertyName = "id"
     private val propertiesJsonPropertyName = "properties"
 
-    def write(room: SharedRoom): JsValue = JsObject(
+    override def write(room: SharedRoom): JsValue = JsObject(
       idJsonPropertyName -> JsString(room.roomId),
       propertiesJsonPropertyName -> (roomPropertySetJsonFormat write room.properties)
     )
 
-    def read(value: JsValue): SharedRoom = value match {
+    override def read(value: JsValue): SharedRoom = value match {
       case JsObject(json) =>
         json(idJsonPropertyName) match {
           case id: JsString => SharedRoom(id.value, json(propertiesJsonPropertyName).convertTo[Set[RoomProperty]])
@@ -48,14 +48,14 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val roomPropertyValueJsonFormat: RootJsonFormat[RoomPropertyValue] = new RootJsonFormat[RoomPropertyValue] {
     private val valueJsPropertyName = "value"
 
-    def write(v: RoomPropertyValue): JsValue = JsObject(valueJsPropertyName -> (v match {
+    override def write(v: RoomPropertyValue): JsValue = JsObject(valueJsPropertyName -> (v match {
       case p: IntRoomPropertyValue => intRoomPropertyJsonFormat write p
       case p: StringRoomPropertyValue => stringRoomPropertyJsonFormat write p
       case p: BooleanRoomPropertyValue => booleanRoomPropertyJsonFormat write p
       case p: DoubleRoomPropertyValue => doubleRoomPropertyJsonFormat write p
     }))
 
-    def read(value: JsValue): RoomPropertyValue = value match {
+    override def read(value: JsValue): RoomPropertyValue = value match {
       case json: JsObject =>
         val value = json.fields(valueJsPropertyName).asJsObject
         value.fields(valueJsPropertyName) match {

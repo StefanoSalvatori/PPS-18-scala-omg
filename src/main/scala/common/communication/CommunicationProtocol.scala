@@ -5,16 +5,10 @@ import common.communication.CommunicationProtocol.SessionId.SessionId
 import common.room.Room.RoomId
 
 object CommunicationProtocol {
-  object SessionId {
-    type SessionId = String
-    val Empty: SessionId = ""
-  }
-
   /**
    * Anything that can be serialized and sent to the socket
    */
   type SocketSerializable = Any with java.io.Serializable
-
 
   /**
    * Information sent by the matchmaker to the clients when the match is created
@@ -55,8 +49,11 @@ object CommunicationProtocol {
 
     // Type of messages that matchmaking service can send to clients
     val MatchCreated: ProtocolMessageType = Value(16) // scalastyle:ignore magic.number
+  }
 
-
+  object SessionId {
+    type SessionId = String
+    val Empty: SessionId = ""
   }
 
   /**

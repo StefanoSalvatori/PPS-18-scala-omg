@@ -43,7 +43,6 @@ trait Room {
    */
   def propertyValues: Map[String, Any] = propertiesAsMap.map(e => (e._1, RoomPropertyValue valueOf e._2))
 
-
   // We override equals so that rooms are compared for their ids
   override def equals(obj: Any): Boolean =
     obj != null && obj.isInstanceOf[BasicRoom] && obj.asInstanceOf[BasicRoom].roomId == this.roomId
