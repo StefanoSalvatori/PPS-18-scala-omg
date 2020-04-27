@@ -1,8 +1,8 @@
 # scala-omg
 A Scala library for online multiplayer games
 
-## Travis build status (develop)
-[![Build Status](https://travis-ci.com/StefanoSalvatori/scala-omg.svg?branch=develop)](https://travis-ci.com/StefanoSalvatori/scala-omg)
+## Travis build status (deploy)
+[![Build Status](https://travis-ci.com/StefanoSalvatori/PPS-18-scala-omg.svg?branch=deploy)](https://travis-ci.com/StefanoSalvatori/PPS-18-scala-omg)
 
 ## Description
 
