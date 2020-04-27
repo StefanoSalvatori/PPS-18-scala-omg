@@ -15,6 +15,8 @@ object Server extends App {
     println(s"Server listening at $host:$port")
   }
 
+  server.start()
+
   val roomName = "matchRoom"
-  server.defineRoomWithMatchmaking(roomName, MatchRoom, Matchmaker.defaultMatchmaker(Map(1 -> 2, 2 -> 2)))
+  server.defineRoomWithMatchmaking(roomName, MatchRoom, Matchmaker.defaultMatchmaker(Map(1 -> 1)))
 }

@@ -1,18 +1,8 @@
 package examples.roll_the_dice.server.room
 
-import  examples.roll_the_dice.common.MessageDictionary._
-import examples.roll_the_dice.common.MatchState
+import examples.roll_the_dice.common.MessageDictionary._
+import examples.roll_the_dice.common.{A1, A2, B1, B2, MatchState, Turn}
 import server.room.{Client, ServerRoom, SynchronizedRoomState}
-
-sealed trait Team
-case object TeamA extends Team
-case object TeamB extends Team
-
-sealed trait Turn
-case object A1 extends Turn
-case object A2 extends Turn
-case object B1 extends Turn
-case object B2 extends Turn
 
 case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState] {
 
@@ -30,35 +20,44 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState]
   override def onClose(): Unit = {}
 
   override def onJoin(client: Client): Unit = {
+    println("Joined " + client)
     clientsTurnMapping = clientsTurnMapping + (turnsOrder.next -> client)
     if (clientsTurnMapping.size == matchmakingGroups.size) {
+      println("Start game")
       gameStarted = true
       currentTurn = turnsOrder.next
-      tell(clientsTurnMapping(currentTurn), Roll)
+      clientsTurnMapping.values.foreach(c => tell(c, StartGame(A1)))
+      //tell(clientsTurnMapping(currentTurn), StartGame(cl))
     }
   }
 
   override def onLeave(client: Client): Unit = {}
 
   override def onMessageReceived(client: Client, message: Any): Unit = {
+    println(client.id + " " + message)
+    /*
     if (gameStarted && clientsTurnMapping.exists(e => e._1 == currentTurn && e._2 == client)) {
       currentTurn match {
         case A1 | A2 =>
+
           matchState = matchState addPointsA message.asInstanceOf[DiceResult].value
           if (matchState.pointsA >= winPoints) {
             broadcast("Team A won!")
           } else {
-            tell(clientsTurnMapping(turnsOrder.next), Roll)
+            currentTurn = turnsOrder.next
+            tell(clientsTurnMapping(currentTurn), Roll)
           }
         case B1 | B2 =>
           matchState = matchState addPointsB message.asInstanceOf[DiceResult].value
           if (matchState.pointsB >= winPoints) {
             broadcast("Team B won!")
           } else {
-            tell(clientsTurnMapping(turnsOrder.next), Roll)
+            currentTurn = turnsOrder.next
+            tell(clientsTurnMapping(currentTurn), Roll)
           }
       }
     }
+     */
   }
 
   override def currentState: MatchState = matchState
