@@ -1,9 +1,8 @@
 package server.room
 
 import akka.actor.{ActorRef, ActorSystem}
-import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.communication.CommunicationProtocol.{ProtocolMessage, SocketSerializable}
 import common.room.Room
 import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
@@ -11,6 +10,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.RoomHandler
 import server.utils.TestClient
+import test_utils.TestConfig
 
 class SynchronizedRoomStateSpec extends AnyWordSpecLike
   with Matchers
@@ -23,8 +23,8 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(20 seconds, 25 millis)
   implicit private val actorSystem: ActorSystem = ActorSystem()
 
-  import server.utils.ExampleRooms.RoomWithState
-  import server.utils.ExampleRooms.RoomWithState._
+  import test_utils.ExampleRooms.RoomWithState
+  import test_utils.ExampleRooms.RoomWithState._
   private var room: RoomWithState = _
   private var roomActor: ActorRef = _
   private var client1: TestClient = _
@@ -36,8 +36,8 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
     roomActor = actorSystem actorOf RoomActor(room, RoomHandler())
     client1 = TestClient()
     client2 = TestClient()
-    room.tryAddClient(client1, Room.defaultPublicPassword)
-    room.tryAddClient(client2, Room.defaultPublicPassword)
+    room.tryAddClient(client1, Room.DefaultPublicPassword)
+    room.tryAddClient(client2, Room.DefaultPublicPassword)
 
   }
   after {
@@ -113,18 +113,18 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
 
   private def receivedStateUpdated(client: TestClient): Boolean = {
     client1.allMessagesReceived.collect({
-      case msg: RoomProtocolMessage if msg.messageType == StateUpdate => msg
+      case msg: ProtocolMessage if msg.messageType == StateUpdate => msg
     }).nonEmpty
   }
 
-  private def receivedState(client: TestClient, state: Any with java.io.Serializable): Boolean = {
+  private def receivedState(client: TestClient, state: SocketSerializable): Boolean = {
     client1.allMessagesReceived.collect({
-      case msg: RoomProtocolMessage if msg.messageType == StateUpdate => msg
-    }).contains(RoomProtocolMessage(StateUpdate, client.id, state))
+      case msg: ProtocolMessage if msg.messageType == StateUpdate => msg
+    }).contains(ProtocolMessage(StateUpdate, client.id, state))
   }
 
-  private def lastReceivedMessageOf(client: TestClient): RoomProtocolMessage = {
-    client.lastMessageReceived.get.asInstanceOf[RoomProtocolMessage]
+  private def lastReceivedMessageOf(client: TestClient): ProtocolMessage = {
+    client.lastMessageReceived.get.asInstanceOf[ProtocolMessage]
   }
 
 

@@ -1,93 +1,36 @@
 package server.room
 
 import java.lang.reflect.Field
-import java.util.UUID
-
 import akka.actor.ActorRef
-import com.typesafe.scalalogging.LazyLogging
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{ProtocolMessageType, RoomProtocolMessage}
-import common.room.Room.{BasicRoom, RoomId, RoomPassword, SharedRoom}
+import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType, SocketSerializable}
+import common.room.Room.{RoomId, RoomPassword}
 import common.room._
+import server.communication.ConnectionConfigurations
 import server.room.RoomActor.{Close, StartAutoCloseTimeout}
-import server.room.socket.ConnectionConfigurations
 import server.utils.Timer
-
-import scala.concurrent.duration.FiniteDuration
-
-trait PrivateRoomSupport {
-
-  private var password: RoomPassword = Room.defaultPublicPassword
-
-  /**
-   * Check if the room is private.
-   *
-   * @return true if the room is private, false if it's public
-   */
-  def isPrivate: Boolean = password != Room.defaultPublicPassword
-
-  /**
-   * It makes the room public.
-   */
-  def makePublic(): Unit = password = Room.defaultPublicPassword
-
-  /**
-   * It makes the room private
-   *
-   * @param newPassword the password to be used to join the room
-   */
-  def makePrivate(newPassword: RoomPassword): Unit = password = newPassword
-
-  /**
-   * It checks if a provided password is the correct one.
-   *
-   * @param providedPassword the password provided, supposedly by a client
-   * @return true if the password is correct or if the room is public, false otherwise.
-   */
-  protected def checkPasswordCorrectness(providedPassword: RoomPassword): Boolean =
-    password == Room.defaultPublicPassword || password == providedPassword
-}
-
-trait RoomLockingSupport {
-
-  private var _isLocked = false
-
-  /**
-   * It checks if the room is currently locked.
-   *
-   * @return true if the room is locked, false otherwise
-   */
-  def isLocked: Boolean = _isLocked
-
-  /**
-   * It locks the room; it has no effect if the room was already locked.
-   */
-  def lock(): Unit = _isLocked = true
-
-  /**
-   * It unlocks the room; it has no effect if the room was already unlocked.
-   */
-  def unlock(): Unit = _isLocked = false
-}
 
 trait ServerRoom extends BasicRoom
   with PrivateRoomSupport
   with RoomLockingSupport
-  with LazyLogging {
+  with MatchmakingSupport {
 
-  import ServerRoom._
-
+  import java.util.UUID
   override val roomId: RoomId = UUID.randomUUID.toString
+
   val socketConfigurations: ConnectionConfigurations = ConnectionConfigurations.Default
-  val autoClose: Boolean = false
-  val autoCloseTimeout: FiniteDuration = DefaultAutomaticCloseTimeout
+  val autoClose: Boolean = true
+  import scala.concurrent.duration._
+  val autoCloseTimeout: FiniteDuration = 5 seconds
+
   protected var roomActor: Option[ActorRef] = None
+
   private var clients: Seq[Client] = Seq.empty
-  //clients that are allowed to reconnect with the associate expiration timer
-  //TODO: need to be synchronized if it's immutable?
+  // Clients that are allowed to reconnect with the associate expiration timer
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
-  def setAssociatedActor(actor: ActorRef): Unit = roomActor = Some(actor)
+  // By creating explicit setter, room actor can be kept "protected"
+  def setRoomActor(actor: ActorRef): Unit = roomActor = Some(actor)
 
   /**
    * Add a client to the room. It triggers the onJoin handler
@@ -99,10 +42,10 @@ trait ServerRoom extends BasicRoom
     val canJoin = checkPasswordCorrectness(providedPassword) && !isLocked && joinConstraints
     if (canJoin) {
       this.clients = client +: this.clients
-      client send RoomProtocolMessage(JoinOk, client.id)
+      client send ProtocolMessage(JoinOk, client.id)
       this.onJoin(client)
     } else {
-      client send RoomProtocolMessage(ClientNotAuthorized)
+      client send ProtocolMessage(ClientNotAuthorized)
     }
     canJoin
   }
@@ -119,9 +62,9 @@ trait ServerRoom extends BasicRoom
       reconnectingClient.get._2.stopTimer()
       this.reconnectingClients = this.reconnectingClients.filter(_._1.id != client.id)
       this.clients = client +: this.clients
-      client.send(RoomProtocolMessage(JoinOk, client.id))
+      client.send(ProtocolMessage(JoinOk, client.id))
     } else {
-      client.send(RoomProtocolMessage(ClientNotAuthorized, client.id))
+      client.send(ProtocolMessage(ClientNotAuthorized, client.id))
     }
     reconnectingClient.nonEmpty
   }
@@ -163,7 +106,7 @@ trait ServerRoom extends BasicRoom
   def removeClient(client: Client): Unit = {
     this.clients = this.clients.filter(_.id != client.id)
     this.onLeave(client)
-    client send RoomProtocolMessage(LeaveOk)
+    client send ProtocolMessage(LeaveOk)
     if (this.checkAutoClose()) {
       this.roomActor.foreach(_ ! StartAutoCloseTimeout)
     }
@@ -187,23 +130,23 @@ trait ServerRoom extends BasicRoom
    * @param client  the client that will receive the message
    * @param message the message to send
    */
-  def tell(client: Client, message: Any with java.io.Serializable): Unit =
-    this.clients.filter(_.id == client.id).foreach(_.send(RoomProtocolMessage(ProtocolMessageType.Tell, client.id, message)))
+  def tell(client: Client, message: SocketSerializable): Unit =
+    this.clients.filter(_.id == client.id).foreach(_.send(ProtocolMessage(ProtocolMessageType.Tell, client.id, message)))
 
   /**
    * Broadcast a message to all clients connected
    *
    * @param message the message to send
    */
-  def broadcast(message: Any with java.io.Serializable): Unit =
-    this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)))
+  def broadcast(message: SocketSerializable): Unit =
+    this.clients.foreach(client => client.send(ProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)))
 
   /**
    * Close this room
    */
   def close(): Unit = {
     this.lock()
-    this.clients.foreach(client => client.send(RoomProtocolMessage(ProtocolMessageType.RoomClosed, client.id)))
+    this.clients.foreach(client => client.send(ProtocolMessage(ProtocolMessageType.RoomClosed, client.id)))
     this.roomActor.foreach(_ ! Close)
     this.onClose()
   }
@@ -243,7 +186,7 @@ trait ServerRoom extends BasicRoom
    *
    * @param properties A set containing the properties to set
    */
-  def setProperties(properties: Set[RoomProperty]): Unit =
+  def properties_=(properties: Set[RoomProperty]): Unit =
     properties.filter(p => try { isProperty(this fieldFrom p.name) } catch { case _: NoSuchFieldException => false })
       .map(ServerRoom.propertyToPair)
       .foreach(property => operationOnField(property.name)(f => f set(this, property.value)))
@@ -328,9 +271,6 @@ trait ServerRoom extends BasicRoom
 
 object ServerRoom {
 
-  import scala.concurrent.duration._
-  val DefaultAutomaticCloseTimeout: FiniteDuration = 5 seconds
-
   /**
    * It creates a SharedRoom from a given ServerRoom.
    * Properties of the basic ServerRoom are dropped (except for the private state),
@@ -356,7 +296,7 @@ object ServerRoom {
 
     // Add public/private state to room properties
     import common.room.RoomPropertyValueConversions._
-    runtimeOnlyProperties = runtimeOnlyProperties + RoomProperty(Room.roomPrivateStatePropertyName, room.isPrivate)
+    runtimeOnlyProperties = runtimeOnlyProperties + RoomProperty(Room.RoomPrivateStatePropertyName, room.isPrivate)
 
     SharedRoom(room.roomId, runtimeOnlyProperties)
   }

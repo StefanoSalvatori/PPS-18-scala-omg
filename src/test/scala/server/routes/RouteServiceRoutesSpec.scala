@@ -3,15 +3,15 @@ package server.routes
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.testkit.TestKit
 import common.http.{HttpRequests, Routes}
-import common.room.Room.SharedRoom
-import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
+import common.room.{FilterOptions, RoomJsonSupport, RoomProperty, SharedRoom}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import server.RoomHandler
 import server.route_service.RouteService
-import server.utils.ExampleRooms._
+import test_utils.ExampleRooms._
 import common.room.RoomPropertyValueConversions._
+import server.matchmaking.{Matchmaker, MatchmakingHandler}
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -23,7 +23,8 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
   with RoomJsonSupport {
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
-  private val routeService = RouteService(RoomHandler())
+  private val roomHandler = RoomHandler()
+  private val routeService = RouteService(roomHandler, MatchmakingHandler(roomHandler))
   private val route = routeService.route
 
   behavior of "Route Service routing"
@@ -31,6 +32,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
   before {
     //ensure to have at least one room-type
     routeService.addRouteForRoomType(TestRoomType, RoomWithProperty)
+    routeService.addRouteForMatchmaking(TestRoomType, RoomWithProperty, Matchmaker defaultMatchmaker Map())
   }
 
   override def afterAll(): Unit = {
@@ -97,19 +99,45 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
     }
   }
 
+
+
   /// --- Web socket  ---
+
+  //Connection
   it should "handle web socket request on path 'connection/{id}'" in {
     val room = createRoomRequest()
     val wsClient = WSProbe()
-    WS("/" + Routes.connectionRoute + "/" + room.roomId, wsClient.flow) ~> route ~>
+    WS("/" + Routes.ConnectionRoute + "/" + room.roomId, wsClient.flow) ~> route ~>
       check {
         isWebSocketUpgrade shouldBe true
       }
   }
 
-  it should "reject web socket request on path 'connection/{id}'" in {
+
+  it should "reject web socket request on path 'connection/{id}' if id doesnt exists" in {
     val wsClient = WSProbe()
-    WS("/" + Routes.connectionRoute + "/wrong-id", wsClient.flow) ~> route ~>
+    WS("/" + Routes.ConnectionRoute + "/wrong-id", wsClient.flow) ~> route ~>
+      check {
+        handled shouldBe false
+      }
+  }
+
+
+
+
+  //Matchmake
+
+  it should "handle web socket request on path  'matchmake/{type}' if such type exists " in {
+    val wsClient = WSProbe()
+    WS("/" + Routes.MatchmakingRoute + "/" + TestRoomType, wsClient.flow) ~> route ~>
+      check {
+        isWebSocketUpgrade shouldBe true
+      }
+  }
+
+  it should "reject web socket request on path  'matchmake/{type}' if such type doesn't exists " in {
+    val wsClient = WSProbe()
+    WS("/" + Routes.MatchmakingRoute + "/" + "wrong-type", wsClient.flow) ~> route ~>
       check {
         handled shouldBe false
       }

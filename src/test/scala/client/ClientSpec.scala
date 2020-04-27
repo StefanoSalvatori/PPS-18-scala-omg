@@ -5,15 +5,14 @@ import akka.testkit.TestKit
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
-import common.TestConfig
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.ServerRoom
-import server.utils.ExampleRooms
-import server.utils.ExampleRooms.{ClosableRoomWithState, NoPropertyRoom, RoomWithProperty, RoomWithReconnection}
 import common.room.RoomPropertyValueConversions._
+import test_utils.ExampleRooms._
+import test_utils.{ExampleRooms, TestConfig}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
@@ -180,7 +179,7 @@ class ClientSpec extends AnyFlatSpec
   it should "allow to reconnect to a previously joined room (that allows reconnection) with the same session id" in {
     val room = Await.result(client.joinOrCreate(ExampleRooms.roomWithReconnection, FilterOptions.empty, Set.empty), DefaultTimeout)
     Await.result(room.leave(), DefaultTimeout)
-    val res = Await.result(client.reconnect(room.roomId, room.sessionId.get), DefaultTimeout)
+    val res = Await.result(client.reconnect(room.roomId, room.sessionId), DefaultTimeout)
 
     room.sessionId shouldEqual res.sessionId
 
@@ -190,7 +189,7 @@ class ClientSpec extends AnyFlatSpec
     val room = Await.result(client.joinOrCreate(ExampleRooms.roomWithReconnection, FilterOptions.empty, Set.empty), DefaultTimeout)
 
     assertThrows[Exception] {
-      Await.result(client.reconnect(room.roomId, room.sessionId.get), DefaultTimeout)
+      Await.result(client.reconnect(room.roomId, room.sessionId), DefaultTimeout)
     }
   }
 

@@ -6,32 +6,40 @@ import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import common.communication.CommunicationProtocol._
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
+
+object TextProtocolSerializer {
+  /**
+   * Separator used to split information in the message
+   */
+  val SEPARATOR = ":"
+
+  // Number of fields in the room protocol message
+  private val ProtocolFieldsCount = 3
+}
 
 /**
  * A simple object that can write and read room protocol messages as text strings.
  * <br>
  * It handles them as text strings in the form <em>action{separator}sessionId{separator}payload</em>
  */
-object TextProtocolSerializer extends RoomProtocolMessageSerializer {
-  val SEPARATOR = ":"
-  private val ProtocolFieldsCount = 3
+case class TextProtocolSerializer() extends ProtocolMessageSerializer {
 
+  import TextProtocolSerializer._
 
-  override def parseFromSocket(msg: Message): Future[RoomProtocolMessage] = msg match {
+  override def parseFromSocket(msg: Message): Future[ProtocolMessage] = msg match {
     case TextMessage.Strict(message) => parseMessage(message)
     case msg => Future.failed(new ParseException(msg.toString, -1))
   }
 
-  override def prepareToSocket(msg: RoomProtocolMessage): Message = {
+  override def prepareToSocket(msg: ProtocolMessage): Message = {
     TextMessage.Strict(msg.messageType.id.toString + SEPARATOR + msg.sessionId + SEPARATOR + msg.payload)
   }
 
-  private def parseMessage(msg: String): Future[RoomProtocolMessage] = {
+  private def parseMessage(msg: String): Future[ProtocolMessage] = {
     try {
       msg.split(SEPARATOR, ProtocolFieldsCount).toList match {
-        case List(code, sessionId, payload) =>
-          Future.successful(RoomProtocolMessage(ProtocolMessageType(code.toInt), sessionId, payload))
+        case code :: sessionId :: payload :: _ =>
+          Future.successful(ProtocolMessage(ProtocolMessageType(code.toInt), sessionId, payload))
       }
     } catch {
       case e: NoSuchElementException => Future.failed(e)

@@ -4,15 +4,14 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
-import common.TestConfig
 import common.communication.BinaryProtocolSerializer
 import common.http.Routes
-import common.room.FilterOptions
-import common.room.Room.SharedRoom
+import common.room.{FilterOptions, SharedRoom}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer
 import server.room.ServerRoom
+import test_utils.TestConfig
 
 import scala.concurrent.Await
 
@@ -70,7 +69,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       httpTestActor ! HttpPostRoom(RoomTypeName, Set.empty)
       val roomRes = expectMsgType[HttpRoomResponse]
 
-      httpTestActor ! HttpSocketRequest(roomRes.room.roomId, BinaryProtocolSerializer())
+      httpTestActor ! HttpRoomSocketRequest(roomRes.room.roomId, BinaryProtocolSerializer())
 
       expectMsgPF() {
         case HttpSocketSuccess(ref) =>  assert(ref.isInstanceOf[ActorRef])

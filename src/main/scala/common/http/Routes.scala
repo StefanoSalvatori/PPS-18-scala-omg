@@ -1,17 +1,27 @@
 package common.http
 
+import common.room.Room.{RoomId, RoomType}
+
+/**
+ * Object that defines the routes that the gameserver provides
+ */
 object Routes {
 
-  def rooms: String = "rooms"
+  val Rooms: String = "rooms"
 
   /**
-   * @return route name for web socket connection with a room
+   * route path for web socket connection with a room
    */
-  def connectionRoute: String = "connection"
+  val ConnectionRoute: String = "connection"
 
-  def roomsByType(roomType: String): String = rooms + "/" + roomType
+  /**
+   * route path for web socket request to enter matchmaking
+   */
+  val MatchmakingRoute: String = "matchmaking"
 
-  def roomByTypeAndId(roomType: String, roomId: String): String = roomsByType(roomType) + "/" + roomId
+  def roomsByType(roomType: RoomType): String = Rooms + "/" + roomType
+
+  def roomByTypeAndId(roomType: RoomType, roomId: RoomId): String = roomsByType(roomType) + "/" + roomId
 
   def httpUri(address: String, port: Int): String = "http://" + address + ":" + port
 
@@ -20,12 +30,16 @@ object Routes {
   def wsUri(httpUri: String): String = httpUri.replace("http", "ws")
 
   /**
-   * Route for web socket connection to a room
-   *
    * @param roomId room id
-   * @return
+   * @return route for web socket connection to a room
    */
-  def webSocketConnection(roomId: String): String = connectionRoute + "/" + roomId
+  def roomSocketConnection(roomId: RoomId): String = ConnectionRoute + "/" + roomId
+
+  /**
+   * @param roomType room type
+   * @return route for web socket connection to the matchmaking service
+   */
+  def matchmakingSocketConnection(roomType: RoomType): String = MatchmakingRoute + "/" + roomType
 }
 
 

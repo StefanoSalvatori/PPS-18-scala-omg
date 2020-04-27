@@ -9,10 +9,10 @@ import akka.pattern.pipe
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import client.utils.MessageDictionary._
-import common.communication.CommunicationProtocol.RoomProtocolMessage
+import common.communication.CommunicationProtocol.ProtocolMessage
+import common.communication.SocketSerializer
 import common.http.{HttpRequests, Routes}
-import common.room.RoomJsonSupport
-import common.room.Room.SharedRoom
+import common.room.{RoomJsonSupport, SharedRoom}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -60,37 +60,49 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
         case Failure(ex) => replyTo ! FailResponse(ex)
       }
 
-    case HttpSocketRequest(roomId, parser) =>
-      val sink: Sink[Message, NotUsed] =
-        Flow[Message]
-          .mapAsync(parallelism = Int.MaxValue)(x =>
-            parser.parseFromSocket(x).recover { case _ => null } // scalastyle:ignore null
-            // null values are not passed downstream
-          )
-          .to(Sink.actorRef(sender, PartialFunction.empty, SocketError))
+    case HttpRoomSocketRequest(roomId, parser) =>
 
-      val (sourceRef, publisher) =
-        Source.actorRef(
-          PartialFunction.empty, PartialFunction.empty, Int.MaxValue, OverflowStrategy.dropHead)
-          .map((x: RoomProtocolMessage) => {
-            parser.prepareToSocket(x)
-          })
-          .toMat(Sink.asPublisher(false))(Keep.both).run()
-
-      val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + Routes.webSocketConnection(roomId)
-      val flow = Http() webSocketClientFlow WebSocketRequest(wsSocketUri)
-
-      val ((_, upgradeResponse), _) = Source.fromPublisher(publisher)
-        .viaMat(flow)(Keep.both)
-        .toMat(sink)(Keep.both)
-        .run()
-
+      val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + Routes.roomSocketConnection(roomId)
+      val (upgradeResponse, sourceRef) = openSocket(wsSocketUri, parser)
       upgradeResponse pipeTo self
       context.become(waitSocketResponse(sender, sourceRef))
+
+
+    case HttpMatchmakingSocketRequest(roomType, parser) =>
+      val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + Routes.matchmakingSocketConnection(roomType)
+      val (upgradeResponse, sourceRef) = openSocket(wsSocketUri, parser)
+      upgradeResponse pipeTo self
+      context.become(waitSocketResponse(sender, sourceRef))
+
+  }
+
+  private def openSocket[ProtocolMessage](wsRoute: String, parser: SocketSerializer[ProtocolMessage]) = {
+    val sink: Sink[Message, NotUsed] =
+      Flow[Message]
+        .mapAsync(parallelism = Int.MaxValue)(x =>
+          parser.parseFromSocket(x).recover { case _ => null } // scalastyle:ignore null
+          // null values are not passed downstream
+        ).to(Sink.actorRef(sender, PartialFunction.empty, SocketError))
+
+    val (sourceRef, publisher) =
+      Source.actorRef[ProtocolMessage](
+        PartialFunction.empty, PartialFunction.empty, Int.MaxValue, OverflowStrategy.dropHead)
+        .map(parser.prepareToSocket)
+        .toMat(Sink.asPublisher(false))(Keep.both).run()
+
+    val flow = Http() webSocketClientFlow WebSocketRequest(wsRoute)
+
+    val ((_, upgradeResponse), _) = Source.fromPublisher(publisher)
+      .viaMat(flow)(Keep.both)
+      .toMat(sink)(Keep.both)
+      .run()
+
+    (upgradeResponse, sourceRef)
+
   }
 
 
-  def onWaitSocketResponse(replyTo: ActorRef, outRef: ActorRef): Receive = {
+  private def onWaitSocketResponse(replyTo: ActorRef, outRef: ActorRef): Receive = {
     case ValidUpgrade(_, _) =>
       replyTo ! HttpSocketSuccess(outRef)
       context.unbecome()

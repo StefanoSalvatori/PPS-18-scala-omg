@@ -1,0 +1,118 @@
+\chapter{Retrospective}
+
+\section{Development description in detail}
+
+\subsection{Sprint 0}
+\subsubsection{Report}
+During the first meeting the product backlog of the project and the product items were defined. Each product item was associated with an estimate of his development effort.
+The organizational structure of the project was also defined. We discussed tools and development environments to support continuous integration.
+An initial analysis and design process was carried out in order to define the main entities and how to manage their interactions.
+It was therefore decided to internally use an approach base on actor, which however is transparent to the user (developer). 
+We decided to rely upon akka-core library and akka-http library. 
+In the end it was decided to carry out the development of clients and server in parallel in ordeer to have a working core in the shortest time. This core would be extended incrementally during the project lifetime.
+
+\subsubsection{Retrospective}
+
+???
+
+
+
+
+
+
+\subsection{Sprint 1}
+\subsubsection{Report}
+The goal of this first sprint was to define the main client and server interfaces and reach a minimal working system that allows:
+\begin{itemize}
+	\item game server execution 
+	\item room types definition
+	\item client requests to create rooms.
+\end{itemize}
+This goal was completed successfully. 
+
+The task effort concerning the creation of a game server based on an existsing server was underestimated; this lead us to re-think some decision that were made upon server creation. The result is that is possible for the user to specify some external routes, this will be handled by the game server if they don't conflict with existing routes used internally. 
+However, it is not possibile to attach the game server to an existing one.
+
+
+
+
+
+\subsubsection{Retrospective}
+The team was able to effectivly use continuous integration and project managemenet tools settled in the firts meeting  and complete all tasks.
+A problem that arised was that some scalastyle rules were too strict and tests were failing with no good reason. We decided then to disable such rules in further development.
+
+\subsection{Sprint 2}
+\subsubsection{Report}
+The amount of work spent on this sprint was certainly greater than the previous one.
+Indeed during this week some of the main features of the library about clients and rooms have been developed.
+Tasks regarding web socket support was underestimated so it was not fully completed during this sprint. Given the amount of work spent on this task some other were left behind and were not fully completed too.
+The task of creating a room with custom options was not completed due to the lack of communication about who was the volunteer of that task.
+Uncompleted tasks will be completed in the next sprint.
+
+The interaction between client and rooms required the definition of an ad hoc protocol to manage the messages used internally by the library. This introduced some dependecies between client and server tasks causing some slowdown in the development process.
+
+
+
+\subsubsection{Retrospective}
+Even if the estimated effort for this sprint was high, the fact that the team was not able to complete all task require some further considerations.
+First, it's important to better define the work in advance. For example we should consider splitting tricky tasks in multiple sub-tasks when needed.
+Furthermore the communication between the team should be increased even during the week.
+This could help solving problems that arises during the development in advance, before reaching the end of the week.
+
+
+\subsection{Sprint 3}
+\subsubsection{Report}
+
+In this week tasks pending from the previous sprint were completed.
+
+During the implementation of the automatic state update we decided to use binary serialization instead of json serialization. Json serialization required the user to define his own parsers while binary serialization allowed a more generic and simple approach.
+
+Since the work done in the previous weeks contained the core functionalities of the library, we were able to implement a simple online multiplayer game.
+The game is Rock-Paper-Scissor. 
+The purpose of implementing this application was to verify that the code produced so far was robust and usable in a simple manner both client and server side.
+The final code is also a good example on how to use the library and his basic functionalities.
+
+
+\subsubsection{Retrospective}
+This time the tasks were all completed. 
+Anyway the lack of documentation and diagrams relative to some common concepts led to different integration issues  between code written by different team members. Sometimes ad hoc refactoring was needed to keep high quality software throughout the development.
+More attention must be paid to the documentation process, particulary the one concerning important aspects of the library. 
+
+During the week were added to the test suite a subset of unpredictable tests.
+They were immediatly fixed after their discovery, within the end of the sprint.
+
+
+
+
+\subsection{Sprint 4}
+\subsubsection{Report}
+In this sprint was implemeneted 'MoneyGrabber', a game that takes advantage of the most advanced features of the library, such as the automatic update of the state of the world and the management of rooms with multiple players.
+It was therefore possible to verify the actual versatility of the library showing a further and more complex example of use in a real context.
+All tasks were completed ahead of time.
+Probably we should have considered the addition of some more tasks to the backlog during the previous sprint review. By the way the remaining time of the sprint was used by the whole team to improve the existing code quility and produce some more detailed documentation.
+
+
+
+\subsubsection{Retrospective}
+
+???
+
+
+
+
+
+
+\section{Sprint 5}
+
+\subsubsection{Report}
+
+\subsubsection{Retrospective}
+
+\section{Sprint 6}
+
+\subsubsection{Report}
+
+\subsubsection{Retrospective}
+
+
+\section{Final comments}

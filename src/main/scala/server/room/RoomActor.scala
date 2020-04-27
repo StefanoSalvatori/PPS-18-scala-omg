@@ -2,23 +2,33 @@ package server.room
 
 import akka.actor.{Actor, ActorLogging, PoisonPill, Props, Timers}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{RoomProtocolMessage, SessionId}
+import common.communication.CommunicationProtocol.SessionId.SessionId
+import common.communication.CommunicationProtocol.{ProtocolMessage, SessionId}
 import common.room.Room.RoomPassword
 import server.RoomHandler
 
 import scala.concurrent.ExecutionContextExecutor
 
 object RoomActor {
+
   sealed trait RoomCommand
+
   case class Join(client: Client, sessionId: SessionId, password: RoomPassword) extends RoomCommand
+
   case class Leave(client: Client) extends RoomCommand
+
+  case class Reconnect(client: Client, sessionId: SessionId, password: RoomPassword) extends RoomCommand
+
   case class Msg(client: Client, payload: Any) extends RoomCommand
+
   case object Close extends RoomCommand
 
   case object StartAutoCloseTimeout
 
   private trait InternalMessage
+
   private case object AutoCloseRoomTimer
+
   private case object AutoCloseRoom extends InternalMessage
 
   def apply(serverRoom: ServerRoom, roomHandler: RoomHandler): Props = Props(classOf[RoomActor], serverRoom, roomHandler)
@@ -34,6 +44,7 @@ object RoomActor {
    * It triggers the update of the room state.
    */
   case class WorldUpdateTick(lastUpdate: Long)
+
 }
 
 /**
@@ -48,7 +59,7 @@ class RoomActor(private val serverRoom: ServerRoom,
 
   implicit val executionContext: ExecutionContextExecutor = this.context.system.dispatcher
 
-  serverRoom setAssociatedActor self
+  serverRoom setRoomActor self
 
   override def preStart(): Unit = {
     super.preStart()
@@ -63,26 +74,26 @@ class RoomActor(private val serverRoom: ServerRoom,
   }
 
   override def receive: Receive = {
-    case Join(client, SessionId.empty, password) => //client first join
-      this.timers.cancel(AutoCloseRoomTimer)
+    case Join(client, _, password) => //client first join
+      this.timers cancel AutoCloseRoomTimer
       val joined = serverRoom tryAddClient(client, password)
-      sender ! (if (joined) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
+      sender ! (if (joined) ProtocolMessage(JoinOk, client.id) else ProtocolMessage(ClientNotAuthorized, client.id))
 
-    case Join(client, _, _) => //if sessionId is not empty means reconnection
+    case Reconnect(client, _, _) =>
       this.timers cancel AutoCloseRoomTimer
       val reconnected = serverRoom tryReconnectClient client
-      sender ! (if (reconnected) RoomProtocolMessage(JoinOk, client.id) else RoomProtocolMessage(ClientNotAuthorized, client.id))
+      sender ! (if (reconnected) ProtocolMessage(JoinOk, client.id) else ProtocolMessage(ClientNotAuthorized, client.id))
 
     case Leave(client) =>
       this.serverRoom removeClient client
-      sender ! RoomProtocolMessage(LeaveOk)
+      sender ! ProtocolMessage(LeaveOk)
 
     case Msg(client, payload) =>
       if (this.serverRoom.clientAuthorized(client)) {
         this.serverRoom.onMessageReceived(client, payload)
       } else {
         client.send(ClientNotAuthorized)
-        sender ! RoomProtocolMessage(ClientNotAuthorized, client.id)
+        sender ! ProtocolMessage(ClientNotAuthorized, client.id)
       }
 
     case Close =>

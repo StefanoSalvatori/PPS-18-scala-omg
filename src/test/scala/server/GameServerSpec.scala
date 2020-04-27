@@ -4,18 +4,17 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, get, _}
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
 import common.http.{HttpRequests, Routes}
-import common.room.Room.SharedRoom
-import common.room.{FilterOptions, RoomJsonSupport}
-import common.TestConfig
+import common.room.{FilterOptions, RoomJsonSupport, SharedRoom}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import server.room.ServerRoom
+import test_utils.TestConfig
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -44,9 +43,13 @@ class GameServerSpec extends AnyFlatSpec
       }
     }
 
-  private val server: GameServer = GameServer(Host, Port, AdditionalTestRoutes)
+  private var server: GameServer = GameServer(Host, Port, AdditionalTestRoutes)
 
   behavior of "Game Server facade"
+
+  before {
+    this.server =  GameServer(Host, Port, AdditionalTestRoutes)
+  }
 
 
   after {
@@ -104,7 +107,7 @@ class GameServerSpec extends AnyFlatSpec
     }
   }
 
-  it should s"respond to requests received at ${Routes.rooms}" in {
+  it should s"respond to requests received at ${Routes.Rooms}" in {
     Await.result(this.server.start(), ServerLaunchAwaitTime)
     val response = Await.result(this.makeEmptyRequestAtRooms, MaxWaitRequests)
     assert(response.status equals StatusCodes.OK)
@@ -170,9 +173,8 @@ class GameServerSpec extends AnyFlatSpec
     val roomsList = Await.result(Unmarshal(httpResult).to[Seq[SharedRoom]], MaxWaitRequests)
     roomsList should have size 1
     Await.result(this.server.stop(), ServerShutdownAwaitTime)
-
-
   }
+
 
 
   private def makeEmptyRequest(): Future[HttpResponse] = {

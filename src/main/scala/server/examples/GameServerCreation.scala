@@ -34,5 +34,5 @@ object GameServerCreation extends App {
   }
 
   import server.examples.rooms.ExampleRooms._
-  gameServer defineRoom("test_room", RoomWithGameLoopAndSync)
+  gameServer defineRoom("test_room", MyRoom)
 }

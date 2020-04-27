@@ -2,9 +2,9 @@ package client
 
 import akka.actor.{ActorRef, Stash}
 import akka.util.Timeout
-import client.room.ClientRoom
+import client.room.{ClientRoom, JoinedRoom}
 import client.utils.MessageDictionary._
-import common.room.{Room, RoomJsonSupport, RoomProperty, RoomPropertyValue}
+import common.room.{Room, RoomJsonSupport, RoomProperty}
 
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -18,6 +18,9 @@ object CoreClient {
 
   def apply(httpServerUri: String): Props = Props(classOf[CoreClientImpl], httpServerUri)
 }
+
+
+
 
 class CoreClientImpl(private val httpServerUri: String) extends CoreClient with RoomJsonSupport with Stash {
 
@@ -40,7 +43,7 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
 
     case CreatePrivateRoom(roomType, roomOptions, password) =>
       context become this.waitHttpResponse(sender)
-      httpClient ! HttpPostRoom(roomType, roomOptions + RoomProperty(Room.roomPasswordPropertyName, password.toString))
+      httpClient ! HttpPostRoom(roomType, roomOptions + RoomProperty(Room.RoomPasswordPropertyName, password.toString))
 
     case GetAvailableRooms(roomType, roomOptions) =>
       context.become(this.waitHttpResponse(sender))
@@ -52,14 +55,14 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
         sender ! JoinedRooms(Set.empty)
       } else {
         context.become(roomsAggregator(this.joinedRoomsActors.size, sender, Set.empty))
-        this.joinedRoomsActors.foreach(a => a ! RetrieveClientRoom)
+        this.joinedRoomsActors.foreach(_ ! RetrieveClientRoom)
       }
 
 
     case ClientRoomActorLeft =>
       this.joinedRoomsActors = this.joinedRoomsActors - sender
 
-    case ClientRoomActorJoined=>
+    case ClientRoomActorJoined =>
       this.joinedRoomsActors = this.joinedRoomsActors + sender
   }
 
@@ -76,12 +79,12 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
 
     case HttpRoomSequenceResponse(rooms) =>
       context.become(onReceive)
-      replyTo ! Success(rooms.map(r =>
-        ClientRoom(
+      replyTo ! Success(rooms.map(room =>
+        ClientRoom.createJoinable(
           self,
           httpServerUri,
-          r.roomId,
-          r.sharedProperties.map(p => (p.name, p.value)).toMap[String, RoomPropertyValue]
+          room.roomId,
+          room.properties
         )
       ))
       unstashAll()
@@ -90,11 +93,11 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
     case HttpRoomResponse(room) =>
       context.become(onReceive)
       replyTo ! Success(
-        ClientRoom(
+        ClientRoom.createJoinable(
           self,
           httpServerUri,
           room.roomId,
-          room.sharedProperties.map(p => (p.name, p.value)).toMap[String, RoomPropertyValue]
+          room.properties
         )
       )
       unstashAll()
@@ -105,13 +108,13 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
   /**
    * Aggregate results to get all joined rooms
    */
-  def roomsAggregator(expectedMessages: Int, replyTo: ActorRef, response: Set[ClientRoom]): Receive = {
-    case ClientRoomResponse(clientRoom) =>
+  def roomsAggregator(expectedMessages: Int, replyTo: ActorRef, response: Set[JoinedRoom]): Receive = {
+    case ClientRoomResponse(room) =>
       if (expectedMessages == 1) {
-        replyTo ! JoinedRooms(response + clientRoom)
+        replyTo ! JoinedRooms(response + room)
         context.become(receive)
       } else {
-        context.become(roomsAggregator(expectedMessages - 1, replyTo, response + clientRoom))
+        context.become(roomsAggregator(expectedMessages - 1, replyTo, response + room))
       }
 
 
