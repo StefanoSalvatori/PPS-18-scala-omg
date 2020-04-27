@@ -4,6 +4,16 @@
 *.toc
 *.gz
 
+#ignore doc and process in deploy
+doc/
+process/
+
+#ingnore examples
+src/main/scala/client/examples/
+src/main/scala/sever/examples/
+src/main/scala/examples
+
+
 
 null/
 .class
