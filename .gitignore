@@ -2,6 +2,7 @@
 *.aux
 *.pdf
 *.toc
+*.gz
 
 
 null/
