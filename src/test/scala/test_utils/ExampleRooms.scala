@@ -1,7 +1,7 @@
-package server.utils
+package test_utils
 
 import server.communication.ConnectionConfigurations
-import server.room.{Client, GameLoop, RoomPropertyMarker, ServerRoom, SynchronizedRoomState}
+import server.room._
 
 /**
  * Rooms used for testing purpose.
@@ -105,9 +105,10 @@ object ExampleRooms {
 
   case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
     import ClosableRoomWithState._
+
     import scala.concurrent.duration._
     override val stateUpdateRate = 200
-    override val socketConfigurations = ConnectionConfigurations(2 seconds)
+    override val socketConfigurations: ConnectionConfigurations = ConnectionConfigurations(2 seconds)
     private var gameState = "gameState"
 
     override def onCreate(): Unit = this.startStateSynchronization()
@@ -219,4 +220,3 @@ object ExampleRooms {
   val lockedRoomType = "lockedRoom"
   val unlockedRoomType = "unlockedRoom"
 }
-

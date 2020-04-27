@@ -1,12 +1,12 @@
 package server.room
 
 import akka.actor.{ActorRef, ActorSystem}
-import common.TestConfig
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import server.RoomHandler
+import test_utils.TestConfig
 
 class GameLoopSpec extends AnyFlatSpecLike
   with Matchers
@@ -17,8 +17,8 @@ class GameLoopSpec extends AnyFlatSpecLike
 
   implicit private val actorSystem: ActorSystem = ActorSystem()
 
-  import server.utils.ExampleRooms.RoomWithGameLoop
-  import server.utils.ExampleRooms.RoomWithGameLoop._
+  import test_utils.ExampleRooms.RoomWithGameLoop
+  import test_utils.ExampleRooms.RoomWithGameLoop._
   private var room: RoomWithGameLoop = _
   private var roomActor: ActorRef = _
 

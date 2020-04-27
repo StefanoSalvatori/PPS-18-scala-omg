@@ -4,8 +4,8 @@ import java.util.NoSuchElementException
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.util.Timeout
-import common.room.Room.{BasicRoom, RoomId}
-import common.room.{NoSuchPropertyException, RoomProperty, RoomPropertyValue}
+import common.room.Room.RoomId
+import common.room.{BasicRoom, NoSuchPropertyException, RoomProperty, RoomPropertyValue}
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._

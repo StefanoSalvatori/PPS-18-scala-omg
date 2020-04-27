@@ -25,8 +25,8 @@ case class RoomSocket(private val room: ActorRef,
   override protected val pongMessage: ProtocolMessage = ProtocolMessage(Pong)
 
   override protected val onMessageFromSocket: PartialFunction[ProtocolMessage, Unit] = {
-    case ProtocolMessage(JoinRoom, SessionId.empty, payload) =>
-      room ! Join(this.client, SessionId.empty, payload.asInstanceOf[RoomPassword])
+    case ProtocolMessage(JoinRoom, SessionId.Empty, payload) =>
+      room ! Join(this.client, SessionId.Empty, payload.asInstanceOf[RoomPassword])
     case ProtocolMessage(JoinRoom, sessionId, payload) =>
       this.client = Client.asActor(sessionId, this.clientActor)
       room ! Join(this.client, sessionId, payload.asInstanceOf[RoomPassword])

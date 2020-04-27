@@ -1,14 +1,14 @@
 package client.room
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
+import akka.pattern.ask
 import client.utils.MessageDictionary.{SendJoin, SendReconnect}
-import common.room.{Room, RoomProperty}
+import common.communication.CommunicationProtocol.SessionId.SessionId
 import common.room.Room.{RoomId, RoomPassword}
+import common.room.{Room, RoomProperty}
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
-import akka.pattern.ask
-import common.communication.CommunicationProtocol.SessionId
+import scala.util.{Failure, Success}
 
 /**
  * A room that can be joined
@@ -19,21 +19,21 @@ trait JoinableRoom extends ClientRoom {
    *
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
-  def join(password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom]
+  def join(password: RoomPassword = Room.DefaultPublicPassword): Future[JoinedRoom]
 
   /**
    * Open web socket with server room and try to join with the given session id
    *
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
-  def joinWithSessionId(sessionId: SessionId, password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom]
+  def joinWithSessionId(sessionId: SessionId, password: RoomPassword = Room.DefaultPublicPassword): Future[JoinedRoom]
 
   /**
    * Open web socket with server room and try to reconnect to the room
    *
    * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
    */
-  def reconnect(sessionId: SessionId, password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom]
+  def reconnect(sessionId: SessionId, password: RoomPassword = Room.DefaultPublicPassword): Future[JoinedRoom]
 }
 
 object JoinableRoom {
@@ -56,7 +56,7 @@ private class JoinableRoomImpl(override val roomId: RoomId,
   private var innerActor: Option[ActorRef] = None
 
 
-  override def join(password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom] = {
+  override def join(password: RoomPassword = Room.DefaultPublicPassword): Future[JoinedRoom] = {
     this.joinFuture(None, password)
   }
 

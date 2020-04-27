@@ -1,12 +1,11 @@
 package common.room
 
 import common.room.RoomPropertyValueConversions._
-import common.room.Room.SharedRoom
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class RoomSpec extends AnyFlatSpec
+class SharedRoomSpec extends AnyFlatSpec
   with Matchers
   with BeforeAndAfter {
 

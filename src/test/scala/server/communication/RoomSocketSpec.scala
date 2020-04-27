@@ -48,7 +48,8 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
   before {
     room = ServerRoom()
     roomActor = system actorOf RoomActor(room, RoomHandler())
-    roomSocketFlow = communication.RoomSocket(roomActor, TextProtocolSerializer, ConnectionConfigurations(IdleConnectionTimeout))
+    roomSocketFlow =
+      communication.RoomSocket(roomActor, TextProtocolSerializer(), ConnectionConfigurations(IdleConnectionTimeout))
     flow = roomSocketFlow.open()
     flowTerminated = Promise[Boolean]()
   }
@@ -64,8 +65,8 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
 
     "make sure that messages from the same socket are linked to the same client" in {
       val joinAndLeave = Source.fromIterator(() => Seq(
-        TextProtocolSerializer.prepareToSocket(ProtocolMessage(JoinRoom)),
-        TextProtocolSerializer.prepareToSocket(ProtocolMessage(LeaveRoom))
+        TextProtocolSerializer().prepareToSocket(ProtocolMessage(JoinRoom)),
+        TextProtocolSerializer().prepareToSocket(ProtocolMessage(LeaveRoom))
       ).iterator)
       flow.runWith(joinAndLeave, Sink.onComplete(_ => flowTerminated.success(true)))
       Await.result(flowTerminated.future, MaxAwaitSocketMessages)
@@ -81,10 +82,10 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
         assert(room.connectedClients.size == 1)
       }
       //Create a different client
-      val client2Socket = communication.RoomSocket(roomActor, TextProtocolSerializer)
+      val client2Socket = communication.RoomSocket(roomActor, TextProtocolSerializer())
       val client2Flow = client2Socket.open()
       val flow2Terminated = Promise[Boolean]()
-      val client2 = Source.single(TextProtocolSerializer.prepareToSocket(ProtocolMessage(LeaveRoom)))
+      val client2 = Source.single(TextProtocolSerializer().prepareToSocket(ProtocolMessage(LeaveRoom)))
       client2Flow.runWith(client2, Sink.onComplete(_ => flow2Terminated.success(true)))
       Await.result(flow2Terminated.future, MaxAwaitSocketMessages)
       assert(room.connectedClients.size == 1)
@@ -109,7 +110,8 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
     }
 
     "close the socket if heartbeat is configured and client doesn't respond" in {
-      roomSocketFlow = communication.RoomSocket(roomActor, TextProtocolSerializer, ConnectionConfigurations(keepAlive = KeepAliveRate))
+      roomSocketFlow =
+        communication.RoomSocket(roomActor, TextProtocolSerializer(), ConnectionConfigurations(keepAlive = KeepAliveRate))
       flow = roomSocketFlow.open()
       flowTerminated = Promise[Boolean]()
       val client = this.joinAndIdle()
@@ -119,10 +121,10 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
   }
 
   def joinAndIdle(idleTime: FiniteDuration = 10000 seconds): Source[Message, NotUsed] = Source.combine(
-    Source.single(TextProtocolSerializer.prepareToSocket(ProtocolMessage(JoinRoom))),
+    Source.single(TextProtocolSerializer().prepareToSocket(ProtocolMessage(JoinRoom))),
     Source.single(TextMessage("")).delay(idleTime))(Concat(_))
 
   def heartbeat(heartBeatRate: FiniteDuration): Source[Message, NotUsed] =
-    Source.repeat(TextProtocolSerializer.prepareToSocket(ProtocolMessage(Pong)))
+    Source.repeat(TextProtocolSerializer().prepareToSocket(ProtocolMessage(Pong)))
       .throttle(1, heartBeatRate)
 }

@@ -1,7 +1,7 @@
 package common.room
 
 import common.room.RoomPropertyValueConversions._
-import common.room.Room.{SharedRoom, RoomId}
+import common.room.Room.RoomId
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

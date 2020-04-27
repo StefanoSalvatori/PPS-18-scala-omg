@@ -10,7 +10,7 @@ import common.room.Room.{RoomId, RoomPassword, RoomType}
 import common.room.{FilterOptions, Room, RoomProperty}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor, Future, Promise}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
@@ -67,7 +67,7 @@ sealed trait Client {
    * @param roomId the id of the room to join
    * @return a future with the joined room
    */
-  def joinById(roomId: RoomId, password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom]
+  def joinById(roomId: RoomId, password: RoomPassword = Room.DefaultPublicPassword): Future[JoinedRoom]
 
   /**
    * @param roomType      type of room to get
@@ -144,7 +144,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
       toJoinRoom
     }
 
-  override def joinById(roomId: RoomId, password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom] = {
+  override def joinById(roomId: RoomId, password: RoomPassword = Room.DefaultPublicPassword): Future[JoinedRoom] = {
     ifNotJoined(roomId, {
       val clientRoom = ClientRoom.createJoinable(coreClient, httpServerUri, roomId, Set())
       clientRoom.join(password)
@@ -178,7 +178,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     }
   }
 
-  private def createRoom(message: CreateRoomMessage, password: RoomPassword = Room.defaultPublicPassword): Future[JoinedRoom] = {
+  private def createRoom(message: CreateRoomMessage, password: RoomPassword = Room.DefaultPublicPassword): Future[JoinedRoom] = {
     for {
       room <- coreClient ? message
       clientRoomTry = room.asInstanceOf[Try[JoinableRoom]]

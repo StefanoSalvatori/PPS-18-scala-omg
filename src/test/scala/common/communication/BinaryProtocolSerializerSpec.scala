@@ -6,14 +6,14 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ws.{BinaryMessage, TextMessage}
 import akka.util.ByteString
-import common.TestConfig
-import common.communication.CommunicationProtocol.ProtocolMessageType.{JoinOk, LeaveRoom}
 import common.communication.CommunicationProtocol.ProtocolMessage
+import common.communication.CommunicationProtocol.ProtocolMessageType.{JoinOk, LeaveRoom}
 import org.apache.commons.lang3.SerializationUtils
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
+import test_utils.TestConfig
 
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.Await
 
 class BinaryProtocolSerializerSpec extends AnyFlatSpec with BeforeAndAfterAll with TestConfig {
 
@@ -47,7 +47,6 @@ class BinaryProtocolSerializerSpec extends AnyFlatSpec with BeforeAndAfterAll wi
     val testMessage = ProtocolMessage(LeaveRoom, UUID.randomUUID.toString)
     val messageToReceive = BinaryMessage.Strict(ByteString(SerializationUtils.serialize(testMessage)))
     val res = Await.result(serializer.parseFromSocket(messageToReceive), DefaultDuration)
-
     assert(res == testMessage)
   }
 
