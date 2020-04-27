@@ -9,13 +9,12 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
 import common.http.{HttpRequests, Routes}
-import common.room.Room.SharedRoom
-import common.room.{FilterOptions, RoomJsonSupport}
-import common.TestConfig
+import common.room.{FilterOptions, RoomJsonSupport, SharedRoom}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import server.room.ServerRoom
+import test_utils.TestConfig
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -108,7 +107,7 @@ class GameServerSpec extends AnyFlatSpec
     }
   }
 
-  it should s"respond to requests received at ${Routes.rooms}" in {
+  it should s"respond to requests received at ${Routes.Rooms}" in {
     Await.result(this.server.start(), ServerLaunchAwaitTime)
     val response = Await.result(this.makeEmptyRequestAtRooms, MaxWaitRequests)
     assert(response.status equals StatusCodes.OK)

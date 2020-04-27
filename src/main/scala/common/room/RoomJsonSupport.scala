@@ -1,9 +1,13 @@
 package common.room
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import common.room.Room.{SharedRoom, RoomId}
+import common.room.Room.RoomId
 import spray.json.{DefaultJsonProtocol, JsArray, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
 
+/**
+ * Trait that defines implicit methods to serialize (in json format) rooms information that need to be exchanged between
+ * client and server during a Request-Response interaction
+ */
 trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   // Room
@@ -15,8 +19,8 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       case _ => deserializationError("id expected")
     }
   }
-  implicit val sharedRoomJsonFormat: RootJsonFormat[SharedRoom] = new RootJsonFormat[SharedRoom] {
 
+  implicit val sharedRoomJsonFormat: RootJsonFormat[SharedRoom] = new RootJsonFormat[SharedRoom] {
     private val idJsonPropertyName = "id"
     private val propertiesJsonPropertyName = "properties"
 
@@ -42,7 +46,6 @@ trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val doubleRoomPropertyJsonFormat: RootJsonFormat[DoubleRoomPropertyValue] = jsonFormat1(DoubleRoomPropertyValue)
 
   implicit val roomPropertyValueJsonFormat: RootJsonFormat[RoomPropertyValue] = new RootJsonFormat[RoomPropertyValue] {
-
     private val valueJsPropertyName = "value"
 
     def write(v: RoomPropertyValue): JsValue = JsObject(valueJsPropertyName -> (v match {

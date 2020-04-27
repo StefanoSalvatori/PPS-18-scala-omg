@@ -4,8 +4,7 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import common.http.HttpRequests
-import common.room.Room.SharedRoom
-import common.room.{RoomJsonSupport, RoomProperty}
+import common.room.{RoomJsonSupport, RoomProperty, SharedRoom}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

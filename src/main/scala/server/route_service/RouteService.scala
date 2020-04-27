@@ -64,7 +64,7 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
   /**
    * rest api for rooms.
    */
-  private def restHttpRoute: Route = pathPrefix(Routes.rooms) {
+  private def restHttpRoute: Route = pathPrefix(Routes.Rooms) {
     pathEnd {
       getAllRoomsRoute
     } ~ pathPrefix(Segment) { roomType: RoomType =>
@@ -87,9 +87,9 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
   private def webSocketRoutes: Route = webSocketConnectionRoute ~ matchmakingRoute
 
   /**
-   * Handle web socket connection on path /[[common.http.Routes.connectionRoute]]/{roomId}
+   * Handle web socket connection on path /[[common.http.Routes.ConnectionRoute]]/{roomId}
    */
-  private def webSocketConnectionRoute: Route = pathPrefix(Routes.connectionRoute / Segment) { roomId =>
+  private def webSocketConnectionRoute: Route = pathPrefix(Routes.ConnectionRoute / Segment) { roomId =>
     get {
       this.roomHandler.handleClientConnection(roomId) match {
         case Some(handler) => handleWebSocketMessages(handler)
@@ -99,9 +99,9 @@ class RouteServiceImpl(private val roomHandler: RoomHandler,
   }
 
   /**
-   * Handle web socket connection on path /[[common.http.Routes.matchmakeRoute]]/{type}
+   * Handle web socket connection on path /[[common.http.Routes.MatchmakingRoute]]/{type}
    */
-  private def matchmakingRoute: Route = pathPrefix(Routes.matchmakeRoute / Segment) { roomType =>
+  private def matchmakingRoute: Route = pathPrefix(Routes.MatchmakingRoute / Segment) { roomType =>
     get {
       this.matchmakingHandler.handleClientConnection(roomType) match {
         case Some(handler) => handleWebSocketMessages(handler)

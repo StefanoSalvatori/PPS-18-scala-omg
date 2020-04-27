@@ -2,6 +2,7 @@ package server.room
 
 import akka.actor.{Actor, ActorLogging, PoisonPill, Props, Timers}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
+import common.communication.CommunicationProtocol.SessionId.SessionId
 import common.communication.CommunicationProtocol.{ProtocolMessage, SessionId}
 import common.room.Room.RoomPassword
 import server.RoomHandler

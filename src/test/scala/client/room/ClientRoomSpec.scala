@@ -11,17 +11,15 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer
 import akka.pattern.ask
-import common.TestConfig
 import common.http.Routes
 import common.room.{NoSuchPropertyException, Room, RoomJsonSupport, RoomProperty}
-import server.utils.ExampleRooms.{NoPropertyRoom, RoomWithProperty}
-import server.utils.ExampleRooms
-import server.utils.ExampleRooms.ClosableRoomWithState
+import test_utils.ExampleRooms.{ClosableRoomWithState, NoPropertyRoom, RoomWithProperty}
 
 import scala.concurrent.{Await, ExecutionContextExecutor, Promise}
 import scala.util.Try
 import common.room.RoomPropertyValueConversions._
 import server.communication.ConnectionConfigurations
+import test_utils.{ExampleRooms, TestConfig}
 
 import scala.concurrent.duration._
 
@@ -110,7 +108,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       room.propertyValues should have size 3 // a, b, private
       room.propertyValues should contain("a", 1)
       room.propertyValues should contain("b", "qwe")
-      room.propertyValues should contain(Room.roomPrivateStatePropertyName, false)
+      room.propertyValues should contain(Room.RoomPrivateStatePropertyName, false)
     }
 
     "throw an error when trying to access a non existing property" in {
@@ -127,13 +125,13 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     "have the private flag turned on when a private room is created" in {
       val res = Await.result((coreClient ? CreatePrivateRoom(ExampleRooms.roomWithPropertyType, Set.empty, "pwd")).mapTo[Try[ClientRoom]], DefaultDuration)
       val room = res.get
-      room valueOf Room.roomPrivateStatePropertyName shouldEqual true
+      room valueOf Room.RoomPrivateStatePropertyName shouldEqual true
     }
 
     "have the private flag turned off when a public room is created" in {
       val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.roomWithPropertyType, Set.empty)).mapTo[Try[ClientRoom]], DefaultDuration)
       val room = res.get
-      room valueOf Room.roomPrivateStatePropertyName shouldEqual false
+      room valueOf Room.RoomPrivateStatePropertyName shouldEqual false
     }
 
     "define a callback to handle messages from server room" in {

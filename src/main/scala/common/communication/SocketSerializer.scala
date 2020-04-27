@@ -3,7 +3,6 @@ package common.communication
 import akka.http.scaladsl.model.ws.Message
 
 import scala.concurrent.Future
-import scala.util.Try
 
 /**
  * A trait that defines how to read and write messages through a socket

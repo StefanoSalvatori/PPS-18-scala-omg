@@ -64,15 +64,15 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "add clients to the room" in {
-      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
-      serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
+      serverRoom.tryAddClient(testClient2, Room.DefaultPublicPassword)
       assert(serverRoom.connectedClients.contains(testClient2))
       assert(serverRoom.connectedClients.contains(testClient))
     }
 
     "remove clients from the room" in {
-      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
-      serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
+      serverRoom.tryAddClient(testClient2, Room.DefaultPublicPassword)
       assert(serverRoom.connectedClients.size == 2)
       serverRoom.removeClient(testClient2)
       serverRoom.removeClient(testClient)
@@ -80,7 +80,7 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "send specific messages to clients using the room protocol" in {
-      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
       serverRoom.tell(testClient, "Hello")
       val received = testClient.lastMessageReceived.get.asInstanceOf[ProtocolMessage]
       received.messageType shouldBe Tell
@@ -88,21 +88,21 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "send a JoinOk message when the client correctly joins the room" in {
-      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
       testClient.lastMessageReceived.get.asInstanceOf[ProtocolMessage].messageType shouldBe JoinOk
     }
 
     "send a ClientNotAuthorized when the client can't join the room" in {
-      testRoom.tryAddClient(testClient, Room.defaultPublicPassword)
-      testRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
-      testRoom.tryAddClient(testClient3, Room.defaultPublicPassword)
+      testRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
+      testRoom.tryAddClient(testClient2, Room.DefaultPublicPassword)
+      testRoom.tryAddClient(testClient3, Room.DefaultPublicPassword)
       testClient3.lastMessageReceived.get.asInstanceOf[ProtocolMessage].messageType shouldBe ClientNotAuthorized
 
     }
 
     "send broadcast messages to all clients connected using the room protocol" in {
-      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
-      serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
+      serverRoom.tryAddClient(testClient2, Room.DefaultPublicPassword)
       serverRoom.broadcast("Hello Everybody")
       val receivedFrom1 = testClient.lastMessageReceived.get.asInstanceOf[ProtocolMessage]
       receivedFrom1.messageType shouldBe Broadcast
@@ -113,8 +113,8 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "notify clients when is closed" in {
-      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
-      serverRoom.tryAddClient(testClient2, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
+      serverRoom.tryAddClient(testClient2, Room.DefaultPublicPassword)
       serverRoom.close()
       val receivedFrom1 = testClient.lastMessageReceived.get.asInstanceOf[ProtocolMessage]
       receivedFrom1.messageType shouldBe RoomClosed
@@ -246,7 +246,7 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "allow reconnections within a specified period" in {
-      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
       serverRoom.allowReconnection(testClient, 3 )
       serverRoom.removeClient(testClient)
       assert(serverRoom.tryReconnectClient(testClient))
@@ -254,7 +254,7 @@ class ServerRoomSpec extends AnyWordSpecLike
 
     "allow reconnections of multiple clients" in {
       val clients = (0 to 2).map(_ => TestClient(UUID.randomUUID().toString))
-      clients.foreach(serverRoom.tryAddClient(_, Room.defaultPublicPassword))
+      clients.foreach(serverRoom.tryAddClient(_, Room.DefaultPublicPassword))
       clients.foreach(serverRoom.allowReconnection(_, 5))
       clients.foreach(serverRoom.removeClient(_))
 
@@ -266,8 +266,8 @@ class ServerRoomSpec extends AnyWordSpecLike
       val allowed = (0 to 2).map(_ => TestClient(UUID.randomUUID().toString))
       val notAllowed = (0 to 2).map(_ => TestClient(UUID.randomUUID().toString))
 
-      allowed.foreach(serverRoom.tryAddClient(_, Room.defaultPublicPassword))
-      notAllowed.foreach(serverRoom.tryAddClient(_, Room.defaultPublicPassword))
+      allowed.foreach(serverRoom.tryAddClient(_, Room.DefaultPublicPassword))
+      notAllowed.foreach(serverRoom.tryAddClient(_, Room.DefaultPublicPassword))
 
       allowed.foreach(serverRoom.allowReconnection(_, 5))
       notAllowed.foreach(serverRoom.removeClient(_))
@@ -277,7 +277,7 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "don't accept reconnections after the period expires" in {
-      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
       serverRoom.allowReconnection(testClient, 3)
       serverRoom.removeClient(testClient)
       Thread sleep 5000 //scalastyle:ignore magic.number
@@ -285,7 +285,7 @@ class ServerRoomSpec extends AnyWordSpecLike
     }
 
     "add the client to the list of connected clients after a reconnection" in {
-      serverRoom.tryAddClient(testClient, Room.defaultPublicPassword)
+      serverRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
       serverRoom.allowReconnection(testClient, 3)
       serverRoom.removeClient(testClient)
       serverRoom.tryReconnectClient(testClient)

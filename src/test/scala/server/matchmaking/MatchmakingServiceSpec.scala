@@ -5,7 +5,6 @@ import java.util.UUID
 import akka.actor.{ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
-import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{MatchmakingInfo, ProtocolMessage}
 import org.scalatest.matchers.should.Matchers
@@ -13,7 +12,8 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.RoomHandler
 import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue}
-import server.utils.{ExampleRooms, TestClient}
+import server.utils.TestClient
+import test_utils.{ExampleRooms, TestConfig}
 
 
 class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.load()))

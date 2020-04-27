@@ -4,11 +4,7 @@ import akka.actor.{ActorRef, Stash}
 import akka.util.Timeout
 import client.room.{ClientRoom, JoinedRoom}
 import client.utils.MessageDictionary._
-import common.communication.BinaryProtocolSerializer
-import common.communication.CommunicationProtocol.ProtocolMessage
-import common.room.Room.RoomType
 import common.room.{Room, RoomJsonSupport, RoomProperty}
-import common.communication.CommunicationProtocol.ProtocolMessageType._
 
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -47,7 +43,7 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
 
     case CreatePrivateRoom(roomType, roomOptions, password) =>
       context become this.waitHttpResponse(sender)
-      httpClient ! HttpPostRoom(roomType, roomOptions + RoomProperty(Room.roomPasswordPropertyName, password.toString))
+      httpClient ! HttpPostRoom(roomType, roomOptions + RoomProperty(Room.RoomPasswordPropertyName, password.toString))
 
     case GetAvailableRooms(roomType, roomOptions) =>
       context.become(this.waitHttpResponse(sender))

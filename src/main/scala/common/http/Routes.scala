@@ -2,21 +2,24 @@ package common.http
 
 import common.room.Room.{RoomId, RoomType}
 
+/**
+ * Object that defines the routes that the gameserver provides
+ */
 object Routes {
 
-  def rooms: String = "rooms"
+  val Rooms: String = "rooms"
 
   /**
-   * @return route name for web socket connection with a room
+   * route path for web socket connection with a room
    */
-  def connectionRoute: String = "connection"
+  val ConnectionRoute: String = "connection"
 
   /**
-   * @return route name for web socket request to enter matchmaking
+   * route path for web socket request to enter matchmaking
    */
-  def matchmakeRoute: String = "matchmake"
+  val MatchmakingRoute: String = "matchmaking"
 
-  def roomsByType(roomType: RoomType): String = rooms + "/" + roomType
+  def roomsByType(roomType: RoomType): String = Rooms + "/" + roomType
 
   def roomByTypeAndId(roomType: RoomType, roomId: RoomId): String = roomsByType(roomType) + "/" + roomId
 
@@ -30,13 +33,13 @@ object Routes {
    * @param roomId room id
    * @return route for web socket connection to a room
    */
-  def roomSocketConnection(roomId: RoomId): String = connectionRoute + "/" + roomId
+  def roomSocketConnection(roomId: RoomId): String = ConnectionRoute + "/" + roomId
 
   /**
    * @param roomType room type
    * @return route for web socket connection to the matchmaking service
    */
-  def matchmakingSocketConnection(roomType: RoomType): String = matchmakeRoute + "/" + roomType
+  def matchmakingSocketConnection(roomType: RoomType): String = MatchmakingRoute + "/" + roomType
 }
 
 

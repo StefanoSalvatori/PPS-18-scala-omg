@@ -1,11 +1,10 @@
-package common
-
+package test_utils
 
 trait TestConfig {
 
-  import scala.concurrent.duration.Duration
-  import scala.concurrent.duration._
   import akka.util.Timeout
+
+  import scala.concurrent.duration.{Duration, _}
 
   val ServerLaunchAwaitTime: Duration = 10 seconds
   val ServerShutdownAwaitTime: Duration = 10 seconds

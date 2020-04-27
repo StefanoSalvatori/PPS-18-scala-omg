@@ -8,13 +8,13 @@ import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Sink
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
-import common.TestConfig
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.ServerActor._
-import server.utils.HttpRequestsActor
+import utils.HttpRequestsActor
 import server.utils.HttpRequestsActor.{Request, RequestFailed}
+import test_utils.TestConfig
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -91,7 +91,6 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
 
   private def makeGetRequestAt(path: String): Unit = {
     httpClientActor ! Request(HttpRequest(HttpMethods.GET, s"http://$Host:$Port/$path"))
-
   }
 
 }

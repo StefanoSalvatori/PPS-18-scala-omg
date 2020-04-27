@@ -5,7 +5,8 @@ import client.utils.MessageDictionary._
 import client.{BasicActor, HttpClient}
 import common.communication.BinaryProtocolSerializer
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{ProtocolMessageType, ProtocolMessage, SocketSerializable, SessionId}
+import common.communication.CommunicationProtocol.SessionId.SessionId
+import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType, SessionId, SocketSerializable}
 import common.room.Room.RoomPassword
 
 import scala.util.{Failure, Success}
@@ -87,7 +88,7 @@ case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room
       unstashAll()
       outRef ! ProtocolMessage(
         messageType = msgType,
-        sessionId = sessionId.getOrElse(SessionId.empty),
+        sessionId = sessionId.getOrElse(SessionId.Empty),
         payload = joinPassword)
   }
 
