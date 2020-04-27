@@ -4,7 +4,6 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
 import client.core.CoreClient
 import akka.testkit.{ImplicitSender, TestKit}
-import client.CoreClient
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.communication.CommunicationProtocol.ProtocolMessage
@@ -41,11 +40,10 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
   private var clientRoomActor: ActorRef = _
   private var gameServer: GameServer = _
 
-  override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
   before {
-    coreClient = system actorOf CoreClient(serverUri)
-    gameServer = GameServer(serverAddress, serverPort)
+    coreClient = system actorOf CoreClient(ServerUri)
+    gameServer = GameServer(ServerAddress, ServerPort)
     gameServer.defineRoom(Name, () => ExampleRooms.ClosableRoomWithState())
     Await.ready(gameServer.start(), DefaultDuration)
 

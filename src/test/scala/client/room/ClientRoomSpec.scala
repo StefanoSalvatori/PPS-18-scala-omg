@@ -4,7 +4,6 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.TestKit
 import client.utils.MessageDictionary.{CreatePrivateRoom, CreatePublicRoom, GetJoinedRooms, JoinedRooms, SendStrictMessage}
-import client.CoreClient
 import client.utils.MessageDictionary.{CreatePrivateRoom, CreatePublicRoom, GetJoinedRooms, JoinedRooms}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging

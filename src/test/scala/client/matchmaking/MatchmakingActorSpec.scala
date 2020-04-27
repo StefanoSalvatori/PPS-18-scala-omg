@@ -38,11 +38,7 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
   private var matchmakingActor2: ActorRef = _
   private var gameServer: GameServer = _
 
-  override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
-  before {
-    matchmakingActor1 = system actorOf MatchmakingActor(Name, serverUri, "")
-    matchmakingActor2 = system actorOf MatchmakingActor(Name, serverUri, "")
 
   // matchmaking strategy that only pairs two clients
   def matchmaker[T]: Matchmaker[T] = map => map.toList match {
@@ -65,7 +61,6 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
 
   after {
     Await.ready(gameServer.terminate(), ServerShutdownAwaitTime)
-
   }
 
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
