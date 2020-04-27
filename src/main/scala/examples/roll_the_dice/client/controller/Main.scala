@@ -20,15 +20,21 @@ object Controller {
   def apply(): Controller = ControllerImpl()
 }
 
+import examples.roll_the_dice.client.{PubSubMessage, PubSubRoomState, Subscriber}
 import examples.roll_the_dice.client.model.Model
 import examples.roll_the_dice.client.view.View
 
-case class ControllerImpl() extends Controller {
+case class ControllerImpl() extends Controller with Subscriber {
 
   private val model = Model()
   private val view = View(this)
 
-  override def start(): Unit = view.start()
+  subscribe()
+
+  override def start(): Unit = {
+    model.start()
+    view.start()
+  }
 
   override def closeApplication(): Unit = {
     // TODO close client?
@@ -38,4 +44,9 @@ case class ControllerImpl() extends Controller {
   override def joinGameWithMatchmaking(): Unit = model.joinGameWithMatchmaking()
 
   override def leaveMatchmakingQueue(): Unit = model.leaveMatchmakingQueue()
+
+  override def onItemPublished(message: PubSubMessage): Unit = message match {
+    case PubSubRoomState(state) =>
+      println(state)
+  }
 }

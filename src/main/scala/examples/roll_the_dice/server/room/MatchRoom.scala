@@ -15,7 +15,7 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState]
   private var matchState = MatchState(0, 0)
   private val winPoints = 50
 
-  override def onCreate(): Unit = {}
+  override def onCreate(): Unit = this.startStateSynchronization()
 
   override def onClose(): Unit = {}
 
@@ -28,6 +28,9 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState]
       currentTurn = turnsOrder.next
       clientsTurnMapping.values.foreach(c => tell(c, StartGame(A1)))
       //tell(clientsTurnMapping(currentTurn), StartGame(cl))
+
+      matchState = MatchState(10, 10)
+
     }
   }
 

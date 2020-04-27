@@ -2,14 +2,16 @@ package examples.roll_the_dice.client.model
 
 import client.Client
 import client.room.JoinedRoom
-import common.room.FilterOptions
-import examples.roll_the_dice.common.{ClientInfo, Turn}
-import examples.roll_the_dice.common.MessageDictionary.{DoRoll, StartGame}
+import examples.roll_the_dice.client.{PubSubRoomState, Publisher}
+import examples.roll_the_dice.common.{ClientInfo, MatchState, Turn}
+import examples.roll_the_dice.common.MessageDictionary.StartGame
 
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
+import scala.util.Success
 
 trait Model {
+
+  def start(): Unit
 
   def joinGameWithMatchmaking(): Unit
 
@@ -18,9 +20,11 @@ trait Model {
 
 object Model {
   def apply(): Model = new ModelImpl()
+
+  implicit def stateToPubSubMessage(state: MatchState): PubSubRoomState = PubSubRoomState(state)
 }
 
-class ModelImpl extends Model {
+class ModelImpl extends Model with Publisher {
 
   implicit val executionContext: ExecutionContext = ExecutionContext.global
   import examples.roll_the_dice.common.ServerConfig._
@@ -31,15 +35,23 @@ class ModelImpl extends Model {
   private var room: JoinedRoom = _
   private var myTurn: Turn = _
 
-  room onMessageReceived {
-    case StartGame(assignedTurn) =>
-      myTurn = assignedTurn
-  }
+  import Model.stateToPubSubMessage
+  def start(): Unit = publish(MatchState())
 
   override def joinGameWithMatchmaking(): Unit =
-    client.matchmaker joinMatchmaking (roomName, ClientInfo()) onComplete { case Success(res) => room = res }
+    client.matchmaker joinMatchmaking (roomName, ClientInfo()) onComplete {
+      case Success(res) =>
+        room = res
 
-  override def leaveMatchmakingQueue(): Unit = {
+        room onMessageReceived {
+          case StartGame(assignedTurn) =>
+            myTurn = assignedTurn
+        }
 
-  }
+        room onStateChanged { newState =>
+          publish(newState.asInstanceOf[MatchState])
+        }
+    }
+
+  override def leaveMatchmakingQueue(): Unit = {}
 }
