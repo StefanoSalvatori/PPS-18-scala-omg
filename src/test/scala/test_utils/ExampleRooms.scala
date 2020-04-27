@@ -8,6 +8,11 @@ import server.room._
  */
 object ExampleRooms {
 
+  object RoomWithState {
+    val Name = "roomWithState"
+    val UpdateRate = 100 //milliseconds
+    val RoomInitialState: Int = 0
+  }
   case class RoomWithState() extends ServerRoom with SynchronizedRoomState[Integer] {
     private var internalState = RoomWithState.RoomInitialState
     override val stateUpdateRate: Int = RoomWithState.UpdateRate
@@ -29,15 +34,11 @@ object ExampleRooms {
     def changeState(newState: Int): Unit = this.internalState = newState
   }
 
-  object RoomWithState {
-    val UpdateRate = 100 //milliseconds
-    val RoomInitialState: Int = 0
+  object RoomWithGameLoop {
+    val Name = "roomWithGameLoop"
+    val initialState = 0
+    val updateRate = 100 // millis
   }
-
-  val roomWithStateType = "roomWithState"
-
-  //_________________________________________________
-
   case class RoomWithGameLoop() extends ServerRoom with GameLoop {
 
     private var count = RoomWithGameLoop.initialState
@@ -66,15 +67,9 @@ object ExampleRooms {
     var receivedTicks: Int = 0
   }
 
-  object RoomWithGameLoop {
-    val initialState = 0
-    val updateRate = 100 // millis
+  object RoomWithReconnection {
+    val Name = "roomWithReconnection"
   }
-
-  val roomWithGameLoopType = "roomWithGameLoop"
-
-  //__________________________________________________
-
   case class RoomWithReconnection() extends ServerRoom {
     private val ReconnectionTime = 10 //s
     override def onCreate(): Unit = {}
@@ -92,18 +87,15 @@ object ExampleRooms {
     override def joinConstraints: Boolean = true
   }
 
-  val roomWithReconnection = "roomWithReconnection"
-
-  //________________________________________________
-
   object ClosableRoomWithState {
+    val Name = "closableRoomWithState"
     val ChangeStateMessage = "changeState"
     val CloseRoomMessage = "close"
     val PingMessage = "ping"
     val PongResponse = "pong"
   }
-
   case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
+
     import ClosableRoomWithState._
 
     import scala.concurrent.duration._
@@ -133,10 +125,9 @@ object ExampleRooms {
 
   }
 
-  val closableRoomWithStateType = "closableRoomWithState"
-
-  //________________________________________________
-
+  object NoPropertyRoom {
+    val Name = "noProperty"
+  }
   case class NoPropertyRoom() extends ServerRoom {
 
     override def onCreate(): Unit = {}
@@ -154,13 +145,13 @@ object ExampleRooms {
     }
   }
 
-  val noPropertyRoomType = "noProperty"
-
-  //________________________________________________
-
+  object RoomWithProperty {
+    val Name = "roomWithProperty"
+  }
+  //noinspection ScalaUnusedSymbol
   case class RoomWithProperty() extends ServerRoom {
 
-    @RoomPropertyMarker private val a: Int = 0
+    @RoomPropertyMarker private val a: Int = 0 //noinspection unused
     @RoomPropertyMarker private val b: String = "abc"
     private val c: Int = 0
 
@@ -179,10 +170,10 @@ object ExampleRooms {
     }
   }
 
-  val roomWithPropertyType = "roomWithProperty"
-
-  // ____________________________________________________________________
-
+  object RoomWithProperty2 {
+    val Name = "roomWithProperty2"
+  }
+  //noinspection ScalaUnusedSymbol
   case class RoomWithProperty2() extends ServerRoom {
 
     @RoomPropertyMarker private var a: Int = 1
@@ -203,20 +194,23 @@ object ExampleRooms {
     override def joinConstraints: Boolean = true
   }
 
-  val roomWithProperty2Type = "roomWithProperty2"
-
-  // ___________________________________________________________________
-
+  object LockableRoom {
+    val LockedRoomType = "lockedRoom"
+    val UnlockedRoomType = "unlockedRoom"
+  }
   case class LockableRoom(private val _isLocked: Boolean) extends ServerRoom {
 
     override def onCreate(): Unit = {}
+
     override def onClose(): Unit = {}
+
     override def onJoin(client: Client): Unit = {}
+
     override def onLeave(client: Client): Unit = {}
+
     override def onMessageReceived(client: Client, message: Any): Unit = {}
+
     override def isLocked: Boolean = _isLocked
   }
 
-  val lockedRoomType = "lockedRoom"
-  val unlockedRoomType = "unlockedRoom"
 }

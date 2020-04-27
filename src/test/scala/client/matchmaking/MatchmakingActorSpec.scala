@@ -12,6 +12,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.matchmaking.Matchmaker
 import test_utils.{ExampleRooms, TestConfig}
+import ExampleRooms.ClosableRoomWithState._
 
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}
@@ -37,8 +38,8 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
   before {
-    matchmakeActor1 = system actorOf MatchmakingActor(ExampleRooms.closableRoomWithStateType, serverUri, "")
-    matchmakeActor2 = system actorOf MatchmakingActor(ExampleRooms.closableRoomWithStateType, serverUri, "")
+    matchmakeActor1 = system actorOf MatchmakingActor(Name, serverUri, "")
+    matchmakeActor2 = system actorOf MatchmakingActor(Name, serverUri, "")
 
     gameServer = GameServer(serverAddress, serverPort)
 
@@ -49,7 +50,7 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
     }
 
     gameServer.defineRoomWithMatchmaking(
-      ExampleRooms.closableRoomWithStateType,
+      Name,
       () => ExampleRooms.ClosableRoomWithState(),
       matchmaker)
     Await.ready(gameServer.start(), DefaultDuration)
