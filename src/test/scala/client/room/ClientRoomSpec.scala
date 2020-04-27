@@ -3,7 +3,6 @@ package client.room
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import client.utils.MessageDictionary.{CreatePrivateRoom, CreatePublicRoom, GetJoinedRooms, JoinedRooms, SendStrictMessage}
-import client.CoreClient
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -11,6 +10,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer
 import akka.pattern.ask
+import client.core.CoreClient
 import common.http.Routes
 import common.room.{NoSuchPropertyException, Room, RoomJsonSupport, RoomProperty}
 import test_utils.ExampleRooms.{ClosableRoomWithState, NoPropertyRoom, RoomWithProperty}
@@ -32,7 +32,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   with LazyLogging
   with RoomJsonSupport {
 
-  private val ServerAddress = "localhost"
+  private val ServerAddress = Localhost
   private val ServerPort = ClientRoomSpecServerPort
 
   implicit val execContext: ExecutionContextExecutor = system.dispatcher
@@ -46,7 +46,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     gameServer.defineRoom(ExampleRooms.roomWithPropertyType, RoomWithProperty)
     gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
-    logger debug s"Server started at $ServerAddress:$ServerPort"
+
     coreClient = system actorOf CoreClient(Routes.httpUri(ServerAddress, ServerPort))
     val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.closableRoomWithStateType, Set.empty))
       .mapTo[Try[JoinableRoom]], DefaultDuration)
@@ -57,7 +57,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     Await.ready(gameServer.terminate(), ServerShutdownAwaitTime)
   }
 
-  "A client room" must {
+  "A client room" should {
     "join and notify the core client" in {
       Await.result(joinableClientRoom.join(), DefaultDuration)
       val res = Await.result((coreClient ? GetJoinedRooms).mapTo[JoinedRooms], DefaultDuration).joinedRooms
@@ -123,13 +123,15 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     }
 
     "have the private flag turned on when a private room is created" in {
-      val res = Await.result((coreClient ? CreatePrivateRoom(ExampleRooms.roomWithPropertyType, Set.empty, "pwd")).mapTo[Try[ClientRoom]], DefaultDuration)
+      val res = Await.result((coreClient ? CreatePrivateRoom(ExampleRooms.roomWithPropertyType, Set.empty, "pwd"))
+        .mapTo[Try[ClientRoom]], DefaultDuration)
       val room = res.get
       room valueOf Room.RoomPrivateStatePropertyName shouldEqual true
     }
 
     "have the private flag turned off when a public room is created" in {
-      val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.roomWithPropertyType, Set.empty)).mapTo[Try[ClientRoom]], DefaultDuration)
+      val res = Await.result((coreClient ? CreatePublicRoom(ExampleRooms.roomWithPropertyType, Set.empty))
+        .mapTo[Try[ClientRoom]], DefaultDuration)
       val room = res.get
       room valueOf Room.RoomPrivateStatePropertyName shouldEqual false
     }

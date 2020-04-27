@@ -3,23 +3,27 @@ package client.matchmaking
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.pattern.ask
 import akka.util.Timeout
-import client.matchmaking.MatchmakingActor.{JoinMatchmaking, LeaveMatchmaking}
 import client.room.{ClientRoom, JoinedRoom}
-import common.communication.CommunicationProtocol.{MatchmakingInfo, SessionId, SocketSerializable}
-import common.room.Room.{RoomId, RoomType}
+import client.utils.MessageDictionary.{JoinMatchmaking, LeaveMatchmaking}
+import common.communication.CommunicationProtocol.{MatchmakingInfo, SocketSerializable}
+import common.room.Room.RoomType
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future, Promise}
 import scala.util.{Failure, Success}
 
-
+/**
+ * Handle the matchmaking service.
+ * Can be used to join or leave multiple matchmaking queue for different room types
+ */
 trait ClientMatchmaker {
 
   private val DefaultMatchmakingTimeout = 5 minutes
+
   /**
-   * Join the serverside matchmaking queue for this type of room
+   * Join the server-side matchmaking queue for this type of room
    *
-   * @param roomType matchmaking room type to join
+   * @param roomType       matchmaking room type to join
    * @param requestTimeout how much time to wait before failing, defualt is 5 minutes
    * @return a future that completes successfully when the matchmaker server side creates the match
    */
@@ -28,7 +32,7 @@ trait ClientMatchmaker {
                       requestTimeout: FiniteDuration = DefaultMatchmakingTimeout): Future[JoinedRoom]
 
   /**
-   * Leave the serverside matchmaking queue for this type of room serverside
+   * Leave the server-side matchmaking queue for this type of room serverside
    *
    * @param roomType matchmaking room room type to leave
    */
@@ -36,16 +40,16 @@ trait ClientMatchmaker {
 
 }
 
-object ClientMatchmaker {
+private[client] object ClientMatchmaker {
 
   def apply(coreClient: ActorRef, httpServerUri: String)
            (implicit system: ActorSystem): ClientMatchmaker = new ClientMatchmakerImpl(coreClient, httpServerUri)
 }
 
 
-class ClientMatchmakerImpl(private val coreClient: ActorRef,
-                           private val httpServerUri: String)
-                          (implicit val system: ActorSystem) extends ClientMatchmaker {
+private class ClientMatchmakerImpl(private val coreClient: ActorRef,
+                                   private val httpServerUri: String)
+                                  (implicit val system: ActorSystem) extends ClientMatchmaker {
 
   private implicit val timeout: Timeout = 20 seconds
   private implicit val executor: ExecutionContextExecutor = system.dispatcher

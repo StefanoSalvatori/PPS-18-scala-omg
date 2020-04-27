@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import client.core.CoreClient
 import client.room.{ClientRoom, ClientRoomActor, JoinedRoom, JoinedRoomImpl}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
@@ -27,36 +28,31 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   with BeforeAndAfter
   with BeforeAndAfterAll
   with TestConfig {
-
-  private val serverAddress = "localhost"
-  private val serverPort = CoreClientSpecServerPort
-  private val serverUri = Routes.httpUri(serverAddress, serverPort)
-
-  private val RoomTypeName: String = "test_room"
-
   implicit val executionContext: ExecutionContext = system.dispatcher
-  private val requestTimeout = 5 // Seconds
 
-  import akka.util.Timeout
-
-  implicit val timeout: Timeout = Timeout(requestTimeout, TimeUnit.SECONDS)
+  private val ServerAddress = Localhost
+  private val ServerPort = CoreClientSpecServerPort
+  private val ServerUri = Routes.httpUri(ServerAddress, ServerPort)
+  private val RoomTypeName: String = "test_room"
 
   private var coreClient: ActorRef = _
   private var gameServer: GameServer = _
 
-  override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
   before {
-    coreClient = system actorOf CoreClient(serverUri)
-    gameServer = GameServer(serverAddress, serverPort)
+    coreClient = system actorOf CoreClient(ServerUri)
+    gameServer = GameServer(ServerAddress, ServerPort)
     gameServer.defineRoom(RoomTypeName, () => ServerRoom())
-    Await.ready(gameServer.start(), 5 seconds)
+    Await.ready(gameServer.start(), DefaultTimeout)
 
-    Await.ready(coreClient ? CreatePublicRoom(RoomTypeName, Set.empty), 5 seconds)
-    Await.ready(coreClient ? CreatePublicRoom(RoomTypeName, Set.empty), 5 seconds)
+    Await.ready(coreClient ? CreatePublicRoom(RoomTypeName, Set.empty), DefaultTimeout)
+    Await.ready(coreClient ? CreatePublicRoom(RoomTypeName, Set.empty), DefaultTimeout)
   }
 
-  "Regarding joined rooms, a core client" must {
+  override def afterAll: Unit = TestKit.shutdownActorSystem(system)
+
+
+  "Regarding joined rooms, a core client" should {
     "start with no joined rooms" in {
       coreClient ! GetJoinedRooms
       val res = expectMsgType[JoinedRooms]
@@ -90,10 +86,10 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
 }
 
-object MockClientRoomActor {
+private[this] object MockClientRoomActor {
   def apply(room: ClientRoom): Props = Props(classOf[MockClientRoomActor],  room)
 }
-class MockClientRoomActor(room: ClientRoom) extends Actor {
+private[this] class MockClientRoomActor(room: ClientRoom) extends Actor {
   private implicit val system: ActorSystem = context.system
 
   override def receive: Receive = {

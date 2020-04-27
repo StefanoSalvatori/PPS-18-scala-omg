@@ -1,30 +1,22 @@
 package client.matchmaking
 
-import akka.actor.{ActorRef, Stash}
-import client.matchmaking.MatchmakingActor.{JoinMatchmaking, LeaveMatchmaking}
-import client.utils.MessageDictionary.{HttpMatchmakingSocketRequest, HttpSocketFail, HttpSocketSuccess, SocketError}
-import client.{BasicActor, HttpClient}
+import akka.actor.{ActorRef, Props, Stash}
+import client.utils.MessageDictionary._
+import client.utils.{BasicActor, HttpService}
 import common.communication.BinaryProtocolSerializer
-import common.communication.CommunicationProtocol.{ProtocolMessage, SessionId}
+import common.communication.CommunicationProtocol.ProtocolMessage
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.room.Room.RoomType
 
 import scala.util.{Failure, Success}
 
 /**
- * Handles the connection with the matchmaker .
- * Notify the client when the room is created
+ * Handles the connection with the serverside matchmaker .
+ * Notify the client when the match is created
  */
-sealed trait MatchmakingActor extends BasicActor
+private[client] sealed trait MatchmakingActor extends BasicActor
 
-object MatchmakingActor {
-
-  case class JoinMatchmaking()
-
-  case class LeaveMatchmaking()
-
-  import akka.actor.Props
-
+private[client] object MatchmakingActor {
   def apply(roomType: RoomType, httpServerUri: String, clientInfo: Any with java.io.Serializable): Props =
     Props(classOf[MatchmakingActorImpl], roomType, httpServerUri, clientInfo)
 }
@@ -33,7 +25,7 @@ object MatchmakingActor {
 class MatchmakingActorImpl(private val roomType: RoomType,
                            private val httpServerUri: String,
                            private val clientInfo: Any with java.io.Serializable) extends MatchmakingActor with Stash {
-  private val httpClient = context.system actorOf HttpClient(httpServerUri)
+  private val httpClient = context.system actorOf HttpService(httpServerUri)
 
   override def receive: Receive = onReceive orElse fallbackReceive
 

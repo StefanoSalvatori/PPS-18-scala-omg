@@ -7,14 +7,13 @@ import common.communication.SocketSerializer
 import common.room.Room.{RoomId, RoomPassword, RoomType}
 import common.room.{FilterOptions, RoomProperty, SharedRoom}
 
-object MessageDictionary {
+// scalastyle:ignore method.length
+private[client] object MessageDictionary {
 
   //CoreClient
-
   trait CreateRoomMessage
   case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty]) extends CreateRoomMessage
   case class CreatePrivateRoom(roomType: RoomType, roomOption: Set[RoomProperty], password: RoomPassword) extends CreateRoomMessage
-
 
   case class GetAvailableRooms(roomType: RoomType, roomOption: FilterOptions)
 
@@ -67,8 +66,8 @@ object MessageDictionary {
    * otherwise [[client.utils.MessageDictionary.HttpSocketFail]]
    *
    * @param roomType id of the room to connect to
-   * @param parser messages received on the socket will be parsed with this parser before sending them to the
-   *               receiver actor
+   * @param parser   messages received on the socket will be parsed with this parser before sending them to the
+   *                 receiver actor
    */
   case class HttpMatchmakingSocketRequest[T](roomType: RoomType, parser: SocketSerializer[T])
 
@@ -102,6 +101,7 @@ object MessageDictionary {
 
   /**
    * Sent to the actor when an error occurs on the socket
+   *
    * @param exception exception thrown
    */
   case class SocketError(exception: Throwable)
@@ -127,7 +127,7 @@ object MessageDictionary {
    *
    * @param callback the callback that handles the message
    */
-  case class OnStateChangedCallback(callback:  Any => Unit)
+  case class OnStateChangedCallback(callback: Any => Unit)
 
   /**
    * Define a callback that will be execute by the actor after the room has been closed
@@ -135,4 +135,12 @@ object MessageDictionary {
    * @param callback the callback that handles the message
    */
   case class OnCloseCallback(callback: () => Unit)
+
+  //MatchmakingActor
+  sealed trait MathmakingRequest
+
+  case class JoinMatchmaking() extends MathmakingRequest
+
+  case class LeaveMatchmaking() extends MathmakingRequest
+
 }

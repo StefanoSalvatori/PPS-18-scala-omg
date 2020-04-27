@@ -2,6 +2,7 @@ package client
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
+import client.utils.HttpService
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.communication.BinaryProtocolSerializer
@@ -21,16 +22,16 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   with BeforeAndAfterAll
   with TestConfig {
 
-  private val serverAddress = "localhost"
-  private val serverPort = HttpClientSpecServerPort
-  private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
+  private val ServerAddress = Localhost
+  private val ServerPort = HttpClientSpecServerPort
+  private val ServerUri = Routes.httpUri(ServerAddress, ServerPort)
 
   private val RoomTypeName: String = "test_room"
 
   private var gameServer: GameServer = _
 
   override def beforeAll: Unit = {
-    gameServer = GameServer(serverAddress, serverPort)
+    gameServer = GameServer(ServerAddress, ServerPort)
     gameServer.defineRoom(RoomTypeName, () => ServerRoom())
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
   }
@@ -40,10 +41,9 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     TestKit.shutdownActorSystem(system)
   }
 
-  "An Http client actor" must {
+  "An Http client actor" should {
 
-    val httpTestActor: ActorRef = system actorOf HttpClient(httpServerUri)
-
+    val httpTestActor: ActorRef = system actorOf HttpService(ServerUri)
 
     "when asked to post a room, return the new room" in {
       httpTestActor ! HttpPostRoom(RoomTypeName, Set.empty)

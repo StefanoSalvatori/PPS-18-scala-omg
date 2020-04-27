@@ -2,7 +2,7 @@ package client.room
 
 import akka.actor.{ActorRef, Props, Stash}
 import client.utils.MessageDictionary._
-import client.{BasicActor, HttpClient}
+import client.utils.{BasicActor, HttpService}
 import common.communication.BinaryProtocolSerializer
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.SessionId.SessionId
@@ -12,20 +12,19 @@ import common.room.Room.RoomPassword
 import scala.util.{Failure, Success}
 
 /**
- * Handles the connection with the server side room.
+ * Handles the connection and communication with the server side room.
  * Notify the coreClient if the associated room is left or joined.
  */
-sealed trait ClientRoomActor extends BasicActor
+private[client] sealed trait ClientRoomActor extends BasicActor
 
-
-object ClientRoomActor {
+private[client] object ClientRoomActor {
   def apply(coreClient: ActorRef, serverUri: String, room: ClientRoom): Props =
     Props(classOf[ClientRoomActorImpl], coreClient, serverUri, room)
 }
 
-
-case class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room: ClientRoom) extends ClientRoomActor with Stash {
-  private val httpClient = context.system actorOf HttpClient(httpServerUri)
+private class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room: ClientRoom)
+  extends ClientRoomActor with Stash {
+  private val httpClient = context.system actorOf HttpService(httpServerUri)
   private var onMessageCallback: Option[Any => Unit] = None
   private var onStateChangedCallback: Option[Any => Unit] = None
   private var onCloseCallback: Option[() => Unit] = None

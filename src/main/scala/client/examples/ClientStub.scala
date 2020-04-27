@@ -1,6 +1,6 @@
 package client.examples
 
-import client.Client
+import client.core.Client
 import common.room.RoomPropertyValueConversions._
 import common.room.{FilterOptions, RoomProperty}
 

@@ -1,4 +1,4 @@
-package client
+package client.core
 
 import akka.actor.ActorSystem
 import akka.pattern.ask
@@ -92,6 +92,9 @@ sealed trait Client {
    */
   def joinedRooms(): Set[JoinedRoom]
 
+  /**
+   * Terminate this client instance
+   */
   def shutdown(): Unit
 }
 

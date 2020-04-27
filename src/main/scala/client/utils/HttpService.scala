@@ -1,15 +1,14 @@
-package client
+package client.utils
 
 import akka.NotUsed
 import akka.actor.{ActorRef, Props}
-import akka.http.scaladsl.model.ws.{InvalidUpgradeResponse, Message, ValidUpgrade, WebSocketRequest}
 import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.ws.{InvalidUpgradeResponse, Message, ValidUpgrade, WebSocketRequest}
 import akka.http.scaladsl.unmarshalling._
 import akka.pattern.pipe
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import client.utils.MessageDictionary._
-import common.communication.CommunicationProtocol.ProtocolMessage
 import common.communication.SocketSerializer
 import common.http.{HttpRequests, Routes}
 import common.room.{RoomJsonSupport, SharedRoom}
@@ -17,13 +16,17 @@ import common.room.{RoomJsonSupport, SharedRoom}
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-sealed trait HttpClient extends BasicActor
+/**
+ * Service that handle http protocol.
+ * Can be used to make requests to a server or initialize a web socket connection
+ */
+private[client] sealed trait HttpService extends BasicActor
 
-object HttpClient {
+private[client] object HttpService {
   def apply(serverUri: String): Props = Props(classOf[HttpClientImpl], serverUri)
 }
 
-class HttpClientImpl(private val httpServerUri: String) extends HttpClient with RoomJsonSupport {
+private class HttpClientImpl(private val httpServerUri: String) extends HttpService with RoomJsonSupport {
 
   import akka.http.scaladsl.Http
 
