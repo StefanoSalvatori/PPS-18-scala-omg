@@ -9,7 +9,7 @@ object TestClient {
 }
 
 /**
- * A client that expose the last message received.
+ * A client that exposes the messages he received
  */
 case class TestClient(override val id: String) extends Client {
   private var messagesReceivedList: List[Any] = List.empty

@@ -3,6 +3,8 @@ package client.room
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
 import client.core.CoreClient
+import akka.testkit.{ImplicitSender, TestKit}
+import client.CoreClient
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.communication.CommunicationProtocol.ProtocolMessage
@@ -15,7 +17,10 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import test_utils.ExampleRooms.ClosableRoomWithState
 import test_utils.{ExampleRooms, TestConfig}
+import ExampleRooms.ClosableRoomWithState._
 
+import scala.concurrent.{Await, ExecutionContext, Promise}
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Promise}
 import scala.util.{Success, Try}
 
@@ -36,14 +41,15 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
   private var clientRoomActor: ActorRef = _
   private var gameServer: GameServer = _
 
+  override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
   before {
-    coreClient = system actorOf CoreClient(ServerUri)
-    gameServer = GameServer(ServerAddress, ServerPort)
-    gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, () => ExampleRooms.ClosableRoomWithState())
+    coreClient = system actorOf CoreClient(serverUri)
+    gameServer = GameServer(serverAddress, serverPort)
+    gameServer.defineRoom(Name, () => ExampleRooms.ClosableRoomWithState())
     Await.ready(gameServer.start(), DefaultDuration)
 
-    coreClient ! CreatePublicRoom(ExampleRooms.closableRoomWithStateType, Set.empty)
+    coreClient ! CreatePublicRoom(Name, Set.empty)
     val room = expectMsgType[Success[ClientRoom]]
     clientRoomActor = system actorOf ClientRoomActor(coreClient, ServerUri, room.value)
   }

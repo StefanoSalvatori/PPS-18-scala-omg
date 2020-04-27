@@ -43,10 +43,10 @@ class ClientSpec extends AnyWordSpecLike
   before {
     gameServer = GameServer(ServerAddress, ServerPort)
     gameServer.defineRoom(RoomTypeName, () => ServerRoom())
-    gameServer.defineRoom(ExampleRooms.roomWithPropertyType, RoomWithProperty)
-    gameServer.defineRoom(ExampleRooms.noPropertyRoomType, NoPropertyRoom)
-    gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, ClosableRoomWithState.apply)
-    gameServer.defineRoom(ExampleRooms.roomWithReconnection, RoomWithReconnection)
+    gameServer.defineRoom(RoomWithProperty.Name, RoomWithProperty.apply)
+    gameServer.defineRoom(NoPropertyRoom.Name, NoPropertyRoom.apply)
+    gameServer.defineRoom(ClosableRoomWithState.Name, ClosableRoomWithState.apply)
+    gameServer.defineRoom(RoomWithReconnection.Name, RoomWithReconnection.apply)
 
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
     logger debug s"Server started at $ServerAddress:$ServerPort"
@@ -138,10 +138,10 @@ class ClientSpec extends AnyWordSpecLike
       assert(room.roomId == joined.roomId)
     }
 
-    "create a public room and join such room" in {
-      val room = Await.result(client createPublicRoom RoomTypeName, DefaultTimeout)
-      assert(client.joinedRooms().exists(_.roomId == room.roomId))
-    }
+  it should "create a public room and join such room" in {
+    val room = Await.result(client createPublicRoom RoomTypeName, DefaultTimeout)
+    assert(client.joinedRooms().exists(_.roomId == room.roomId))
+  }
 
     "fail on joining an already joined room" in {
       val room = Await.result(client createPublicRoom RoomTypeName, DefaultTimeout)
@@ -175,6 +175,11 @@ class ClientSpec extends AnyWordSpecLike
       Await.result(room.leave(), DefaultTimeout)
     }
 
+  it should "allow to reconnect to a previously joined room (that allows reconnection) with the same session id" in {
+    val room = Await.result(client.joinOrCreate(RoomWithReconnection.Name, FilterOptions.empty, Set.empty),
+      DefaultTimeout)
+    Await.result(room.leave(), DefaultTimeout)
+    val res = Await.result(client.reconnect(room.roomId, room.sessionId), DefaultTimeout)
     "allow to reconnect to a previously joined room (that allows reconnection) with the same session id" in {
       val room = Await.result(client.joinOrCreate(ExampleRooms.roomWithReconnection, FilterOptions.empty, Set.empty), DefaultTimeout)
       Await.result(room.leave(), DefaultTimeout)
@@ -184,6 +189,8 @@ class ClientSpec extends AnyWordSpecLike
 
     }
 
+  "not allow to reconnect an already joined room" in {
+    val room = Await.result(client.joinOrCreate(RoomWithReconnection.Name, FilterOptions.empty, Set.empty), DefaultTimeout)
     "not allow to reconnect an already joined room" in {
       val room = Await.result(client.joinOrCreate(ExampleRooms.roomWithReconnection, FilterOptions.empty, Set.empty), DefaultTimeout)
 
@@ -201,9 +208,15 @@ class ClientSpec extends AnyWordSpecLike
       Await.ready(client.createPublicRoom(ExampleRooms.roomWithPropertyType, Set(testProperty)), DefaultTimeout)
       val room = Await.result(client.createPublicRoom(ExampleRooms.roomWithPropertyType, Set(testProperty3)), DefaultTimeout)
       Await.ready(client.createPublicRoom(ExampleRooms.roomWithPropertyType, Set(testProperty2)), DefaultTimeout)
+    //create 3 rooms so that only the second one matches the filters
+    Await.ready(client.createPublicRoom(RoomWithProperty.Name, Set(testProperty)), DefaultTimeout)
+    val room = Await.result(client.createPublicRoom(RoomWithProperty.Name, Set(testProperty3)), DefaultTimeout)
+    Await.ready(client.createPublicRoom(RoomWithProperty.Name, Set(testProperty2)), DefaultTimeout)
 
       val joined = Await.result(client.join(ExampleRooms.roomWithPropertyType, FilterOptions just testProperty =:= 3), DefaultTimeout)
       room.roomId shouldEqual joined.roomId
     }
+    val joined = Await.result(client.join(RoomWithProperty.Name, FilterOptions just testProperty =:= 3), DefaultTimeout)
+    room.roomId shouldEqual joined.roomId
   }
 }

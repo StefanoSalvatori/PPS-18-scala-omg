@@ -11,6 +11,8 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.matchmaking.Matchmaker
+import test_utils.{ExampleRooms, TestConfig}
+import ExampleRooms.ClosableRoomWithState._
 import server.room.ServerRoom
 import test_utils.TestConfig
 
@@ -36,6 +38,11 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
   private var matchmakingActor2: ActorRef = _
   private var gameServer: GameServer = _
 
+  override def afterAll: Unit = TestKit.shutdownActorSystem(system)
+
+  before {
+    matchmakingActor1 = system actorOf MatchmakingActor(Name, serverUri, "")
+    matchmakingActor2 = system actorOf MatchmakingActor(Name, serverUri, "")
 
   // matchmaking strategy that only pairs two clients
   def matchmaker[T]: Matchmaker[T] = map => map.toList match {
@@ -49,6 +56,10 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
 
     gameServer = GameServer(ServerAddress, ServerPort)
     gameServer.defineRoomWithMatchmaking(RoomType, () => ServerRoom(), matchmaker)
+    gameServer.defineRoomWithMatchmaking(
+      Name,
+      () => ExampleRooms.ClosableRoomWithState(),
+      matchmaker)
     Await.ready(gameServer.start(), DefaultDuration)
   }
 
