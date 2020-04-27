@@ -1,14 +1,15 @@
 package client.room
 
 import akka.actor.{ActorRef, ActorSystem}
+import akka.pattern.ask
 import client.utils.MessageDictionary._
+import common.communication.CommunicationProtocol.SessionId.SessionId
+import common.communication.CommunicationProtocol.SocketSerializable
 import common.room.Room.RoomId
 import common.room.RoomProperty
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-import akka.pattern.ask
-import common.communication.CommunicationProtocol.{SocketSerializable, SessionId}
 
 /**
  * Room that is joined

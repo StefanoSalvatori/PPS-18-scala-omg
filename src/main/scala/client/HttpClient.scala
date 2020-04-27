@@ -12,8 +12,7 @@ import client.utils.MessageDictionary._
 import common.communication.CommunicationProtocol.ProtocolMessage
 import common.communication.SocketSerializer
 import common.http.{HttpRequests, Routes}
-import common.room.RoomJsonSupport
-import common.room.Room.SharedRoom
+import common.room.{RoomJsonSupport, SharedRoom}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}

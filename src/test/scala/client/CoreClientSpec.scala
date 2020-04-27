@@ -8,13 +8,13 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import client.room.{ClientRoom, ClientRoomActor, JoinedRoom, JoinedRoomImpl}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
-import common.TestConfig
 import common.http.Routes
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.ServerRoom
+import test_utils.TestConfig
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
@@ -94,7 +94,7 @@ object MockClientRoomActor {
   def apply(room: ClientRoom): Props = Props(classOf[MockClientRoomActor],  room)
 }
 class MockClientRoomActor(room: ClientRoom) extends Actor {
-  private implicit val system = context.system
+  private implicit val system: ActorSystem = context.system
 
   override def receive: Receive = {
     case RetrieveClientRoom =>

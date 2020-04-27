@@ -4,7 +4,6 @@ import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
 import client.matchmaking.MatchmakingActor.{JoinMatchmaking, LeaveMatchmaking}
 import com.typesafe.config.ConfigFactory
-import common.TestConfig
 import common.communication.CommunicationProtocol.MatchmakingInfo
 import common.http.Routes
 import org.scalatest.matchers.should.Matchers
@@ -12,7 +11,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.matchmaking.Matchmaker
-import server.utils.ExampleRooms
+import test_utils.{ExampleRooms, TestConfig}
 
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}

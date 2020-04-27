@@ -6,7 +6,6 @@ import akka.util.Timeout
 import client.CoreClient
 import client.room.JoinedRoom
 import com.typesafe.scalalogging.LazyLogging
-import common.TestConfig
 import common.http.Routes
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -14,6 +13,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.matchmaking.Matchmaker
 import server.room.ServerRoom
+import test_utils.TestConfig
 
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContextExecutor, Promise}

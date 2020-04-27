@@ -7,9 +7,8 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import client.CoreClient
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
-import common.TestConfig
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{ProtocolMessageType, ProtocolMessage}
+import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType}
 import common.http.Routes
 import common.room.Room
 import org.scalatest.matchers.should.Matchers
@@ -17,7 +16,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.ServerRoom
-import server.utils.ExampleRooms
+import test_utils.{ExampleRooms, TestConfig}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
@@ -58,13 +57,13 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
 
   "Client Room Actor" should {
     "should respond with a success or a failure when joining" in {
-      clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
+      clientRoomActor ! SendJoin(None, Room.DefaultPublicPassword)
       expectMsgType[Try[Any]]
     }
 
 
     "should respond with a success or a failure when leaving" in {
-      clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
+      clientRoomActor ! SendJoin(None, Room.DefaultPublicPassword)
       expectMsgType[Try[Any]]
 
       clientRoomActor ! SendLeave
@@ -90,7 +89,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
 
     "should react to socket errors" in {
       val promise = Promise[Boolean]()
-      clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
+      clientRoomActor ! SendJoin(None, Room.DefaultPublicPassword)
       expectMsgType[Success[_]]
 
       clientRoomActor ! OnErrorCallback(_ => promise.success(true))
@@ -111,7 +110,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
         }
       )
       clientRoomActor ! OnCloseCallback(() => onClosePromise.success(true))
-      clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
+      clientRoomActor ! SendJoin(None, Room.DefaultPublicPassword)
       expectMsgType[Success[_]]
 
       clientRoomActor ! SendStrictMessage("ping")
@@ -129,7 +128,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
       val messagesCount = 200
       val allReceived = Promise[Int]()
       var count = 0
-      clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
+      clientRoomActor ! SendJoin(None, Room.DefaultPublicPassword)
       expectMsgType[Success[_]]
       clientRoomActor ! OnMsgCallback(_ => {
         count = count + 1
@@ -156,7 +155,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
       case RoomClosed => clientRoomActor ! OnCloseCallback(() => promise.success(true))
     }
 
-    clientRoomActor ! SendJoin(None, Room.defaultPublicPassword)
+    clientRoomActor ! SendJoin(None, Room.DefaultPublicPassword)
     expectMsgType[Try[Any]]
 
     clientRoomActor ! ProtocolMessage(msgType)

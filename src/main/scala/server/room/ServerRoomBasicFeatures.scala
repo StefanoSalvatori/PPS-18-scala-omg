@@ -4,19 +4,19 @@ trait PrivateRoomSupport {
 
   import common.room.Room
   import common.room.Room.RoomPassword
-  private var password: RoomPassword = Room.defaultPublicPassword
+  private var password: RoomPassword = Room.DefaultPublicPassword
 
   /**
    * Check if the room is private.
    *
    * @return true if the room is private, false if it's public
    */
-  def isPrivate: Boolean = password != Room.defaultPublicPassword
+  def isPrivate: Boolean = password != Room.DefaultPublicPassword
 
   /**
    * It makes the room public.
    */
-  def makePublic(): Unit = password = Room.defaultPublicPassword
+  def makePublic(): Unit = password = Room.DefaultPublicPassword
 
   /**
    * It makes the room private
@@ -32,7 +32,7 @@ trait PrivateRoomSupport {
    * @return true if the password is correct or if the room is public, false otherwise.
    */
   protected def checkPasswordCorrectness(providedPassword: RoomPassword): Boolean =
-    password == Room.defaultPublicPassword || password == providedPassword
+    password == Room.DefaultPublicPassword || password == providedPassword
 }
 
 trait RoomLockingSupport {

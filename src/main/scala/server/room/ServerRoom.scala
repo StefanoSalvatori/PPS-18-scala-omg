@@ -4,7 +4,7 @@ import java.lang.reflect.Field
 import akka.actor.ActorRef
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType, SocketSerializable}
-import common.room.Room.{BasicRoom, RoomId, RoomPassword, SharedRoom}
+import common.room.Room.{RoomId, RoomPassword}
 import common.room._
 import server.communication.ConnectionConfigurations
 import server.room.RoomActor.{Close, StartAutoCloseTimeout}
@@ -19,7 +19,7 @@ trait ServerRoom extends BasicRoom
   override val roomId: RoomId = UUID.randomUUID.toString
 
   val socketConfigurations: ConnectionConfigurations = ConnectionConfigurations.Default
-  val autoClose: Boolean = false
+  val autoClose: Boolean = true
   import scala.concurrent.duration._
   val autoCloseTimeout: FiniteDuration = 5 seconds
 
@@ -296,7 +296,7 @@ object ServerRoom {
 
     // Add public/private state to room properties
     import common.room.RoomPropertyValueConversions._
-    runtimeOnlyProperties = runtimeOnlyProperties + RoomProperty(Room.roomPrivateStatePropertyName, room.isPrivate)
+    runtimeOnlyProperties = runtimeOnlyProperties + RoomProperty(Room.RoomPrivateStatePropertyName, room.isPrivate)
 
     SharedRoom(room.roomId, runtimeOnlyProperties)
   }

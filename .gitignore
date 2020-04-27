@@ -1,3 +1,9 @@
+# latex ignores
+*.aux
+*.pdf
+*.toc
+*.gz
+
 
 null/
 .class

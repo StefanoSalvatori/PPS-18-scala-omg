@@ -4,8 +4,8 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
 import common.communication.BinaryProtocolSerializer
-import common.room.Room.{RoomId, RoomPassword, RoomType, SharedRoom}
-import common.room.{FilterOptions, NoSuchPropertyException, Room, RoomProperty, RoomPropertyValue}
+import common.room.Room.{RoomId, RoomPassword, RoomType}
+import common.room.{FilterOptions, NoSuchPropertyException, Room, RoomProperty, RoomPropertyValue, SharedRoom}
 import server.communication.RoomSocket
 import server.matchmaking.Group.GroupId
 import server.room.{Client, RoomActor, ServerRoom}
@@ -100,7 +100,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
     val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
     _roomsByType = updateRoomMap(_roomsByType, roomType)(newRoom, newRoomActor)
     // Set property and password
-    roomProperties.find(_.name == Room.roomPasswordPropertyName) match {
+    roomProperties.find(_.name == Room.RoomPasswordPropertyName) match {
       case Some(password) =>
         val properties = roomProperties - password
         newRoom makePrivate (RoomPropertyValue valueOf password.value).asInstanceOf[RoomPassword]

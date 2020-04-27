@@ -9,21 +9,13 @@ import common.room.RoomPropertyValueConversions._
 import common.room.{FilterOptions, RoomProperty}
 import org.scalatest.BeforeAndAfter
 import server.routes.RouteCommonTestOptions
-import server.utils.ExampleRooms
+import test_utils.ExampleRooms._
 
 class RoomHandlerSpec extends AnyFlatSpec
   with Matchers
   with ScalatestRouteTest
   with RouteCommonTestOptions
   with BeforeAndAfter {
-
-  import ExampleRooms.RoomWithProperty
-  import ExampleRooms.roomWithPropertyType
-  import ExampleRooms.RoomWithProperty2
-  import ExampleRooms.roomWithProperty2Type
-  import ExampleRooms.LockableRoom
-  import ExampleRooms.lockedRoomType
-  import ExampleRooms.unlockedRoomType
 
   private var roomHandler: RoomHandler = _
 
