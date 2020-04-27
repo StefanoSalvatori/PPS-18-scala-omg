@@ -4,6 +4,7 @@ import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.pattern.ask
 import akka.util.Timeout
 import client.room.{ClientRoom, JoinedRoom}
+import client.utils.JoinMatchmakingException
 import client.utils.MessageDictionary.{JoinMatchmaking, LeaveMatchmaking}
 import common.communication.CommunicationProtocol.{MatchmakingInfo, SocketSerializable}
 import common.room.Room.RoomType
@@ -99,7 +100,7 @@ private class ClientMatchmakerImpl(private val coreClient: ActorRef,
       case Failure(ex) =>
         matchmakingActor ! LeaveMatchmaking
         matchmakingActor ! PoisonPill
-        Future.failed(ex)
+        Future.failed(JoinMatchmakingException(ex.getMessage))
     }
   }
 

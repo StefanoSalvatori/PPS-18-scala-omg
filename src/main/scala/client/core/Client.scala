@@ -13,7 +13,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
-
+import akka.util.Timeout
+import client.utils.{NoRoomToJoinException, RoomAlreadyJoinedException}
 
 sealed trait Client {
 
@@ -99,19 +100,13 @@ sealed trait Client {
 }
 
 object Client {
-  def apply(serverAddress: String, serverPort: Int): ClientImpl = new ClientImpl(serverAddress, serverPort)
+  def apply(serverAddress: String, serverPort: Int): Client = new ClientImpl(serverAddress, serverPort)
 }
 
 
+private class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
 
-class ClientImpl(private val serverAddress: String, private val serverPort: Int) extends Client {
-
-  private val RequestTimeout = 5 // Seconds
-
-  import akka.util.Timeout
-
-  implicit val timeout: Timeout = RequestTimeout seconds
-
+  implicit val timeout: Timeout = 5 seconds
   private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
 
   private implicit val actorSystem: ActorSystem = ActorSystem()
@@ -121,7 +116,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
   override val matchmaker: ClientMatchmaker = ClientMatchmaker(coreClient, httpServerUri)
 
   override def joinedRooms(): Set[JoinedRoom] = {
-    Await.result(coreClient ? GetJoinedRooms, 5 seconds).asInstanceOf[JoinedRooms].joinedRooms
+    Await.result(coreClient ? GetJoinedRooms, timeout.duration).asInstanceOf[JoinedRooms].joinedRooms
   }
 
   override def shutdown(): Unit = this.actorSystem.terminate()
@@ -175,7 +170,7 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
    */
   private def ifNotJoined(idToCheck: RoomId, exec: => Future[JoinedRoom]): Future[JoinedRoom] = {
     if (this.joinedRooms().exists(_.roomId == idToCheck)) {
-      Future.failed(new Exception("Room already joined"))
+      Future.failed(RoomAlreadyJoinedException())
     } else {
       exec
     }
@@ -202,12 +197,13 @@ class ClientImpl(private val serverAddress: String, private val serverPort: Int)
     rooms match {
       case head +: _ =>
         try {
-          Future.successful(Await.result(head.join(), 5 seconds))
+          Future.successful(Await.result(head.join(), timeout.duration))
         } catch {
           case _: Exception => findJoinable(rooms.tail)
         }
-      case Nil => Future.failed(new Exception("no room to join"))
+      case Nil => Future.failed(NoRoomToJoinException())
 
     }
 
 }
+

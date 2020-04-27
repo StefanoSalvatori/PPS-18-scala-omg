@@ -2,7 +2,7 @@ package client.room
 
 import akka.actor.{ActorRef, Props, Stash}
 import client.utils.MessageDictionary._
-import client.utils.{BasicActor, HttpService}
+import client.utils.{BasicActor, HttpService, JoinException, LeaveException}
 import common.communication.BinaryProtocolSerializer
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.SessionId.SessionId
@@ -99,8 +99,8 @@ private class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, r
       context.become(roomJoined(outRef))
       unstashAll()
 
-    case ProtocolMessage(ClientNotAuthorized, _, _) =>
-      replyTo ! Failure(new Exception("Can't join"))
+    case ProtocolMessage(ClientNotAuthorized, _, payload) =>
+      replyTo ! Failure(JoinException(payload.toString))
 
     case SendStrictMessage(_: SocketSerializable) => stash()
     case ProtocolMessage(Tell, _, _) => stash()
@@ -136,8 +136,8 @@ private class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, r
       replyTo ! Success()
       context.become(receive)
 
-    case ProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, _) =>
-      replyTo ! Failure(new Exception("Can't leave"))
+    case ProtocolMessage(ProtocolMessageType.ClientNotAuthorized, _, payload) =>
+      replyTo ! Failure(LeaveException(payload.toString))
       context.become(roomJoined(outRef))
   }
 

@@ -14,9 +14,7 @@ import scala.util.{Failure, Success}
 sealed trait CoreClient extends BasicActor
 
 object CoreClient {
-
   import akka.actor.Props
-
   def apply(httpServerUri: String): Props = Props(classOf[CoreClientImpl], httpServerUri)
 }
 
