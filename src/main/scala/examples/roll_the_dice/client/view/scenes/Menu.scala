@@ -5,13 +5,13 @@ import java.awt.BorderLayout
 import examples.roll_the_dice.client.view.View
 import javax.swing._
 
-case class Menu(view: View) extends BasicScene {
+case class Menu(private val view: View) extends BasicScene {
 
   // Set title
   panel add (new JLabel("Roll The Dice"), BorderLayout.NORTH)
 
   // Set main menu
-  private val menuBox = new Box(BoxLayout.Y_AXIS)
+  private val menuBox = Box.createVerticalBox()
   private val quitButton = new JButton("Quit")
   private val findMatchButton = new JButton("Play w/ default matchmaker")
   menuBox add findMatchButton

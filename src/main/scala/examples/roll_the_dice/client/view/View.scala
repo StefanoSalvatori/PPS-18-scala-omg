@@ -1,7 +1,8 @@
 package examples.roll_the_dice.client.view
 
 import examples.roll_the_dice.client.controller.Controller
-import examples.roll_the_dice.client.view.scenes.{Loading, Menu}
+import examples.roll_the_dice.client.view.scenes.{Loading, Match, Menu}
+import examples.roll_the_dice.common.{MatchState, Turn}
 import javax.swing.{JFrame, JPanel}
 
 trait View extends JFrame {
@@ -12,6 +13,10 @@ trait View extends JFrame {
   def leaveMatchmakingQueue(): Unit
 
   def closeApplication(): Unit
+
+  def startGame(assignedTurn: Turn): Unit
+
+  def updateState(newState: MatchState): Unit
 }
 
 object View {
@@ -30,32 +35,39 @@ class ViewImpl(observer: Controller) extends View {
   private val mainPanel = new JPanel()
   this setContentPane mainPanel
 
-  private val menu = Menu(this).panel
-  private val loading = Loading(this).panel
+  private val menuScene = Menu(this)
+  private val loadingScene = Loading(this)
+  private val matchScene = Match(this)
 
-  this changePanel menu
+  this changePanel menuScene.panel
 
   //pack()
 
   override def start(): Unit = this setVisible true
 
-  override def closeApplication(): Unit = observer.closeApplication()
-
   override def joinGameWithMatchmaking(): Unit = {
     observer.joinGameWithMatchmaking()
-    this changePanel loading
+    this changePanel loadingScene.panel
   }
 
   override def leaveMatchmakingQueue(): Unit = {
     observer.joinGameWithMatchmaking()
-    this changePanel menu
+    this changePanel menuScene.panel
   }
+
+  override def closeApplication(): Unit = observer.closeApplication()
+
+  override def startGame(assignedTurn: Turn): Unit = {
+    this changePanel matchScene.panel
+    matchScene.assignedTurn = assignedTurn
+  }
+
+  override def updateState(newState: MatchState): Unit = matchScene updateState newState
 
   private def changePanel(newPanel: JPanel): Unit = {
     mainPanel.removeAll()
     mainPanel.repaint()
     mainPanel.revalidate()
     mainPanel add newPanel
-
   }
 }

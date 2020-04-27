@@ -3,9 +3,9 @@ package examples.roll_the_dice.client.view.scenes
 import java.awt.BorderLayout
 
 import examples.roll_the_dice.client.view.View
-import javax.swing.{Box, BoxLayout, JButton, JLabel, JPanel}
+import javax.swing.{Box, BoxLayout, JButton, JLabel}
 
-case class Loading(view: View) extends BasicScene {
+case class Loading(private val view: View) extends BasicScene {
 
   private val box = new Box(BoxLayout.Y_AXIS)
   private val loadingLabel = new JLabel("Looking for a game to join...")

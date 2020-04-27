@@ -1,9 +1,10 @@
 package examples.roll_the_dice.client
 
-import examples.roll_the_dice.common.MatchState
+import examples.roll_the_dice.common.{MatchState, Turn}
 
 trait PubSubMessage
 case class PubSubRoomState(state: MatchState) extends PubSubMessage
+case class PubSubStartGame(myTurn: Turn) extends PubSubMessage
 
 trait Subscriber {
 

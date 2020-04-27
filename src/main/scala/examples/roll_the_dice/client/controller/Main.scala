@@ -1,7 +1,6 @@
 package examples.roll_the_dice.client.controller
 
 object Main extends App {
-
   Controller().start()
 }
 
@@ -20,7 +19,7 @@ object Controller {
   def apply(): Controller = ControllerImpl()
 }
 
-import examples.roll_the_dice.client.{PubSubMessage, PubSubRoomState, Subscriber}
+import examples.roll_the_dice.client.{PubSubMessage, PubSubRoomState, PubSubStartGame, Subscriber}
 import examples.roll_the_dice.client.model.Model
 import examples.roll_the_dice.client.view.View
 
@@ -46,7 +45,9 @@ case class ControllerImpl() extends Controller with Subscriber {
   override def leaveMatchmakingQueue(): Unit = model.leaveMatchmakingQueue()
 
   override def onItemPublished(message: PubSubMessage): Unit = message match {
-    case PubSubRoomState(state) =>
-      println(state)
+    case PubSubRoomState(newState) =>
+      view updateState newState
+    case PubSubStartGame(myTurn) =>
+      view startGame myTurn
   }
 }

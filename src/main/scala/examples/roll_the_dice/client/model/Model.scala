@@ -2,7 +2,7 @@ package examples.roll_the_dice.client.model
 
 import client.Client
 import client.room.JoinedRoom
-import examples.roll_the_dice.client.{PubSubRoomState, Publisher}
+import examples.roll_the_dice.client.{PubSubMessage, PubSubRoomState, PubSubStartGame, Publisher}
 import examples.roll_the_dice.common.{ClientInfo, MatchState, Turn}
 import examples.roll_the_dice.common.MessageDictionary.StartGame
 
@@ -21,7 +21,8 @@ trait Model {
 object Model {
   def apply(): Model = new ModelImpl()
 
-  implicit def stateToPubSubMessage(state: MatchState): PubSubRoomState = PubSubRoomState(state)
+  implicit def stateToPubSubMessage(state: MatchState): PubSubMessage = PubSubRoomState(state)
+  implicit def startGameToPubSubMessage(turn: Turn): PubSubMessage = PubSubStartGame(turn)
 }
 
 class ModelImpl extends Model with Publisher {
@@ -33,9 +34,8 @@ class ModelImpl extends Model with Publisher {
   val roomName = "matchRoom"
 
   private var room: JoinedRoom = _
-  private var myTurn: Turn = _
 
-  import Model.stateToPubSubMessage
+  import Model._
   def start(): Unit = publish(MatchState())
 
   override def joinGameWithMatchmaking(): Unit =
@@ -45,7 +45,7 @@ class ModelImpl extends Model with Publisher {
 
         room onMessageReceived {
           case StartGame(assignedTurn) =>
-            myTurn = assignedTurn
+            publish(assignedTurn)
         }
 
         room onStateChanged { newState =>
