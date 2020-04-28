@@ -8,14 +8,19 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState]
 
   private var gameStarted = false
 
+  private var joinedA = 0
+  private var expectedA = 2
+  private var joinedB = 0
+  private var expectedB = 2
+
   private var turnClientMapping = Map.empty[Turn, Client]
   private var clientTurnMapping = Map.empty[Client, Turn]
 
-  private val turnsOrder = Iterator continually { Seq(A1, B1) } flatten // , A2, B2
+  private val turnsOrder = Iterator continually { Seq(A1, B1, A2, B2) } flatten
   private var currentTurn: Turn = A1
 
   private var matchState = MatchState()
-  private val goalPoints = 50
+  private val goalPoints = 10
   private val dice = Dice.classic()
 
   override def onCreate(): Unit = this.startStateSynchronization()
@@ -25,9 +30,20 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState]
     println(s"Joined ${client.id}")
 
     // Assign a turn to the client that joined
-    val currentTurnAssignment = turnsOrder.next
-    turnClientMapping = turnClientMapping + (currentTurnAssignment -> client)
-    clientTurnMapping = clientTurnMapping + (client -> currentTurnAssignment)
+    matchmakingGroups(client) match {
+      case 0 =>
+        joinedA = joinedA + 1
+        val assignedTurn = if (joinedA < expectedA) A1 else A2
+        turnClientMapping = turnClientMapping + (assignedTurn -> client)
+      clientTurnMapping = clientTurnMapping + (client -> assignedTurn)
+      case 1 =>
+        joinedB = joinedB + 1
+        val assignedTurn = if (joinedB < expectedB) B1 else B2
+        turnClientMapping = turnClientMapping + (assignedTurn -> client)
+        clientTurnMapping = clientTurnMapping + (client -> assignedTurn)
+    }
+
+    println(clientTurnMapping)
 
     // Start the game if all clients connected
     if (turnClientMapping.size == matchmakingGroups.size) {
@@ -35,7 +51,7 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState]
       println("Start game")
 
       gameStarted = true
-      clientTurnMapping.keys.foreach(c => tell(c, StartGame(clientTurnMapping(c), matchState, goalPoints)))
+      clientTurnMapping.foreach(kv => tell(kv._1, StartGame(kv._2, matchState, goalPoints)))
       broadcast(NextTurn(turnsOrder.next))
     }
   }
@@ -50,6 +66,7 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState]
         }) {
           gameStarted = false
           broadcast(Win(team))
+          close()
         }
       }
 

@@ -18,6 +18,6 @@ case class Menu(private val view: View) extends BasicScene {
   menuBox add quitButton
   panel.add(menuBox, BorderLayout.CENTER)
 
-  findMatchButton addActionListener { _ => view.joinGameWithMatchmaking() }
+  findMatchButton addActionListener { _ => view.showMatchSetup() }
   quitButton addActionListener { _ => System exit 0 }
 }

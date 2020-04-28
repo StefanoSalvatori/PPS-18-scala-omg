@@ -4,7 +4,7 @@ import java.awt.{BorderLayout, Color, Font}
 
 import examples.roll_the_dice.client.view.{View, WindowSize}
 import examples.roll_the_dice.common.{A1, A2, B1, B2, MatchState, Team, Turn}
-import javax.swing.{BorderFactory, Box, JButton, JLabel}
+import javax.swing.{BorderFactory, Box, JButton, JLabel, JOptionPane}
 import examples.roll_the_dice.client.view.Utils.DimensionConverters._
 
 case class Match(private val view: View) extends BasicScene {
@@ -23,10 +23,6 @@ case class Match(private val view: View) extends BasicScene {
   private val middleBox = MiddleBox(view)
   panel add (middleBox.box, BorderLayout.CENTER)
 
-  def assignedTurn_=(turn: Turn): Unit = middleBox.assignedTurn = turn
-
-  def assignedTurn: Turn = middleBox.assignedTurn
-
   def updateState(newState: MatchState): Unit = pointsBox updatePoints newState
 
   def setupGame(assignedTurn: Turn, startingState: MatchState, goalPoints: Int): Unit = {
@@ -35,6 +31,14 @@ case class Match(private val view: View) extends BasicScene {
   }
 
   def changeTurn(newTurn: Turn): Unit = middleBox.currentTurn = newTurn
+
+  def showWinningDialog(team: Team): Unit = JOptionPane.showMessageDialog(
+    view,
+    s"Team $team wins!",
+    "Game end",
+    JOptionPane.INFORMATION_MESSAGE
+  )
+
 }
 
 private case class PointsBox() extends BasicBox {

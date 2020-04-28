@@ -13,7 +13,7 @@ trait Model {
 
   def start(): Unit
 
-  def joinGameWithMatchmaking(): Unit
+  def joinGameWithMatchmaking(desiredTeam: Team): Unit
 
   def leaveMatchmakingQueue(): Unit
 
@@ -42,8 +42,8 @@ class ModelImpl extends Model with Publisher {
   import Model._
   def start(): Unit = publish(MatchState())
 
-  override def joinGameWithMatchmaking(): Unit =
-    client.matchmaker joinMatchmaking (roomName, ClientInfo()) onComplete {
+  override def joinGameWithMatchmaking(desiredTeam: Team): Unit =
+    client.matchmaker joinMatchmaking (roomName, ClientInfo(desiredTeam)) onComplete {
       case Success(res) =>
         room = res
 

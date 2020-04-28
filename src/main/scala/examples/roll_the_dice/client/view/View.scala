@@ -1,7 +1,7 @@
 package examples.roll_the_dice.client.view
 
 import examples.roll_the_dice.client.controller.Controller
-import examples.roll_the_dice.client.view.scenes.{Loading, Match, Menu}
+import examples.roll_the_dice.client.view.scenes.{Loading, Match, MatchSetup, Menu}
 import examples.roll_the_dice.common.{MatchState, Team, Turn}
 import javax.swing.{JFrame, JPanel}
 
@@ -9,13 +9,13 @@ trait View extends JFrame {
 
   def observer: Controller
 
-  def start(): Unit
-
-  def joinGameWithMatchmaking(): Unit
-
-  def leaveMatchmakingQueue(): Unit
+  def startGUI(): Unit
 
   def closeApplication(): Unit
+
+  def joinGameWithMatchmaking(desiredTeam: Team): Unit
+
+  def leaveMatchmakingQueue(): Unit
 
   def updateState(newState: MatchState): Unit
 
@@ -24,6 +24,8 @@ trait View extends JFrame {
   def changeTurn(newTurn: Turn): Unit
 
   def endGame(winner: Team): Unit
+
+  def showMatchSetup(): Unit
 }
 
 object View {
@@ -45,35 +47,26 @@ class ViewImpl(override val observer: Controller) extends View {
 
   private val menuScene = Menu(this)
   private val loadingScene = Loading(this)
+  private val matchSetupScene = MatchSetup(this)
   private val matchScene = Match(this)
 
   this changePanel menuScene.panel
-//  this changePanel matchScene.panel
 
-  //pack()
+  override def startGUI(): Unit = this setVisible true
 
-  override def start(): Unit = this setVisible true
-
-  override def joinGameWithMatchmaking(): Unit = {
-    observer.joinGameWithMatchmaking()
+  override def joinGameWithMatchmaking(desiredTeam: Team): Unit = {
+    observer.joinGameWithMatchmaking(desiredTeam)
     this changePanel loadingScene.panel
   }
 
   override def leaveMatchmakingQueue(): Unit = {
-    observer.joinGameWithMatchmaking()
+    observer.leaveMatchmakingQueue()
     this changePanel menuScene.panel
   }
 
   override def closeApplication(): Unit = observer.closeApplication()
 
   override def updateState(newState: MatchState): Unit = matchScene updateState newState
-
-  private def changePanel(newPanel: JPanel): Unit = {
-    mainPanel.removeAll()
-    mainPanel.repaint()
-    mainPanel.revalidate()
-    mainPanel add newPanel
-  }
 
   override def startGame(assignedTurn: Turn, startingState: MatchState, goalPoints: Int): Unit = {
     matchScene setupGame (assignedTurn, startingState, goalPoints)
@@ -83,6 +76,16 @@ class ViewImpl(override val observer: Controller) extends View {
   override def changeTurn(newTurn: Turn): Unit = matchScene changeTurn newTurn
 
   override def endGame(winner: Team): Unit = {
-    println(s"$winner won")
+    matchScene showWinningDialog winner
+    this changePanel menuScene.panel
+  }
+
+  override def showMatchSetup(): Unit = this changePanel matchSetupScene.panel
+
+  private def changePanel(newPanel: JPanel): Unit = {
+    mainPanel.removeAll()
+    mainPanel.repaint()
+    mainPanel.revalidate()
+    mainPanel add newPanel
   }
 }

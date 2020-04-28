@@ -18,5 +18,5 @@ object Server extends App {
   server.start()
 
   val roomName = "matchRoom"
-  server.defineRoomWithMatchmaking(roomName, MatchRoom, Matchmaker.defaultMatchmaker(Map(1 -> 1, 2 -> 1)))
+  server.defineRoomWithMatchmaking(roomName, MatchRoom, CustomMatchmaker())
 }

@@ -8,13 +8,22 @@ object Main2 extends App {
   Controller().start()
 }
 
+object Main3 extends App {
+  Controller().start()
+}
+
+object Main4 extends App {
+  Controller().start()
+}
+
 trait Controller {
 
   def start(): Unit
 
   def closeApplication(): Unit
 
-  def joinGameWithMatchmaking(): Unit
+  import examples.roll_the_dice.common.Team
+  def joinGameWithMatchmaking(desiredTeam: Team): Unit
 
   def leaveMatchmakingQueue(): Unit
 
@@ -28,6 +37,7 @@ object Controller {
 import examples.roll_the_dice.client.{PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, PubSubWin, Subscriber}
 import examples.roll_the_dice.client.model.Model
 import examples.roll_the_dice.client.view.View
+import examples.roll_the_dice.common.Team
 
 case class ControllerImpl() extends Controller with Subscriber {
 
@@ -38,7 +48,7 @@ case class ControllerImpl() extends Controller with Subscriber {
 
   override def start(): Unit = {
     model.start()
-    view.start()
+    view.startGUI()
   }
 
   override def closeApplication(): Unit = {
@@ -46,7 +56,7 @@ case class ControllerImpl() extends Controller with Subscriber {
     System exit 0
   }
 
-  override def joinGameWithMatchmaking(): Unit = model.joinGameWithMatchmaking()
+  override def joinGameWithMatchmaking(desiredTeam: Team): Unit = model.joinGameWithMatchmaking(desiredTeam)
 
   override def leaveMatchmakingQueue(): Unit = model.leaveMatchmakingQueue()
 
