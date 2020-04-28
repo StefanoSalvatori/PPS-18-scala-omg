@@ -50,29 +50,19 @@ private[client] object MessageDictionary {
   case class HttpGetRooms(roomType: RoomType, roomOption: FilterOptions)
 
   /**
-   * Perform a web socket request to open a connection to server side room with the given id.
+   * Perform a request to open a web socket connection
    * If the connection is successful respond with message [[client.utils.MessageDictionary.HttpSocketSuccess]]
    * otherwise [[client.utils.MessageDictionary.HttpSocketFail]]
    *
-   * @param roomId id of the room to connect to
    * @param parser messages received on the socket will be parsed with this parser before sending them to the
    *               receiver actor
+   * @param route  route for the request
    */
-  case class HttpRoomSocketRequest[T](roomId: RoomId, parser: SocketSerializer[T])
+  case class HttpSocketRequest[T](parser: SocketSerializer[T], route: String)
+
 
   /**
-   * Perform a web socket request to open a connection with the server side matchmaking service.
-   * If the connection is successful respond with message [[client.utils.MessageDictionary.HttpSocketSuccess]]
-   * otherwise [[client.utils.MessageDictionary.HttpSocketFail]]
-   *
-   * @param roomType id of the room to connect to
-   * @param parser   messages received on the socket will be parsed with this parser before sending them to the
-   *                 receiver actor
-   */
-  case class HttpMatchmakingSocketRequest[T](roomType: RoomType, parser: SocketSerializer[T])
-
-  /**
-   * Successful response of an [[client.utils.MessageDictionary.HttpRoomSocketRequest]].
+   * Successful response of an [[client.utils.MessageDictionary.HttpSocketRequest]].
    * Contains an actor ref.
    *
    * @param outRef Sending messages to this actor means sending them in the socket
@@ -80,7 +70,7 @@ private[client] object MessageDictionary {
   case class HttpSocketSuccess(outRef: ActorRef)
 
   /**
-   * Failure response of an [[HttpRoomSocketRequest]].
+   * Failure response of an [[HttpSocketRequest]].
    *
    * @param cause what caused the failure
    */

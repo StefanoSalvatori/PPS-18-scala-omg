@@ -11,10 +11,9 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.matchmaking.Matchmaker
-import test_utils.{ExampleRooms, TestConfig}
-import ExampleRooms.ClosableRoomWithState._
 import server.room.ServerRoom
-import test_utils.TestConfig
+import test_utils.ExampleRooms.ClosableRoomWithState._
+import test_utils.{ExampleRooms, TestConfig}
 
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}

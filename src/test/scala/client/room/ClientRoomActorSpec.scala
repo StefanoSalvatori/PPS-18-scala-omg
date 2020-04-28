@@ -3,7 +3,6 @@ package client.room
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
 import client.core.CoreClient
-import akka.testkit.{ImplicitSender, TestKit}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.communication.CommunicationProtocol.ProtocolMessage
@@ -15,11 +14,9 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import test_utils.ExampleRooms.ClosableRoomWithState
+import test_utils.ExampleRooms.ClosableRoomWithState._
 import test_utils.{ExampleRooms, TestConfig}
-import ExampleRooms.ClosableRoomWithState._
 
-import scala.concurrent.{Await, ExecutionContext, Promise}
-import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Promise}
 import scala.util.{Success, Try}
 

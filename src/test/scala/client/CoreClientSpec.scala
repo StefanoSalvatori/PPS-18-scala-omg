@@ -1,12 +1,10 @@
 package client
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
-import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import akka.testkit.{ImplicitSender, TestKit}
 import client.core.CoreClient
-import client.room.{ClientRoom, ClientRoomActor, JoinedRoom, JoinedRoomImpl}
+import client.room.{ClientRoom, JoinedRoom}
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.http.Routes
@@ -17,9 +15,8 @@ import server.GameServer
 import server.room.ServerRoom
 import test_utils.TestConfig
 
-import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with ImplicitSender

@@ -2,21 +2,18 @@ package client
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
-import akka.util.Timeout
 import client.core.Client
 import com.typesafe.scalalogging.LazyLogging
+import common.room.RoomPropertyValueConversions._
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
-import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
 import server.room.ServerRoom
-import common.room.RoomPropertyValueConversions._
-import org.scalatest.wordspec.AnyWordSpecLike
 import test_utils.ExampleRooms._
-import test_utils.{ExampleRooms, TestConfig}
+import test_utils.TestConfig
 
-import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
 
 class ClientSpec extends AnyWordSpecLike

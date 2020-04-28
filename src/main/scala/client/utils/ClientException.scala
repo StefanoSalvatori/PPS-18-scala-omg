@@ -25,3 +25,13 @@ case class LeaveException(message: String) extends ClientException
  * Exception thrown when the client can't join a matchmaking queue
  */
 case class JoinMatchmakingException(message: String) extends ClientException
+
+/**
+ * Exception thrown when the client leave a matchmaking queue before it's completion
+ */
+case class MatchmakingLeftException(message: String = "Matchmaking left") extends ClientException
+
+/**
+ * Exception thrown on web socket opening fail
+ */
+case class SocketFailException(message: String) extends ClientException

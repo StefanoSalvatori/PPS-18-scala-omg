@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.pattern.ask
 import akka.util.Timeout
 import client.room.{ClientRoom, JoinedRoom}
-import client.utils.JoinMatchmakingException
+import client.utils.{JoinMatchmakingException, MatchmakingLeftException}
 import client.utils.MessageDictionary.{JoinMatchmaking, LeaveMatchmaking}
 import common.communication.CommunicationProtocol.{MatchmakingInfo, SocketSerializable}
 import common.room.Room.RoomType
@@ -77,7 +77,7 @@ private class ClientMatchmakerImpl(private val coreClient: ActorRef,
       case Some(ref) =>
         (ref ? LeaveMatchmaking).map { _ =>
           //make the join future fail
-          this.promises(roomType).failure(new Exception("matchmaking left"))
+          this.promises(roomType).failure(MatchmakingLeftException())
           this.removeMatchmakingConnection(roomType)
         }
       case None =>

@@ -9,12 +9,18 @@ import akka.pattern.pipe
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import client.utils.MessageDictionary._
+import common.communication.CommunicationProtocol.ProtocolMessageType.ProtocolMessageType
+import common.communication.CommunicationProtocol.SessionId.SessionId
 import common.communication.SocketSerializer
 import common.http.{HttpRequests, Routes}
 import common.room.{RoomJsonSupport, SharedRoom}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+
+
+
+
 
 /**
  * Service that handle http protocol.
@@ -63,16 +69,8 @@ private class HttpClientImpl(private val httpServerUri: String) extends HttpServ
         case Failure(ex) => replyTo ! FailResponse(ex)
       }
 
-    case HttpRoomSocketRequest(roomId, parser) =>
-
-      val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + Routes.roomSocketConnection(roomId)
-      val (upgradeResponse, sourceRef) = openSocket(wsSocketUri, parser)
-      upgradeResponse pipeTo self
-      context.become(waitSocketResponse(sender, sourceRef))
-
-
-    case HttpMatchmakingSocketRequest(roomType, parser) =>
-      val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + Routes.matchmakingSocketConnection(roomType)
+    case HttpSocketRequest(parser, route) =>
+      val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + route
       val (upgradeResponse, sourceRef) = openSocket(wsSocketUri, parser)
       upgradeResponse pipeTo self
       context.become(waitSocketResponse(sender, sourceRef))
@@ -93,7 +91,7 @@ private class HttpClientImpl(private val httpServerUri: String) extends HttpServ
         .map(parser.prepareToSocket)
         .toMat(Sink.asPublisher(false))(Keep.both).run()
 
-    val flow = Http() webSocketClientFlow WebSocketRequest(wsRoute)
+    val flow = http webSocketClientFlow WebSocketRequest(wsRoute)
 
     val ((_, upgradeResponse), _) = Source.fromPublisher(publisher)
       .viaMat(flow)(Keep.both)
