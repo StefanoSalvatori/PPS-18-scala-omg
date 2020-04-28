@@ -16,7 +16,6 @@ import server.GameServer
 import test_utils.ExampleRooms.ClosableRoomWithState
 import test_utils.ExampleRooms.ClosableRoomWithState._
 import test_utils.{ExampleRooms, TestConfig}
-
 import scala.concurrent.{Await, ExecutionContext, Promise}
 import scala.util.{Success, Try}
 
@@ -72,6 +71,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
     }
 
 
+
     "should handle messages when receiving 'Tell' from server room" in {
       assert(this.checkCallback(Tell))
     }
@@ -124,6 +124,23 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
       assert(Await.result(onClosePromise.future, DefaultDuration))
 
     }
+
+    "should notify the core client when the room is closed" in {
+      val close = Promise[Boolean]()
+      clientRoomActor ! OnCloseCallback(() => close.success(true))
+
+      clientRoomActor ! SendJoin(None, Room.DefaultPublicPassword)
+      expectMsgType[Try[Any]]
+
+      clientRoomActor ! SendStrictMessage(ClosableRoomWithState.CloseRoomMessage)
+      Await.result(close.future, DefaultTimeout)
+
+      coreClient ! GetJoinedRooms
+      val res = expectMsgType[JoinedRooms]
+      res.joinedRooms shouldBe empty
+
+    }
+
   }
 
 

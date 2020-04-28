@@ -119,7 +119,10 @@ private class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, r
     case ProtocolMessage(Tell, _, payload) => handleIfDefinedOrStash(this.onMessageCallback, payload)
     case ProtocolMessage(Broadcast, _, payload) => handleIfDefinedOrStash(this.onMessageCallback, payload)
     case ProtocolMessage(StateUpdate, _, payload) => handleIfDefinedOrStash(this.onStateChangedCallback, payload)
-    case ProtocolMessage(RoomClosed, _, _) => handleIfDefinedOrStash(this.onCloseCallback)
+    case ProtocolMessage(RoomClosed, _, _) =>
+      coreClient ! ClientRoomActorLeft
+      handleIfDefinedOrStash(this.onCloseCallback)
+
 
 
     case SendLeave =>
