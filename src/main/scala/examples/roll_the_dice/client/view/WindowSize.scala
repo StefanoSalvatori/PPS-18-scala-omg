@@ -6,7 +6,7 @@ object WindowSize {
   val screenWidth: Double =  Toolkit.getDefaultToolkit.getScreenSize.getWidth
   val screenHeight: Double = Toolkit.getDefaultToolkit.getScreenSize.getHeight
 
-  private val windowPercentage = 0.9
+  private val windowPercentage = 0.6
   val windowWidth: Double = screenWidth * windowPercentage
   val windowHeight: Double = screenHeight * windowPercentage
 }

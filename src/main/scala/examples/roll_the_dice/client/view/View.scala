@@ -31,6 +31,7 @@ class ViewImpl(observer: Controller) extends View {
   this setTitle "Roll The Dice"
   this setSize (_width, _height)
   this setResizable true
+  this setDefaultCloseOperation JFrame.EXIT_ON_CLOSE
 
   private val mainPanel = new JPanel()
   this setContentPane mainPanel
@@ -39,7 +40,7 @@ class ViewImpl(observer: Controller) extends View {
   private val loadingScene = Loading(this)
   private val matchScene = Match(this)
 
-  this changePanel menuScene.panel
+  this changePanel matchScene.panel //menuScene.panel
 
   //pack()
 
