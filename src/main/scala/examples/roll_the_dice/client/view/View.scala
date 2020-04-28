@@ -2,10 +2,13 @@ package examples.roll_the_dice.client.view
 
 import examples.roll_the_dice.client.controller.Controller
 import examples.roll_the_dice.client.view.scenes.{Loading, Match, Menu}
-import examples.roll_the_dice.common.{MatchState, Turn}
+import examples.roll_the_dice.common.{MatchState, Team, Turn}
 import javax.swing.{JFrame, JPanel}
 
 trait View extends JFrame {
+
+  def observer: Controller
+
   def start(): Unit
 
   def joinGameWithMatchmaking(): Unit
@@ -20,7 +23,7 @@ trait View extends JFrame {
 
   def changeTurn(newTurn: Turn): Unit
 
-  def observer: Controller
+  def endGame(winner: Team): Unit
 }
 
 object View {
@@ -78,4 +81,8 @@ class ViewImpl(override val observer: Controller) extends View {
   }
 
   override def changeTurn(newTurn: Turn): Unit = matchScene changeTurn newTurn
+
+  override def endGame(winner: Team): Unit = {
+    println(s"$winner won")
+  }
 }

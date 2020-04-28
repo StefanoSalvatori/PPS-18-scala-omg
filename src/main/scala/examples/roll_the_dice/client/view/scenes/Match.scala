@@ -3,7 +3,7 @@ package examples.roll_the_dice.client.view.scenes
 import java.awt.{BorderLayout, Color, Font}
 
 import examples.roll_the_dice.client.view.{View, WindowSize}
-import examples.roll_the_dice.common.{A1, A2, B1, B2, MatchState, Turn}
+import examples.roll_the_dice.common.{A1, A2, B1, B2, MatchState, Team, Turn}
 import javax.swing.{BorderFactory, Box, JButton, JLabel}
 import examples.roll_the_dice.client.view.Utils.DimensionConverters._
 
@@ -126,7 +126,7 @@ private case class MiddleBox(private val view: View) extends BasicBox {
     if (_currentTurn == _assignedTurn) {
       rollButton setEnabled true
     } else {
-      //rollButton setEnabled false
+      rollButton setEnabled false
     }
   }
 }

@@ -7,4 +7,6 @@ object MessageDictionary {
   case object Roll
 
   case class NextTurn(currentTurn: Turn)
+
+  case class Win(team: Team)
 }

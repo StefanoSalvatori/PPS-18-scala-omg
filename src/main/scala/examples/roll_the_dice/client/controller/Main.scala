@@ -4,6 +4,10 @@ object Main extends App {
   Controller().start()
 }
 
+object Main2 extends App {
+  Controller().start()
+}
+
 trait Controller {
 
   def start(): Unit
@@ -21,7 +25,7 @@ object Controller {
   def apply(): Controller = ControllerImpl()
 }
 
-import examples.roll_the_dice.client.{PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, Subscriber}
+import examples.roll_the_dice.client.{PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, PubSubWin, Subscriber}
 import examples.roll_the_dice.client.model.Model
 import examples.roll_the_dice.client.view.View
 
@@ -55,5 +59,8 @@ case class ControllerImpl() extends Controller with Subscriber {
       view startGame (assignedTurn, startingState, goalPoints)
     case PubSubNextTurn(newTurn) =>
       view changeTurn newTurn
+    case PubSubWin(team) =>
+      view endGame team
+
   }
 }
