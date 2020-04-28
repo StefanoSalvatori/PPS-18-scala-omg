@@ -4,7 +4,8 @@ import examples.roll_the_dice.common.{MatchState, Turn}
 
 trait PubSubMessage
 case class PubSubRoomState(state: MatchState) extends PubSubMessage
-case class PubSubStartGame(myTurn: Turn) extends PubSubMessage
+case class PubSubSetupGame(assignedTurn: Turn, startingState: MatchState, goalPoints: Int) extends PubSubMessage
+case class PubSubNextTurn(turn: Turn) extends PubSubMessage
 
 trait Subscriber {
 

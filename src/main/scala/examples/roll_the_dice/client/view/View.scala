@@ -14,16 +14,20 @@ trait View extends JFrame {
 
   def closeApplication(): Unit
 
-  def startGame(assignedTurn: Turn): Unit
-
   def updateState(newState: MatchState): Unit
+
+  def startGame(assignedTurn: Turn, startingState: MatchState, goalPoints: Int): Unit
+
+  def changeTurn(newTurn: Turn): Unit
+
+  def observer: Controller
 }
 
 object View {
   def apply(observer: Controller): View = new ViewImpl(observer)
 }
 
-class ViewImpl(observer: Controller) extends View {
+class ViewImpl(override val observer: Controller) extends View {
 
   private val _width: Int = WindowSize.windowWidth.intValue
   private val _height: Int = WindowSize.windowHeight.intValue
@@ -40,7 +44,8 @@ class ViewImpl(observer: Controller) extends View {
   private val loadingScene = Loading(this)
   private val matchScene = Match(this)
 
-  this changePanel matchScene.panel //menuScene.panel
+  this changePanel menuScene.panel
+//  this changePanel matchScene.panel
 
   //pack()
 
@@ -58,11 +63,6 @@ class ViewImpl(observer: Controller) extends View {
 
   override def closeApplication(): Unit = observer.closeApplication()
 
-  override def startGame(assignedTurn: Turn): Unit = {
-    this changePanel matchScene.panel
-    matchScene.assignedTurn = assignedTurn
-  }
-
   override def updateState(newState: MatchState): Unit = matchScene updateState newState
 
   private def changePanel(newPanel: JPanel): Unit = {
@@ -71,4 +71,11 @@ class ViewImpl(observer: Controller) extends View {
     mainPanel.revalidate()
     mainPanel add newPanel
   }
+
+  override def startGame(assignedTurn: Turn, startingState: MatchState, goalPoints: Int): Unit = {
+    matchScene setupGame (assignedTurn, startingState, goalPoints)
+    this changePanel matchScene.panel
+  }
+
+  override def changeTurn(newTurn: Turn): Unit = matchScene changeTurn newTurn
 }

@@ -2,9 +2,9 @@ package examples.roll_the_dice.client.model
 
 import client.Client
 import client.room.JoinedRoom
-import examples.roll_the_dice.client.{PubSubMessage, PubSubRoomState, PubSubStartGame, Publisher}
+import examples.roll_the_dice.client.{PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, Publisher}
 import examples.roll_the_dice.common.{ClientInfo, MatchState, Turn}
-import examples.roll_the_dice.common.MessageDictionary.StartGame
+import examples.roll_the_dice.common.MessageDictionary.{NextTurn, Roll, StartGame}
 
 import scala.concurrent.ExecutionContext
 import scala.util.Success
@@ -16,13 +16,16 @@ trait Model {
   def joinGameWithMatchmaking(): Unit
 
   def leaveMatchmakingQueue(): Unit
+
+  def rollDice(): Unit
 }
 
 object Model {
   def apply(): Model = new ModelImpl()
 
   implicit def stateToPubSubMessage(state: MatchState): PubSubMessage = PubSubRoomState(state)
-  implicit def startGameToPubSubMessage(turn: Turn): PubSubMessage = PubSubStartGame(turn)
+  implicit def setupGameToPubSubMessage(t: (Turn, MatchState, Int)): PubSubMessage = PubSubSetupGame(t._1, t._2, t._3)
+  implicit def nextTurnToPubSubMessage(t: Turn): PubSubMessage = PubSubNextTurn(t)
 }
 
 class ModelImpl extends Model with Publisher {
@@ -44,8 +47,10 @@ class ModelImpl extends Model with Publisher {
         room = res
 
         room onMessageReceived {
-          case StartGame(assignedTurn) =>
-            publish(assignedTurn)
+          case StartGame(assignedTurn, startingState, goalPoints) =>
+            publish((assignedTurn, startingState, goalPoints))
+          case NextTurn(turn) =>
+            publish(turn)
         }
 
         room onStateChanged { newState =>
@@ -54,4 +59,8 @@ class ModelImpl extends Model with Publisher {
     }
 
   override def leaveMatchmakingQueue(): Unit = {}
+
+  override def rollDice(): Unit = {
+    room send Roll
+  }
 }

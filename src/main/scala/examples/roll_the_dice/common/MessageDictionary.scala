@@ -2,9 +2,9 @@ package examples.roll_the_dice.common
 
 object MessageDictionary {
 
-  case class StartGame(assignedTurn: Turn)
+  case class StartGame(assignedTurn: Turn, startingState: MatchState, goalPoints: Int)
 
-  case class Roll()
+  case object Roll
 
-  case class DoRoll(currentTurn: Turn)
+  case class NextTurn(currentTurn: Turn)
 }

@@ -13,13 +13,15 @@ trait Controller {
   def joinGameWithMatchmaking(): Unit
 
   def leaveMatchmakingQueue(): Unit
+
+  def rollDice(): Unit
 }
 
 object Controller {
   def apply(): Controller = ControllerImpl()
 }
 
-import examples.roll_the_dice.client.{PubSubMessage, PubSubRoomState, PubSubStartGame, Subscriber}
+import examples.roll_the_dice.client.{PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, Subscriber}
 import examples.roll_the_dice.client.model.Model
 import examples.roll_the_dice.client.view.View
 
@@ -44,10 +46,14 @@ case class ControllerImpl() extends Controller with Subscriber {
 
   override def leaveMatchmakingQueue(): Unit = model.leaveMatchmakingQueue()
 
+  override def rollDice(): Unit = model.rollDice()
+
   override def onItemPublished(message: PubSubMessage): Unit = message match {
     case PubSubRoomState(newState) =>
       view updateState newState
-    case PubSubStartGame(myTurn) =>
-      view startGame myTurn
+    case PubSubSetupGame(assignedTurn, startingState, goalPoints) =>
+      view startGame (assignedTurn, startingState, goalPoints)
+    case PubSubNextTurn(newTurn) =>
+      view changeTurn newTurn
   }
 }
