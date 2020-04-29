@@ -35,7 +35,6 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   private var coreClient: ActorRef = _
   private var gameServer: GameServer = _
 
-
   before {
     coreClient = system actorOf CoreClient(ServerUri)
     gameServer = GameServer(ServerAddress, ServerPort)
@@ -48,13 +47,11 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
-
   "Regarding joined rooms, a core client" should {
     "start with no joined rooms" in {
       coreClient ! GetJoinedRooms
       val res = expectMsgType[JoinedRooms]
       res.joinedRooms shouldBe empty
-
     }
 
     "keep track of joined rooms" in {
@@ -69,18 +66,14 @@ class CoreClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       coreClient ! GetJoinedRooms
       val res = expectMsgType[JoinedRooms]
       res.joinedRooms should have size 3
-
     }
 
     "respond with the created room if request to create a room" in {
       coreClient ! CreatePublicRoom(RoomTypeName, Set.empty)
       val tryRes = expectMsgType[Try[ClientRoom]]
       if (tryRes.isSuccess) assert(tryRes.get.isInstanceOf[ClientRoom])
-
     }
-
   }
-
 }
 
 private[this] object MockClientRoomActor {

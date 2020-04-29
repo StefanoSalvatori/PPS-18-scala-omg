@@ -13,7 +13,6 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer
 import server.room.ServerRoom
 import test_utils.TestConfig
-
 import scala.concurrent.Await
 
 class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
@@ -42,18 +41,15 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   }
 
   "An Http client actor" should {
-
     val httpTestActor: ActorRef = system actorOf HttpService(ServerUri)
 
     "when asked to post a room, return the new room" in {
       httpTestActor ! HttpPostRoom(RoomTypeName, Set.empty)
-
       expectMsgPF() {
         case HttpRoomResponse(room) =>
           assert(room.isInstanceOf[SharedRoom])
         case FailResponse(_) =>
       }
-
     }
 
     "when asked to get a rooms, return a set of rooms" in {

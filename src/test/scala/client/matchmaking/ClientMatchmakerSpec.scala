@@ -36,7 +36,6 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
   private var matchmaker1: ClientMatchmaker = _
   private var matchmaker2: ClientMatchmaker = _
 
-
   private val RoomType1 = "test1"
   private val RoomType2 = "test2"
   private val RoomType3 = "test3"
@@ -52,7 +51,6 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
     case (c1, c1Info) :: (c2, c2Info) :: _ if c1Info.equals(c2Info) => Some(Map(c1 -> 0, c2 -> 1))
     case _ => None
   }
-
 
   before {
     gameServer = GameServer(ServerAddress, ServerPort)
@@ -100,7 +98,6 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
       this.matchmaker2.joinMatchmaking(RoomType2)
       val room2 = Await.result(this.matchmaker1.joinMatchmaking(RoomType2), DefaultTimeout)
       assert(room2.isInstanceOf[JoinedRoom])
-
     }
 
     "return the same future on multiple requests on the same room type" in {
@@ -128,9 +125,7 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
       assert(room.isInstanceOf[JoinedRoom])
     }
   }
-
 }
-
 
 @SerialVersionUID(12345L)
 private[this] case class ClientInfo(a: Int) extends java.io.Serializable

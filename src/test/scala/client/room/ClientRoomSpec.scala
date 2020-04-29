@@ -155,7 +155,6 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
       joinedRoom.send(ClosableRoomWithState.ChangeStateMessage)
       assert(Await.result(p.future, DefaultDuration))
-
     }
 
     "define a callback to handle room closed changed" in {
@@ -176,7 +175,6 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
       //not sending any message should close the socket
       assert(Await.result(p.future, DefaultDuration))
-
     }
   }
 

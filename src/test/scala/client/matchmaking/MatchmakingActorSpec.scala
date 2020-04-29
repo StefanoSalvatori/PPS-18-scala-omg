@@ -66,7 +66,6 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
 
   "MatchmakingActor" should {
     "join a matchmaking queue and return matchmaking infos when the match is created" in {
-
       matchmakingActor1 ! JoinMatchmaking
       matchmakingActor2 ! JoinMatchmaking
       expectMsgPF() {
@@ -83,11 +82,9 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
       expectMsgType[Any]
       matchmakingActor1 ! PoisonPill
 
-
       //this should never respond because the other actor left the matchmaking queue
       matchmakingActor2 ! JoinMatchmaking
       expectNoMessage()
-
     }
   }
 

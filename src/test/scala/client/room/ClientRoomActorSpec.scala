@@ -54,13 +54,11 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
 
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
-
   "Client Room Actor" should {
     "should respond with a success or a failure when joining" in {
       clientRoomActor ! SendJoin(None, Room.DefaultPublicPassword)
       expectMsgType[Try[Any]]
     }
-
 
     "should respond with a success or a failure when leaving" in {
       clientRoomActor ! SendJoin(None, Room.DefaultPublicPassword)
@@ -69,8 +67,6 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
       clientRoomActor ! SendLeave
       expectMsgType[Try[Any]]
     }
-
-
 
     "should handle messages when receiving 'Tell' from server room" in {
       assert(this.checkCallback(Tell))
@@ -122,7 +118,6 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
 
       clientRoomActor ! SendStrictMessage(ClosableRoomWithState.CloseRoomMessage)
       assert(Await.result(onClosePromise.future, DefaultDuration))
-
     }
 
     "should notify the core client when the room is closed" in {
@@ -138,11 +133,9 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
       coreClient ! GetJoinedRooms
       val res = expectMsgType[JoinedRooms]
       res.joinedRooms shouldBe empty
-
     }
 
   }
-
 
   private def checkCallback(msgType: ProtocolMessageType): Boolean = {
     val promise = Promise[Boolean]()
@@ -158,6 +151,5 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
     clientRoomActor ! ProtocolMessage(msgType)
     Await.result(promise.future, DefaultDuration)
   }
-
 }
 

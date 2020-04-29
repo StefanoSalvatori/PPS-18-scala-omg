@@ -25,12 +25,12 @@ class ClientSpec extends AnyWordSpecLike
   with LazyLogging
   with RoomJsonSupport {
 
+  implicit val execContext: ExecutionContextExecutor = system.dispatcher
+
   private val ServerAddress = Localhost
   private val ServerPort = ClientSpecServerPort
-
   private val RoomTypeName: String = "test_room"
 
-  implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private var gameServer: GameServer = _
   private var client: Client = _
   private var client2: Client = _
@@ -179,12 +179,10 @@ class ClientSpec extends AnyWordSpecLike
       val res = Await.result(client.reconnect(room.roomId, room.sessionId), DefaultTimeout)
 
       room.sessionId shouldEqual res.sessionId
-
     }
 
     "not allow to reconnect an already joined room" in {
       val room = Await.result(client.joinOrCreate(RoomWithReconnection.Name, FilterOptions.empty, Set.empty), DefaultTimeout)
-
       assertThrows[Exception] {
         Await.result(client.reconnect(room.roomId, room.sessionId), DefaultTimeout)
       }
