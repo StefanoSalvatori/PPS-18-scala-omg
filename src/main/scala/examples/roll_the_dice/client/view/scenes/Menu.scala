@@ -18,7 +18,7 @@ case class Menu(private val view: View) extends BasicScene {
   private val boxSpacing = (20, 20)
   private val menuBox = Box.createVerticalBox()
   private val quitButton = new JButton("Quit")
-  private val findMatchButton = new JButton("Play w/ default matchmaker")
+  private val findMatchButton = new JButton("Play")
 
   menuBox add Utils.spacing(boxSpacing)
   menuBox add findMatchButton

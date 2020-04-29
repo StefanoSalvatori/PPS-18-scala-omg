@@ -9,8 +9,6 @@ case class CustomMatchmaker() extends Matchmaker[ClientInfo] {
 
   override def createFairGroup(waitingClients: Map[Client, ClientInfo]): Option[Map[Client, GroupId]] = {
 
-    println("Trying")
-
     // Lazy evaluation: stream combined with headOption let stop when the first admissible grouping is found
     val clientStream = waitingClients.keys.toStream
     val admissibleGroups =
@@ -29,8 +27,6 @@ case class CustomMatchmaker() extends Matchmaker[ClientInfo] {
         if x.desiredTeam == A && x.desiredTeam == y.desiredTeam
         if z.desiredTeam == B && z.desiredTeam == w.desiredTeam
       ) yield Map(clientX -> 0, clientY -> 0, clientZ -> 1, clientW -> 1)
-
-    if (admissibleGroups.isEmpty) println("Failed") else println("Created")
     admissibleGroups.headOption
   }
 }

@@ -61,7 +61,7 @@ class ModelImpl extends Model with Publisher {
         }
     }
 
-  override def leaveMatchmakingQueue(): Unit = {}
+  override def leaveMatchmakingQueue(): Unit = client.matchmaker leaveMatchmaking roomName
 
   override def rollDice(): Unit = {
     room send Roll
