@@ -40,7 +40,7 @@ class ViewImpl(override val observer: Controller) extends View {
   this setTitle "Roll The Dice"
   this setSize (_width, _height)
   this setResizable true
-  this setDefaultCloseOperation JFrame.EXIT_ON_CLOSE
+  //this setDefaultCloseOperation JFrame.EXIT_ON_CLOSE
 
   private val mainPanel = new JPanel()
   this setContentPane mainPanel
