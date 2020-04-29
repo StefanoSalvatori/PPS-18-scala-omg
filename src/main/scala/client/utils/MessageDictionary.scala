@@ -4,10 +4,11 @@ import akka.actor.ActorRef
 import client.room.JoinedRoom
 import common.communication.CommunicationProtocol.SocketSerializable
 import common.communication.SocketSerializer
-import common.room.Room.{RoomId, RoomPassword, RoomType}
+import common.room.Room.{RoomPassword, RoomType}
 import common.room.{FilterOptions, RoomProperty, SharedRoom}
 
 // scalastyle:ignore method.length
+// scalastyle:ignore number.of.types
 private[client] object MessageDictionary {
 
   //CoreClient
