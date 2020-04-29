@@ -10,4 +10,8 @@ object Utils {
 
     implicit def doubleTupleToDimension(t: (Double, Double)): Dimension = new Dimension(t._1.intValue, t._2.intValue)
   }
+
+  import java.awt.Component
+  import javax.swing.Box
+  def spacing(d: Dimension): Component = Box createRigidArea d
 }

@@ -2,7 +2,6 @@ package examples.roll_the_dice.server
 
 import examples.roll_the_dice.server.room.{CustomMatchmaker, MatchRoom}
 import server.GameServer
-import server.matchmaking.Matchmaker
 
 object Server extends App {
 

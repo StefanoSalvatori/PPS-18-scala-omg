@@ -2,7 +2,7 @@ package examples.roll_the_dice.client.view.scenes
 
 import java.awt.{BorderLayout, Color, Font}
 
-import examples.roll_the_dice.client.view.{View, WindowSize}
+import examples.roll_the_dice.client.view.{Utils, View, WindowSize}
 import examples.roll_the_dice.common.{A1, A2, B1, B2, MatchState, Team, Turn}
 import javax.swing.{BorderFactory, Box, JButton, JLabel, JOptionPane}
 import examples.roll_the_dice.client.view.Utils.DimensionConverters._
@@ -43,7 +43,7 @@ case class Match(private val view: View) extends BasicScene {
 
 private case class PointsBox() extends BasicBox {
 
-  private val spacingDimension = (20, 20)
+  private val boxSpacing = (20, 20)
 
   private var goalPoints: Int = 0
   private var currentState = MatchState()
@@ -61,9 +61,9 @@ private case class PointsBox() extends BasicBox {
   box setBorder BorderFactory.createEtchedBorder(1)
   box setPreferredSize (WindowSize.windowWidth * 0.5, WindowSize.windowHeight * 0.3)
 
-  box add Box.createRigidArea(spacingDimension)
+  box add Utils.spacing(boxSpacing)
   box add redTeamLabel
-  box add Box.createRigidArea(spacingDimension)
+  box add Utils.spacing(boxSpacing)
   box add blueTeamLabel
 
   override def boxType: BoxType = VerticalBox
@@ -83,7 +83,7 @@ private case class PointsBox() extends BasicBox {
 
 private case class MiddleBox(private val view: View) extends BasicBox {
 
-  private val spacingDimension = (20, 20) // scalastyle:ignore magic.number
+  private val boxSpacing = (20, 20) // scalastyle:ignore magic.number
 
   private val labelFont = new Font(new JLabel().getName, Font.PLAIN, 20) // scalastyle:ignore magic.number
 
@@ -106,11 +106,11 @@ private case class MiddleBox(private val view: View) extends BasicBox {
   private val rollButton = new JButton("Roll")
   rollButton addActionListener(_ => view.observer.rollDice())
 
-  box add Box.createRigidArea(spacingDimension)
+  box add Utils.spacing(boxSpacing)
   box add myTurnLabel
-  box add Box.createRigidArea(spacingDimension)
+  box add Utils.spacing(boxSpacing)
   box add currentTurnLabel
-  box add Box.createRigidArea(spacingDimension)
+  box add Utils.spacing(boxSpacing)
   box add rollButton
 
   override def boxType: BoxType = VerticalBox
@@ -137,16 +137,16 @@ private case class MiddleBox(private val view: View) extends BasicBox {
 
 private case class TeamToolbar(player1: Turn, player2: Turn) extends BasicBox {
 
-  private val spacingDimension = (20, 20) // scalastyle:ignore magic.number
+  private val boxSpacing = (20, 20) // scalastyle:ignore magic.number
 
   private val player1Box = PlayerBox(player1)
   private val player2Box = PlayerBox(player2)
 
-  box add Box.createRigidArea(spacingDimension)
+  box add Utils.spacing(boxSpacing)
   box add player1Box.box
-  box add Box.createRigidArea(spacingDimension)
+  box add Utils.spacing(boxSpacing)
   box add player2Box.box
-  box add Box.createRigidArea(spacingDimension)
+  box add Utils.spacing(boxSpacing)
 
   box setBorder BorderFactory.createEtchedBorder(1)
 
@@ -154,7 +154,6 @@ private case class TeamToolbar(player1: Turn, player2: Turn) extends BasicBox {
 
   private val boxDimension = (WindowSize.windowWidth * 0.33, WindowSize.windowHeight * 0.5)
   box setPreferredSize boxDimension
-
 }
 
 private case class PlayerBox(turn: Turn) extends BasicBox {

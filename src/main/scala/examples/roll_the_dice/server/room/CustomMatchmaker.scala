@@ -1,6 +1,6 @@
 package examples.roll_the_dice.server.room
 
-import examples.roll_the_dice.common.{A, B, ClientInfo}
+import examples.roll_the_dice.common.{A, B, ClientInfo, Team}
 import server.matchmaking.Group.GroupId
 import server.matchmaking.Matchmaker
 import server.room.Client
@@ -29,6 +29,12 @@ case class CustomMatchmaker() extends Matchmaker[ClientInfo] {
         if x.desiredTeam == A && x.desiredTeam == y.desiredTeam
         if z.desiredTeam == B && z.desiredTeam == w.desiredTeam
       ) yield Map(clientX -> 0, clientY -> 0, clientZ -> 1, clientW -> 1)
+
+    if (admissibleGroups.isEmpty) println("Failed") else println("Created")
     admissibleGroups.headOption
   }
+}
+
+object CustomMatchmaker {
+  implicit def groupIdTeamMapping: Map[GroupId, Team] = Map(0 -> A, 1 -> B)
 }

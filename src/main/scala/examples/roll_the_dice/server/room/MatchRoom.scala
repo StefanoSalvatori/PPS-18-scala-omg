@@ -30,18 +30,17 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState]
     println(s"Joined ${client.id}")
 
     // Assign a turn to the client that joined
-    matchmakingGroups(client) match {
-      case 0 =>
+    var assignedTurn: Turn = A1
+    CustomMatchmaker groupIdTeamMapping matchmakingGroups(client) match {
+      case A =>
         joinedA = joinedA + 1
-        val assignedTurn = if (joinedA < expectedA) A1 else A2
-        turnClientMapping = turnClientMapping + (assignedTurn -> client)
-      clientTurnMapping = clientTurnMapping + (client -> assignedTurn)
-      case 1 =>
+        assignedTurn = if (joinedA < expectedA) A1 else A2
+      case B =>
         joinedB = joinedB + 1
-        val assignedTurn = if (joinedB < expectedB) B1 else B2
-        turnClientMapping = turnClientMapping + (assignedTurn -> client)
-        clientTurnMapping = clientTurnMapping + (client -> assignedTurn)
+        assignedTurn = if (joinedB < expectedB) B1 else B2
     }
+    turnClientMapping = turnClientMapping + (assignedTurn -> client)
+    clientTurnMapping = clientTurnMapping + (client -> assignedTurn)
 
     println(clientTurnMapping)
 
