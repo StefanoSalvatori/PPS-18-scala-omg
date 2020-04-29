@@ -156,7 +156,7 @@ trait ServerRoom extends BasicRoom
    *
    * @return a set containing all defined room properties
    */
-  def properties: Set[RoomProperty] = {
+  override def properties: Set[RoomProperty] = {
     def checkAdmissibleFieldType[T](value: T): Boolean = value match {
       case _: Int | _: String | _: Boolean | _: Double => true
       case _ => false

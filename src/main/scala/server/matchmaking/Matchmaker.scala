@@ -40,8 +40,8 @@ private case class DefaultMatchmaker(groupsMetadata: Map[GroupId, Int]) extends 
         .flatMap(group => Seq.fill(group._2)(group._1)) // Create a list of available slots
         .map(slot => (clientIterator.next, slot)) // Fill each slot with a waiting client
         .toMap
-      Option(groups)
+      Some(groups)
     } else {
-      Option.empty
+      None
     }
 }
