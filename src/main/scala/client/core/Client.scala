@@ -189,7 +189,7 @@ private class ClientImpl(private val serverAddress: String, private val serverPo
   }
 
   /**
-   * @param rooms to check
+   * @param rooms sequence of rooms to check
    * @return the first joinable room in the sequence
    */
   @scala.annotation.tailrec

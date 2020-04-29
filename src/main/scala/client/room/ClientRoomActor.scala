@@ -2,22 +2,23 @@ package client.room
 
 import akka.actor.{ActorRef, Props, Stash}
 import client.utils.MessageDictionary._
-import client.utils.{BasicActor, HttpService, JoinException, LeaveException, SocketFailException, SocketService}
+import client.utils._
 import common.communication.BinaryProtocolSerializer
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.SessionId.SessionId
-import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType, SessionId, SocketSerializable}
+import common.communication.CommunicationProtocol.{ProtocolMessage, SessionId, SocketSerializable}
 import common.http.Routes
 import common.room.Room.RoomPassword
 
 import scala.util.{Failure, Success}
 
 
+
 /**
  * Handles the connection and communication with the server side room.
- * Notify the coreClient if the associated room is left or joined.
+ * Notify the coreClient if the associated room is left, joined or closed.
  */
-private[client] sealed trait ClientRoomActor extends BasicActor
+private[client] sealed trait ClientRoomActor extends SocketActor[ProtocolMessage]
 
 private[client] object ClientRoomActor {
   def apply(coreClient: ActorRef, serverUri: String, room: ClientRoom): Props =
@@ -25,14 +26,15 @@ private[client] object ClientRoomActor {
 }
 
 private class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, room: ClientRoom)
-  extends ClientRoomActor with Stash with SocketService {
-  private var onMessageCallback: Option[Any => Unit] = None
-  private var onStateChangedCallback: Option[Any => Unit] = None
-  private var onCloseCallback: Option[() => Unit] = None
-  private var onErrorCallback: Option[Throwable => Unit] = None
+  extends ClientRoomActor with Stash  {
 
   private var joinPassword: RoomPassword = _
   private var joinedRoom: JoinedRoom = _
+
+  override val uri = httpServerUri
+  override val serializer = BinaryProtocolSerializer()
+
+  private val callbackHandler: ActorRef = system.actorOf(CallbackHandler())
 
   override def receive: Receive =
     waitRequest orElse
@@ -71,12 +73,12 @@ private class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, r
   def waitRequest: Receive = {
     case SendJoin(sessionId: Option[SessionId], password: RoomPassword) =>
       joinPassword = password
-      makeSocketRequest(BinaryProtocolSerializer(), Routes.roomSocketConnection(this.room.roomId), this.httpServerUri)
+      makeSocketRequest(Routes.roomSocketConnection(this.room.roomId))
       context.become(waitSocketResponse(sender, sessionId, JoinRoom))
 
     case SendReconnect(sessionId: Option[SessionId], password: RoomPassword) =>
       joinPassword = password
-      makeSocketRequest(BinaryProtocolSerializer(), Routes.roomSocketConnection(this.room.roomId), this.httpServerUri)
+      makeSocketRequest(Routes.roomSocketConnection(this.room.roomId))
       context.become(waitSocketResponse(sender, sessionId, ReconnectRoom))
   }
 
@@ -104,26 +106,23 @@ private class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, r
       context.become(roomJoined(outRef))
       unstashAll()
 
-    case ProtocolMessage(ClientNotAuthorized, _, payload) =>
-      replyTo ! Failure(JoinException(payload.toString))
-
-    case SendStrictMessage(_: SocketSerializable) => stash()
+    case ProtocolMessage(ClientNotAuthorized, _, payload) => replyTo ! Failure(JoinException(payload.toString))
     case ProtocolMessage(Tell, _, _) => stash()
     case ProtocolMessage(Broadcast, _, _) => stash()
     case ProtocolMessage(RoomClosed, _, _) => stash()
+    case SendStrictMessage(_) => stash()
+
 
   }
 
   def onRoomJoined(outRef: ActorRef): Receive = {
     case ProtocolMessage(ClientNotAuthorized, _, _) =>
-    case ProtocolMessage(Tell, _, payload) => handleIfDefinedOrStash(this.onMessageCallback, payload)
-    case ProtocolMessage(Broadcast, _, payload) => handleIfDefinedOrStash(this.onMessageCallback, payload)
-    case ProtocolMessage(StateUpdate, _, payload) => handleIfDefinedOrStash(this.onStateChangedCallback, payload)
-    case ProtocolMessage(RoomClosed, _, _) =>
+    case msg@ProtocolMessage(Tell, _, _) => callbackHandler ! msg
+    case msg@ProtocolMessage(Broadcast, _, _) => callbackHandler ! msg
+    case msg@ProtocolMessage(StateUpdate, _, _) => callbackHandler ! msg
+    case msg@ProtocolMessage(RoomClosed, _, _) =>
       coreClient ! ClientRoomActorLeft
-      handleIfDefinedOrStash(this.onCloseCallback)
-
-
+      callbackHandler ! msg
 
     case SendLeave =>
       outRef ! ProtocolMessage(LeaveRoom)
@@ -149,8 +148,37 @@ private class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, r
   //private utilities
 
   private def handleErrors: Receive =
-    super.handleErrors(ex => this.handleIfDefinedOrStash(this.onErrorCallback, ex))
+    super.handleErrors(ex => this.callbackHandler ! SocketError(ex))
 
+  private def callbackDefinition: Receive = {
+    case msg@OnMsgCallback(_) => callbackHandler ! msg
+    case msg@OnStateChangedCallback(_) => callbackHandler ! msg
+    case msg@OnCloseCallback(_) => callbackHandler ! msg
+    case msg@OnErrorCallback(_) => callbackHandler ! msg
+
+  }
+}
+
+/**
+ * Actor used to execute callbacks defined by the user
+ */
+private[this] class CallbackHandler extends BasicActor with Stash{
+  //callback handled by this actor
+  private var onMessageCallback: Option[Any => Unit] = None
+  private var onStateChangedCallback: Option[Any => Unit] = None
+  private var onCloseCallback: Option[() => Unit] = None
+  private var onErrorCallback: Option[Throwable => Unit] = None
+
+
+  override def receive: Receive = handleProtocolMessages orElse callbackDefinition
+
+  private def handleProtocolMessages: Receive = {
+    case ProtocolMessage(Tell, _, payload) => handleIfDefinedOrStash(this.onMessageCallback, payload)
+    case ProtocolMessage(Broadcast, _, payload) => handleIfDefinedOrStash(this.onMessageCallback, payload)
+    case ProtocolMessage(StateUpdate, _, payload) => handleIfDefinedOrStash(this.onStateChangedCallback, payload)
+    case ProtocolMessage(RoomClosed, _, _) => handleIfDefinedOrStash(this.onCloseCallback)
+    case SocketError(t) =>  handleIfDefinedOrStash(onErrorCallback, t)
+  }
 
   private def callbackDefinition: Receive = {
     case OnMsgCallback(callback) =>
@@ -170,7 +198,6 @@ private class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, r
       unstashAll()
   }
 
-
   //stash messages if callback is not defined
   //They will be handled as soon as the callback is defined
   private def handleIfDefinedOrStash[T](callback: Option[T => Unit], msg: T): Unit = {
@@ -188,7 +215,9 @@ private class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, r
       case None => stash()
     }
   }
+}
 
-
+private[this] object CallbackHandler {
+  def apply(): Props = Props(classOf[CallbackHandler])
 }
 

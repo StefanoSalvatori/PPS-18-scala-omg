@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.ExecutionContext
 
 /**
- * Proved common functionality to actors
+ * Provide common actors functionality
  */
 private[client] trait BasicActor extends Actor with LazyLogging {
 

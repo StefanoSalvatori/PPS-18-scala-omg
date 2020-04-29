@@ -77,6 +77,18 @@ private class HttpClientImpl(private val httpServerUri: String) extends HttpServ
 
   }
 
+
+  private def onWaitSocketResponse(replyTo: ActorRef, outRef: ActorRef): Receive = {
+    case ValidUpgrade(_, _) =>
+      replyTo ! HttpSocketSuccess(outRef)
+      context.unbecome()
+
+    case InvalidUpgradeResponse(_, cause) =>
+      replyTo ! HttpSocketFail(cause)
+      context.unbecome()
+
+  }
+
   private def openSocket[ProtocolMessage](wsRoute: String, parser: SocketSerializer[ProtocolMessage]) = {
     val sink: Sink[Message, NotUsed] =
       Flow[Message]
@@ -102,17 +114,6 @@ private class HttpClientImpl(private val httpServerUri: String) extends HttpServ
 
   }
 
-
-  private def onWaitSocketResponse(replyTo: ActorRef, outRef: ActorRef): Receive = {
-    case ValidUpgrade(_, _) =>
-      replyTo ! HttpSocketSuccess(outRef)
-      context.unbecome()
-
-    case InvalidUpgradeResponse(_, cause) =>
-      replyTo ! HttpSocketFail(cause)
-      context.unbecome()
-
-  }
 
 
 }

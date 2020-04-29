@@ -97,7 +97,7 @@ private[client] object MessageDictionary {
   case class SocketError(exception: Throwable)
 
   /**
-   * Define a callback that will be execute by the actor after an error occurs on the socket
+   * Define a callback that will be execute after an error occurs on the socket
    *
    * @param callback the callback that handles the error
    */
@@ -105,14 +105,14 @@ private[client] object MessageDictionary {
 
 
   /**
-   * Define a callback that will be execute by the actor after a message received from the socket
+   * Define a callback that will be execute after a message received from the socket
    *
    * @param callback the callback that handles the message
    */
   case class OnMsgCallback(callback: Any => Unit)
 
   /**
-   * Define a callback that will be execute by the actor after a message
+   * Define a callback that will be execute after a message
    * that represent a new game state
    *
    * @param callback the callback that handles the message
@@ -120,17 +120,17 @@ private[client] object MessageDictionary {
   case class OnStateChangedCallback(callback: Any => Unit)
 
   /**
-   * Define a callback that will be execute by the actor after the room has been closed
+   * Define a callback that will be execute after the room has been closed
    *
    * @param callback the callback that handles the message
    */
   case class OnCloseCallback(callback: () => Unit)
 
   //MatchmakingActor
-  sealed trait MathmakingRequest
+  sealed trait MatchmakingRequest
 
-  case class JoinMatchmaking() extends MathmakingRequest
+  case class JoinMatchmaking() extends MatchmakingRequest
 
-  case class LeaveMatchmaking() extends MathmakingRequest
+  case class LeaveMatchmaking() extends MatchmakingRequest
 
 }

@@ -7,13 +7,10 @@
 During the first meeting the product backlog of the project and the product items were defined. Each product item was associated with an estimate of his development effort.
 The organizational structure of the project was also defined. We discussed tools and development environments to support continuous integration.
 An initial analysis and design process was carried out in order to define the main entities and how to manage their interactions.
-It was therefore decided to internally use an approach base on actor, which however is transparent to the user (developer). 
+It was therefore decided to internally use an approach base on actors, which however would have been transparent to the final user (developer). 
 We decided to rely upon akka-core library and akka-http library. 
-In the end it was decided to carry out the development of clients and server in parallel in ordeer to have a working core in the shortest time. This core would be extended incrementally during the project lifetime.
+In the end it was decided to carry out the development of clients and server modules in parallel in order to have a working core in the shortest time. This core would be extended incrementally during the project lifetime.
 
-\subsubsection{Retrospective}
-
-???
 
 
 
@@ -70,7 +67,7 @@ During the implementation of the automatic state update we decided to use binary
 Since the work done in the previous weeks contained the core functionalities of the library, we were able to implement a simple online multiplayer game.
 The game is Rock-Paper-Scissor. 
 The purpose of implementing this application was to verify that the code produced so far was robust and usable in a simple manner both client and server side.
-The final code is also a good example on how to use the library and his basic functionalities.
+The final code is also a good example on how to use the library and his basic functionality.
 
 
 \subsubsection{Retrospective}
@@ -89,14 +86,13 @@ They were immediatly fixed after their discovery, within the end of the sprint.
 In this sprint was implemeneted 'MoneyGrabber', a game that takes advantage of the most advanced features of the library, such as the automatic update of the state of the world and the management of rooms with multiple players.
 It was therefore possible to verify the actual versatility of the library showing a further and more complex example of use in a real context.
 All tasks were completed ahead of time.
-Probably we should have considered the addition of some more tasks to the backlog during the previous sprint review. By the way the remaining time of the sprint was used by the whole team to improve the existing code quility and produce some more detailed documentation.
+Probably we should have considered the addition of some more tasks to the backlog in the previous sprint review. By the way the remaining time of the sprint was used by the whole team to improve the existing code quility and produce some more detailed documentation.
 
 
 
 \subsubsection{Retrospective}
 
-???
-
+During this sprint the team worked really well, probably helped by the solid core alredy implemented that was easily extensible.
 
 
 
@@ -105,8 +101,18 @@ Probably we should have considered the addition of some more tasks to the backlo
 \section{Sprint 5}
 
 \subsubsection{Report}
+During this sprint the Matchmaking functionality was fully implemented. 
+Matchmaking protocol implementation forced us to review the client-server communication protocol and make some refactoring to code about room communication.
 
 \subsubsection{Retrospective}
+
+Given the importance of the new matchmaking feature we decided to develop a further example showing its use. This will be done in the next sprint.
+
+We noticed that the client room closure feature was not yet explicitly defined. 
+After a brief discussion we noticed that a developer could implement such functionanlity by the use of existing features (e.g autoclose feature) in more safer and robust manner.
+
+So, at this point all the main features are completed, library is ready for deployment.
+
 
 \section{Sprint 6}
 
