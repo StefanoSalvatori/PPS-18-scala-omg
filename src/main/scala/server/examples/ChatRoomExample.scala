@@ -1,32 +1,44 @@
 package server.examples
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import server.GameServer
-import server.examples.rooms.ChatRoom
-import server.room._
+import server.room.{ServerRoom, Client => RoomClient}
+import client.core.Client
+import common.room.FilterOptions
 
-import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
 import scala.io.StdIn
+import scala.util.{Failure, Success}
 
+case class ChatRoom() extends ServerRoom {
+  override def onCreate(): Unit = println("Room Created")
 
-object ChatRoomExample extends App {
-  implicit private val actorSystem: ActorSystem = ActorSystem()
+  override def onClose(): Unit = println("Room Closed")
+
+  override def onJoin(client: RoomClient): Unit = this.broadcast(s"${client.id} Connected")
+
+  override def onLeave(client: RoomClient): Unit = this.broadcast(s"${client.id} Left")
+
+  override def onMessageReceived(client: RoomClient, message: Any): Unit = this.broadcast(s"${client.id}: $message")
+}
+
+object ChatRoomServer extends App {
+  implicit private val executor: ExecutionContext = ExecutionContext.global
   private val Host: String = "localhost"
   private val Port: Int = 8080
-  private val EscapeExit = "quit"
-  private val RoomPath = "chat"
   private val gameServer: GameServer = GameServer(Host, Port)
-  gameServer.defineRoom(RoomPath, ChatRoom)
+  gameServer.defineRoom("chat_room", ChatRoom)
+  gameServer.start()
+}
 
-  import scala.concurrent.duration._
-  Await.ready(gameServer.start(), 10 seconds)
-  while (StdIn.readLine(s"press any key to create chatRoom; type '$EscapeExit' to exit \n") != EscapeExit) {
-    Http().singleRequest(HttpRequest(HttpMethods.POST, uri = s"http://$Host:$Port/rooms/$RoomPath"))
+object ChatRoomClient extends App {
+  implicit private val executor: ExecutionContext = ExecutionContext.global
+  private val client = Client("localhost", 8080)
+  client.joinOrCreate("chat_room", FilterOptions.empty).onComplete {
+    case Success(room) =>
+      room.onMessageReceived(println)
+      while (true) {
+        room.send(StdIn.readLine())
+      }
+    case Failure(_) => println("Something went wrong :-(")
   }
-  Await.ready(gameServer.stop(), 10 seconds)
-  gameServer.terminate()
-
-
 }
