@@ -1,15 +1,16 @@
-package client
+package client.utils
 
 import akka.NotUsed
 import akka.actor.{ActorRef, Props}
-import akka.http.scaladsl.model.ws.{InvalidUpgradeResponse, Message, ValidUpgrade, WebSocketRequest}
 import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.ws.{InvalidUpgradeResponse, Message, ValidUpgrade, WebSocketRequest}
 import akka.http.scaladsl.unmarshalling._
 import akka.pattern.pipe
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import client.utils.MessageDictionary._
-import common.communication.CommunicationProtocol.ProtocolMessage
+import common.communication.CommunicationProtocol.ProtocolMessageType.ProtocolMessageType
+import common.communication.CommunicationProtocol.SessionId.SessionId
 import common.communication.SocketSerializer
 import common.http.{HttpRequests, Routes}
 import common.room.{RoomJsonSupport, SharedRoom}
@@ -17,13 +18,21 @@ import common.room.{RoomJsonSupport, SharedRoom}
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-sealed trait HttpClient extends BasicActor
 
-object HttpClient {
+
+
+
+/**
+ * Service that handle http protocol.
+ * Can be used to make requests to a server or initialize a web socket connection
+ */
+private[client] sealed trait HttpService extends BasicActor
+
+private[client] object HttpService {
   def apply(serverUri: String): Props = Props(classOf[HttpClientImpl], serverUri)
 }
 
-class HttpClientImpl(private val httpServerUri: String) extends HttpClient with RoomJsonSupport {
+private class HttpClientImpl(private val httpServerUri: String) extends HttpService with RoomJsonSupport {
 
   import akka.http.scaladsl.Http
 
@@ -60,19 +69,23 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
         case Failure(ex) => replyTo ! FailResponse(ex)
       }
 
-    case HttpRoomSocketRequest(roomId, parser) =>
-
-      val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + Routes.roomSocketConnection(roomId)
+    case HttpSocketRequest(parser, route) =>
+      val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + route
       val (upgradeResponse, sourceRef) = openSocket(wsSocketUri, parser)
       upgradeResponse pipeTo self
       context.become(waitSocketResponse(sender, sourceRef))
 
+  }
 
-    case HttpMatchmakingSocketRequest(roomType, parser) =>
-      val wsSocketUri = Routes.wsUri(this.httpServerUri) + "/" + Routes.matchmakingSocketConnection(roomType)
-      val (upgradeResponse, sourceRef) = openSocket(wsSocketUri, parser)
-      upgradeResponse pipeTo self
-      context.become(waitSocketResponse(sender, sourceRef))
+
+  private def onWaitSocketResponse(replyTo: ActorRef, outRef: ActorRef): Receive = {
+    case ValidUpgrade(_, _) =>
+      replyTo ! HttpSocketSuccess(outRef)
+      context.unbecome()
+
+    case InvalidUpgradeResponse(_, cause) =>
+      replyTo ! HttpSocketFail(cause)
+      context.unbecome()
 
   }
 
@@ -90,7 +103,7 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
         .map(parser.prepareToSocket)
         .toMat(Sink.asPublisher(false))(Keep.both).run()
 
-    val flow = Http() webSocketClientFlow WebSocketRequest(wsRoute)
+    val flow = http webSocketClientFlow WebSocketRequest(wsRoute)
 
     val ((_, upgradeResponse), _) = Source.fromPublisher(publisher)
       .viaMat(flow)(Keep.both)
@@ -101,17 +114,6 @@ class HttpClientImpl(private val httpServerUri: String) extends HttpClient with 
 
   }
 
-
-  private def onWaitSocketResponse(replyTo: ActorRef, outRef: ActorRef): Receive = {
-    case ValidUpgrade(_, _) =>
-      replyTo ! HttpSocketSuccess(outRef)
-      context.unbecome()
-
-    case InvalidUpgradeResponse(_, cause) =>
-      replyTo ! HttpSocketFail(cause)
-      context.unbecome()
-
-  }
 
 
 }

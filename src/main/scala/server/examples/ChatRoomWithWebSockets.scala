@@ -5,8 +5,8 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.ws.{Message, WebSocketRequest}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Keep, Sink, Source}
-import client.Client
-import common.communication.CommunicationProtocol.{ProtocolMessageType, ProtocolMessage}
+import client.core.Client
+import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType}
 import common.http.Routes
 import common.communication.TextProtocolSerializer
 import server.GameServer
