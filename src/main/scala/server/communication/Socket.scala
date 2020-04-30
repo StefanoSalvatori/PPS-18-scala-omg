@@ -47,18 +47,22 @@ trait Socket[T] {
   private val heartbeatTimer = Timer.withExecutor()
   private var heartbeatServiceActor: Option[ActorRef] = None
 
+  /**
+   * Open the socket creating a flow that handle messages.
+   *
+   * @return a flow that handle messages sent and received from this socket
+   */
   def open()(implicit materializer: Materializer): Flow[Message, Message, NotUsed] = {
     implicit val executor: ExecutionContextExecutor = materializer.executionContext
+    //output from server
     val (socketOutputActor, publisher) = this.outputStream.run()
-
     //Link this socket to the client
     this.clientActor = socketOutputActor
     this.client = Client.asActor(UUID.randomUUID.toString, this.clientActor)
-
     if (connectionConfig.isKeepAliveActive) {
       this.startHeartbeat(client, connectionConfig.keepAlive.toSeconds seconds)
     }
-
+    //input form client
     val sink: Sink[Message, Any] =
       this.inputStream.to(Sink.onComplete(_ => {
         this.heartbeatTimer.stopTimer()
@@ -68,6 +72,9 @@ trait Socket[T] {
     Flow.fromSinkAndSourceCoupled(sink, Source.fromPublisher(publisher))
   }
 
+  /**
+   * Close the socket.
+   */
   def close(): Unit = {
     if (this.clientActor != null) {
       this.clientActor ! PoisonPill

@@ -11,32 +11,35 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 /**
- * A room that can be joined
+ * A room that is not joined yet.
  */
-trait JoinableRoom extends ClientRoom {
+private[client] trait JoinableRoom extends ClientRoom {
   /**
-   * Open web socket with server room and try to join
+   * Initialize the communication with server room and try to join
    *
-   * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
+   * @return success if this room can be joined,
+   *         fail if the communication can't be initialize or the room can't be joined
    */
   def join(password: RoomPassword = Room.DefaultPublicPassword): Future[JoinedRoom]
 
   /**
-   * Open web socket with server room and try to join with the given session id
+   * Initialize the communication server room and try to join with the given session id
    *
-   * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
+   * @return success if this room can be joined,
+   *         fail if the communication can't be initialize or the room can't be joined
    */
   def joinWithSessionId(sessionId: SessionId, password: RoomPassword = Room.DefaultPublicPassword): Future[JoinedRoom]
 
   /**
-   * Open web socket with server room and try to reconnect to the room
+   * Initialize the communication with server room and try to reconnect
    *
-   * @return success if this room can be joined fail if the socket can't be opened or the room can't be joined
+   * @return success if this room can be joined,
+   *         fail if the communication can't be initialize or the room can't be joined
    */
   def reconnect(sessionId: SessionId, password: RoomPassword = Room.DefaultPublicPassword): Future[JoinedRoom]
 }
 
-object JoinableRoom {
+private[client] object JoinableRoom {
   def apply(roomId: RoomId,
             coreClient: ActorRef,
             httpServerUri: String,
@@ -69,7 +72,6 @@ private class JoinableRoomImpl(override val roomId: RoomId,
   }
 
 
-
   private def joinFuture(sessionId: Option[SessionId], password: RoomPassword): Future[JoinedRoom] = {
     this.spawnAndAskActor(_ ? SendJoin(sessionId, password), sessionId, password)
 
@@ -80,7 +82,7 @@ private class JoinableRoomImpl(override val roomId: RoomId,
   }
 
   private def spawnAndAskActor(ask: ActorRef => Future[Any],
-                       sessionId: Option[SessionId], password: RoomPassword): Future[JoinedRoom] = {
+                               sessionId: Option[SessionId], password: RoomPassword): Future[JoinedRoom] = {
     val ref = this.spawnInnerActor()
     ask(ref) flatMap {
       case Success(response) =>

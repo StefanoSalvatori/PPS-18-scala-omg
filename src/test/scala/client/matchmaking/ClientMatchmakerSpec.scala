@@ -2,8 +2,7 @@ package client.matchmaking
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
-import akka.util.Timeout
-import client.CoreClient
+import client.core.CoreClient
 import client.room.JoinedRoom
 import com.typesafe.scalalogging.LazyLogging
 import common.http.Routes
@@ -15,7 +14,7 @@ import server.matchmaking.Matchmaker
 import server.room.ServerRoom
 import test_utils.TestConfig
 
-import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Promise}
 
 
@@ -27,49 +26,44 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
   with ScalatestRouteTest
   with LazyLogging {
 
-
-  private val serverAddress = "localhost"
-  private val serverPort = ClientMatchmakingSpecServerPort
-  private val serverUri = Routes.httpUri(serverAddress, serverPort)
-
   implicit val execContext: ExecutionContextExecutor = system.dispatcher
+
+  private val ServerAddress = Localhost
+  private val ServerPort = ClientMatchmakingSpecServerPort
+  private val ServerUri = Routes.httpUri(ServerAddress, ServerPort)
+
   private var gameServer: GameServer = _
   private var matchmaker1: ClientMatchmaker = _
   private var matchmaker2: ClientMatchmaker = _
 
-
-  implicit val timeoutToDuration: Timeout => Duration = timeout => timeout.duration
   private val RoomType1 = "test1"
   private val RoomType2 = "test2"
   private val RoomType3 = "test3"
 
+  //matchmaking strategy that match always two clients
+  private def matchmaker[T]: Matchmaker[T] = map => map.toList match {
+    case c1 :: c2 :: _ => Some(Map(c1._1 -> 0, c2._1 -> 1))
+    case _ => None
+  }
 
-
+  //matchmaking strategy that match client that have the same info
+  private def matchmakingEqualStrategy[T]: Matchmaker[T] = map => map.toList match {
+    case (c1, c1Info) :: (c2, c2Info) :: _ if c1Info.equals(c2Info) => Some(Map(c1 -> 0, c2 -> 1))
+    case _ => None
+  }
 
   before {
-    gameServer = GameServer(serverAddress, serverPort)
+    gameServer = GameServer(ServerAddress, ServerPort)
 
-    //dummy matchmaking strategy that only consider one client
-    def matchmaker[T]: Matchmaker[T] = map => map.toList match {
-      case c1 :: c2 :: _ => Some(Map(c1._1 -> 0, c2._1 -> 1))
-      case _ => None
-    }
-
-    //matchmaking strategy that match client that have the same info
-    def matchmakingEqualStrategy[T]: Matchmaker[T] = map => map.toList match {
-      case (c1, c1Info) :: (c2, c2Info) :: _ if c1Info.equals(c2Info) => Some(Map(c1 -> 0, c2 -> 1))
-      case _ => None
-    }
-
-    gameServer.defineRoomWithMatchmaking(RoomType1,  () => ServerRoom(),  matchmaker)
-    gameServer.defineRoomWithMatchmaking(RoomType2,  () => ServerRoom(), matchmaker)
+    gameServer.defineRoomWithMatchmaking(RoomType1, () => ServerRoom(), matchmaker)
+    gameServer.defineRoomWithMatchmaking(RoomType2, () => ServerRoom(), matchmaker)
     gameServer.defineRoomWithMatchmaking(RoomType3, () => ServerRoom(), matchmakingEqualStrategy)
 
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
 
     //simulate to clients that can join or leave the matchmaking
-    matchmaker1 = ClientMatchmaker(system actorOf CoreClient(serverUri), serverUri)
-    matchmaker2 = ClientMatchmaker(system actorOf CoreClient(serverUri), serverUri)
+    matchmaker1 = ClientMatchmaker(system actorOf CoreClient(ServerUri), ServerUri)
+    matchmaker2 = ClientMatchmaker(system actorOf CoreClient(ServerUri), ServerUri)
 
   }
 
@@ -94,17 +88,16 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
       assert(p.isCompleted)
     }
 
-    "handle multiple matchmake requests" in {
-      //matchmake request 1
+    "handle multiple matchmaking requests" in {
+      //matchmaking request 1
       this.matchmaker2.joinMatchmaking(RoomType1)
       val room = Await.result(this.matchmaker1.joinMatchmaking(RoomType1), DefaultTimeout)
       assert(room.isInstanceOf[JoinedRoom])
 
-      //matchmake request 2
+      //matchmaking request 2
       this.matchmaker2.joinMatchmaking(RoomType2)
       val room2 = Await.result(this.matchmaker1.joinMatchmaking(RoomType2), DefaultTimeout)
       assert(room2.isInstanceOf[JoinedRoom])
-
     }
 
     "return the same future on multiple requests on the same room type" in {
@@ -115,7 +108,7 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
       assert(room2.isInstanceOf[JoinedRoom])
     }
 
-    "successfully completes when leaving a matchmake that was never joined" in {
+    "successfully completes when leaving a matchmaking that was never joined" in {
       Await.result(this.matchmaker1.leaveMatchmaking(RoomType2), DefaultTimeout)
     }
 
@@ -132,9 +125,7 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
       assert(room.isInstanceOf[JoinedRoom])
     }
   }
-
 }
-
 
 @SerialVersionUID(12345L)
 private[this] case class ClientInfo(a: Int) extends java.io.Serializable

@@ -3,6 +3,7 @@
 *.pdf
 *.toc
 *.gz
+*.synctex.gz
 
 #ignore doc and process in deploy
 doc/
@@ -58,3 +59,4 @@ project/target/
 .history
 .cache
 .lib/
+

@@ -4,17 +4,17 @@ import akka.actor.ActorRef
 import client.room.JoinedRoom
 import common.communication.CommunicationProtocol.SocketSerializable
 import common.communication.SocketSerializer
-import common.room.Room.{RoomId, RoomPassword, RoomType}
+import common.room.Room.{RoomPassword, RoomType}
 import common.room.{FilterOptions, RoomProperty, SharedRoom}
 
-object MessageDictionary {
+// scalastyle:ignore method.length
+// scalastyle:ignore number.of.types
+private[client] object MessageDictionary {
 
   //CoreClient
-
   trait CreateRoomMessage
   case class CreatePublicRoom(roomType: RoomType, roomOption: Set[RoomProperty]) extends CreateRoomMessage
   case class CreatePrivateRoom(roomType: RoomType, roomOption: Set[RoomProperty], password: RoomPassword) extends CreateRoomMessage
-
 
   case class GetAvailableRooms(roomType: RoomType, roomOption: FilterOptions)
 
@@ -51,29 +51,19 @@ object MessageDictionary {
   case class HttpGetRooms(roomType: RoomType, roomOption: FilterOptions)
 
   /**
-   * Perform a web socket request to open a connection to server side room with the given id.
+   * Perform a request to open a web socket connection
    * If the connection is successful respond with message [[client.utils.MessageDictionary.HttpSocketSuccess]]
    * otherwise [[client.utils.MessageDictionary.HttpSocketFail]]
    *
-   * @param roomId id of the room to connect to
    * @param parser messages received on the socket will be parsed with this parser before sending them to the
    *               receiver actor
+   * @param route  route for the request
    */
-  case class HttpRoomSocketRequest[T](roomId: RoomId, parser: SocketSerializer[T])
+  case class HttpSocketRequest[T](parser: SocketSerializer[T], route: String)
+
 
   /**
-   * Perform a web socket request to open a connection with the server side matchmaking service.
-   * If the connection is successful respond with message [[client.utils.MessageDictionary.HttpSocketSuccess]]
-   * otherwise [[client.utils.MessageDictionary.HttpSocketFail]]
-   *
-   * @param roomType id of the room to connect to
-   * @param parser messages received on the socket will be parsed with this parser before sending them to the
-   *               receiver actor
-   */
-  case class HttpMatchmakingSocketRequest[T](roomType: RoomType, parser: SocketSerializer[T])
-
-  /**
-   * Successful response of an [[client.utils.MessageDictionary.HttpRoomSocketRequest]].
+   * Successful response of an [[client.utils.MessageDictionary.HttpSocketRequest]].
    * Contains an actor ref.
    *
    * @param outRef Sending messages to this actor means sending them in the socket
@@ -81,7 +71,7 @@ object MessageDictionary {
   case class HttpSocketSuccess(outRef: ActorRef)
 
   /**
-   * Failure response of an [[HttpRoomSocketRequest]].
+   * Failure response of an [[HttpSocketRequest]].
    *
    * @param cause what caused the failure
    */
@@ -102,12 +92,13 @@ object MessageDictionary {
 
   /**
    * Sent to the actor when an error occurs on the socket
+   *
    * @param exception exception thrown
    */
   case class SocketError(exception: Throwable)
 
   /**
-   * Define a callback that will be execute by the actor after an error occurs on the socket
+   * Define a callback that will be execute after an error occurs on the socket
    *
    * @param callback the callback that handles the error
    */
@@ -115,24 +106,32 @@ object MessageDictionary {
 
 
   /**
-   * Define a callback that will be execute by the actor after a message received from the socket
+   * Define a callback that will be execute after a message received from the socket
    *
    * @param callback the callback that handles the message
    */
   case class OnMsgCallback(callback: Any => Unit)
 
   /**
-   * Define a callback that will be execute by the actor after a message
+   * Define a callback that will be execute after a message
    * that represent a new game state
    *
    * @param callback the callback that handles the message
    */
-  case class OnStateChangedCallback(callback:  Any => Unit)
+  case class OnStateChangedCallback(callback: Any => Unit)
 
   /**
-   * Define a callback that will be execute by the actor after the room has been closed
+   * Define a callback that will be execute after the room has been closed
    *
    * @param callback the callback that handles the message
    */
   case class OnCloseCallback(callback: () => Unit)
+
+  //MatchmakingActor
+  sealed trait MatchmakingRequest
+
+  case class JoinMatchmaking() extends MatchmakingRequest
+
+  case class LeaveMatchmaking() extends MatchmakingRequest
+
 }

@@ -1,18 +1,16 @@
 package client.room
 
 import java.util.NoSuchElementException
-
 import akka.actor.{ActorRef, ActorSystem}
 import akka.util.Timeout
 import common.room.Room.RoomId
 import common.room.{BasicRoom, NoSuchPropertyException, RoomProperty, RoomPropertyValue}
-
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 
 
 /**
- * Define client side room
+ * Define a client side room and gives common utilities for properties handling
  */
 trait ClientRoom extends BasicRoom {
   /**
@@ -42,7 +40,7 @@ trait ClientRoom extends BasicRoom {
   }
 }
 
-object ClientRoom {
+private[client] object ClientRoom {
   /**
    * Create a room that can be joined
    */

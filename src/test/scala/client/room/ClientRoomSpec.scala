@@ -3,7 +3,7 @@ package client.room
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.TestKit
-import client.CoreClient
+import client.core.CoreClient
 import client.utils.MessageDictionary.{CreatePrivateRoom, CreatePublicRoom, GetJoinedRooms, JoinedRooms}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
@@ -29,7 +29,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   with LazyLogging
   with RoomJsonSupport {
 
-  private val ServerAddress = "localhost"
+  private val ServerAddress = Localhost
   private val ServerPort = ClientRoomSpecServerPort
 
   implicit val execContext: ExecutionContextExecutor = system.dispatcher
@@ -43,7 +43,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     gameServer.defineRoom(RoomWithProperty.Name, () => RoomWithProperty())
     gameServer.defineRoom(NoPropertyRoom.Name, () => NoPropertyRoom())
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
-    logger debug s"Server started at $ServerAddress:$ServerPort"
+
     coreClient = system actorOf CoreClient(Routes.httpUri(ServerAddress, ServerPort))
     val res = Await.result((coreClient ? CreatePublicRoom(ClosableRoomWithState.Name, Set.empty))
       .mapTo[Try[JoinableRoom]], DefaultDuration)
@@ -54,7 +54,7 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     Await.ready(gameServer.terminate(), ServerShutdownAwaitTime)
   }
 
-  "A client room" must {
+  "A client room" should {
     "join and notify the core client" in {
       Await.result(joinableClientRoom.join(), DefaultDuration)
       val res = Await.result((coreClient ? GetJoinedRooms).mapTo[JoinedRooms], DefaultDuration).joinedRooms
@@ -155,7 +155,6 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
       joinedRoom.send(ClosableRoomWithState.ChangeStateMessage)
       assert(Await.result(p.future, DefaultDuration))
-
     }
 
     "define a callback to handle room closed changed" in {
@@ -176,7 +175,6 @@ class ClientRoomSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
 
       //not sending any message should close the socket
       assert(Await.result(p.future, DefaultDuration))
-
     }
   }
 
