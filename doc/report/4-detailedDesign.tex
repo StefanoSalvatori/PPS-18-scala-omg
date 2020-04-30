@@ -17,6 +17,21 @@
 \subsection{Properties and Filters}
 
 \section{Server}
+Class diagram in figure \ref{fig:server_class_diagram} describes in detail the server architecture with the addition of actors, displaying the main functionalities of the classes.
+\begin{figure}[h]
+	\hspace*{-1in}
+	\includegraphics[scale=0.6]{images/4-design/server_class.png}
+	\caption{Server class diagram}
+	\label{fig:server_class_diagram}
+\end{figure}
+
+The \texttt{GameServer} class is the facade interface that is exposed to the developer. It internally creates a \texttt{ServerActor} that is the entity that acts as the real server listening for clients requests. This actor creates a \texttt{RouteService} object that is used to know which routes to use and how to handle request; it also allows to dynamically define new room types that will be used by te server. 
+
+The \texttt{ServerActor} also uses a \texttt{RoomHandler} create and define rooms from the server. The same RoomHandler used by the RouteService.
+
+As we described for the server architecture in section \ref{sec:server_arch}, the purpose of the \texttt{RoomHandler} is to manage the active rooms in the applications.Specificallt though doesn't directly create rooms but instead it creates RoomActors which are actors used as 'wrappers' for ServerRooms to avoid concurrency issues: indeed more than one client can interact with a single room at the same time, so, in order to avoid race coditions, we decided to make clients communicate with RoomActors (that process messages one at the time) that then would 
+
+The \texttt{RoomHandler}
 
 \section{Client}
 
@@ -32,7 +47,7 @@ For Request-Response interaction (described in section 3.4), we decided to use j
 \end{itemize}
 
 \subsection{Websockets}
-\begin{figure}[]
+\begin{figure}[h]
 	\hspace*{-0.5in}
 	\includegraphics[scale=0.6]{images/4-design/communication_protocol.png}
 	\caption{Websocket class diagram}

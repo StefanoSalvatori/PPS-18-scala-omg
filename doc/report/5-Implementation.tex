@@ -6,14 +6,14 @@ As we decribed in the design section (\ref{sec:communication_design}) there are 
 	\item binary serialization for  data exhanged through websockets
 \end{itemize}
 
-Regarding the first one we decided to use the \texttt{spray-json} library since it is the one recommended to be used with akka and provides 
+For the first one we decided to use the \texttt{spray-json} library since it is the one recommended to be used with akka.
 
-For the binary representation we chose instead to use \texttt{java.io} serialization. This is because there were no strict performance constraints in the requirements and we preferred to favor user-side usability: indeed the user of the library can exchange messages between clients and server simply defining classes that extend \texttt{java.io.Serializable}.
+Regadring binary serialization we chose instead to use \texttt{java.io} serialization. This is because there were no strict performance constraints in the requirements and we preferred to favor user-side usability: indeed the user of the library is able to exchange messages between clients and server simply defining classes that extend the \texttt{java.io.Serializable} inetrface.
 
 
 
 \section{Stefano Salvatori}
-In the early stages of the project I have mainly worked on the server package. First I defined the \texttt{GameServer} trait providing a basic implementation of it with a \texttt{ServerActor} that allowed to run a server listening on specific host an port; then I started working on the \texttt{ServerRoom} class and the \texttt{RoomActor} so that it would be possible for clients to connect to a room and for developers to create his own type of room. Concerning ServerRoom class i've also implemented the automatic close functionality and the periodic state synchronization to clients.
+In the early stages of the project I have mainly worked on the server package. First I defined the \texttt{GameServer} trait providing a basic implementation of it with a \texttt{ServerActor} that allowed to run a server listening on specific host an port; then I started working on the \texttt{ServerRoom} class and the \texttt{RoomActor} so that it would be possible for clients to connect to a room and for developers to create their own type of room. Concerning ServerRoom class i've also implemented the automatic close functionality and the periodic state synchronization to clients.
 
 Later on I worked on the communication protocol implementing all the classes in the \texttt{common.communication} package. Regarding communication between client and server i've also designed and implemented the websocket utilities in the \texttt{server.communication} package. Here i had to use some advanced features of akka reactive streams. 
 
