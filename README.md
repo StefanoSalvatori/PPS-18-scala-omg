@@ -91,7 +91,7 @@ object Server extends App {
 ### Rooms with State
 If you want to define a room with a state that needs to be synchronized with clients, you can mixin the ```SynchronizedRoomState``` trait. This trait is generic in the type of the state you want to synchronize and allows to define the update rate. The generic type must be Serializable since it will be sent through the network to clients.
 
-The following example shows a proptype of room for a basic multiplayer game that simply has players moving in a 2D grid.
+The following example shows a room that can be used for a basic multiplayer game that simply has players moving in a 2D grid.
 
 ```scala
 case class Player(x: Int, y: Int)
