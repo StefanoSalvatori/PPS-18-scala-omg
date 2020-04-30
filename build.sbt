@@ -23,7 +23,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "org.apache.commons" % "commons-lang3" % "3.3.2",
-  "org.scalafx" %% "scalafx" % "12.0.2-R18",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
   "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test)
