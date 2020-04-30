@@ -7,7 +7,6 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 
-
 object Server extends App {
 
   implicit private val executor: ExecutionContext = ExecutionContext.global
@@ -23,7 +22,6 @@ object Server extends App {
   gameServer.start() onComplete {
     case Success(_) => println(s"Server started at $Host:$Port")
     case Failure(exception) => println(s"Startup failed: $exception")
-
   }
 
 

@@ -1,10 +1,6 @@
 package examples.rock_paper_scissor.client
 
-import java.io.IOException
-
-import examples.rock_paper_scissor.client.View1.{getClass, stage}
-import javafx.{fxml => jfxf}
-import javafx.{scene => jfxs}
+import javafx.{fxml => jfxf, scene => jfxs}
 import scalafx.Includes._
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage

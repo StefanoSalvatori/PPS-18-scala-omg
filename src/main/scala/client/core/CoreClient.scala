@@ -1,31 +1,28 @@
-package client
+package client.core
 
 import akka.actor.{ActorRef, Stash}
 import akka.util.Timeout
 import client.room.{ClientRoom, JoinedRoom}
 import client.utils.MessageDictionary._
+import client.utils.{BasicActor, HttpService}
 import common.room.{Room, RoomJsonSupport, RoomProperty}
 
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 
-sealed trait CoreClient extends BasicActor
+private[client] sealed trait CoreClient extends BasicActor
 
-object CoreClient {
-
+private[client]  object CoreClient {
   import akka.actor.Props
-
   def apply(httpServerUri: String): Props = Props(classOf[CoreClientImpl], httpServerUri)
 }
 
-
-
-
-class CoreClientImpl(private val httpServerUri: String) extends CoreClient with RoomJsonSupport with Stash {
+private[client]  class CoreClientImpl(private val httpServerUri: String) extends CoreClient
+  with RoomJsonSupport with Stash {
 
   private implicit val timeout: Timeout = 5 seconds
-  private val httpClient = context.system actorOf HttpClient(httpServerUri)
+  private val httpClient = context.system actorOf HttpService(httpServerUri)
   private var joinedRoomsActors: Set[ActorRef] = Set()
 
   override def receive: Receive = onReceive orElse fallbackReceive
@@ -116,7 +113,5 @@ class CoreClientImpl(private val httpServerUri: String) extends CoreClient with 
       } else {
         context.become(roomsAggregator(expectedMessages - 1, replyTo, response + room))
       }
-
-
   }
 }
