@@ -44,7 +44,6 @@ class MatchController {
     room.onClose {
       println("room is closed")
     }
-
   }
 
   @jfxf.FXML
