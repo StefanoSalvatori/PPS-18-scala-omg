@@ -126,6 +126,4 @@ class SynchronizedRoomStateSpec extends AnyWordSpecLike
   private def lastReceivedMessageOf(client: TestClient): ProtocolMessage = {
     client.lastMessageReceived.get.asInstanceOf[ProtocolMessage]
   }
-
-
 }

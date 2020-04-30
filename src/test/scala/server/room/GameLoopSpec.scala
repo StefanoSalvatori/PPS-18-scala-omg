@@ -26,7 +26,6 @@ class GameLoopSpec extends AnyFlatSpecLike
     // Can't directly use roomHandler.createRoom since we need server room type instance
     room = RoomWithGameLoop()
     roomActor = actorSystem actorOf RoomActor(room, RoomHandler())
-    //room setAssociatedActor roomActor
   }
 
   behavior of "Server room with game loop"
@@ -74,6 +73,4 @@ class GameLoopSpec extends AnyFlatSpecLike
     // In a real application the world state could be the same, in the test example the counter is incremented at each tick
     assert(room.state != currentState)
   }
-
-
 }

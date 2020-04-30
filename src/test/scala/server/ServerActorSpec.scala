@@ -20,7 +20,6 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
 
-
 class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.load()))
   with ImplicitSender
   with Matchers
@@ -71,7 +70,7 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
     }
 
     "use the routes passed as parameters in the StartServer message" in {
-      makeGetRequestAt(s"$RoutesBasePath")
+      makeGetRequest()
       val response = expectMsgType[HttpResponse]
       response.status shouldBe StatusCodes.OK
       response.discardEntityBytes()
@@ -84,13 +83,13 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
 
       // Await.ready(Http(system).shutdownAllConnectionPools(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
       //Now requests fail
-      makeGetRequestAt(s"$RoutesBasePath")
+      makeGetRequest()
       expectMsgType[RequestFailed](RequestFailTimeout)
     }
   }
 
-  private def makeGetRequestAt(path: String): Unit = {
-    httpClientActor ! Request(HttpRequest(HttpMethods.GET, s"http://$Host:$Port/$path"))
+  private def makeGetRequest(): Unit = {
+    httpClientActor ! Request(HttpRequest(HttpMethods.GET, s"http://$Host:$Port/$RoutesBasePath"))
   }
 
 }

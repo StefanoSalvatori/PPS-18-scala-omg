@@ -1,6 +1,5 @@
 package server.routes
 
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import common.http.HttpRequests
@@ -77,35 +76,9 @@ class RoutingServiceResponseSpec extends AnyFlatSpec with Matchers
     }
   }
 
-
-  def createRoomRequest(testProperties: Set[RoomProperty] = Set.empty): SharedRoom = {
+  private def createRoomRequest(testProperties: Set[RoomProperty] = Set.empty): SharedRoom = {
     HttpRequests.postRoom("")(TestRoomType, testProperties) ~> route ~> check {
       responseAs[SharedRoom]
     }
-
-    /*it should "return a room on GET request on path 'rooms/{type}/{id}' " in {
-      Get(ROOMS_WITH_TYPE_AND_ID) ~> route ~> check {
-        responseAs[Room]
-      }
-
-       it should "respond with a list of available rooms on PUT request on path 'rooms/{type}' " in {
-      makeRequestWithEmptyFilter(HttpMethods.PUT)(ROOMS_WITH_TYPE) ~> route ~> check {
-        responseAs[Seq[Room]]
-      }
-    }
-
-      it should "create a new room and respond with that room after PUT request if no room exists with the given type  " in {
-      makeRequestWithEmptyFilter(HttpMethods.PUT)(ROOMS_WITH_TYPE) ~> route ~> check {
-        responseAs[Seq[Room]] should have size 1
-      }
-
-      //ensure creation
-      makeRequestWithEmptyFilter(HttpMethods.GET)(ROOMS_WITH_TYPE) ~> route ~> check {
-        responseAs[Seq[Room]] should have size 1
-      }
-      }
-    }*/
   }
-
-
 }

@@ -33,13 +33,11 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
   private val IdleConnectionTimeout = 2 seconds
   private val KeepAliveRate = 300 millis
 
-
   private var room: ServerRoom = _
   private var roomActor: ActorRef = _
   private var roomSocketFlow: RoomSocket = _
   private var flow: Flow[Message, Message, Any] = _
   private var flowTerminated: Promise[Boolean] = _
-
 
   override def afterAll(): Unit = {
     system.terminate()

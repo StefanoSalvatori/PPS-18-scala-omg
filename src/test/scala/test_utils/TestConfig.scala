@@ -3,9 +3,7 @@ package test_utils
 trait TestConfig {
 
   import akka.util.Timeout
-
   import scala.concurrent.duration.{Duration, _}
-
   val ServerLaunchAwaitTime: Duration = 10 seconds
   val ServerShutdownAwaitTime: Duration = 10 seconds
   implicit val DefaultTimeout: Timeout = 5 seconds
@@ -21,6 +19,4 @@ trait TestConfig {
   val ClientRoomSpecServerPort = 8087
   val MatchmakingSpecServerPort = 8088
   val ClientMatchmakingSpecServerPort = 8089
-
-
 }

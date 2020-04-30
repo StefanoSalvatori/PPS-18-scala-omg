@@ -99,8 +99,6 @@ class RoutingServiceRoutesSpec extends AnyFlatSpec
     }
   }
 
-
-
   /// --- Web socket  ---
 
   //Connection
@@ -113,7 +111,6 @@ class RoutingServiceRoutesSpec extends AnyFlatSpec
       }
   }
 
-
   it should "reject web socket request on path 'connection/{id}' if id doesnt exists" in {
     val wsClient = WSProbe()
     WS("/" + Routes.ConnectionRoute + "/wrong-id", wsClient.flow) ~> route ~>
@@ -122,10 +119,7 @@ class RoutingServiceRoutesSpec extends AnyFlatSpec
       }
   }
 
-
-
-
-  //Matchmake
+  //Matchmaker
 
   it should "handle web socket request on path  'matchmake/{type}' if such type exists " in {
     val wsClient = WSProbe()
@@ -143,25 +137,10 @@ class RoutingServiceRoutesSpec extends AnyFlatSpec
       }
   }
 
-  def createRoomRequest(testProperties: Set[RoomProperty] = Set.empty): SharedRoom = {
+  private def createRoomRequest(testProperties: Set[RoomProperty] = Set.empty): SharedRoom = {
     HttpRequests.postRoom("")(TestRoomType, testProperties) ~> route ~> check {
       responseAs[SharedRoom]
     }
   }
-    /*
-  /// PUT rooms/{type}
-it should "handle PUT request on path 'rooms/{type}' with room options as payload  " in {
-  makeRequestWithEmptyFilter(HttpMethods.PUT)(ROOMS_WITH_TYPE) ~> route ~> check {
-    handled shouldBe true
-  }
-}
-
-it should "handle PUT request on path 'rooms/{type}' with no payload " in {
-  Put(ROOMS_WITH_TYPE) ~> route ~> check {
-    handled shouldBe true
-  }
-}
-
- */
 }
 

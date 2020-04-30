@@ -46,7 +46,6 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
     TestKit.shutdownActorSystem(system)
   }
 
-
   "A room actor" should {
     "allow clients to join" in {
       roomActor ! Join(FakeClient_1, "", Room.DefaultPublicPassword)
@@ -140,11 +139,8 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
     }
   }
 
-
   private def makeClient(id: String = UUID.randomUUID.toString): Client = {
     val client1TestProbe = TestProbe()
     Client.asActor(id, client1TestProbe.ref)
   }
-
-
 }
