@@ -3,6 +3,7 @@
 *.pdf
 *.toc
 *.gz
+*.synctex.gz
 
 
 null/
@@ -49,8 +50,3 @@ project/target/
 .cache
 .lib/
 
-# For latex files that can be generated
-*.pdf
-*.toc
-*.aux
-*.synctex.gz
