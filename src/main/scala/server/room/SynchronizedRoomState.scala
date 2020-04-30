@@ -7,18 +7,18 @@ import server.room.RoomActor.StateSyncTick
 import server.utils.Timer
 
 /**
- * Trait that define a room with a public state that needs to be synchronized between clients.
+ * It defines a room with a public state that needs to be synchronized between clients.
  *
- * @tparam T generic type for the state. It must extends [[java.io.Serializable]] so that it can be serialized and
- *           sent to clients
+ * @tparam T type of the state. It must extend [[common.communication.CommunicationProtocol.SocketSerializable]]
+ *           so that it can be serialized and sent to clients
  */
 trait SynchronizedRoomState[T <: SocketSerializable] extends ServerRoom {
 
   private val stateTimer = Timer.withExecutor()
-  private var lastStateSent: T  = _
+  private var lastStateSent: Option[T]  = None
 
   /**
-   * How often clients will be updated (time expressed in milliseconds)
+   * How often clients will be updated (time expressed in milliseconds).
    */
   protected val stateUpdateRate = 50 //milliseconds
 
@@ -28,13 +28,14 @@ trait SynchronizedRoomState[T <: SocketSerializable] extends ServerRoom {
   }
 
   /**
-   * Start sending state to all clients
+   * Start sending state to all clients.
    */
-  def startStateSynchronization(): Unit =
-    stateTimer.scheduleAtFixedRate(() => generateStateSyncTick(), 0, stateUpdateRate)
+  def startStateSynchronization(): Unit = {
+    stateTimer.scheduleAtFixedRate(generateStateSyncTick, period = stateUpdateRate)
+  }
 
   /**
-   * Stop sending state updates to clients
+   * Stop sending state updates to clients.
    */
   def stopStateSynchronization(): Unit = stateTimer.stopTimer()
 
@@ -46,15 +47,16 @@ trait SynchronizedRoomState[T <: SocketSerializable] extends ServerRoom {
   def currentState: T
 
   private def generateStateSyncTick(): Unit =
-    if (this.lastStateSent == null || this.lastStateSent != currentState) {
-      this.lastStateSent = currentState
-      this.roomActor.foreach(_ ! StateSyncTick(c => c send ProtocolMessage(StateUpdate, c.id, currentState)))
+    if (lastStateSent.isEmpty || lastStateSent.get != currentState) {
+      lastStateSent = Option(currentState)
+      roomActor foreach { _ ! StateSyncTick(c => c send ProtocolMessage(StateUpdate, c.id, currentState)) }
     }
 
 }
 
 object SynchronizedRoomState {
 
+  // Example room with empty behavior
   private case class BasicServerRoomWithSynchronizedState() extends ServerRoom with SynchronizedRoomState[Integer] {
     override def joinConstraints: Boolean = true
     override def onCreate(): Unit = {}
@@ -68,7 +70,7 @@ object SynchronizedRoomState {
   private def apply(): BasicServerRoomWithSynchronizedState = BasicServerRoomWithSynchronizedState()
 
   /**
-   * Getter of the synchronized room state properties
+   * Getter of the synchronized room state properties.
    *
    * @return a set containing the defined properties
    */

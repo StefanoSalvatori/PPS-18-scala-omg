@@ -7,7 +7,7 @@ import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMess
 import common.room.Room.{RoomId, RoomPassword}
 import common.room._
 import server.communication.ConnectionConfigurations
-import server.room.RoomActor.{Close, StartAutoCloseTimeout}
+import server.room.RoomActor.Close
 import server.utils.Timer
 
 trait ServerRoom extends BasicRoom
@@ -18,18 +18,43 @@ trait ServerRoom extends BasicRoom
   import java.util.UUID
   override val roomId: RoomId = UUID.randomUUID.toString
 
-  val socketConfigurations: ConnectionConfigurations = ConnectionConfigurations.Default
-  val autoClose: Boolean = true
-  import scala.concurrent.duration._
-  val autoCloseTimeout: FiniteDuration = 5 seconds
-
-  protected var roomActor: Option[ActorRef] = None
-
   private var clients: Seq[Client] = Seq.empty
   // Clients that are allowed to reconnect with the associate expiration timer
   private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
 
+  /**
+   * Socket configuration used in the room.
+   */
+  val socketConfigurations: ConnectionConfigurations = ConnectionConfigurations.Default
+
+  /**
+   * It enables/disables the auto close feature on the room.
+   */
+  protected val isAutoCloseEnabled: Boolean = true
+
+  import scala.concurrent.duration._
+  /**
+   * The auto close timeout, i.e. time within the room closes after starting the auto closing.
+   */
+  val autoCloseTimeout: FiniteDuration = 5 seconds
+
+  /**
+   * It checks if the room auto closing needs to be started.
+   * @return true if the auto close operations need to start, false otherwise.
+   */
+  def isAutoCloseAllowed: Boolean = this.isAutoCloseEnabled && this.connectedClients.isEmpty
+
+
+  /**
+   * The actor associated to the room. It may be [[scala.None]] if not defined yet
+   */
+  protected var roomActor: Option[ActorRef] = None
+
   // By creating explicit setter, room actor can be kept "protected"
+  /**
+   * It sets the actor associated to the room.
+   * @param actor the actor to associate to the room
+   */
   def setRoomActor(actor: ActorRef): Unit = roomActor = Some(actor)
 
   /**
@@ -70,26 +95,19 @@ trait ServerRoom extends BasicRoom
   }
 
   /**
-   * Allow the given client to reconnect to this room within the specified amount of time
+   * Allow the given client to reconnect to this room within the specified amount of time.
    *
    * @param client the reconnecting client
    * @param period time in seconds within which the client can reconnect
    */
   def allowReconnection(client: Client, period: Long): Unit = {
     val timer = Timer()
-    this.reconnectingClients = (client, timer) +: this.reconnectingClients
+    reconnectingClients = (client, timer) +: reconnectingClients
 
     timer.scheduleOnce(() => {
-      this.reconnectingClients = this.reconnectingClients.filter(_._1.id != client.id)
+      reconnectingClients = reconnectingClients.filter(_._1.id != client.id)
     }, period * 1000) //seconds to millis
   }
-
-  /**
-   *
-   * @return true if the autoclose operations need to start
-   */
-  def checkAutoClose(): Boolean = this.autoClose && this.connectedClients.isEmpty
-
 
   /**
    * Custom room constraints that may cause a join request to fail.
@@ -99,81 +117,77 @@ trait ServerRoom extends BasicRoom
   def joinConstraints: Boolean = true
 
   /**
-   * Remove a client from the room. Triggers onLeave
+   * Remove a client from the room. It triggers onLeave
    *
    * @param client the client that leaved
    */
   def removeClient(client: Client): Unit = {
-    this.clients = this.clients.filter(_.id != client.id)
-    this.onLeave(client)
+    clients = clients.filter(_.id != client.id)
+    this onLeave client
     client send ProtocolMessage(LeaveOk)
-    if (this.checkAutoClose()) {
-      this.roomActor.foreach(_ ! StartAutoCloseTimeout)
-    }
   }
 
   /**
-   *
+   * It checks if a client is authorized to perform actions on the room.
    * @param client the client to check
-   * @return true if the client is authorized to perform actions on this room
+   * @return true if the client is authorized, false otherwise
    */
-  def clientAuthorized(client: Client): Boolean = connectedClients contains client
+  def isClientAuthorized(client: Client): Boolean = connectedClients contains client
 
   /**
+   * List of connected clients in the room.
    * @return the list of connected clients
    */
   def connectedClients: Seq[Client] = this.clients
 
   /**
-   * Send a message to a single client
+   * Send a message to a single client.
    *
    * @param client  the client that will receive the message
    * @param message the message to send
    */
-  def tell(client: Client, message: SocketSerializable): Unit =
-    this.clients.filter(_.id == client.id).foreach(_.send(ProtocolMessage(ProtocolMessageType.Tell, client.id, message)))
+  def tell(client: Client, message: SocketSerializable): Unit = clients filter (_.id == client.id) foreach {
+    _ send ProtocolMessage(ProtocolMessageType.Tell, client.id, message)
+  }
 
   /**
-   * Broadcast a message to all clients connected
+   * Broadcast a same message to all clients connected.
    *
    * @param message the message to send
    */
-  def broadcast(message: SocketSerializable): Unit =
-    this.clients.foreach(client => client.send(ProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)))
+  def broadcast(message: SocketSerializable): Unit = clients foreach { client =>
+    client send ProtocolMessage(ProtocolMessageType.Broadcast, client.id, message)
+  }
 
   /**
-   * Close this room
+   * Close this room.
    */
   def close(): Unit = {
     this.lock()
-    this.clients.foreach(client => client.send(ProtocolMessage(ProtocolMessageType.RoomClosed, client.id)))
+    this.clients foreach { client => client send ProtocolMessage(ProtocolMessageType.RoomClosed, client.id) }
     this.roomActor.foreach(_ ! Close)
     this.onClose()
   }
 
-  /**
-   * Getter of all room properties
-   *
-   * @return a set containing all defined room properties
-   */
-  def properties: Set[RoomProperty] = {
+  override def properties: Set[RoomProperty] = {
     def checkAdmissibleFieldType[T](value: T): Boolean = value match {
       case _: Int | _: String | _: Boolean | _: Double => true
       case _ => false
     }
 
     this.getClass.getDeclaredFields.filter(isProperty) collect {
-      case f if operationOnField(f.getName)(field => checkAdmissibleFieldType(this --> field)) => propertyOf(f.getName)
+      case f if operationOnField(f.getName)(field => checkAdmissibleFieldType(this --> field)) =>
+        this propertyOf f.getName
     } toSet
   }
 
-  override def valueOf(propertyName: String): Any = operationOnProperty(propertyName)(this --> _)
+  override def valueOf(propertyName: String): Any = operationOnProperty(propertyName)(-->)
 
   /**
-   * Getter of the value of a property
+   * Getter of the value of a property as [[common.room.RoomPropertyValue]].
    * @param propertyName The name of the property
    * @throws NoSuchPropertyException if the requested property does not exist
-   * @return The value of the property, expressed as a RoomPropertyValue
+   * @return The value of the property, expressed as [[common.room.RoomPropertyValue]]
    */
   def `valueOf~AsPropertyValue`(propertyName: String): RoomPropertyValue =
     operationOnProperty(propertyName)(f => RoomPropertyValue propertyValueFrom (this --> f))
@@ -182,41 +196,42 @@ trait ServerRoom extends BasicRoom
     operationOnProperty(propertyName)(f => RoomProperty(propertyName, RoomPropertyValue propertyValueFrom (this --> f)))
 
   /**
-   * Setter of room properties
+   * Setter of room properties.
    *
    * @param properties A set containing the properties to set
    */
   def properties_=(properties: Set[RoomProperty]): Unit =
-    properties.filter(p => try { isProperty(this fieldFrom p.name) } catch { case _: NoSuchFieldException => false })
+    properties
+      .filter(p => try { isProperty(this fieldFrom p.name) } catch { case _: NoSuchFieldException => false })
       .map(ServerRoom.propertyToPair)
-      .foreach(property => operationOnField(property.name)(f => f set(this, property.value)))
+      .foreach { property => operationOnField(property.name)(_ set(this, property.value)) }
 
   /**
-   * Called as soon as the room is created by the server
+   * Called as soon as the room is created by the server.
    */
   def onCreate(): Unit
 
   /**
-   * Called as soon as the room is closed
+   * Called as soon as the room is closed.
    */
   def onClose(): Unit
 
   /**
-   * Called when a user joins the room
+   * Called when a user joins the room.
    *
    * @param client tha user that joined
    */
   def onJoin(client: Client): Unit
 
   /**
-   * Called when a user left the room
+   * Called when a user left the room.
    *
    * @param client the client that left
    */
   def onLeave(client: Client): Unit
 
   /**
-   * Called when the room receives a message
+   * Called when the room receives a message.
    *
    * @param client  the client that sent the message
    * @param message the message received
@@ -224,8 +239,8 @@ trait ServerRoom extends BasicRoom
   def onMessageReceived(client: Client, message: Any)
 
   /**
-   * Tries to perform an operation on a property. If the property exists, the operation will be successfully completed,
-   *  otherwise an error will be notified.
+   * Tries to perform an operation on a property. If the property exists, the operation will be successfully
+   * completed, otherwise an error will be notified.
    * @param propertyName the name of the property
    * @param f            the operation to execute on such property
    * @tparam T           the type of return of the operation to execute
@@ -259,11 +274,10 @@ trait ServerRoom extends BasicRoom
     result
   }
 
-  private def fieldFrom(fieldName: String): Field = {
-    this.getClass getDeclaredField fieldName
-  }
+  private def fieldFrom(fieldName: String): Field = this.getClass getDeclaredField fieldName
 
-  private def -->(field: Field): AnyRef = field get this // Get the value of the field
+  // Gets the value of the field
+  private def -->(field: Field): AnyRef = field get this
 
   private def isProperty(field: Field): Boolean =
     field.getDeclaredAnnotations collectFirst { case ann: RoomPropertyMarker => ann } nonEmpty
@@ -307,7 +321,7 @@ object ServerRoom {
    * @tparam T type of custom rooms that extend ServerRoom
    * @return A sequence of SharedRoom, where each element is the corresponding one mapped from the input sequence
    */
-  implicit def serverRoomSeqToSharedRoomSeq[T <: ServerRoom]: Seq[T] => Seq[SharedRoom] = _.map(serverRoomToSharedRoom)
+  implicit def serverRoomSeqToSharedRoomSeq[T <: ServerRoom]: Seq[T] => Seq[SharedRoom] = _ map serverRoomToSharedRoom
 
   /**
    * From a given room, it calculates properties not in common with a basic server room.
@@ -323,22 +337,14 @@ object ServerRoom {
     runtimeProperties.filter(property => runtimeOnlyPropertyNames contains property.name)
   }
 
-  /**
-   * A room with empty behavior
-   */
-  private case class BasicServerRoom(automaticClose: Boolean) extends ServerRoom {
-    override val autoClose: Boolean = this.automaticClose
-
+  // Example room with empty behavior
+  private case class BasicServerRoom(private val automaticClose: Boolean) extends ServerRoom {
+    override val isAutoCloseEnabled: Boolean = this.automaticClose
     override def onCreate(): Unit = {}
-
     override def onClose(): Unit = {}
-
     override def onJoin(client: Client): Unit = {}
-
     override def onLeave(client: Client): Unit = {}
-
     override def onMessageReceived(client: Client, message: Any): Unit = {}
-
     override def joinConstraints: Boolean = true
   }
 

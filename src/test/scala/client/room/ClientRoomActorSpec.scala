@@ -1,25 +1,22 @@
 package client.room
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorRef, ActorSystem}
-import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import akka.testkit.{ImplicitSender, TestKit}
 import client.CoreClient
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType}
+import common.communication.CommunicationProtocol.ProtocolMessage
 import common.http.Routes
 import common.room.Room
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
-import server.room.ServerRoom
 import test_utils.{ExampleRooms, TestConfig}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+import scala.concurrent.{Await, ExecutionContext, Promise}
 import scala.util.{Success, Try}
 
 class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))

@@ -15,7 +15,7 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] with
   //map clientId -> playerId to keep the link between clients and players
   private var players: Map[String, Int] = Map.empty
 
-  override val autoClose: Boolean = true
+  override val isAutoCloseEnabled: Boolean = true
   override val worldUpdateRate: Int = 60
   override val stateUpdateRate: Int = 60
 

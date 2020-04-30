@@ -8,14 +8,14 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import server.RoomHandler
-import server.route_service.RouteService
+import server.routing_service.RoutingService
 import test_utils.ExampleRooms._
 import common.room.RoomPropertyValueConversions._
 import server.matchmaking.{Matchmaker, MatchmakingHandler}
 
 import scala.concurrent.ExecutionContextExecutor
 
-class RouteServiceRoutesSpec extends AnyFlatSpec
+class RoutingServiceRoutesSpec extends AnyFlatSpec
   with Matchers
   with ScalatestRouteTest
   with RouteCommonTestOptions
@@ -24,7 +24,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private val roomHandler = RoomHandler()
-  private val routeService = RouteService(roomHandler, MatchmakingHandler(roomHandler))
+  private val routeService = RoutingService(roomHandler, MatchmakingHandler(roomHandler))
   private val route = routeService.route
 
   behavior of "Route Service routing"
@@ -32,7 +32,7 @@ class RouteServiceRoutesSpec extends AnyFlatSpec
   before {
     //ensure to have at least one room-type
     routeService.addRouteForRoomType(TestRoomType, RoomWithProperty)
-    routeService.addRouteForMatchmaking(TestRoomType, RoomWithProperty, Matchmaker defaultMatchmaker Map())
+    routeService.addRouteForMatchmaking(TestRoomType, RoomWithProperty)(Matchmaker defaultMatchmaker Map())
   }
 
   override def afterAll(): Unit = {

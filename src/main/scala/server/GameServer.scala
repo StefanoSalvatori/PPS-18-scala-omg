@@ -4,7 +4,6 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
-import com.typesafe.scalalogging.LazyLogging
 import common.room.RoomProperty
 import server.matchmaking.Matchmaker
 import server.room.ServerRoom
@@ -13,7 +12,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.language.postfixOps
 
-trait GameServer {
+sealed trait GameServer {
 
   /**
    * The host where the game server runs.
@@ -67,9 +66,7 @@ trait GameServer {
   /**
    * Define a type of room that enable matchmaking functions
    */
-  def defineRoomWithMatchmaking[T](roomTypeName: String, roomFactory: () => ServerRoom,
-                                matchmaker: Matchmaker[T])
-
+  def defineRoomWithMatchmaking[T](roomTypeName: String, roomFactory: () => ServerRoom, matchmaker: Matchmaker[T])
 
   /**
    * Creates a room of a given type. The type should be defined before calling this method
@@ -79,17 +76,15 @@ trait GameServer {
   def createRoom(roomType: String, properties: Set[RoomProperty] = Set.empty): Unit
 }
 
-
 object GameServer {
+
   /**
    * Timeout for the graceful shutdown of the server
    */
   val ServerTerminationDeadline: FiniteDuration = 2 seconds
 
-
   /**
    * Create a new game server at the the specified host and port.
-   * <br>
    * You can pass optional routes that will be used by the server so that, for example, you can use this both as game
    * server and web-server.
    *
@@ -113,8 +108,8 @@ object GameServer {
  **/
 private class GameServerImpl(override val host: String,
                              override val port: Int,
-                             private val additionalRoutes: Route = reject) extends GameServer
-  with LazyLogging {
+                             private val additionalRoutes: Route = reject
+                            ) extends GameServer {
 
   import GameServer._
   import server.ServerActor._
@@ -129,28 +124,25 @@ private class GameServerImpl(override val host: String,
   private var onStart: () => Unit = () => {}
   private var onShutdown: () => Unit = () => {}
 
-
-  override def start(): Future[Unit] = {
+  override def start(): Future[Unit] =
     (serverActor ? StartServer(host, port))
       .asInstanceOf[Future[ServerResponse]]
       .flatMap {
         case Started => this.onStart(); Future.successful()
-        case StateError(msg) => Future.failed(new IllegalStateException(msg))
-        case ServerFailure(exception) => Future.failed(exception)
-        case _ => Future.failed(new IllegalStateException())
+        case StateError(msg) => Future failed new IllegalStateException(msg)
+        case ServerFailure(exception) => Future failed exception
+        case _ => Future failed new IllegalStateException()
       }
-  }
 
-  override def stop(): Future[Unit] = {
+  override def stop(): Future[Unit] =
     (serverActor ? StopServer)
       .asInstanceOf[Future[ServerResponse]]
       .flatMap {
         case Stopped => this.onShutdown(); Future.successful()
-        case StateError(msg) => Future.failed(new IllegalStateException(msg))
-        case ServerFailure(exception) => Future.failed(exception)
-        case _ => Future.failed(new IllegalStateException())
+        case StateError(msg) => Future failed new IllegalStateException(msg)
+        case ServerFailure(exception) => Future failed exception
+        case _ => Future failed new IllegalStateException()
       }
-  }
 
   override def onStart(callback: => Unit): Unit = this.onStart = () => callback
 
@@ -160,9 +152,12 @@ private class GameServerImpl(override val host: String,
     Await.ready(serverActor ? AddRoute(roomTypeName, roomFactory), ActorRequestTimeout.duration)
 
   override def defineRoomWithMatchmaking[T](roomTypeName: String,
-                                         roomFactory: () => ServerRoom,
-                                         matchmaker: Matchmaker[T]): Unit =
-    Await.ready(serverActor ? AddRouteForMatchmaking(roomTypeName, roomFactory, matchmaker), ActorRequestTimeout.duration)
+                                            roomFactory: () => ServerRoom,
+                                            matchmaker: Matchmaker[T]): Unit =
+    Await.ready(
+      serverActor ? AddRouteForMatchmaking(roomTypeName, roomFactory, matchmaker),
+      ActorRequestTimeout.duration
+    )
 
 
   override def createRoom(roomType: String, properties: Set[RoomProperty] = Set.empty): Unit =
@@ -174,7 +169,3 @@ private class GameServerImpl(override val host: String,
       _ <- this.actorSystem.terminate()
     } yield {}
 }
-
-
-
-

@@ -11,11 +11,11 @@ import org.scalatest.matchers.should.Matchers
 import server.RoomHandler
 import server.matchmaking.MatchmakingHandler
 import server.room.ServerRoom
-import server.route_service.RouteService
+import server.routing_service.RoutingService
 
 import scala.concurrent.ExecutionContextExecutor
 
-class RouteServiceResponseSpec extends AnyFlatSpec with Matchers
+class RoutingServiceResponseSpec extends AnyFlatSpec with Matchers
   with ScalatestRouteTest
   with RoomJsonSupport
   with RouteCommonTestOptions
@@ -23,14 +23,14 @@ class RouteServiceResponseSpec extends AnyFlatSpec with Matchers
 
   private implicit val execContext: ExecutionContextExecutor = system.dispatcher
   private var roomHandler = RoomHandler()
-  private var routeService = RouteService(roomHandler, MatchmakingHandler(roomHandler))
+  private var routeService = RoutingService(roomHandler, MatchmakingHandler(roomHandler))
   private var route = routeService.route
 
   behavior of "Route Service routing with room handling"
 
   before {
     roomHandler = RoomHandler()
-    routeService = RouteService(roomHandler, MatchmakingHandler(roomHandler))
+    routeService = RoutingService(roomHandler, MatchmakingHandler(roomHandler))
     route = routeService.route
 
     //define room type for test
