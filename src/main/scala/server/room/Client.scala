@@ -5,7 +5,7 @@ import akka.actor.ActorRef
 /**
  * Minimal interface for a client communication channel. It must have an Id and a send method.
  */
-sealed trait Client {
+trait Client {
 
   /**
    * Client identifier.

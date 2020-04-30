@@ -31,8 +31,8 @@ class RoutingServiceRoutesSpec extends AnyFlatSpec
 
   before {
     //ensure to have at least one room-type
-    routeService.addRouteForRoomType(TestRoomType, RoomWithProperty)
-    routeService.addRouteForMatchmaking(TestRoomType, RoomWithProperty)(Matchmaker defaultMatchmaker Map())
+    routeService.addRouteForRoomType(TestRoomType, RoomWithProperty.apply)
+    routeService.addRouteForMatchmaking(TestRoomType, RoomWithProperty.apply)(Matchmaker defaultMatchmaker Map())
   }
 
   override def afterAll(): Unit = {

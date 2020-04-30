@@ -13,7 +13,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.GameServer
-import test_utils.{ExampleRooms, TestConfig}
+import test_utils.TestConfig
+import test_utils.ExampleRooms._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Promise}
@@ -40,10 +41,10 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
   before {
     coreClient = system actorOf CoreClient(serverUri)
     gameServer = GameServer(serverAddress, serverPort)
-    gameServer.defineRoom(ExampleRooms.closableRoomWithStateType, () => ExampleRooms.ClosableRoomWithState())
+    gameServer.defineRoom(ClosableRoomWithState.name, ClosableRoomWithState.apply)
     Await.ready(gameServer.start(), DefaultDuration)
 
-    coreClient ! CreatePublicRoom(ExampleRooms.closableRoomWithStateType, Set.empty)
+    coreClient ! CreatePublicRoom(ClosableRoomWithState.name, Set.empty)
     val room = expectMsgType[Success[ClientRoom]]
     clientRoomActor = system actorOf ClientRoomActor(coreClient, serverUri, room.value)
   }
@@ -134,7 +135,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
 
       (0 until messagesCount).foreach(_ => {
         clientRoomActor ! SendStrictMessage("ping")
-        Thread.sleep(10)
+        Thread.sleep(10) //scalastyle:ignore magic.number
       })
       val received = Await.result(allReceived.future, 10 seconds)
 

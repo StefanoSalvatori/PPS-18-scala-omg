@@ -16,6 +16,8 @@ import test_utils.{ExampleRooms, TestConfig}
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}
 
+import test_utils.ExampleRooms._
+
 class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with ImplicitSender
   with AnyWordSpecLike
@@ -29,16 +31,16 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
   private val serverPort = MatchmakingSpecServerPort
   private val serverUri = Routes.httpUri(serverAddress, serverPort)
 
-  private var matchmakeActor1: ActorRef = _
-  private var matchmakeActor2: ActorRef = _
+  private var matchmakerActor1: ActorRef = _
+  private var matchmakerActor2: ActorRef = _
 
   private var gameServer: GameServer = _
 
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
   before {
-    matchmakeActor1 = system actorOf MatchmakingActor(ExampleRooms.closableRoomWithStateType, serverUri, "")
-    matchmakeActor2 = system actorOf MatchmakingActor(ExampleRooms.closableRoomWithStateType, serverUri, "")
+    matchmakerActor1 = system actorOf MatchmakingActor(ClosableRoomWithState.name, serverUri, "")
+    matchmakerActor2 = system actorOf MatchmakingActor(ClosableRoomWithState.name, serverUri, "")
 
     gameServer = GameServer(serverAddress, serverPort)
 
@@ -49,7 +51,7 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
     }
 
     gameServer.defineRoomWithMatchmaking(
-      ExampleRooms.closableRoomWithStateType,
+      ClosableRoomWithState.name,
       () => ExampleRooms.ClosableRoomWithState(),
       matchmaker)
     Await.ready(gameServer.start(), DefaultDuration)
@@ -64,8 +66,8 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
   "MatchmakingActor" should {
     "join a matchmaking queue and return a MatchmakeTicket when the match is created" in {
 
-      matchmakeActor1 ! JoinMatchmaking
-      matchmakeActor2 ! JoinMatchmaking
+      matchmakerActor1 ! JoinMatchmaking
+      matchmakerActor2 ! JoinMatchmaking
       expectMsgPF() {
         case Success(res) =>
           assert(res.isInstanceOf[MatchmakingInfo])
@@ -75,14 +77,14 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
     }
 
     "leave a matchmaking queue" in {
-      matchmakeActor1 ! JoinMatchmaking
-      matchmakeActor1 ! LeaveMatchmaking
+      matchmakerActor1 ! JoinMatchmaking
+      matchmakerActor1 ! LeaveMatchmaking
       expectMsgType[Any]
-      matchmakeActor1 ! PoisonPill
+      matchmakerActor1 ! PoisonPill
 
 
       //this should never respond because the other actor left the matchmake
-      matchmakeActor2 ! JoinMatchmaking
+      matchmakerActor2 ! JoinMatchmaking
       expectNoMessage()
 
     }
