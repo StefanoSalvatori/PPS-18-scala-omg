@@ -97,14 +97,16 @@ object RoomHandler {
 
 case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandler {
 
-  private var roomTypesHandlers: Map[RoomType, () => ServerRoom] = Map.empty
-  private var _roomsByType: Map[RoomType, Map[ServerRoom, ActorRef]] = Map.empty
-  private var _roomsWithMatchmakingByType: Map[RoomType, Map[ServerRoom, ActorRef]] = Map.empty
+  import scala.collection.concurrent.{Map => SynchronizedMap, TrieMap}
+  import scala.collection.mutable.{Map => MutableMap}
+  private var roomTypesHandlers: SynchronizedMap[RoomType, () => ServerRoom] = TrieMap.empty
+  private var _roomsByType: MutableMap[RoomType, Map[ServerRoom, ActorRef]] = MutableMap.empty
+  private var _roomsWithMatchmakingByType: SynchronizedMap[RoomType, Map[ServerRoom, ActorRef]] = TrieMap.empty
 
   override def createRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): SharedRoom = {
     val newRoom = roomTypesHandlers(roomType)()
     val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
-    _roomsByType = updateRoomMap(_roomsByType, roomType)(newRoom, newRoomActor)
+    _roomsByType += (roomType -> (_roomsByType.getOrElse(roomType, Map.empty) + (newRoom -> newRoomActor)))
     // Set property and password
     roomProperties.find(_.name == Room.RoomPasswordPropertyName) match {
       case Some(password) =>
@@ -120,11 +122,12 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
 
   // synchronized: more than one matchmaker could access concurrently
   override def createRoomWithMatchmaking(roomType: RoomType,
-                                         matchmakingGroups: Map[Client, GroupId]): SharedRoom = synchronized {
+                                         matchmakingGroups: Map[Client, GroupId]): SharedRoom = {
     val newRoom = roomTypesHandlers(roomType)()
     newRoom.matchmakingGroups = matchmakingGroups
     val newRoomActor = actorSystem actorOf RoomActor(newRoom, this)
-    _roomsWithMatchmakingByType = updateRoomMap(_roomsWithMatchmakingByType, roomType)(newRoom, newRoomActor)
+    _roomsWithMatchmakingByType +=
+      (roomType -> (_roomsWithMatchmakingByType.getOrElse(roomType, Map.empty) + (newRoom -> newRoomActor)))
     newRoom
   }
 
@@ -151,7 +154,7 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
 
   override def defineRoomType(roomTypeName: RoomType, roomFactory: () => ServerRoom): Unit = {
     _roomsByType = _roomsByType + (roomTypeName -> Map.empty)
-    roomTypesHandlers = roomTypesHandlers + (roomTypeName -> roomFactory)
+    roomTypesHandlers += (roomTypeName -> roomFactory)
   }
 
   override def removeRoom(roomId: RoomId): Unit =
@@ -186,17 +189,4 @@ case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandle
       }
     }
   }
-
-  /**
-   * It updates a room map when creating a new room using the given information.
-   *
-   * @param roomMap      the room map to update
-   * @param roomType     the room type
-   * @param newRoom      the new room just created
-   * @param newRoomActor the actor associated to the room
-   * @return the new room map containing also the new room
-   */
-  private def updateRoomMap(roomMap: Map[RoomType, Map[ServerRoom, ActorRef]], roomType: RoomType)
-                           (newRoom: ServerRoom, newRoomActor: ActorRef): Map[RoomType, Map[ServerRoom, ActorRef]] =
-    roomMap + (roomType -> (roomMap.getOrElse(roomType, Map.empty) + (newRoom -> newRoomActor)))
 }

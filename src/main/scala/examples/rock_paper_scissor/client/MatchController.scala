@@ -8,11 +8,10 @@ import scalafx.application.Platform
 import javafx.{fxml => jfxf}
 import javafx.{scene => jfxs}
 
-
 class MatchController {
-  @jfxf.FXML private val labelWaitingPlayer: Label = _
-  @jfxf.FXML private val splitPaneButtons: SplitPane = _
-  @jfxf.FXML private val gridPaneAdvancedMoves: GridPane = _
+  @jfxf.FXML private var labelWaitingPlayer: Label = _
+  @jfxf.FXML private var splitPaneButtons: SplitPane = _
+  @jfxf.FXML private var gridPaneAdvancedMoves: GridPane = _
 
   private var room: JoinedRoom = _
 

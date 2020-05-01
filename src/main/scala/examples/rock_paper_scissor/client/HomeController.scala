@@ -15,9 +15,9 @@ class HomeController {
   private val Host = "localhost"
   private val Port = 8080
 
-  @jfxf.FXML private val btnNewGame: Button = _
-  @jfxf.FXML private val labelStatus: Label = _
-  @jfxf.FXML private val vboxMenuButtons: VBox = _
+  @jfxf.FXML private var btnNewGame: Button = _
+  @jfxf.FXML private var labelStatus: Label = _
+  @jfxf.FXML private var vboxMenuButtons: VBox = _
 
   private val client: Client = Client(Host, Port)
 
@@ -50,7 +50,7 @@ class HomeController {
 
     this.labelStatus.setText("joining advanced room...")
 
-    //use client api to join a room. If no one is availabe create one and wait another player
+    //use client api to join a room. If no one is available create one and wait another player
     client.joinOrCreate("advanced", FilterOptions.empty) onComplete {
       case Success(room) => goToMatchScene(room, "advanced")
       case Failure(_) => println("client room creation failed")
