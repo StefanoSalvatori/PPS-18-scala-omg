@@ -1,5 +1,7 @@
 package scalaomg.server.examples
 
+import scalaomg.server.core.GameServer
+
 import scala.concurrent.ExecutionContext
 
 object GameServerCreation extends App {

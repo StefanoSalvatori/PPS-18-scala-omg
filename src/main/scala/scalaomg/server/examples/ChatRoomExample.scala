@@ -2,6 +2,7 @@ package scalaomg.server.examples
 import scalaomg.server.room.{ServerRoom, Client => RoomClient}
 import scalaomg.client.core.Client
 import scalaomg.common.room.FilterOptions
+import scalaomg.server.core.GameServer
 
 import scala.concurrent.ExecutionContext
 import scala.io.StdIn
