@@ -9,9 +9,9 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState]
   private var gameStarted = false
 
   private var joinedA = 0
-  private var expectedA = 2
+  private val expectedA = 2
   private var joinedB = 0
-  private var expectedB = 2
+  private val expectedB = 2
 
   private var turnClientMapping = Map.empty[Turn, Client]
   private var clientTurnMapping = Map.empty[Client, Turn]

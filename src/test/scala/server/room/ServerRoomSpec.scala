@@ -21,6 +21,7 @@ class ServerRoomSpec extends AnyWordSpecLike
   private var testClient: TestClient = _
   private var testClient2: TestClient = _
   private var testClient3: TestClient = _
+  private val reconnectionPeriod = 5L
 
   private val nameA = "a"
   private val valueA = 1
@@ -97,7 +98,6 @@ class ServerRoomSpec extends AnyWordSpecLike
       testRoom.tryAddClient(testClient2, Room.DefaultPublicPassword)
       testRoom.tryAddClient(testClient3, Room.DefaultPublicPassword)
       testClient3.lastMessageReceived.get.asInstanceOf[ProtocolMessage].messageType shouldBe ClientNotAuthorized
-
     }
 
     "send broadcast messages to all clients connected using the room protocol" in {
@@ -247,7 +247,7 @@ class ServerRoomSpec extends AnyWordSpecLike
 
     "allow reconnections within a specified period" in {
       serverRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
-      serverRoom.allowReconnection(testClient, 3 )
+      serverRoom.allowReconnection(testClient, 3)
       serverRoom.removeClient(testClient)
       assert(serverRoom.tryReconnectClient(testClient))
     }
@@ -255,28 +255,28 @@ class ServerRoomSpec extends AnyWordSpecLike
     "allow reconnections of multiple clients" in {
       val clients = (0 to 2).map(_ => TestClient(UUID.randomUUID().toString))
       clients.foreach(serverRoom.tryAddClient(_, Room.DefaultPublicPassword))
-      clients.foreach(serverRoom.allowReconnection(_, 5))
+      clients.foreach(serverRoom.allowReconnection(_, reconnectionPeriod))
       clients.foreach(serverRoom.removeClient(_))
 
 
       assert(clients.forall(serverRoom.tryReconnectClient(_)))
     }
 
-    "dont accept reconnections of not allowed clients" in {
+    "not accept reconnections of not allowed clients" in {
       val allowed = (0 to 2).map(_ => TestClient(UUID.randomUUID().toString))
       val notAllowed = (0 to 2).map(_ => TestClient(UUID.randomUUID().toString))
 
       allowed.foreach(serverRoom.tryAddClient(_, Room.DefaultPublicPassword))
       notAllowed.foreach(serverRoom.tryAddClient(_, Room.DefaultPublicPassword))
 
-      allowed.foreach(serverRoom.allowReconnection(_, 5))
+      allowed.foreach(serverRoom.allowReconnection(_, reconnectionPeriod))
       notAllowed.foreach(serverRoom.removeClient(_))
 
 
       assert(notAllowed.forall(!serverRoom.tryReconnectClient(_)))
     }
 
-    "don't accept reconnections after the period expires" in {
+    "not accept reconnections after the period expires" in {
       serverRoom.tryAddClient(testClient, Room.DefaultPublicPassword)
       serverRoom.allowReconnection(testClient, 3)
       serverRoom.removeClient(testClient)

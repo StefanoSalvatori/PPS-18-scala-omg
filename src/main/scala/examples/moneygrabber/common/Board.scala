@@ -94,9 +94,9 @@ case class Board(players: List[Player], coins: List[Coin], hunters: List[Hunter]
     this.copy(players = newPlayers, coins = newCoins)
   }
 
-  //Return the board without the catched players
+  //Return the board without the caught players
   def catchPlayers(): Board = {
-    this.copy(players = this.players.filter(!playerCatched(_)))
+    this.copy(players = this.players.filter(!playerCaught(_)))
   }
 
   private def randomlyChangeDirection(hunter: Hunter): Direction = {
@@ -110,7 +110,7 @@ case class Board(players: List[Player], coins: List[Coin], hunters: List[Hunter]
 
   private def hunterDropped = Random.nextDouble < HunterDropProbability
 
-  private def playerCatched(player: Player) = hunters.map(_.position).contains(player.position)
+  private def playerCaught(player: Player) = hunters.map(_.position).contains(player.position)
 
   private def keepInsideBorders(position: Position): Position = {
     (keepXInsideBorders(position._1), keepYInsideBorders(position._2))

@@ -10,12 +10,11 @@ import common.communication.CommunicationProtocol.{MatchmakingInfo, ProtocolMess
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.RoomHandler
+import server.core.RoomHandler
 import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue}
 import server.utils.TestClient
 import test_utils.ExampleRooms._
 import test_utils.TestConfig
-
 
 class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.load()))
   with ImplicitSender
@@ -44,9 +43,9 @@ class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigF
     client1 = TestClient(UUID.randomUUID.toString)
     client2 = TestClient(UUID.randomUUID.toString)
     roomHandler = RoomHandler()
-    roomHandler.defineRoomType(NoPropertyRoom.Name, NoPropertyRoom.apply)
+    roomHandler.defineRoomType(NoPropertyRoom.name, NoPropertyRoom.apply)
     matchmakingServiceActor =
-      TestActorRef(new MatchmakingService(matchmakingStrategy, NoPropertyRoom.Name, roomHandler))
+      TestActorRef(new MatchmakingService(matchmakingStrategy, NoPropertyRoom.name, roomHandler))
     matchmakingServiceState = matchmakingServiceActor.underlyingActor
   }
 

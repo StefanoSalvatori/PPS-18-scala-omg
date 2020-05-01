@@ -2,7 +2,7 @@ package examples.roll_the_dice.client.model
 
 import client.core.Client
 import client.room.JoinedRoom
-import examples.roll_the_dice.client.{PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, PubSubWin, Publisher}
+import examples.roll_the_dice.client.{LeavedMatchmaking, PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, PubSubWin, Publisher}
 import examples.roll_the_dice.common.{ClientInfo, MatchState, Team, Turn}
 import examples.roll_the_dice.common.MessageDictionary.{NextTurn, Roll, StartGame, Win}
 
@@ -40,7 +40,7 @@ class ModelImpl extends Model with Publisher {
   private var room: JoinedRoom = _
 
   import Model._
-  def start(): Unit = publish(MatchState())
+  override def start(): Unit = publish(MatchState())
 
   override def joinGameWithMatchmaking(desiredTeam: Team): Unit =
     client.matchmaker joinMatchmaking (roomName, ClientInfo(desiredTeam)) onComplete {
@@ -59,9 +59,13 @@ class ModelImpl extends Model with Publisher {
         room onStateChanged { newState =>
           publish(newState.asInstanceOf[MatchState])
         }
+
+      case _ =>
     }
 
-  override def leaveMatchmakingQueue(): Unit = client.matchmaker leaveMatchmaking roomName
+  override def leaveMatchmakingQueue(): Unit = client.matchmaker leaveMatchmaking roomName onComplete {
+    _ => publish(LeavedMatchmaking)
+  }
 
   override def rollDice(): Unit = {
     room send Roll

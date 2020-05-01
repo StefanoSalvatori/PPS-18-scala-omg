@@ -34,7 +34,7 @@ object Controller {
   def apply(): Controller = ControllerImpl()
 }
 
-import examples.roll_the_dice.client.{PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, PubSubWin, Subscriber}
+import examples.roll_the_dice.client.{LeavedMatchmaking, PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, PubSubWin, Subscriber}
 import examples.roll_the_dice.client.model.Model
 import examples.roll_the_dice.client.view.View
 import examples.roll_the_dice.common.Team
@@ -71,6 +71,7 @@ case class ControllerImpl() extends Controller with Subscriber {
       view changeTurn newTurn
     case PubSubWin(team) =>
       view endGame team
-
+    case LeavedMatchmaking =>
+      view.showMainMenu()
   }
 }

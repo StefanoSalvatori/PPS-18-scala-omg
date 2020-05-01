@@ -26,6 +26,8 @@ trait View extends JFrame {
   def endGame(winner: Team): Unit
 
   def showMatchSetup(): Unit
+
+  def showMainMenu(): Unit
 }
 
 object View {
@@ -59,10 +61,8 @@ class ViewImpl(override val observer: Controller) extends View {
     this changePanel loadingScene.panel
   }
 
-  override def leaveMatchmakingQueue(): Unit = {
-    observer.leaveMatchmakingQueue()
-    this changePanel menuScene.panel
-  }
+  override def leaveMatchmakingQueue(): Unit = observer.leaveMatchmakingQueue()
+
 
   override def closeApplication(): Unit = observer.closeApplication()
 
@@ -77,15 +77,21 @@ class ViewImpl(override val observer: Controller) extends View {
 
   override def endGame(winner: Team): Unit = {
     matchScene showWinningDialog winner
-    this changePanel menuScene.panel
+    this.showMainMenu()
   }
 
   override def showMatchSetup(): Unit = this changePanel matchSetupScene.panel
+
+  override def showMainMenu(): Unit = {
+    this changePanel menuScene.panel
+    loadingScene.enableQueueLeaving()
+  }
 
   private def changePanel(newPanel: JPanel): Unit = {
     mainPanel.removeAll()
     mainPanel.repaint()
     mainPanel.revalidate()
     mainPanel add newPanel
+    mainPanel.repaint()
   }
 }

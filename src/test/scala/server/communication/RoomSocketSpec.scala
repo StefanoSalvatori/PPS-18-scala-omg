@@ -14,7 +14,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.room.{RoomActor, ServerRoom}
-import server.{RoomHandler, communication}
+import server.communication
+import server.core.RoomHandler
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Promise}
@@ -33,13 +34,11 @@ class RoomSocketSpec extends TestKit(ActorSystem("RoomSocketFlow", ConfigFactory
   private val IdleConnectionTimeout = 2 seconds
   private val KeepAliveRate = 300 millis
 
-
   private var room: ServerRoom = _
   private var roomActor: ActorRef = _
   private var roomSocketFlow: RoomSocket = _
   private var flow: Flow[Message, Message, Any] = _
   private var flowTerminated: Promise[Boolean] = _
-
 
   override def afterAll(): Unit = {
     system.terminate()

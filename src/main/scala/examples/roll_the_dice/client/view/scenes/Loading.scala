@@ -18,5 +18,10 @@ case class Loading(private val view: View) extends BasicScene {
   box add backButton
   panel add (box, BorderLayout.CENTER)
 
-  backButton addActionListener { _ => view.leaveMatchmakingQueue() }
+  backButton addActionListener ( _ => {
+    backButton setEnabled false
+    view.leaveMatchmakingQueue()
+  })
+
+  def enableQueueLeaving(): Unit = backButton setEnabled true
 }

@@ -20,7 +20,6 @@ trait RouteCommonTestOptions extends RoomJsonSupport {
     HttpRequests.postRoom("")(TestRoomType, properties)
   }
 
-
   def getRoomsByTypeWithEmptyFilters: HttpRequest = {
     getRoomsByTypeWithFilters(FilterOptions.empty)
   }
@@ -28,6 +27,4 @@ trait RouteCommonTestOptions extends RoomJsonSupport {
   def postRoomWithEmptyProperties: HttpRequest = {
     postRoomWithProperties(Set.empty)
   }
-
-
 }

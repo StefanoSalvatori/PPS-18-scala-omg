@@ -12,7 +12,7 @@ import common.room.Room.RoomType
 import scala.util.{Failure, Success}
 
 /**
- * Handles the connection with the serverside matchmaker .
+ * Handles the connection with the server side matchmaker .
  * Notify the client when the match is created
  */
 private[client] sealed trait MatchmakingActor extends SocketActor[ProtocolMessage]
@@ -28,8 +28,8 @@ class MatchmakingActorImpl(private val roomType: RoomType,
                            private val clientInfo: SocketSerializable)
   extends MatchmakingActor with Stash  {
 
-  override val uri = httpServerUri
-  override val serializer = BinaryProtocolSerializer()
+  override val uri: String = httpServerUri
+  override val serializer: BinaryProtocolSerializer = BinaryProtocolSerializer()
 
   override def receive: Receive = onReceive orElse fallbackReceive
 

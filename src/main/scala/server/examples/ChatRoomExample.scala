@@ -3,13 +3,11 @@ package server.examples
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
-import server.GameServer
+import server.core.GameServer
 import server.examples.rooms.ChatRoom
-import server.room._
 
 import scala.concurrent.Await
 import scala.io.StdIn
-
 
 object ChatRoomExample extends App {
   implicit private val actorSystem: ActorSystem = ActorSystem()
@@ -27,6 +25,4 @@ object ChatRoomExample extends App {
   }
   Await.ready(gameServer.stop(), 10 seconds)
   gameServer.terminate()
-
-
 }

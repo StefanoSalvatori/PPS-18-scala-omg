@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, get, _}
-import akka.http.scaladsl.testkit.{ScalatestRouteTest, WSProbe}
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
@@ -13,6 +13,7 @@ import common.room.{FilterOptions, RoomJsonSupport, SharedRoom}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import server.core.GameServer
 import server.room.ServerRoom
 import test_utils.TestConfig
 
@@ -175,18 +176,12 @@ class GameServerSpec extends AnyFlatSpec
     Await.result(this.server.stop(), ServerShutdownAwaitTime)
   }
 
-
-
   private def makeEmptyRequest(): Future[HttpResponse] = {
     this.makeEmptyRequestAtRooms
   }
 
   private def makeEmptyRequestAtRooms: Future[HttpResponse] = {
     Http().singleRequest(HttpRequests.getRooms(Routes.httpUri(Host, Port))(FilterOptions.empty))
-  }
-
-  private def makeEmptyRequestAtRoomsWithType(roomType: String): Future[HttpResponse] = {
-    Http().singleRequest(HttpRequests.getRoomsByType(Routes.httpUri(Host, Port))(roomType, FilterOptions.empty))
   }
 
   private def makeEmptyRequestAtPath(path: String): Future[HttpResponse] = {
