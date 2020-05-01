@@ -7,16 +7,15 @@ import scalaomg.examples.moneygrabber.client.view.menu.MainMenu
 import scalaomg.examples.moneygrabber.client.view.menu.MainMenu.{FourPlayers, Quit, TwoPlayers}
 import scalaomg.examples.moneygrabber.common.GameModes
 import scalaomg.examples.moneygrabber.common.GameModes.GameMode
-import scalaomg.examples.moneygrabber.server.{Server, ServerConfig}
+import scalaomg.examples.moneygrabber.server.ServerInfo
 
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
 import scala.swing.Publisher
 
-class MainMenuController(private val menu: MainMenu) extends Publisher {
+class MainMenuController(private val menu: MainMenu,
+                         private val serverInfo: ServerInfo) extends Publisher {
   implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
-  private val Host = ServerConfig.ServerHost
-  private val Port = ServerConfig.ServerPort
-  private val client = Client(Host, Port)
+  private val client = Client(serverInfo.host, serverInfo.port)
 
   listenTo(MainMenu.MenuButtons: _*)
   reactions += {
