@@ -9,7 +9,7 @@ import scala.concurrent.Future
  *
  * @tparam T the type of message to write and read
  */
-trait SocketSerializer[T] {
+private[scalaomg] trait SocketSerializer[T] {
 
   /**
    * Parse an incoming message from a socket

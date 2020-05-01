@@ -7,7 +7,7 @@ import scalaomg.common.communication.CommunicationProtocol._
 
 import scala.concurrent.Future
 
-object TextProtocolSerializer {
+private[scalaomg] object TextProtocolSerializer {
   /**
    * Separator used to split information in the message
    */
@@ -22,7 +22,7 @@ object TextProtocolSerializer {
  * <br>
  * It handles them as text strings in the form <em>action{separator}sessionId{separator}payload</em>
  */
-case class TextProtocolSerializer() extends ProtocolMessageSerializer {
+private[scalaomg] case class TextProtocolSerializer() extends ProtocolMessageSerializer {
 
   import TextProtocolSerializer._
 

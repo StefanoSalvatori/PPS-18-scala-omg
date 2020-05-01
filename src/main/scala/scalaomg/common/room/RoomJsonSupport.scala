@@ -8,7 +8,7 @@ import spray.json.{DefaultJsonProtocol, JsArray, JsBoolean, JsNumber, JsObject, 
  * Trait that defines implicit methods to serialize (in json format) rooms information that need to be exchanged between
  * client and server during a Request-Response interaction
  */
-trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+private[scalaomg] trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   // Room
   implicit val roomIdJsonFormat: RootJsonFormat[RoomId] = new RootJsonFormat[RoomId] {

@@ -9,7 +9,7 @@ import spray.json.RootJsonFormat
 /**
  * Factory to generate valid http requests to the game server
  */
-object HttpRequests extends RoomJsonSupport {
+private[scalaomg] object HttpRequests extends RoomJsonSupport {
 
   private val defaultContentType = ContentTypes.`application/json`
 

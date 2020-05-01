@@ -5,7 +5,7 @@ import scalaomg.common.room.Room.{RoomId, RoomType}
 /**
  * Object that defines the routes that the game server provides
  */
-object Routes {
+private[scalaomg] object Routes {
 
   val Rooms: String = "rooms"
 

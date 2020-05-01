@@ -2,7 +2,7 @@ package scalaomg.common.room
 
 import scalaomg.common.room.Room.RoomId
 
-object Room {
+private[scalaomg] object Room {
   type RoomId = String
   type RoomType = String
   type RoomPassword = String // Must be serializable
@@ -23,7 +23,7 @@ object Room {
 /**
  * This is the main concept of room shared between client and server
  */
-trait Room {
+private[scalaomg] trait Room {
   val roomId: RoomId
 
   def properties: Set[RoomProperty]
@@ -50,7 +50,7 @@ trait Room {
   override def hashCode(): Int = this.roomId.hashCode
 }
 
-trait BasicRoom extends Room {
+private[scalaomg] trait BasicRoom extends Room {
   /**
    * Getter of the value of a given property
    *
@@ -75,7 +75,8 @@ trait BasicRoom extends Room {
  * This is the class that is exchanged over the network. A json serialization for this class is provided in
  * [[scalaomg.common.room.RoomJsonSupport]]
  */
-case class SharedRoom(override val roomId: RoomId, override val properties: Set[RoomProperty]) extends Room
+private[scalaomg] case class SharedRoom(override val roomId: RoomId,
+                                        override val properties: Set[RoomProperty]) extends Room
 
 
 

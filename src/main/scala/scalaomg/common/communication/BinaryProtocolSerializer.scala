@@ -10,7 +10,7 @@ import org.apache.commons.lang3.SerializationUtils
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-object BinaryProtocolSerializer {
+private[scalaomg] object BinaryProtocolSerializer {
   // Time after which a byte stream must be parsed. If after this time a byte stream message is not parsed, the futures fails
   val CompletionTimeout: FiniteDuration = 10 seconds
 }
@@ -19,7 +19,8 @@ object BinaryProtocolSerializer {
  * A SocketSerializer for [[scalaomg.common.communication.CommunicationProtocol.ProtocolMessage]] that can write and read
  * them as binary objects. The payload is serialized according to the java.io.Serialization methods
  */
-case class BinaryProtocolSerializer(implicit val materializer: Materializer) extends ProtocolMessageSerializer {
+private[scalaomg] case class BinaryProtocolSerializer(implicit val materializer: Materializer)
+  extends ProtocolMessageSerializer {
 
   private implicit val executor: ExecutionContextExecutor = materializer.executionContext
 

@@ -4,7 +4,7 @@ import scalaomg.common.communication.CommunicationProtocol.ProtocolMessageType.P
 import scalaomg.common.communication.CommunicationProtocol.SessionId.SessionId
 import scalaomg.common.room.Room.RoomId
 
-object CommunicationProtocol {
+private[scalaomg] object CommunicationProtocol {
   /**
    * Anything that can be serialized and sent to the socket
    */
