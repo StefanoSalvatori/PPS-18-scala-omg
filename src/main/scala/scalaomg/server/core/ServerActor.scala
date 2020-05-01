@@ -58,7 +58,7 @@ private[server] object ServerActor {
                                        matchmaker: Matchmaker[T]) extends ServerCommand
 
   /**
-   * Responses to messages
+   * Server responses to commands
    */
   sealed trait ServerResponse
   case object Started extends ServerResponse
@@ -86,15 +86,15 @@ private[server] object ServerActor {
   private case object ServerStopped extends InternalMessage
 
   /**
-   * Default termination deadline for pending connections
+   * Default termination deadline for pending connections when server stops
    */
   val DefaultDeadline: FiniteDuration = 3 seconds
 
   /**
-   * Creates a server actor that can be start at a specified host and port
+   * Creates a server actor that can be started at a specified host and port
    *
    * @param terminationDeadline time for soft closing connections after the server is stopped. When this timeout expires all
-   *                            still pending connections are forcedly closed. If no para,eter is passed, it will
+   *                            still pending connections are forcedly closed. If no parameter is passed, it will
    *                            automatically use [[scalaomg.server.core.ServerActor#DefaultDeadline]]
    * @param additionalRoutes    additional routes that this server will use to handle requests
    * @return
@@ -139,7 +139,6 @@ private class ServerActor(private val terminationDeadline: FiniteDuration,
   def serverRunning(binding: Http.ServerBinding): Receive = {
     case StartServer(_, _) =>
       sender ! ServerAlreadyRunning
-
     case StopServer =>
       binding.terminate(this.terminationDeadline)
       binding.whenTerminated
