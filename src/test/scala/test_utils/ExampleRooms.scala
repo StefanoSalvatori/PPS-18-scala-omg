@@ -1,7 +1,7 @@
 package test_utils
 
-import server.communication.ConnectionConfigurations
-import server.room._
+import scalaomg.server.communication.ConnectionConfigurations
+import scalaomg.server.room._
 
 /**
  * Rooms used for testing purpose.
@@ -9,37 +9,36 @@ import server.room._
 object ExampleRooms {
 
   object RoomWithState {
-    val Name = "roomWithState"
+    def apply(): RoomWithState = new RoomWithState()
+    val name = "roomWithState"
     val UpdateRate = 100 //milliseconds
     val RoomInitialState: Int = 0
   }
-  case class RoomWithState() extends ServerRoom with SynchronizedRoomState[Integer] {
+
+  class RoomWithState() extends ServerRoom with SynchronizedRoomState[Integer] {
     private var internalState = RoomWithState.RoomInitialState
     override val stateUpdateRate: Int = RoomWithState.UpdateRate
-
     override def onCreate(): Unit = {}
-
     override def onClose(): Unit = this.stopStateSynchronization()
-
     override def onJoin(client: Client): Unit = {}
-
     override def onLeave(client: Client): Unit = {}
-
     override def onMessageReceived(client: Client, message: Any): Unit = {}
-
     override def currentState: Integer = this.internalState
-
 
     //Only used for testing
     def changeState(newState: Int): Unit = this.internalState = newState
   }
 
+  //_________________________________________________
+
   object RoomWithGameLoop {
-    val Name = "roomWithGameLoop"
+    def apply(): RoomWithGameLoop = new RoomWithGameLoop()
+    val name = "roomWithGameLoop"
     val initialState = 0
     val updateRate = 100 // millis
   }
-  case class RoomWithGameLoop() extends ServerRoom with GameLoop {
+
+  class RoomWithGameLoop() extends ServerRoom with GameLoop {
 
     private var count = RoomWithGameLoop.initialState
     override val worldUpdateRate: Int = RoomWithGameLoop.updateRate
@@ -67,10 +66,15 @@ object ExampleRooms {
     var receivedTicks: Int = 0
   }
 
+  //__________________________________________________
+
   object RoomWithReconnection {
-    val Name = "roomWithReconnection"
+    def apply(): RoomWithReconnection = new RoomWithReconnection()
+    val name = "roomWithReconnection"
   }
-  case class RoomWithReconnection() extends ServerRoom {
+
+  class RoomWithReconnection() extends ServerRoom {
+
     private val ReconnectionTime = 10 //s
     override def onCreate(): Unit = {}
 
@@ -87,14 +91,18 @@ object ExampleRooms {
     override def joinConstraints: Boolean = true
   }
 
+  //________________________________________________
+
   object ClosableRoomWithState {
-    val Name = "closableRoomWithState"
+    def apply(): ClosableRoomWithState = new ClosableRoomWithState()
+    val name = "closableRoomWithState"
     val ChangeStateMessage = "changeState"
     val CloseRoomMessage = "close"
     val PingMessage = "ping"
     val PongResponse = "pong"
   }
-  case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
+
+  class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
 
     import ClosableRoomWithState._
 
@@ -125,10 +133,14 @@ object ExampleRooms {
 
   }
 
+  //________________________________________________
+
   object NoPropertyRoom {
-    val Name = "noProperty"
+    def apply(): NoPropertyRoom = new NoPropertyRoom()
+    val name = "noProperty"
   }
-  case class NoPropertyRoom() extends ServerRoom {
+
+  class NoPropertyRoom() extends ServerRoom {
 
     override def onCreate(): Unit = {}
 
@@ -145,13 +157,17 @@ object ExampleRooms {
     }
   }
 
+  //________________________________________________
+
   object RoomWithProperty {
-    val Name = "roomWithProperty"
+    def apply(): RoomWithProperty = new RoomWithProperty()
+    val name = "roomWithProperty"
   }
+
   //noinspection ScalaUnusedSymbol
   case class RoomWithProperty() extends ServerRoom {
 
-    @RoomPropertyMarker private val a: Int = 0 //noinspection unused
+    @RoomPropertyMarker private val a: Int = 0
     @RoomPropertyMarker private val b: String = "abc"
     private val c: Int = 0
 
@@ -159,22 +175,27 @@ object ExampleRooms {
 
     override def onClose(): Unit = {}
 
-    override def onJoin(client: server.room.Client): Unit = {}
+    override def onJoin(client: scalaomg.server.room.Client): Unit = {}
 
-    override def onLeave(client: server.room.Client): Unit = {}
+    override def onLeave(client: scalaomg.server.room.Client): Unit = {}
 
-    override def onMessageReceived(client: server.room.Client, message: Any): Unit = {}
+    override def onMessageReceived(client: scalaomg.server.room.Client, message: Any): Unit = {}
 
     override def joinConstraints: Boolean = {
       true
     }
   }
 
+
+  // ____________________________________________________________________
+
   object RoomWithProperty2 {
-    val Name = "roomWithProperty2"
+    def apply(): RoomWithProperty2 = new RoomWithProperty2()
+    val name = "roomWithProperty2"
   }
+
   //noinspection ScalaUnusedSymbol
-  case class RoomWithProperty2() extends ServerRoom {
+  class RoomWithProperty2() extends ServerRoom {
 
     @RoomPropertyMarker private var a: Int = 1
     @RoomPropertyMarker private var b: String = "a"
@@ -194,11 +215,16 @@ object ExampleRooms {
     override def joinConstraints: Boolean = true
   }
 
+  // ___________________________________________________________________
+
   object LockableRoom {
-    val LockedRoomType = "lockedRoom"
-    val UnlockedRoomType = "unlockedRoom"
+    def locked(): LockableRoom = new LockableRoom(true)
+    def unlocked(): LockableRoom = new LockableRoom(false)
+    val lockedName = "lockedRoom"
+    val unlockedName = "unlockedRoom"
   }
-  case class LockableRoom(private val _isLocked: Boolean) extends ServerRoom {
+
+  class LockableRoom(private val _isLocked: Boolean) extends ServerRoom {
 
     override def onCreate(): Unit = {}
 
@@ -212,5 +238,4 @@ object ExampleRooms {
 
     override def isLocked: Boolean = _isLocked
   }
-
 }
