@@ -1,9 +1,10 @@
-package examples.rock_paper_scissor.client
-import javafx.{fxml => jfxf, scene => jfxs}
-import scalafx.Includes._
+package scalaomg.examples.rock_paper_scissor.client
+
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.scene.Scene
+import scalafx.Includes._
+import javafx.{fxml => jfxf, scene => jfxs}
 
 object App extends JFXApp {
   private val DefaultPort = 8080
@@ -20,9 +21,3 @@ object App extends JFXApp {
     scene = new Scene(root)
   }
 }
-
-
-
-
-
-

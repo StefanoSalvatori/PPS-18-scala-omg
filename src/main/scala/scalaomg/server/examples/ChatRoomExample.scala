@@ -31,7 +31,9 @@ object ChatRoomServer extends App {
 
 object ChatRoomClient extends App {
   implicit private val executor: ExecutionContext = ExecutionContext.global
-  private val client = Client("localhost", 8080)
+  private val Host: String = "localhost"
+  private val Port: Int = 8080
+  private val client = Client(Host, Port)
   client.joinOrCreate("chat_room", FilterOptions.empty).onComplete {
     case Success(room) =>
       room.onMessageReceived(println)

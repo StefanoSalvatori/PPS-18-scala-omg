@@ -6,6 +6,7 @@ import scala.concurrent.ExecutionContext
 
 object GameServerCreation extends App {
   implicit private val executor: ExecutionContext = ExecutionContext.global
+  private val TerminationTimeout = 5000 //millis
   private val Host = "localhost"
   private val Port = 8080
   private val gameServer = GameServer(Host, Port)
@@ -13,6 +14,6 @@ object GameServerCreation extends App {
     println("GAMESERVER STARTED")
   }
   gameServer.start()
-  Thread.sleep(5000)
+  Thread.sleep(TerminationTimeout)
   gameServer.terminate()
 }

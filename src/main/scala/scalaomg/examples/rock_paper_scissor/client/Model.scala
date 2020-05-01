@@ -1,6 +1,6 @@
-package examples.rock_paper_scissor.client
+package scalaomg.examples.rock_paper_scissor.client
 
-import client.core.Client
+import scalaomg.client.core.Client
 
 object Model {
   var client: Client = _
