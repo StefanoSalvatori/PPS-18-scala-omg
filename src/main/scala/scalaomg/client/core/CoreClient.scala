@@ -29,7 +29,7 @@ private[client]  class CoreClientImpl(private val httpServerUri: String) extends
 
   def waitHttpResponse(replyTo: ActorRef): Receive = onWaitHttpResponse(replyTo) orElse fallbackReceive
 
-  import scalaomg.common.room.RoomPropertyValueConversions._
+  import scalaomg.common.room.RoomPropertyValue.Conversions._
   val onReceive: Receive = {
 
     case FailResponse(ex) => sender ! Failure(ex)

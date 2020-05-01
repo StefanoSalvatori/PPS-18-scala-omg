@@ -4,7 +4,7 @@ import scalaomg.client.core.Client
 
 import scala.concurrent.ExecutionContext
 import scalaomg.common.room._
-import scalaomg.common.room.RoomPropertyValueConversions._
+import scalaomg.common.room.RoomPropertyValue.Conversions._
 
 import scala.util.{Failure, Success} // Implicit conversions Int -> IntRoomPropertyValue etc.
 

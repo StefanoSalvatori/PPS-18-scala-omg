@@ -25,7 +25,7 @@ class MainMenuController(private val menu: MainMenu,
   }
 
   private def startGame(mode: GameMode): Unit = {
-    import scalaomg.common.room.RoomPropertyValueConversions._
+    import scalaomg.common.room.RoomPropertyValue.Conversions._
 
     import scala.concurrent.duration._
     val gameMode = RoomProperty("mode", mode.name)

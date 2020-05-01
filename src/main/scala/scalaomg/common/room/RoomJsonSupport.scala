@@ -11,6 +11,9 @@ import spray.json.{DefaultJsonProtocol, JsArray, JsBoolean, JsNumber, JsObject, 
 private[scalaomg] trait RoomJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   // Room
+  /**
+   * Implicit [[RoomId]] Json reader/writer.
+   */
   implicit val roomIdJsonFormat: RootJsonFormat[RoomId] = new RootJsonFormat[RoomId] {
     override def write(a: RoomId): JsValue = JsString(a)
 
@@ -20,6 +23,9 @@ private[scalaomg] trait RoomJsonSupport extends SprayJsonSupport with DefaultJso
     }
   }
 
+  /**
+   * Implicit [[SharedRoom]] Json reader/writer.
+   */
   implicit val sharedRoomJsonFormat: RootJsonFormat[SharedRoom] = new RootJsonFormat[SharedRoom] {
     private val idJsonPropertyName = "id"
     private val propertiesJsonPropertyName = "properties"
@@ -40,11 +46,26 @@ private[scalaomg] trait RoomJsonSupport extends SprayJsonSupport with DefaultJso
   }
 
   // Room property values
+  /**
+   * Implicit [[IntRoomPropertyValue]] Json reader/writer.
+   */
   implicit val intRoomPropertyJsonFormat: RootJsonFormat[IntRoomPropertyValue] = jsonFormat1(IntRoomPropertyValue)
+  /**
+   * Implicit [[StringRoomPropertyValue]] Json reader/writer.
+   */
   implicit val stringRoomPropertyJsonFormat: RootJsonFormat[StringRoomPropertyValue] = jsonFormat1(StringRoomPropertyValue)
+  /**
+   * Implicit [[BooleanRoomPropertyValue]] Json reader/writer.
+   */
   implicit val booleanRoomPropertyJsonFormat: RootJsonFormat[BooleanRoomPropertyValue] = jsonFormat1(BooleanRoomPropertyValue)
+  /**
+   * Implicit [[DoubleRoomPropertyValue]] Json reader/writer.
+   */
   implicit val doubleRoomPropertyJsonFormat: RootJsonFormat[DoubleRoomPropertyValue] = jsonFormat1(DoubleRoomPropertyValue)
 
+  /**
+   * Implicit [[RoomPropertyValue]] Json reader/writer.
+   */
   implicit val roomPropertyValueJsonFormat: RootJsonFormat[RoomPropertyValue] = new RootJsonFormat[RoomPropertyValue] {
     private val valueJsPropertyName = "value"
 
@@ -74,7 +95,13 @@ private[scalaomg] trait RoomJsonSupport extends SprayJsonSupport with DefaultJso
   }
 
   // Room property
+  /**
+   * Implicit [[RoomProperty]] Json reader/writer.
+   */
   implicit val roomPropertyJsonFormat: RootJsonFormat[RoomProperty] = jsonFormat2(RoomProperty)
+  /**
+   * Implicit [[RoomProperty]] set Json reader/writer.
+   */
   implicit val roomPropertySetJsonFormat: RootJsonFormat[Set[RoomProperty]] = new RootJsonFormat[Set[RoomProperty]] {
     override def write(obj: Set[RoomProperty]): JsValue = obj.map(roomPropertyJsonFormat write).toJson
 
@@ -85,9 +112,21 @@ private[scalaomg] trait RoomJsonSupport extends SprayJsonSupport with DefaultJso
   }
 
   // Filter Strategy
+  /**
+   * Implicit [[EqualStrategy]] Json reader/writer.
+   */
   implicit val equalStrategyJsonFormat: RootJsonFormat[EqualStrategy] = createStrategyJsonFormat(EqualStrategy())
+  /**
+   * Implicit [[NotEqualStrategy]] Json reader/writer.
+   */
   implicit val notEqualStrategyJsonFormat: RootJsonFormat[NotEqualStrategy] = createStrategyJsonFormat(NotEqualStrategy())
+  /**
+   * Implicit [[GreaterStrategy]] Json reader/writer.
+   */
   implicit val greaterStrategyJsonFormat: RootJsonFormat[GreaterStrategy] = createStrategyJsonFormat(GreaterStrategy())
+  /**
+   * Implicit [[LowerStrategy]] Json reader/writer.
+   */
   implicit val lowerStrategyJsonFormat: RootJsonFormat[LowerStrategy] = createStrategyJsonFormat(LowerStrategy())
 
   private def createStrategyJsonFormat[T <: FilterStrategy](strategyType: T): RootJsonFormat[T] = new RootJsonFormat[T] {
@@ -99,6 +138,9 @@ private[scalaomg] trait RoomJsonSupport extends SprayJsonSupport with DefaultJso
     override def write(obj: T): JsValue = JsString(strategyType.name)
   }
 
+  /**
+   * Implicit [[FilterStrategy]] Json reader/writer.
+   */
   implicit val filterStrategy: RootJsonFormat[FilterStrategy] = new RootJsonFormat[FilterStrategy] {
     override def write(obj: FilterStrategy): JsValue = obj match {
       case s: EqualStrategy => equalStrategyJsonFormat write s
@@ -116,7 +158,13 @@ private[scalaomg] trait RoomJsonSupport extends SprayJsonSupport with DefaultJso
   }
 
   // Filter options
+  /**
+   * Implicit [[FilterOption]] Json reader/writer.
+   */
   implicit val filterOptionJsonFormat: RootJsonFormat[FilterOption] = jsonFormat3(FilterOption)
+  /**
+   * Implicit [[FilterOptions]] Json reader/writer.
+   */
   implicit val filterOptionsJsonFormat: RootJsonFormat[FilterOptions] = new RootJsonFormat[FilterOptions] {
     override def write(obj: FilterOptions): JsValue = obj.options.map(filterOptionJsonFormat write).toJson
 

@@ -11,7 +11,7 @@ import scalaomg.client.utils.MessageDictionary.{CreatePrivateRoom, CreatePublicR
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import scalaomg.common.http.Routes
-import scalaomg.common.room.RoomPropertyValueConversions._
+import scalaomg.common.room.RoomPropertyValue.Conversions._
 import scalaomg.common.room.{NoSuchPropertyException, Room, RoomJsonSupport, RoomProperty}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
