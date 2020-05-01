@@ -12,14 +12,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
 class HomeController {
-  private val Host = "localhost"
-  private val Port = 8080
-
   @jfxf.FXML private var btnNewGame: Button = _
   @jfxf.FXML private var labelStatus: Label = _
   @jfxf.FXML private var vboxMenuButtons: VBox = _
 
-  private val client: Client = Client(Host, Port)
+  private def client: Client = Model.client
 
 
   private def goToMatchScene(room: JoinedRoom, gameMode: String): Unit = {
