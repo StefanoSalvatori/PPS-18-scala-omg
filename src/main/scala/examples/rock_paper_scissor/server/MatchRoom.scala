@@ -60,9 +60,6 @@ class ClassicMatchRoom() extends ServerRoom {
       }
 
     }
-
-
-    println(s"${client.id }: $message")
   }
 
   override def joinConstraints: Boolean = true
@@ -81,10 +78,10 @@ class AdvancedMatchRoom() extends ClassicMatchRoom {
 
 
 /**
- * Rock paper scissor logic implemented in prolog
+ * Rock paper scissor logic
  */
 case class RockPaperScissor() {
-  private val TheoryPath = "src/main/scala/examples/rock_paper_scissor/server/resources/rock_scissor_paper.prolog"
+  private val TheoryPath = "src/main/scala/examples/rock_paper_scissor/server/resources/rock_paper_scissor.prolog"
   private val TermResult = "Z"
   private val engine = new Prolog()
   private val theory = new Theory(new FileInputStream(TheoryPath))

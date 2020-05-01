@@ -1,6 +1,6 @@
 package examples.moneygrabber.client.controller
 
-import client.Client
+import client.core.Client
 import common.room.{FilterOptions, RoomProperty}
 import examples.moneygrabber.client.view.game.{GameFrame, GameView}
 import examples.moneygrabber.client.view.menu.MainMenu

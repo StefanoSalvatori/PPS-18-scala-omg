@@ -2,6 +2,7 @@ package client
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
+import client.utils.HttpService
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.communication.BinaryProtocolSerializer
@@ -12,7 +13,6 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import server.GameServer
 import server.room.ServerRoom
 import test_utils.TestConfig
-
 import scala.concurrent.Await
 
 class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
@@ -21,16 +21,16 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
   with BeforeAndAfterAll
   with TestConfig {
 
-  private val serverAddress = "localhost"
-  private val serverPort = HttpClientSpecServerPort
-  private val httpServerUri = Routes.httpUri(serverAddress, serverPort)
+  private val ServerAddress = Localhost
+  private val ServerPort = HttpClientSpecServerPort
+  private val ServerUri = Routes.httpUri(ServerAddress, ServerPort)
 
   private val RoomTypeName: String = "test_room"
 
   private var gameServer: GameServer = _
 
   override def beforeAll: Unit = {
-    gameServer = GameServer(serverAddress, serverPort)
+    gameServer = GameServer(ServerAddress, ServerPort)
     gameServer.defineRoom(RoomTypeName, () => ServerRoom())
     Await.ready(gameServer.start(), ServerLaunchAwaitTime)
   }
@@ -40,20 +40,16 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
     TestKit.shutdownActorSystem(system)
   }
 
-  "An Http client actor" must {
-
-    val httpTestActor: ActorRef = system actorOf HttpClient(httpServerUri)
-
+  "An Http client actor" should {
+    val httpTestActor: ActorRef = system actorOf HttpService(ServerUri)
 
     "when asked to post a room, return the new room" in {
       httpTestActor ! HttpPostRoom(RoomTypeName, Set.empty)
-
       expectMsgPF() {
         case HttpRoomResponse(room) =>
           assert(room.isInstanceOf[SharedRoom])
         case FailResponse(_) =>
       }
-
     }
 
     "when asked to get a rooms, return a set of rooms" in {
@@ -69,7 +65,7 @@ class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.l
       httpTestActor ! HttpPostRoom(RoomTypeName, Set.empty)
       val roomRes = expectMsgType[HttpRoomResponse]
 
-      httpTestActor ! HttpRoomSocketRequest(roomRes.room.roomId, BinaryProtocolSerializer())
+      httpTestActor ! HttpSocketRequest(BinaryProtocolSerializer(), Routes.roomSocketConnection(roomRes.room.roomId))
 
       expectMsgPF() {
         case HttpSocketSuccess(ref) =>  assert(ref.isInstanceOf[ActorRef])

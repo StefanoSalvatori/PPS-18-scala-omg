@@ -13,8 +13,14 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.RoomHandler
 import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue}
 import server.utils.TestClient
+<<<<<<< HEAD
 import test_utils.ExampleRooms.NoPropertyRoom
 import test_utils.TestConfig
+=======
+import test_utils.ExampleRooms._
+import test_utils.TestConfig
+
+>>>>>>> upstream/develop
 
 class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.load()))
   with ImplicitSender
@@ -43,9 +49,15 @@ class MatchmakingServiceSpec extends TestKit(ActorSystem("ServerSystem", ConfigF
     client1 = TestClient(UUID.randomUUID.toString)
     client2 = TestClient(UUID.randomUUID.toString)
     roomHandler = RoomHandler()
+<<<<<<< HEAD
     roomHandler.defineRoomType(NoPropertyRoom.name, NoPropertyRoom.apply)
     matchmakingServiceActor =
       TestActorRef(new MatchmakingService(matchmakingStrategy, NoPropertyRoom.name, roomHandler))
+=======
+    roomHandler.defineRoomType(NoPropertyRoom.Name, NoPropertyRoom.apply)
+    matchmakingServiceActor =
+      TestActorRef(new MatchmakingService(matchmakingStrategy, NoPropertyRoom.Name, roomHandler))
+>>>>>>> upstream/develop
     matchmakingServiceState = matchmakingServiceActor.underlyingActor
   }
 

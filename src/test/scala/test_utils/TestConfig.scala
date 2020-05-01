@@ -4,10 +4,17 @@ trait TestConfig {
 
   import akka.util.Timeout
   import scala.concurrent.duration.{Duration, _}
+<<<<<<< HEAD
+=======
+
+  val Localhost: String = "localhost"
+>>>>>>> upstream/develop
   val ServerLaunchAwaitTime: Duration = 10 seconds
   val ServerShutdownAwaitTime: Duration = 10 seconds
+
   implicit val DefaultTimeout: Timeout = 5 seconds
   implicit val DefaultDuration: Duration = 5 seconds
+  implicit val TimeoutToDuration: Timeout => Duration = timeout => timeout.duration
 
   val GameServerSpecServerPort = 8080
   val ClientSpecServerPort = 8081

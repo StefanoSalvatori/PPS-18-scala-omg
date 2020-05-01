@@ -39,7 +39,6 @@ class MatchController {
           loader.getController[GameEndController]().init(msg.toString)
           this.splitPaneButtons.getScene.setRoot(root)
         }
-
     }
 
     room.onClose {

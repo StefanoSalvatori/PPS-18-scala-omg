@@ -1,6 +1,6 @@
 package client.examples
 
-import client.Client
+import client.core.Client
 
 import scala.concurrent.ExecutionContext
 import common.room._

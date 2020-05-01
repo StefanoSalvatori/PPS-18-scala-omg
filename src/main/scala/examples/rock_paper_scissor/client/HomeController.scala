@@ -1,7 +1,7 @@
 package examples.rock_paper_scissor.client
 
-import client.Client
-import client.room.{ClientRoom, JoinedRoom}
+import client.core.Client
+import client.room.JoinedRoom
 import common.room.FilterOptions
 import javafx.scene.control.{Button, Label}
 import javafx.scene.layout.VBox
@@ -16,8 +16,6 @@ class HomeController {
   private val Port = 8080
 
   @jfxf.FXML private var btnNewGame: Button = _
-  @jfxf.FXML private var btnExit: Button = _
-  @jfxf.FXML private var labelWaitingPlayer: Label = _
   @jfxf.FXML private var labelStatus: Label = _
   @jfxf.FXML private var vboxMenuButtons: VBox = _
 
@@ -62,6 +60,7 @@ class HomeController {
 
   @jfxf.FXML
   def handleExitButtonPress(event: jfxEvent.ActionEvent): Unit = {
+    client.shutdown()
     Platform.exit()
   }
 

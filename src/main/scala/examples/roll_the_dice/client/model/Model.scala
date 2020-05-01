@@ -1,6 +1,6 @@
 package examples.roll_the_dice.client.model
 
-import client.Client
+import client.core.Client
 import client.room.JoinedRoom
 import examples.roll_the_dice.client.{LeavedMatchmaking, PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, PubSubWin, Publisher}
 import examples.roll_the_dice.common.{ClientInfo, MatchState, Team, Turn}
