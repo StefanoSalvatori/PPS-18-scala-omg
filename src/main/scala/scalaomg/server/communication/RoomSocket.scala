@@ -16,7 +16,7 @@ import scalaomg.server.room.RoomActor.{Join, Leave, Msg, Reconnect}
  * @param parser           the parsers to use for socket messages
  * @param connectionConfig socket connection configurations, see [[scalaomg.server.communication.ConnectionConfigurations]]
  */
-case class RoomSocket(private val room: ActorRef,
+private[server] case class RoomSocket(private val room: ActorRef,
                       override val parser: ProtocolMessageSerializer,
                       override val connectionConfig: ConnectionConfigurations = ConnectionConfigurations.Default)
   extends Socket[ProtocolMessage] {
@@ -26,15 +26,15 @@ case class RoomSocket(private val room: ActorRef,
 
   override protected val onMessageFromSocket: PartialFunction[ProtocolMessage, Unit] = {
     case ProtocolMessage(JoinRoom, SessionId.Empty, payload) =>
-      room ! Join(client, SessionId.Empty, payload.asInstanceOf[RoomPassword])
+      room ! Join(client, payload.asInstanceOf[RoomPassword])
 
     case ProtocolMessage(JoinRoom, sessionId, payload) =>
       client = Client.asActor(sessionId, this.clientActor)
-      room ! Join(client, sessionId, payload.asInstanceOf[RoomPassword])
+      room ! Join(client, payload.asInstanceOf[RoomPassword])
 
-    case ProtocolMessage(ReconnectRoom, sessionId, payload) =>
+    case ProtocolMessage(ReconnectRoom, sessionId, _) =>
       client = Client.asActor(sessionId, this.clientActor)
-      room ! Reconnect(client, sessionId, payload.asInstanceOf[RoomPassword])
+      room ! Reconnect(client)
 
     case ProtocolMessage(LeaveRoom, _, _) =>
       room ! Leave(client)

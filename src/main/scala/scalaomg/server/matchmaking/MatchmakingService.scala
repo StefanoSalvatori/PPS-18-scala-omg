@@ -9,7 +9,6 @@ import scalaomg.server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue}
 import scalaomg.server.room.Client
 
 private[server] object MatchmakingService {
-
   trait MatchmakingRequest
   case class JoinQueue[T](client: Client, clientInfo: T) extends MatchmakingRequest
   case class LeaveQueue(client: Client) extends MatchmakingRequest
@@ -21,7 +20,7 @@ private[server] object MatchmakingService {
 /**
  *
  * @param matchmaker  the matchmaking strategy
- * @param roomType    teh type of room that will be created
+ * @param roomType    the type of room that will be created
  * @param roomHandler the room handler where to spawn the room
  */
 private class MatchmakingService[T](private val matchmaker: Matchmaker[T],

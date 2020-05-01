@@ -14,7 +14,7 @@ import scala.concurrent.duration.Duration
  * @param matchmakingService the matchmaking service that will handle clients requests
  * @param parser a parser used to read and write messages on the socket
  */
-case class MatchmakingSocket(private val matchmakingService: ActorRef,
+private[server] case class MatchmakingSocket(private val matchmakingService: ActorRef,
                              override val parser: ProtocolMessageSerializer) extends Socket[ProtocolMessage] {
 
   override protected val pingMessage: ProtocolMessage = ProtocolMessage(ProtocolMessageType.Ping)

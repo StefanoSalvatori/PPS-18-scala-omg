@@ -1,19 +1,12 @@
 package scalaomg.examples.roll_the_dice.client.controller
 
+import scalaomg.examples.roll_the_dice.client.model.Model
+import scalaomg.examples.roll_the_dice.common.ServerInfo
+
 object Main extends App {
-  Controller().start()
-}
-
-object Main2 extends App {
-  Controller().start()
-}
-
-object Main3 extends App {
-  Controller().start()
-}
-
-object Main4 extends App {
-  Controller().start()
+  private val host = if (args.length > 0) args(0) else ServerInfo.DefaultHost
+  private val port = if (args.length > 1) args(1).toInt else ServerInfo.DefaultPort
+  Controller(ServerInfo(host, port)).start()
 }
 
 trait Controller {
@@ -31,17 +24,16 @@ trait Controller {
 }
 
 object Controller {
-  def apply(): Controller = ControllerImpl()
+  def apply(serverInfo: ServerInfo): Controller = ControllerImpl(serverInfo)
 }
 
-import scalaomg.examples.roll_the_dice.client.{LeavedMatchmaking, PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, PubSubWin, Subscriber}
-import scalaomg.examples.roll_the_dice.client.model.Model
 import scalaomg.examples.roll_the_dice.client.view.View
+import scalaomg.examples.roll_the_dice.client._
 import scalaomg.examples.roll_the_dice.common.Team
 
-case class ControllerImpl() extends Controller with Subscriber {
+case class ControllerImpl(serverInfo: ServerInfo) extends Controller with Subscriber {
 
-  private val model = Model()
+  private val model = Model(serverInfo)
   private val view = View(this)
 
   subscribe()
@@ -66,7 +58,7 @@ case class ControllerImpl() extends Controller with Subscriber {
     case PubSubRoomState(newState) =>
       view updateState newState
     case PubSubSetupGame(assignedTurn, startingState, goalPoints) =>
-      view startGame (assignedTurn, startingState, goalPoints)
+      view startGame(assignedTurn, startingState, goalPoints)
     case PubSubNextTurn(newTurn) =>
       view changeTurn newTurn
     case PubSubWin(team) =>

@@ -17,22 +17,49 @@ import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.{FiniteDuration, _}
 import scala.language.postfixOps
 
+
 private[server] object ServerActor {
+  trait ServerCommand
 
-  sealed trait ServerEvent
+  /**
+   * Creates a room of the given type
+   *
+   * @param roomType   the type of room to create
+   * @param properties optional properties
+   */
+  case class CreateRoom(roomType: RoomType, properties: Set[RoomProperty] = Set.empty) extends ServerCommand
+  /**
+   * Start the server at the specified host an port
+   */
+  case class StartServer(host: String, port: Int) extends ServerCommand
+  /**
+   * Stop the server from handling requests
+   */
+  case object StopServer extends ServerCommand
 
-  case class CreateRoom(roomType: RoomType, properties: Set[RoomProperty] = Set.empty)
+  /**
+   * Add a route for a given type of room
+   *
+   * @param routeName route's name associated with the room
+   * @param room      room factory to create rooms
+   */
+  case class AddRoute(routeName: String, room: () => ServerRoom) extends ServerCommand
 
-  // Command
-  sealed trait Command extends ServerEvent
-  case class StartServer(host: String, port: Int) extends Command
-  case object StopServer extends Command
-  case class AddRoute(routeName: String, room: () => ServerRoom) extends Command
+  /**
+   * Add a route for matchmaking requests on a given room
+   *
+   * @param routeName  route's name associated with the room
+   * @param room       room factory to create room
+   * @param matchmaker the matchmaking strategy to use
+   * @tparam T the type of client informations used by the matchmaking strategy
+   */
   case class AddRouteForMatchmaking[T](routeName: String,
                                        room: () => ServerRoom,
-                                       matchmaker: Matchmaker[T]) extends Command
+                                       matchmaker: Matchmaker[T]) extends ServerCommand
 
-  // Server response
+  /**
+   * Responses to messages
+   */
   sealed trait ServerResponse
   case object Started extends ServerResponse
   case object Stopped extends ServerResponse
@@ -40,26 +67,44 @@ private[server] object ServerActor {
   case object RoomCreated extends ServerResponse
   case class ServerFailure(exception: Throwable) extends ServerResponse
 
-  // State error
+  /**
+   * Errors caused by commands received in an illegal state of the server
+   *
+   * @param msg the error message
+   */
   case class StateError(msg: String) extends ServerResponse
   object ServerAlreadyRunning extends StateError("Server already running")
   object ServerIsStarting extends StateError("Server is starting")
   object ServerAlreadyStopped extends StateError("Server already stopped")
   object ServerIsStopping extends StateError("Server is stopping")
 
-  // Internal message
-  private trait InternalMessage extends ServerEvent
+  /**
+   * Messages that are meant to be used internally by this actor.
+   */
+  private trait InternalMessage
   private case class ServerStarted(binding: Http.ServerBinding) extends InternalMessage
   private case object ServerStopped extends InternalMessage
 
-  private val DefaultDeadline: FiniteDuration = 3 seconds
+  /**
+   * Default termination deadline for pending connections
+   */
+  val DefaultDeadline: FiniteDuration = 3 seconds
 
+  /**
+   * Creates a server actor that can be start at a specified host and port
+   *
+   * @param terminationDeadline time for soft closing connections after the server is stopped. When this timeout expires all
+   *                            still pending connections are forcedly closed. If no para,eter is passed, it will
+   *                            automatically use [[scalaomg.server.core.ServerActor#DefaultDeadline]]
+   * @param additionalRoutes    additional routes that this server will use to handle requests
+   * @return
+   */
   def apply(terminationDeadline: FiniteDuration = DefaultDeadline, additionalRoutes: Route): Props =
     Props(classOf[ServerActor], terminationDeadline, additionalRoutes)
 }
 
 private class ServerActor(private val terminationDeadline: FiniteDuration,
-                  private val additionalRoutes: Route) extends Actor with Stash {
+                          private val additionalRoutes: Route) extends Actor with Stash {
   implicit val actorSystem: ActorSystem = context.system
   implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
 
@@ -108,11 +153,8 @@ private class ServerActor(private val terminationDeadline: FiniteDuration,
       replyTo ! Stopped
       context.become(receive)
       unstashAll()
-
     case StopServer => sender ! ServerIsStopping
-
     case StartServer(_, _) => stash()
-
     case Status.Failure(exception: Exception) =>
       replyTo ! ServerActor.ServerFailure(exception)
       context.become(serverRunning(binding) orElse roomHandling)
@@ -122,11 +164,9 @@ private class ServerActor(private val terminationDeadline: FiniteDuration,
     case AddRoute(roomType, room) =>
       this.routeService.addRouteForRoomType(roomType, room)
       sender ! RouteAdded
-
     case AddRouteForMatchmaking(roomType, room, matchmaker) =>
       this.routeService.addRouteForMatchmaking(roomType, room)(matchmaker)
       sender ! RouteAdded
-
     case CreateRoom(roomType, properties) =>
       this.roomHandler.createRoom(roomType, properties)
       sender ! RoomCreated

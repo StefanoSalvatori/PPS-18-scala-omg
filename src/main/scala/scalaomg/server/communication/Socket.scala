@@ -14,7 +14,7 @@ import scalaomg.server.utils.Timer
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.{FiniteDuration, _}
 
-object Socket {
+private[server] object Socket {
 
   /**
    * It defines a default overflow strategy. The default one is head dropping.
@@ -38,7 +38,7 @@ object Socket {
  * A web socket between a client and the server.
  * @tparam T the type of messages that flow on the socket
  */
-trait Socket[T] {
+private[server] trait Socket[T] {
 
   import Socket._
 
@@ -96,9 +96,9 @@ trait Socket[T] {
   private var heartbeatServiceActor: Option[ActorRef] = None
 
   /**
-   * Open the socket creating a flow that handle messages.
-   *
-   * @return a flow that handle messages sent and received from this socket
+   * Open the socket creating a flow that handle messages received and sent through it.
+   * @param materializer executor of the the stream pipeline of the socket
+   * @return the flow that handle messages sent and received from this socket
    */
   def open()(implicit materializer: Materializer): Flow[Message, Message, NotUsed] = {
     implicit val executor: ExecutionContextExecutor = materializer.executionContext

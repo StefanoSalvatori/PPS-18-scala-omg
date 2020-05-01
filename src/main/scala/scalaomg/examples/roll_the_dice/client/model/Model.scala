@@ -3,7 +3,7 @@ package scalaomg.examples.roll_the_dice.client.model
 import scalaomg.client.core.Client
 import scalaomg.client.room.JoinedRoom
 import scalaomg.examples.roll_the_dice.client.{LeavedMatchmaking, PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, PubSubWin, Publisher}
-import scalaomg.examples.roll_the_dice.common.{ClientInfo, MatchState, Team, Turn}
+import scalaomg.examples.roll_the_dice.common.{ClientInfo, MatchState, ServerInfo, Team, Turn}
 import scalaomg.examples.roll_the_dice.common.MessageDictionary.{NextTurn, Roll, StartGame, Win}
 
 import scala.concurrent.ExecutionContext
@@ -21,7 +21,7 @@ trait Model {
 }
 
 object Model {
-  def apply(): Model = new ModelImpl()
+  def apply(serverInfo: ServerInfo): Model = new ModelImpl(serverInfo)
 
   implicit def stateToPubSubMessage(state: MatchState): PubSubMessage = PubSubRoomState(state)
   implicit def setupGameToPubSubMessage(d: (Turn, MatchState, Int)): PubSubMessage = PubSubSetupGame(d._1, d._2, d._3)
@@ -29,11 +29,10 @@ object Model {
   implicit def winTeamToPubSubMessage(t: Team): PubSubMessage = PubSubWin(t)
 }
 
-class ModelImpl extends Model with Publisher {
+class ModelImpl(serverInfo: ServerInfo) extends Model with Publisher {
 
   implicit val executionContext: ExecutionContext = ExecutionContext.global
-  import scalaomg.examples.roll_the_dice.common.ServerConfig._
-  private val client = Client(host, port)
+  private val client = Client(serverInfo.host, serverInfo.port)
 
   val roomName = "matchRoom"
 

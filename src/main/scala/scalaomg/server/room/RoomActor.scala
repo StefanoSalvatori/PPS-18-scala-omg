@@ -1,9 +1,8 @@
 package scalaomg.server.room
 
 import akka.actor.{Actor, PoisonPill, Props, Timers}
-import scalaomg.common.communication.CommunicationProtocol.ProtocolMessageType._
-import scalaomg.common.communication.CommunicationProtocol.SessionId.SessionId
 import scalaomg.common.communication.CommunicationProtocol.ProtocolMessage
+import scalaomg.common.communication.CommunicationProtocol.ProtocolMessageType._
 import scalaomg.common.room.Room.RoomPassword
 import scalaomg.server.core.RoomHandler
 
@@ -13,7 +12,8 @@ private[server] object RoomActor {
 
   /**
    * It creates a room actor associated to a room.
-   * @param serverRoom the room associated to the actor
+   *
+   * @param serverRoom  the room associated to the actor
    * @param roomHandler the room handler that is charged to handle the room
    * @return [[akka.actor.Props]] needed to create the actor
    */
@@ -31,19 +31,51 @@ private[server] object RoomActor {
    */
   case class WorldUpdateTick(lastUpdate: Long)
 
-  // Command
+  /**
+   * Commands that directly affect the room associated with this actor
+   */
   sealed trait RoomCommand
-  case class Join(client: Client, sessionId: SessionId, password: RoomPassword) extends RoomCommand
+  /**
+   * Try add the given client to the room
+   *
+   * @param client   the client that is joining the room
+   * @param password the password provided by the client
+   */
+  case class Join(client: Client, password: RoomPassword) extends RoomCommand
+  /**
+   * Makes the give client leave the room
+   *
+   * @param client the client that wants to leave
+   */
   case class Leave(client: Client) extends RoomCommand
-  case class Reconnect(client: Client, sessionId: SessionId, password: RoomPassword) extends RoomCommand
+  /**
+   * Try to reconnect a client to the room
+   *
+   * @param client the client that wants to reconnect
+   */
+  case class Reconnect(client: Client) extends RoomCommand
+  /**
+   * Send a message to the room
+   *
+   * @param client  the client that sent the message
+   * @param payload the message itself
+   */
   case class Msg(client: Client, payload: Any) extends RoomCommand
+  /**
+   * Cose the room
+   */
   case object Close extends RoomCommand
 
+  /**
+   * Starts the automatic close timeout that close the room when expires
+   */
   case object StartAutoCloseTimeout
 
+  /**
+   * Messages that are meant to be used internally by this actor.
+   */
   private trait InternalMessage
   private case object AutoCloseRoom extends InternalMessage
-
   private case object AutoCloseRoomTimer
 }
 
@@ -56,9 +88,7 @@ private[server] class RoomActor(private val serverRoom: ServerRoom,
                                 private val roomHandler: RoomHandler) extends Actor with Timers {
 
   import RoomActor._
-
   implicit val executionContext: ExecutionContextExecutor = this.context.system.dispatcher
-
   serverRoom setRoomActor self
 
   override def preStart(): Unit = {
@@ -74,12 +104,12 @@ private[server] class RoomActor(private val serverRoom: ServerRoom,
   }
 
   override def receive: Receive = {
-    case Join(client, _, password) => // a client joins for the first time
+    case Join(client, password) =>
       this.timers cancel AutoCloseRoomTimer
       val joined = serverRoom tryAddClient(client, password)
       sender ! (if (joined) ProtocolMessage(JoinOk, client.id) else ProtocolMessage(ClientNotAuthorized, client.id))
 
-    case Reconnect(client, _, _) =>
+    case Reconnect(client) =>
       this.timers cancel AutoCloseRoomTimer
       val reconnected = serverRoom tryReconnectClient client
       sender ! (if (reconnected) ProtocolMessage(JoinOk, client.id) else ProtocolMessage(ClientNotAuthorized, client.id))

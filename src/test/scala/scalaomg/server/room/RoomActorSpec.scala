@@ -48,14 +48,14 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
 
   "A room actor" should {
     "allow clients to join" in {
-      roomActor ! Join(FakeClient_1, "", Room.DefaultPublicPassword)
+      roomActor ! Join(FakeClient_1, Room.DefaultPublicPassword)
       val res = expectMsgType[ProtocolMessage]
       res.messageType shouldBe JoinOk
       assert(room.connectedClients.contains(FakeClient_1))
     }
 
     "allow client to leave the room" in {
-      roomActor ! Join(FakeClient_1, "", Room.DefaultPublicPassword)
+      roomActor ! Join(FakeClient_1, Room.DefaultPublicPassword)
       val joinRed = expectMsgType[ProtocolMessage]
       joinRed.messageType shouldBe JoinOk
       roomActor ! Leave(FakeClient_1)
@@ -67,7 +67,7 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
 
     "allow client to reconnect to a room and respond JoinOk" in {
       val testClient = makeClient()
-      roomActor ! Join(testClient, "", Room.DefaultPublicPassword)
+      roomActor ! Join(testClient, Room.DefaultPublicPassword)
       val res = expectMsgType[ProtocolMessage]
       roomActor ! Leave(testClient)
       val leaveRes = expectMsgType[ProtocolMessage]
@@ -76,14 +76,14 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       room.allowReconnection(testClient, 5000) //scalastyle:ignore magic.number
       val fakeClient = makeClient(res.sessionId)
 
-      roomActor ! Reconnect(fakeClient, fakeClient.id, Room.DefaultPublicPassword)
+      roomActor ! Reconnect(fakeClient)
       val reconnectResponse = expectMsgType[ProtocolMessage]
       reconnectResponse.messageType shouldBe JoinOk
       assert(room.connectedClients.contains(testClient))
     }
 
     "respond ClientNotAuthorized on fail reconnection" in {
-      roomActor ! Join(FakeClient_1, "", Room.DefaultPublicPassword)
+      roomActor ! Join(FakeClient_1, Room.DefaultPublicPassword)
       val res = expectMsgType[ProtocolMessage]
       roomActor ! Leave(FakeClient_1)
       val leaveRes = expectMsgType[ProtocolMessage]
@@ -91,7 +91,7 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       //do not allow reconnection
       val fakeClient = makeClient(res.sessionId)
 
-      roomActor ! Reconnect(fakeClient, fakeClient.id, Room.DefaultPublicPassword)
+      roomActor ! Reconnect(fakeClient)
       val reconnectResponse = expectMsgType[ProtocolMessage]
       reconnectResponse.messageType shouldBe ClientNotAuthorized
     }
@@ -118,11 +118,11 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
     "not automatically close the room if a client is connected" in {
       val probe = TestProbe()
       probe watch roomActor
-      roomActor ! Join(FakeClient_1, "", Room.DefaultPublicPassword)
+      roomActor ! Join(FakeClient_1, Room.DefaultPublicPassword)
       val res = expectMsgType[ProtocolMessage]
       res.messageType shouldBe JoinOk
       Thread.sleep((room.autoCloseTimeout.toSeconds + 2 seconds).toMillis)
-      roomActor ! Join(FakeClient_2, "", Room.DefaultPublicPassword)
+      roomActor ! Join(FakeClient_2, Room.DefaultPublicPassword)
       val res2 = expectMsgType[ProtocolMessage]
       res2.messageType shouldBe JoinOk
     }
@@ -134,7 +134,7 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
       val probe = TestProbe()
       probe watch roomActor
       Thread.sleep((room.autoCloseTimeout.toSeconds + 2 seconds).toMillis)
-      roomActor ! Join(FakeClient_1, "", Room.DefaultPublicPassword)
+      roomActor ! Join(FakeClient_1, Room.DefaultPublicPassword)
       expectMsgType[ProtocolMessage]
     }
   }
