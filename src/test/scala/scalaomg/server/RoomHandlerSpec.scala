@@ -5,7 +5,7 @@ import akka.testkit.TestKit
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scalaomg.server.room.ServerRoom
-import scalaomg.common.room.RoomPropertyValueConversions._
+import scalaomg.common.room.RoomPropertyValue.Conversions._
 import scalaomg.common.room.{FilterOptions, RoomProperty}
 import org.scalatest.BeforeAndAfter
 import scalaomg.server.core.RoomHandler

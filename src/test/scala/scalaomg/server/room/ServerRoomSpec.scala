@@ -8,7 +8,7 @@ import scalaomg.common.communication.CommunicationProtocol.ProtocolMessage
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import scalaomg.common.room.RoomPropertyValueConversions._
+import scalaomg.common.room.RoomPropertyValue.Conversions._
 import scalaomg.common.room.{NoSuchPropertyException, Room, RoomProperty, RoomPropertyValue}
 import scalaomg.server.utils.TestClient
 

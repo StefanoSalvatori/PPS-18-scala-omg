@@ -9,7 +9,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scalaomg.server.routing_service.RoutingService
 import test_utils.ExampleRooms._
-import scalaomg.common.room.RoomPropertyValueConversions._
+import scalaomg.common.room.RoomPropertyValue.Conversions._
 import scalaomg.server.core.RoomHandler
 import scalaomg.server.matchmaking.{Matchmaker, MatchmakingHandler}
 

@@ -1,6 +1,6 @@
 package scalaomg.common.room
 
-import scalaomg.common.room.RoomPropertyValueConversions._
+import scalaomg.common.room.RoomPropertyValue.Conversions._
 import scalaomg.common.room.Room.RoomId
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec

@@ -1,6 +1,6 @@
 package scalaomg.client
 
-import scalaomg.common.room.RoomPropertyValueConversions._
+import scalaomg.common.room.RoomPropertyValue.Conversions._
 import scalaomg.common.room.{EqualStrategy, FilterOption, FilterOptions, FilterStrategy, GreaterStrategy, NotEqualStrategy, RoomProperty, RoomPropertyValue}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec

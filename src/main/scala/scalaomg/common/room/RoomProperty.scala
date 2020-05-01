@@ -18,7 +18,7 @@ case class NoSuchPropertyException(
                                   ) extends Exception(message, cause)
 
 /**
- * The value of a room property. It wraps a "common" value (i.e. Int, String, ...).
+ * The value of a room property. It wraps a "common" value (i.e. Int, String, Boolean, Double).
  */
 trait RoomPropertyValue { self =>
   /**
@@ -37,7 +37,7 @@ trait RoomPropertyValue { self =>
 object RoomPropertyValue {
 
   /**
-   * Getter of the real value of a [[RoomPropertyValue]] (i.e. Int, String...).
+   * Getter of the real value of a [[RoomPropertyValue]] (i.e. Int, String, Boolean, Double).
    * @param propertyValue the [[RoomPropertyValue]] to know the value
    * @return the real value of the property
    */
@@ -49,10 +49,10 @@ object RoomPropertyValue {
   }
 
   /**
-   * It creates a [[RoomPropertyValue]] from a "common" value (i.e. Int, String, ...)
+   * It creates a [[RoomPropertyValue]] from a "common" value (i.e. Int, String, Boolean, Double).
    * @param value the value to be wrapped by the room property
    * @tparam T the type of the value to be wrapped
-   * @return a [[RoomPropertyValue]] that incapsulates the input value
+   * @return a [[RoomPropertyValue]] that embeds the input value
    */
   // Useful when we can't directly instantiate the property value since we don't know the type of the value
   def propertyValueFrom[T](value: T): RoomPropertyValue = value match {
@@ -60,6 +60,39 @@ object RoomPropertyValue {
     case v: String => StringRoomPropertyValue(v)
     case v: Boolean => BooleanRoomPropertyValue(v)
     case v: Double => DoubleRoomPropertyValue(v)
+  }
+
+  /**
+   * Implicit converters from a real value to a [[RoomPropertyValue]] that wraps it.
+   */
+  object Conversions {
+    /**
+     * [[IntRoomPropertyValue]] converter.
+     * @param value the Int value to be wrapped
+     * @return a [[IntRoomPropertyValue]] that wraps the input value
+     */
+    implicit def intToIntProperty(value: Int): IntRoomPropertyValue = IntRoomPropertyValue(value)
+
+    /**
+     * [[StringRoomPropertyValue]] converter.
+     * @param value the String value to be wrapped
+     * @return a [[StringRoomPropertyValue]] that wraps the input value
+     */
+    implicit def stringToStringProperty(value: String): StringRoomPropertyValue = StringRoomPropertyValue(value)
+
+    /**
+     * [[BooleanRoomPropertyValue]] converter.
+     * @param value the Boolean value to be wrapped
+     * @return a [[BooleanRoomPropertyValue]] that wraps the input value
+     */
+    implicit def booleanToBooleanProperty(value: Boolean): BooleanRoomPropertyValue = BooleanRoomPropertyValue(value)
+
+    /**
+     * [[DoubleRoomPropertyValue]] converter.
+     * @param value the Double value to be wrapped
+     * @return a [[DoubleRoomPropertyValue]] that wraps the input value
+     */
+    implicit def DoubleToBooleanProperty(value: Double): DoubleRoomPropertyValue = DoubleRoomPropertyValue(value)
   }
 }
 
@@ -93,37 +126,4 @@ case class BooleanRoomPropertyValue(value: Boolean) extends RoomPropertyValue {
  */
 case class DoubleRoomPropertyValue(value: Double) extends RoomPropertyValue {
   override def compare(that: this.type): Int = this.value compareTo that.value
-}
-
-/**
- * Implicit converters from a real value to a [[RoomPropertyValue]] that wraps it.
- */
-object RoomPropertyValueConversions {
-  /**
-   * [[IntRoomPropertyValue]] converter.
-   * @param value the Int value to be wrapped
-   * @return a [[IntRoomPropertyValue]] that wraps the input value
-   */
-  implicit def intToIntProperty(value: Int): IntRoomPropertyValue = IntRoomPropertyValue(value)
-
-  /**
-   * [[StringRoomPropertyValue]] converter.
-   * @param value the String value to be wrapped
-   * @return a [[StringRoomPropertyValue]] that wraps the input value
-   */
-  implicit def stringToStringProperty(value: String): StringRoomPropertyValue = StringRoomPropertyValue(value)
-
-  /**
-   * [[BooleanRoomPropertyValue]] converter.
-   * @param value the Boolean value to be wrapped
-   * @return a [[BooleanRoomPropertyValue]] that wraps the input value
-   */
-  implicit def booleanToBooleanProperty(value: Boolean): BooleanRoomPropertyValue = BooleanRoomPropertyValue(value)
-
-  /**
-   * [[DoubleRoomPropertyValue]] converter.
-   * @param value the Double value to be wrapped
-   * @return a [[DoubleRoomPropertyValue]] that wraps the input value
-   */
-  implicit def DoubleToBooleanProperty(value: Double): DoubleRoomPropertyValue = DoubleRoomPropertyValue(value)
 }

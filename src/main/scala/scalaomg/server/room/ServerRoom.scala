@@ -277,7 +277,7 @@ object ServerRoom {
     }
 
     // Add public/private state to room properties
-    import scalaomg.common.room.RoomPropertyValueConversions._
+    import scalaomg.common.room.RoomPropertyValue.Conversions._
     runtimeOnlyProperties = runtimeOnlyProperties + RoomProperty(Room.RoomPrivateStatePropertyName, room.isPrivate)
 
     SharedRoom(room.roomId, runtimeOnlyProperties)
