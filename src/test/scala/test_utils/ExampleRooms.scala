@@ -1,7 +1,7 @@
 package test_utils
 
-import server.communication.ConnectionConfigurations
-import server.room._
+import scalaomg.server.communication.ConnectionConfigurations
+import scalaomg.server.room._
 
 /**
  * Rooms used for testing purpose.
@@ -175,11 +175,11 @@ object ExampleRooms {
 
     override def onClose(): Unit = {}
 
-    override def onJoin(client: server.room.Client): Unit = {}
+    override def onJoin(client: scalaomg.server.room.Client): Unit = {}
 
-    override def onLeave(client: server.room.Client): Unit = {}
+    override def onLeave(client: scalaomg.server.room.Client): Unit = {}
 
-    override def onMessageReceived(client: server.room.Client, message: Any): Unit = {}
+    override def onMessageReceived(client: scalaomg.server.room.Client, message: Any): Unit = {}
 
     override def joinConstraints: Boolean = {
       true
