@@ -8,7 +8,7 @@ import javafx.{event => jfxEvent, fxml => jfxf}
 import javafx.{scene => jfxs}
 
 class GameEndController {
-  @jfxf.FXML private var labelGameResult: Label = _
+  @jfxf.FXML private val labelGameResult: Label = _
 
   def init(gameState: String): Unit = {
     gameState match {

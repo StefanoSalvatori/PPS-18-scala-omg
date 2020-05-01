@@ -42,10 +42,10 @@ object Entities {
 
   implicit val playerOrder: Ordering[Player] = (x: Player, y: Player) => x.points - y.points
   @SerialVersionUID(1234L) // scalastyle:ignore magic.number
-  case class Player(id: Int, position: Position, points: Int) extends Entity with java.io.Serializable
+  case class Player(id: Int, override val position: Position, points: Int) extends Entity with java.io.Serializable
 
   @SerialVersionUID(23532L) // scalastyle:ignore magic.number
-  case class Coin(position: Position, value: Int) extends Entity with java.io.Serializable
+  case class Coin(override val position: Position, value: Int) extends Entity with java.io.Serializable
 
   //hunters need to have a (double,double) position since they can move fraction of tiles
   @SerialVersionUID(45632L) // scalastyle:ignore magic.number

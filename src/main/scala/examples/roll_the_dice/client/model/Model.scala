@@ -40,7 +40,7 @@ class ModelImpl extends Model with Publisher {
   private var room: JoinedRoom = _
 
   import Model._
-  def start(): Unit = publish(MatchState())
+  override def start(): Unit = publish(MatchState())
 
   override def joinGameWithMatchmaking(desiredTeam: Team): Unit =
     client.matchmaker joinMatchmaking (roomName, ClientInfo(desiredTeam)) onComplete {

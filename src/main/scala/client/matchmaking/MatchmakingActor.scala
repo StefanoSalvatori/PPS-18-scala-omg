@@ -12,7 +12,7 @@ import common.room.Room.RoomType
 import scala.util.{Failure, Success}
 
 /**
- * Handles the connection with the serverside matchmaker .
+ * Handles the connection with the server side matchmaker .
  * Notify the client when the match is created
  */
 private[client] sealed trait MatchmakingActor extends SocketActor[ProtocolMessage]

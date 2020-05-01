@@ -7,6 +7,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
+<!--suppress ALL -->
 <BorderPane maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0"
             xmlns="http://javafx.com/javafx/8.0.181"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="examples.rock_paper_scissor.client.HomeController">
@@ -41,7 +42,7 @@
 
     </center>
     <bottom>
-        <Label fx:id="labelStatus" text="" BorderPane.alignment="CENTER" />
+        <Label fx:id="labelStatus" BorderPane.alignment="CENTER" />
     </bottom>
 
 </BorderPane>

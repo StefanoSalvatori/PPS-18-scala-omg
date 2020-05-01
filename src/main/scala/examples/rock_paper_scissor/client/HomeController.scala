@@ -15,14 +15,14 @@ class HomeController {
   private val Host = "localhost"
   private val Port = 8080
 
-  @jfxf.FXML private var btnNewGame: Button = _
-  @jfxf.FXML private var labelStatus: Label = _
-  @jfxf.FXML private var vboxMenuButtons: VBox = _
+  @jfxf.FXML private val btnNewGame: Button = _
+  @jfxf.FXML private val labelStatus: Label = _
+  @jfxf.FXML private val vboxMenuButtons: VBox = _
 
   private val client: Client = Client(Host, Port)
 
 
-  private def goToMatchScene(room: JoinedRoom, gameMode: String) = {
+  private def goToMatchScene(room: JoinedRoom, gameMode: String): Unit = {
     Platform.runLater {
       val loader = new jfxf.FXMLLoader(getClass.getResource("./resources/match.fxml"))
       val root: jfxs.Parent = loader.load()
