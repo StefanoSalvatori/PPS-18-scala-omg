@@ -260,7 +260,7 @@ object ServerRoom {
    * @tparam T type of the room that extends ServerRoom
    * @return the created SharedRoom
    */
-  implicit def serverRoomToSharedRoom[T <: ServerRoom]: T => SharedRoom = room => {
+  private[server] implicit def serverRoomToSharedRoom[T <: ServerRoom]: T => SharedRoom = room => {
 
     // Calculate properties of the room
     var runtimeOnlyProperties = propertyDifferenceFrom(room)
@@ -288,7 +288,7 @@ object ServerRoom {
    * @tparam T type of custom rooms that extend ServerRoom
    * @return A sequence of SharedRoom, where each element is the corresponding one mapped from the input sequence
    */
-  implicit def serverRoomSeqToSharedRoomSeq[T <: ServerRoom]: Seq[T] => Seq[SharedRoom] = _ map serverRoomToSharedRoom
+  private[server] implicit def serverRoomSeqToSharedRoomSeq[T <: ServerRoom]: Seq[T] => Seq[SharedRoom] = _ map serverRoomToSharedRoom
 
   /**
    * From a given room, it calculates properties not in common with a basic server room.
@@ -297,7 +297,7 @@ object ServerRoom {
    * @param runtimeRoom the room with its own custom properties
    * @return the set of property of the custom room that are not shared with the basic server room
    */
-  def propertyDifferenceFrom[T <: ServerRoom](runtimeRoom: T): Set[RoomProperty] = {
+  private[server] def propertyDifferenceFrom[T <: ServerRoom](runtimeRoom: T): Set[RoomProperty] = {
     val serverRoomProperties = ServerRoom.defaultProperties
     val runtimeProperties = runtimeRoom.properties
     val runtimeOnlyPropertyNames = runtimeProperties.map(_ name) &~ serverRoomProperties.map(_ name)
@@ -327,7 +327,7 @@ object ServerRoom {
    *
    * @return a set containing the defined properties
    */
-  def defaultProperties: Set[RoomProperty] = ServerRoom().properties // Create an instance of ServerRoom and get properties
+  private[server] def defaultProperties: Set[RoomProperty] = ServerRoom().properties // Create an instance of ServerRoom and get properties
 
   private case class PairRoomProperty[T](name: String, value: T)
 

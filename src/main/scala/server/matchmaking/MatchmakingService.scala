@@ -8,7 +8,7 @@ import server.core.RoomHandler
 import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue}
 import server.room.Client
 
-object MatchmakingService {
+private[server] object MatchmakingService {
 
   trait MatchmakingRequest
   case class JoinQueue[T](client: Client, clientInfo: T) extends MatchmakingRequest
@@ -24,7 +24,7 @@ object MatchmakingService {
  * @param roomType    teh type of room that will be created
  * @param roomHandler the room handler where to spawn the room
  */
-class MatchmakingService[T](private val matchmaker: Matchmaker[T],
+private class MatchmakingService[T](private val matchmaker: Matchmaker[T],
                             private val roomType: RoomType,
                             private val roomHandler: RoomHandler) extends Actor {
 

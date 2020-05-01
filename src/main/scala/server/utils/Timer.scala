@@ -5,7 +5,7 @@ import java.util.TimerTask
 /**
  * Utility class used to wrap a [[java.util.Timer]]
  */
-sealed trait Timer {
+private[server] sealed trait Timer {
 
   /**
    * Schedule a given task at a fixed rate. The task will be added to a task queue if other scheduled tasks are running
@@ -30,7 +30,7 @@ sealed trait Timer {
   def stopTimer(): Unit
 }
 
-object Timer {
+private[server] object Timer {
 
   /**
    * It creates a simple timer.

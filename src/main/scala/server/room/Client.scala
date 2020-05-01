@@ -5,7 +5,7 @@ import akka.actor.ActorRef
 /**
  * Minimal interface for a client communication channel. It must have an Id and a send method.
  */
-trait Client {
+private[server] trait Client {
 
   /**
    * Client identifier.
@@ -26,7 +26,7 @@ trait Client {
   override def hashCode(): Int = super.hashCode()
 }
 
-object Client {
+private[server] object Client {
 
   /**
    * Creates a client that echoes messages to a specific actor.

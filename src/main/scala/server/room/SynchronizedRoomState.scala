@@ -54,7 +54,7 @@ trait SynchronizedRoomState[T <: SocketSerializable] extends ServerRoom {
 
 }
 
-object SynchronizedRoomState {
+private[server] object SynchronizedRoomState {
 
   // Example room with empty behavior
   private case class BasicServerRoomWithSynchronizedState() extends ServerRoom with SynchronizedRoomState[Integer] {

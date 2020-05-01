@@ -8,7 +8,7 @@ import common.room.Room.RoomType
 import server.communication.MatchmakingSocket
 import server.core.RoomHandler
 
-trait MatchmakingHandler {
+private[server] trait MatchmakingHandler {
 
   /**
    * Define a new matchmaker for the room type
@@ -26,13 +26,13 @@ trait MatchmakingHandler {
 
 }
 
-object MatchmakingHandler {
+private[server] object MatchmakingHandler {
   def apply(roomHandler: RoomHandler) (implicit actorSystem: ActorSystem): MatchmakingHandler =
     new MatchmakingHandlerImpl(roomHandler)
 }
 
 
-class MatchmakingHandlerImpl(private val roomHandler: RoomHandler)
+private class MatchmakingHandlerImpl(private val roomHandler: RoomHandler)
                             (implicit actorSystem: ActorSystem) extends MatchmakingHandler {
   private var matchmakers: Map[RoomType, ActorRef] = Map()
 

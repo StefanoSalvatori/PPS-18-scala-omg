@@ -1,6 +1,6 @@
 package server.room
 
-trait PrivateRoomSupport {
+private[server] trait PrivateRoomSupport {
 
   import common.room.Room
   import common.room.Room.RoomPassword
@@ -35,7 +35,7 @@ trait PrivateRoomSupport {
     password == Room.DefaultPublicPassword || password == providedPassword
 }
 
-trait RoomLockingSupport {
+private[server] trait RoomLockingSupport {
 
   private var _isLocked = false
 
@@ -57,7 +57,7 @@ trait RoomLockingSupport {
   def unlock(): Unit = _isLocked = false
 }
 
-trait MatchmakingSupport {
+private[server] trait MatchmakingSupport {
 
   import server.matchmaking.Group.GroupId
   private var _matchmakingGroups: Map[Client, GroupId] = Map.empty
@@ -81,7 +81,7 @@ trait MatchmakingSupport {
   def isMatchmakingEnabled: Boolean = _matchmakingGroups.nonEmpty
 }
 
-trait ReconnectionSupport { self: ServerRoom =>
+private[server] trait ReconnectionSupport { self: ServerRoom =>
 
   import common.communication.CommunicationProtocol.ProtocolMessage
   import common.communication.CommunicationProtocol.ProtocolMessageType.{ClientNotAuthorized, JoinOk}

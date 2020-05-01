@@ -10,7 +10,7 @@ import server.communication.RoomSocket
 import server.matchmaking.Group.GroupId
 import server.room.{Client, RoomActor, ServerRoom}
 
-sealed trait RoomHandler {
+private[server] sealed trait RoomHandler {
 
   /**
    * Create a new room of specific type with properties.
@@ -85,7 +85,7 @@ sealed trait RoomHandler {
   def handleClientConnection(roomId: RoomId): Option[Flow[Message, Message, Any]]
 }
 
-object RoomHandler {
+private[server] object RoomHandler {
 
   /**
    * It creates a room handler
@@ -95,7 +95,7 @@ object RoomHandler {
   def apply()(implicit actorSystem: ActorSystem): RoomHandler = RoomHandlerImpl()
 }
 
-case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandler {
+private case class RoomHandlerImpl(implicit actorSystem: ActorSystem) extends RoomHandler {
 
   import scala.collection.concurrent.{Map => SynchronizedMap, TrieMap}
   import scala.collection.mutable.{Map => MutableMap}

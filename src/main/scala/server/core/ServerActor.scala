@@ -17,7 +17,7 @@ import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.{FiniteDuration, _}
 import scala.language.postfixOps
 
-object ServerActor {
+private[server] object ServerActor {
 
   sealed trait ServerEvent
 
@@ -58,7 +58,7 @@ object ServerActor {
     Props(classOf[ServerActor], terminationDeadline, additionalRoutes)
 }
 
-class ServerActor(private val terminationDeadline: FiniteDuration,
+private class ServerActor(private val terminationDeadline: FiniteDuration,
                   private val additionalRoutes: Route) extends Actor with Stash {
   implicit val actorSystem: ActorSystem = context.system
   implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher

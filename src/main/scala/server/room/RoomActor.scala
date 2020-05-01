@@ -9,7 +9,7 @@ import server.core.RoomHandler
 
 import scala.concurrent.ExecutionContextExecutor
 
-object RoomActor {
+private[server] object RoomActor {
 
   /**
    * It creates a room actor associated to a room.
@@ -52,7 +52,7 @@ object RoomActor {
  *
  * @param serverRoom the room linked with this actor
  */
-class RoomActor(private val serverRoom: ServerRoom,
+private[server] class RoomActor(private val serverRoom: ServerRoom,
                 private val roomHandler: RoomHandler) extends Actor with Timers {
 
   import RoomActor._

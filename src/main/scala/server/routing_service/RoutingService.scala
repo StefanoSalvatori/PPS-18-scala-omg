@@ -9,7 +9,7 @@ import server.core.RoomHandler
 import server.matchmaking.{Matchmaker, MatchmakingHandler}
 import server.room.ServerRoom
 
-sealed trait RoutingService {
+private[server] sealed trait RoutingService {
 
   /**
    * Main route
@@ -33,7 +33,7 @@ sealed trait RoutingService {
   def addRouteForMatchmaking[T](roomTypeName: String, roomFactory: () => ServerRoom)(matchmaker: Matchmaker[T])
 }
 
-object RoutingService {
+private[server] object RoutingService {
 
   /**
    * It creates a routing service.
@@ -45,8 +45,7 @@ object RoutingService {
     new RoutingServiceImpl(roomHandler, matchmakerHandler)
 }
 
-
-class RoutingServiceImpl(private val roomHandler: RoomHandler,
+private class RoutingServiceImpl(private val roomHandler: RoomHandler,
                          private val matchmakingHandler: MatchmakingHandler
                         ) extends RoutingService with RoomJsonSupport {
 

@@ -45,7 +45,7 @@ trait GameLoop extends ServerRoom {
   }
 }
 
-object GameLoop {
+private[server] object GameLoop {
 
   // Example room with empty behavior
   private case class BasicServerRoomWithGameLoop() extends ServerRoom with GameLoop {
