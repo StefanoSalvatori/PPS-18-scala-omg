@@ -104,7 +104,7 @@ private class ClientMatchmakerImpl(private val coreClient: ActorRef,
     }
   }
 
-  private def removeMatchmakingConnection(roomType: RoomType) = {
+  private def removeMatchmakingConnection(roomType: RoomType): Unit = {
     this.promises = this.promises - roomType
     this.matchmakingConnections(roomType) ! PoisonPill
     this.matchmakingConnections = this.matchmakingConnections - roomType

@@ -14,7 +14,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import server.room.{RoomActor, ServerRoom}
-import server.{RoomHandler, communication}
+import server.communication
+import server.core.RoomHandler
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Promise}

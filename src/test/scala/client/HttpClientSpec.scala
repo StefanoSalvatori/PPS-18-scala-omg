@@ -10,9 +10,10 @@ import common.http.Routes
 import common.room.{FilterOptions, SharedRoom}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpecLike
-import server.GameServer
+import server.core.GameServer
 import server.room.ServerRoom
 import test_utils.TestConfig
+
 import scala.concurrent.Await
 
 class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))

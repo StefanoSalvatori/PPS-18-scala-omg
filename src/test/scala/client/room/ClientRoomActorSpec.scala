@@ -2,35 +2,20 @@ package client.room
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
-<<<<<<< HEAD
-import client.CoreClient
-=======
+import server.core.GameServer
 import client.core.CoreClient
->>>>>>> upstream/develop
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
 import common.communication.CommunicationProtocol.ProtocolMessage
 import common.communication.CommunicationProtocol.ProtocolMessageType._
-<<<<<<< HEAD
-import common.communication.CommunicationProtocol.ProtocolMessage
-=======
->>>>>>> upstream/develop
 import common.http.Routes
 import common.room.Room
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.GameServer
-<<<<<<< HEAD
-import test_utils.TestConfig
-import test_utils.ExampleRooms._
-
-import scala.concurrent.duration._
-=======
 import test_utils.ExampleRooms.ClosableRoomWithState
-import test_utils.ExampleRooms.ClosableRoomWithState._
-import test_utils.{ExampleRooms, TestConfig}
->>>>>>> upstream/develop
+import test_utils.TestConfig
+
 import scala.concurrent.{Await, ExecutionContext, Promise}
 import scala.util.{Success, Try}
 
@@ -53,21 +38,12 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
 
 
   before {
-<<<<<<< HEAD
-    coreClient = system actorOf CoreClient(serverUri)
-    gameServer = GameServer(serverAddress, serverPort)
+    coreClient = system actorOf CoreClient(ServerUri)
+    gameServer = GameServer(ServerAddress, ServerPort)
     gameServer.defineRoom(ClosableRoomWithState.name, ClosableRoomWithState.apply)
     Await.ready(gameServer.start(), DefaultDuration)
 
     coreClient ! CreatePublicRoom(ClosableRoomWithState.name, Set.empty)
-=======
-    coreClient = system actorOf CoreClient(ServerUri)
-    gameServer = GameServer(ServerAddress, ServerPort)
-    gameServer.defineRoom(Name, () => ExampleRooms.ClosableRoomWithState())
-    Await.ready(gameServer.start(), DefaultDuration)
-
-    coreClient ! CreatePublicRoom(Name, Set.empty)
->>>>>>> upstream/develop
     val room = expectMsgType[Success[ClientRoom]]
     clientRoomActor = system actorOf ClientRoomActor(coreClient, ServerUri, room.value)
   }
@@ -148,16 +124,9 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
       val close = Promise[Boolean]()
       clientRoomActor ! OnCloseCallback(() => close.success(true))
 
-<<<<<<< HEAD
-      (0 until messagesCount).foreach(_ => {
-        clientRoomActor ! SendStrictMessage("ping")
-        Thread.sleep(10) //scalastyle:ignore magic.number
-      })
-      val received = Await.result(allReceived.future, 10 seconds)
-=======
       clientRoomActor ! SendJoin(None, Room.DefaultPublicPassword)
       expectMsgType[Try[Any]]
->>>>>>> upstream/develop
+
 
       clientRoomActor ! SendStrictMessage(ClosableRoomWithState.CloseRoomMessage)
       Await.result(close.future, DefaultTimeout)

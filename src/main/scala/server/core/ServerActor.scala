@@ -1,4 +1,4 @@
-package server
+package server.core
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props, Stash, Status}
 import akka.http.scaladsl.Http
@@ -8,6 +8,7 @@ import akka.pattern.pipe
 import akka.stream.scaladsl.Sink
 import common.room.Room.RoomType
 import common.room.RoomProperty
+import server.core.ServerActor._
 import server.matchmaking.{Matchmaker, MatchmakingHandler}
 import server.room.ServerRoom
 import server.routing_service.RoutingService
@@ -59,8 +60,6 @@ object ServerActor {
 
 class ServerActor(private val terminationDeadline: FiniteDuration,
                   private val additionalRoutes: Route) extends Actor with Stash {
-
-  import server.ServerActor._
   implicit val actorSystem: ActorSystem = context.system
   implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
 

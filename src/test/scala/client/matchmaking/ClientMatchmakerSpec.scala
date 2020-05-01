@@ -9,7 +9,7 @@ import common.http.Routes
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.GameServer
+import server.core.GameServer
 import server.matchmaking.Matchmaker
 import server.room.ServerRoom
 import test_utils.TestConfig
@@ -127,5 +127,5 @@ class ClientMatchmakerSpec extends AnyWordSpecLike
   }
 }
 
-@SerialVersionUID(12345L)
+@SerialVersionUID(12345L) // scalastyle:ignore magic.number
 private[this] case class ClientInfo(a: Int) extends java.io.Serializable

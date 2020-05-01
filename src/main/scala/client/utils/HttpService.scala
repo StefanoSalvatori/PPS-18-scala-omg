@@ -9,18 +9,12 @@ import akka.pattern.pipe
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import client.utils.MessageDictionary._
-import common.communication.CommunicationProtocol.ProtocolMessageType.ProtocolMessageType
-import common.communication.CommunicationProtocol.SessionId.SessionId
 import common.communication.SocketSerializer
 import common.http.{HttpRequests, Routes}
 import common.room.{RoomJsonSupport, SharedRoom}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-
-
-
-
 
 /**
  * Service that handle http protocol.

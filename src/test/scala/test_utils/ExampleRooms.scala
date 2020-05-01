@@ -9,7 +9,6 @@ import server.room._
 object ExampleRooms {
 
   object RoomWithState {
-<<<<<<< HEAD
     def apply(): RoomWithState = new RoomWithState()
     val name = "roomWithState"
     val UpdateRate = 100 //milliseconds
@@ -17,13 +16,6 @@ object ExampleRooms {
   }
 
   class RoomWithState() extends ServerRoom with SynchronizedRoomState[Integer] {
-=======
-    val Name = "roomWithState"
-    val UpdateRate = 100 //milliseconds
-    val RoomInitialState: Int = 0
-  }
-  case class RoomWithState() extends ServerRoom with SynchronizedRoomState[Integer] {
->>>>>>> upstream/develop
     private var internalState = RoomWithState.RoomInitialState
     override val stateUpdateRate: Int = RoomWithState.UpdateRate
     override def onCreate(): Unit = {}
@@ -37,7 +29,6 @@ object ExampleRooms {
     def changeState(newState: Int): Unit = this.internalState = newState
   }
 
-<<<<<<< HEAD
   //_________________________________________________
 
   object RoomWithGameLoop {
@@ -48,14 +39,6 @@ object ExampleRooms {
   }
 
   class RoomWithGameLoop() extends ServerRoom with GameLoop {
-=======
-  object RoomWithGameLoop {
-    val Name = "roomWithGameLoop"
-    val initialState = 0
-    val updateRate = 100 // millis
-  }
-  case class RoomWithGameLoop() extends ServerRoom with GameLoop {
->>>>>>> upstream/develop
 
     private var count = RoomWithGameLoop.initialState
     override val worldUpdateRate: Int = RoomWithGameLoop.updateRate
@@ -83,7 +66,6 @@ object ExampleRooms {
     var receivedTicks: Int = 0
   }
 
-<<<<<<< HEAD
   //__________________________________________________
 
   object RoomWithReconnection {
@@ -92,12 +74,7 @@ object ExampleRooms {
   }
 
   class RoomWithReconnection() extends ServerRoom {
-=======
-  object RoomWithReconnection {
-    val Name = "roomWithReconnection"
-  }
-  case class RoomWithReconnection() extends ServerRoom {
->>>>>>> upstream/develop
+
     private val ReconnectionTime = 10 //s
     override def onCreate(): Unit = {}
 
@@ -114,28 +91,19 @@ object ExampleRooms {
     override def joinConstraints: Boolean = true
   }
 
-<<<<<<< HEAD
   //________________________________________________
 
   object ClosableRoomWithState {
     def apply(): ClosableRoomWithState = new ClosableRoomWithState()
     val name = "closableRoomWithState"
-=======
-  object ClosableRoomWithState {
-    val Name = "closableRoomWithState"
->>>>>>> upstream/develop
     val ChangeStateMessage = "changeState"
     val CloseRoomMessage = "close"
     val PingMessage = "ping"
     val PongResponse = "pong"
   }
-<<<<<<< HEAD
 
   class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
-=======
-  case class ClosableRoomWithState() extends ServerRoom with SynchronizedRoomState[String] {
 
->>>>>>> upstream/develop
     import ClosableRoomWithState._
 
     import scala.concurrent.duration._
@@ -165,7 +133,6 @@ object ExampleRooms {
 
   }
 
-<<<<<<< HEAD
   //________________________________________________
 
   object NoPropertyRoom {
@@ -174,12 +141,6 @@ object ExampleRooms {
   }
 
   class NoPropertyRoom() extends ServerRoom {
-=======
-  object NoPropertyRoom {
-    val Name = "noProperty"
-  }
-  case class NoPropertyRoom() extends ServerRoom {
->>>>>>> upstream/develop
 
     override def onCreate(): Unit = {}
 
@@ -196,7 +157,6 @@ object ExampleRooms {
     }
   }
 
-<<<<<<< HEAD
   //________________________________________________
 
   object RoomWithProperty {
@@ -204,16 +164,10 @@ object ExampleRooms {
     val name = "roomWithProperty"
   }
 
-  class RoomWithProperty() extends ServerRoom {
-=======
-  object RoomWithProperty {
-    val Name = "roomWithProperty"
-  }
   //noinspection ScalaUnusedSymbol
   case class RoomWithProperty() extends ServerRoom {
->>>>>>> upstream/develop
 
-    @RoomPropertyMarker private val a: Int = 0 //noinspection unused
+    @RoomPropertyMarker private val a: Int = 0
     @RoomPropertyMarker private val b: String = "abc"
     private val c: Int = 0
 
@@ -232,7 +186,7 @@ object ExampleRooms {
     }
   }
 
-<<<<<<< HEAD
+
   // ____________________________________________________________________
 
   object RoomWithProperty2 {
@@ -240,14 +194,8 @@ object ExampleRooms {
     val name = "roomWithProperty2"
   }
 
-  class RoomWithProperty2() extends ServerRoom {
-=======
-  object RoomWithProperty2 {
-    val Name = "roomWithProperty2"
-  }
   //noinspection ScalaUnusedSymbol
-  case class RoomWithProperty2() extends ServerRoom {
->>>>>>> upstream/develop
+  class RoomWithProperty2() extends ServerRoom {
 
     @RoomPropertyMarker private var a: Int = 1
     @RoomPropertyMarker private var b: String = "a"
@@ -267,7 +215,6 @@ object ExampleRooms {
     override def joinConstraints: Boolean = true
   }
 
-<<<<<<< HEAD
   // ___________________________________________________________________
 
   object LockableRoom {
@@ -278,13 +225,6 @@ object ExampleRooms {
   }
 
   class LockableRoom(private val _isLocked: Boolean) extends ServerRoom {
-=======
-  object LockableRoom {
-    val LockedRoomType = "lockedRoom"
-    val UnlockedRoomType = "unlockedRoom"
-  }
-  case class LockableRoom(private val _isLocked: Boolean) extends ServerRoom {
->>>>>>> upstream/develop
 
     override def onCreate(): Unit = {}
 
@@ -298,8 +238,4 @@ object ExampleRooms {
 
     override def isLocked: Boolean = _isLocked
   }
-<<<<<<< HEAD
-=======
-
->>>>>>> upstream/develop
 }

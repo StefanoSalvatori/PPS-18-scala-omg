@@ -8,6 +8,7 @@ import server.room.ServerRoom
 import common.room.RoomPropertyValueConversions._
 import common.room.{FilterOptions, RoomProperty}
 import org.scalatest.BeforeAndAfter
+import server.core.RoomHandler
 import server.routes.RouteCommonTestOptions
 import test_utils.ExampleRooms._
 
@@ -25,13 +26,8 @@ class RoomHandlerSpec extends AnyFlatSpec
 
   before {
     roomHandler = RoomHandler()
-<<<<<<< HEAD
     roomHandler defineRoomType(RoomWithProperty.name, RoomWithProperty.apply)
     roomHandler defineRoomType(RoomWithProperty2.name, RoomWithProperty2.apply)
-=======
-    roomHandler defineRoomType(RoomWithProperty.Name, RoomWithProperty.apply)
-    roomHandler defineRoomType(RoomWithProperty2.Name, RoomWithProperty2.apply)
->>>>>>> upstream/develop
     roomHandler defineRoomType (roomType1, () => ServerRoom())
     this.roomHandler.defineRoomType(roomType2, () => ServerRoom())
   }
@@ -71,7 +67,6 @@ class RoomHandlerSpec extends AnyFlatSpec
   }
 
   it should "not return rooms by type that does not match filters" in {
-<<<<<<< HEAD
     roomHandler createRoom RoomWithProperty.name
     val property = RoomProperty("a", 0)
     roomHandler.roomsByType(RoomWithProperty.name, FilterOptions just property =:= 1) should have size 0
@@ -79,26 +74,13 @@ class RoomHandlerSpec extends AnyFlatSpec
 
   "An empty filter" should "not affect any room" in {
     roomHandler createRoom RoomWithProperty.name
-=======
-    roomHandler createRoom RoomWithProperty.Name
-    val property = RoomProperty("a", 0)
-    roomHandler.roomsByType(RoomWithProperty.Name, FilterOptions just property =:= 1) should have size 0
-  }
-
-  "An empty filter" should "not affect any room" in {
-    roomHandler createRoom RoomWithProperty.Name
->>>>>>> upstream/develop
     roomHandler.availableRooms() should have size 1
     val filteredRooms = roomHandler.availableRooms()
     filteredRooms should have size 1
   }
 
   "If no room can pass the filter, it" should "return an empty set" in {
-<<<<<<< HEAD
     roomHandler createRoom RoomWithProperty.name
-=======
-    roomHandler createRoom RoomWithProperty.Name
->>>>>>> upstream/develop
     val testProperty = RoomProperty("a", 0)
     val filter = FilterOptions just testProperty =:= 10
     val filteredRooms = roomHandler.availableRooms(filter)
@@ -109,20 +91,12 @@ class RoomHandlerSpec extends AnyFlatSpec
     val testProperty = RoomProperty("c", true)
     val filter = FilterOptions just testProperty =:= true
 
-<<<<<<< HEAD
     roomHandler createRoom RoomWithProperty.name
-=======
-    roomHandler createRoom RoomWithProperty.Name
->>>>>>> upstream/develop
     val filteredRooms = roomHandler.availableRooms(filter)
     roomHandler.availableRooms() should have size 1
     filteredRooms should have size 0
 
-<<<<<<< HEAD
     roomHandler createRoom RoomWithProperty2.name
-=======
-    roomHandler createRoom RoomWithProperty2.Name
->>>>>>> upstream/develop
     val filteredRooms2 = roomHandler.availableRooms(filter)
     roomHandler.availableRooms() should have size 2
     filteredRooms2 should have size 1
@@ -131,11 +105,7 @@ class RoomHandlerSpec extends AnyFlatSpec
   "Correct filter strategies" must "be applied to rooms' properties" in {
     val testProperty = RoomProperty("a", 1)
     val testProperty2 = RoomProperty("b", "a")
-<<<<<<< HEAD
     roomHandler createRoom RoomWithProperty.name
-=======
-    roomHandler createRoom RoomWithProperty.Name
->>>>>>> upstream/develop
 
     val filter = FilterOptions just testProperty < 2 and testProperty2 =:= "abc"
     val filteredRooms = roomHandler.availableRooms(filter)
@@ -150,35 +120,20 @@ class RoomHandlerSpec extends AnyFlatSpec
     val testProperty = RoomProperty("a", 1)
     val testProperty2 = RoomProperty("a", 2)
 
-<<<<<<< HEAD
     roomHandler defineRoomType(RoomWithProperty.name, RoomWithProperty.apply)
     roomHandler createRoom (RoomWithProperty.name, Set(testProperty))
     roomHandler createRoom (RoomWithProperty.name, Set(testProperty2))
 
     val filter = FilterOptions just testProperty =:= 1
     val filteredRooms = roomHandler.roomsByType(RoomWithProperty.name, filter)
-=======
-    roomHandler defineRoomType(RoomWithProperty.Name, RoomWithProperty.apply)
-    roomHandler createRoom (RoomWithProperty.Name, Set(testProperty))
-    roomHandler createRoom (RoomWithProperty.Name, Set(testProperty2))
-
-    val filter = FilterOptions just testProperty =:= 1
-    val filteredRooms = roomHandler.roomsByType(RoomWithProperty.Name, filter)
->>>>>>> upstream/develop
     filteredRooms should have size 1
   }
 
   it should "not show locked rooms when returning all rooms" in {
     lockedRoomsSetup()
-<<<<<<< HEAD
     roomHandler createRoom LockableRoom.lockedName
     roomHandler.availableRooms() should have size 0
     val room = roomHandler createRoom LockableRoom.unlockedName
-=======
-    roomHandler createRoom LockableRoom.LockedRoomType
-    roomHandler.availableRooms() should have size 0
-    val room = roomHandler createRoom LockableRoom.UnlockedRoomType
->>>>>>> upstream/develop
     val rooms = roomHandler.availableRooms()
     rooms should have size 1
     assert(rooms.map(_ roomId) contains room.roomId)
@@ -186,26 +141,17 @@ class RoomHandlerSpec extends AnyFlatSpec
 
   it should "not show locked rooms when returning all rooms by type" in {
     lockedRoomsSetup()
-<<<<<<< HEAD
     roomHandler createRoom LockableRoom.lockedName
     val room = roomHandler createRoom LockableRoom.unlockedName
     val lockedRooms = roomHandler roomsByType LockableRoom.lockedName
     lockedRooms should have size 0
     val unlockedRooms = roomHandler roomsByType LockableRoom.unlockedName
-=======
-    roomHandler createRoom LockableRoom.LockedRoomType
-    val room = roomHandler createRoom LockableRoom.UnlockedRoomType
-    val lockedRooms = roomHandler roomsByType LockableRoom.LockedRoomType
-    lockedRooms should have size 0
-    val unlockedRooms = roomHandler roomsByType LockableRoom.UnlockedRoomType
->>>>>>> upstream/develop
     unlockedRooms should have size 1
     assert(unlockedRooms.map(_ roomId) contains room.roomId)
   }
 
   it should "not show locked room when retrieving rooms by type and Id" in {
     lockedRoomsSetup()
-<<<<<<< HEAD
     val lockedRoom = roomHandler createRoom LockableRoom.lockedName
     assert(roomHandler.roomByTypeAndId(LockableRoom.lockedName, lockedRoom.roomId).isEmpty)
     val unlockedRoom = roomHandler createRoom LockableRoom.unlockedName
@@ -217,29 +163,11 @@ class RoomHandlerSpec extends AnyFlatSpec
     roomHandler createRoomWithMatchmaking (RoomWithProperty.name, Map.empty)
     roomHandler.availableRooms() should have size 0
     roomHandler createRoom RoomWithProperty.name
-=======
-    val lockedRoom = roomHandler createRoom LockableRoom.LockedRoomType
-    assert(roomHandler.roomByTypeAndId(LockableRoom.LockedRoomType, lockedRoom.roomId).isEmpty)
-    val unlockedRoom = roomHandler createRoom LockableRoom.UnlockedRoomType
-    assert(roomHandler.roomByTypeAndId(LockableRoom.UnlockedRoomType, unlockedRoom.roomId).nonEmpty)
-  }
-
-  it should "not show rooms with enabled matchmaking" in {
-    roomHandler defineRoomType (RoomWithProperty.Name, RoomWithProperty.apply)
-    roomHandler createRoomWithMatchmaking (RoomWithProperty.Name, Map.empty)
-    roomHandler.availableRooms() should have size 0
-    roomHandler createRoom RoomWithProperty.Name
->>>>>>> upstream/develop
     roomHandler.availableRooms() should have size 1
   }
 
   private def lockedRoomsSetup(): Unit = {
-<<<<<<< HEAD
     roomHandler defineRoomType (LockableRoom.lockedName, LockableRoom.locked)
     roomHandler defineRoomType (LockableRoom.unlockedName, LockableRoom.unlocked)
-=======
-    roomHandler defineRoomType (LockableRoom.LockedRoomType, () => LockableRoom(true))
-    roomHandler defineRoomType (LockableRoom.UnlockedRoomType, () => LockableRoom(false))
->>>>>>> upstream/develop
   }
 }

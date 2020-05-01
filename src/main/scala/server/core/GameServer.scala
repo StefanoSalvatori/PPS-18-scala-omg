@@ -1,4 +1,4 @@
-package server
+package server.core
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
@@ -25,7 +25,7 @@ sealed trait GameServer {
   val port: Int
 
   /**
-   * Start the server listening at [[server.GameServer#host]]:[[server.GameServer#port]].
+   * Start the server listening at [[server.core.GameServer#host]]:[[server.core.GameServer#port]].
    *
    * @return A future that completes when the server is started
    */
@@ -93,7 +93,7 @@ object GameServer {
    * @param host           the hostname of the server
    * @param port           the port it will be listening on
    * @param existingRoutes (optional) additional routes that will be used by the server
-   * @return an instance if a [[server.GameServer]]
+   * @return an instance if a [[server.core.GameServer]]
    */
   def apply(host: String, port: Int, existingRoutes: Route = reject): GameServer =
     new GameServerImpl(host, port, existingRoutes)
@@ -112,8 +112,8 @@ private class GameServerImpl(override val host: String,
                             ) extends GameServer {
 
   import GameServer._
-  import server.ServerActor._
   import akka.pattern.ask
+  import server.core.ServerActor._
 
   private implicit val ActorRequestTimeout: Timeout = 10 seconds
 

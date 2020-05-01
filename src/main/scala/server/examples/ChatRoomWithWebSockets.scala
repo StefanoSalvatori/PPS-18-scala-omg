@@ -9,7 +9,7 @@ import client.core.Client
 import common.communication.CommunicationProtocol.{ProtocolMessage, ProtocolMessageType}
 import common.http.Routes
 import common.communication.TextProtocolSerializer
-import server.GameServer
+import server.core.GameServer
 import server.examples.rooms.ChatRoom
 
 import scala.concurrent.Await

@@ -8,7 +8,7 @@ import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.RoomHandler
+import server.core.RoomHandler
 import server.utils.TestClient
 import test_utils.TestConfig
 

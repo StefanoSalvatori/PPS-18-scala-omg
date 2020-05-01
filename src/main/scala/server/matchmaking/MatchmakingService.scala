@@ -4,7 +4,7 @@ import akka.actor.{Actor, Props}
 import common.communication.CommunicationProtocol.{MatchmakingInfo, ProtocolMessage}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.room.Room.RoomType
-import server.RoomHandler
+import server.core.RoomHandler
 import server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue}
 import server.room.Client
 

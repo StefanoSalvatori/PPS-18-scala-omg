@@ -1,7 +1,7 @@
 package examples.moneygrabber.server
 
 import examples.moneygrabber.server.rooms.MatchRoom
-import server.GameServer
+import server.core.GameServer
 
 object Server extends App {
   val Host = ServerConfig.ServerHost

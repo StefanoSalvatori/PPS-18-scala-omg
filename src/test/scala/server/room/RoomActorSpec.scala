@@ -11,7 +11,7 @@ import common.room.Room
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.RoomHandler
+import server.core.RoomHandler
 import server.room.RoomActor._
 
 import scala.concurrent.duration._

@@ -22,6 +22,7 @@ object ExampleRooms {
     override def joinConstraints: Boolean = true
   }
 
+  //noinspection ScalaUnusedSymbol
   case class RoomWithGameLoopAndSync() extends ServerRoom with GameLoop with SynchronizedRoomState[Integer] {
 
     @RoomPropertyMarker private val maxClients = 2

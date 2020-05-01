@@ -28,8 +28,8 @@ class MatchmakingActorImpl(private val roomType: RoomType,
                            private val clientInfo: SocketSerializable)
   extends MatchmakingActor with Stash  {
 
-  override val uri = httpServerUri
-  override val serializer = BinaryProtocolSerializer()
+  override val uri: String = httpServerUri
+  override val serializer: BinaryProtocolSerializer = BinaryProtocolSerializer()
 
   override def receive: Receive = onReceive orElse fallbackReceive
 

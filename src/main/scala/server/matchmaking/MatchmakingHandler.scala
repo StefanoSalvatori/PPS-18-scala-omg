@@ -5,8 +5,8 @@ import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
 import common.communication.BinaryProtocolSerializer
 import common.room.Room.RoomType
-import server.RoomHandler
 import server.communication.MatchmakingSocket
+import server.core.RoomHandler
 
 trait MatchmakingHandler {
 

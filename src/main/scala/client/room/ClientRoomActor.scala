@@ -12,8 +12,6 @@ import common.room.Room.RoomPassword
 
 import scala.util.{Failure, Success}
 
-
-
 /**
  * Handles the connection and communication with the server side room.
  * Notify the coreClient if the associated room is left, joined or closed.
@@ -31,8 +29,8 @@ private class ClientRoomActorImpl(coreClient: ActorRef, httpServerUri: String, r
   private var joinPassword: RoomPassword = _
   private var joinedRoom: JoinedRoom = _
 
-  override val uri = httpServerUri
-  override val serializer = BinaryProtocolSerializer()
+  override val uri: String = httpServerUri
+  override val serializer: BinaryProtocolSerializer = BinaryProtocolSerializer()
 
   private val callbackHandler: ActorRef = system.actorOf(CallbackHandler())
 

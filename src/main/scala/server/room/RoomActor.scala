@@ -5,7 +5,7 @@ import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.SessionId.SessionId
 import common.communication.CommunicationProtocol.ProtocolMessage
 import common.room.Room.RoomPassword
-import server.RoomHandler
+import server.core.RoomHandler
 
 import scala.concurrent.ExecutionContextExecutor
 

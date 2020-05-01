@@ -7,7 +7,7 @@ import common.room.{RoomJsonSupport, RoomProperty, SharedRoom}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import server.RoomHandler
+import server.core.RoomHandler
 import server.matchmaking.MatchmakingHandler
 import server.room.ServerRoom
 import server.routing_service.RoutingService

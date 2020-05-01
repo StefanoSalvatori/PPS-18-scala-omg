@@ -13,6 +13,7 @@ import common.room.{FilterOptions, RoomJsonSupport, SharedRoom}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import server.core.GameServer
 import server.room.ServerRoom
 import test_utils.TestConfig
 

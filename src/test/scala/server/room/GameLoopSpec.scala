@@ -5,7 +5,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
-import server.RoomHandler
+import server.core.RoomHandler
 import test_utils.TestConfig
 
 class GameLoopSpec extends AnyFlatSpecLike

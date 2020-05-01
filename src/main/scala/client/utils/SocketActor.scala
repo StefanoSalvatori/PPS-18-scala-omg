@@ -6,7 +6,6 @@ import common.communication.CommunicationProtocol.ProtocolMessage
 import common.communication.CommunicationProtocol.ProtocolMessageType.{Ping, Pong}
 import common.communication.SocketSerializer
 
-
 /**
  * An actor that handles a web socket communication
  */

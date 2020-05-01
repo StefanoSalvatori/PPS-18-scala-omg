@@ -7,10 +7,10 @@ import common.room.{FilterOptions, RoomJsonSupport, RoomProperty, SharedRoom}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import server.RoomHandler
 import server.routing_service.RoutingService
 import test_utils.ExampleRooms._
 import common.room.RoomPropertyValueConversions._
+import server.core.RoomHandler
 import server.matchmaking.{Matchmaker, MatchmakingHandler}
 
 import scala.concurrent.ExecutionContextExecutor
@@ -32,11 +32,7 @@ class RoutingServiceRoutesSpec extends AnyFlatSpec
   before {
     //ensure to have at least one room-type
     routeService.addRouteForRoomType(TestRoomType, RoomWithProperty.apply)
-<<<<<<< HEAD:src/test/scala/server/routes/RoutingServiceRoutesSpec.scala
     routeService.addRouteForMatchmaking(TestRoomType, RoomWithProperty.apply)(Matchmaker defaultMatchmaker Map())
-=======
-    routeService.addRouteForMatchmaking(TestRoomType, RoomWithProperty.apply, Matchmaker defaultMatchmaker Map())
->>>>>>> upstream/develop:src/test/scala/server/routes/RouteServiceRoutesSpec.scala
   }
 
   override def afterAll(): Unit = {

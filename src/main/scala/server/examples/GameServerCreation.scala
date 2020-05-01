@@ -1,6 +1,6 @@
 package server.examples
 
-import server.GameServer
+import server.core.GameServer
 
 import scala.concurrent.ExecutionContext
 import scala.io.StdIn

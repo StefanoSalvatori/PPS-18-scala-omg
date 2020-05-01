@@ -121,11 +121,7 @@ trait Socket[T] {
   }
 
   /**
-<<<<<<< HEAD
-   * Close the web socket.
-=======
    * Close the socket.
->>>>>>> upstream/develop
    */
   def close(): Unit = {
     if (this.clientActor != null) {
@@ -176,7 +172,6 @@ trait Socket[T] {
     this.heartbeatServiceActor = Some(heartbeatActor)
     heartbeatTimer.scheduleAtFixedRate(() => heartbeatActor ! this.pingMessage, 0, connectionConfig.keepAlive.toMillis)
   }
-
 
   private def onPongMessage: PartialFunction[T, Any] = {
     case this.pongMessage => this.heartbeatServiceActor.foreach(_ ! this.pongMessage)

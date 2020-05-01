@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.Route
 import common.http.Routes
 import common.room.Room.{RoomId, RoomType}
 import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
-import server.RoomHandler
+import server.core.RoomHandler
 import server.matchmaking.{Matchmaker, MatchmakingHandler}
 import server.room.ServerRoom
 

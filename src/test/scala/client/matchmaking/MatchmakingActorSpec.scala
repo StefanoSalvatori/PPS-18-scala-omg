@@ -9,15 +9,13 @@ import common.http.Routes
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.GameServer
+import server.core.GameServer
 import server.matchmaking.Matchmaker
 import server.room.ServerRoom
-import test_utils.ExampleRooms.ClosableRoomWithState._
 import test_utils.{ExampleRooms, TestConfig}
 
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}
-
 import test_utils.ExampleRooms._
 
 class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
@@ -30,28 +28,13 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
 
   implicit val executionContext: ExecutionContext = system.dispatcher
 
-<<<<<<< HEAD
-  private var matchmakerActor1: ActorRef = _
-  private var matchmakerActor2: ActorRef = _
-=======
   private val ServerAddress = Localhost
   private val ServerPort = MatchmakingSpecServerPort
   private val ServerUri = Routes.httpUri(ServerAddress, ServerPort)
-  private val RoomType = "test"
->>>>>>> upstream/develop
 
   private var matchmakingActor1: ActorRef = _
   private var matchmakingActor2: ActorRef = _
   private var gameServer: GameServer = _
-
-<<<<<<< HEAD
-  override def afterAll: Unit = TestKit.shutdownActorSystem(system)
-
-  before {
-    matchmakerActor1 = system actorOf MatchmakingActor(ClosableRoomWithState.name, serverUri, "")
-    matchmakerActor2 = system actorOf MatchmakingActor(ClosableRoomWithState.name, serverUri, "")
-=======
->>>>>>> upstream/develop
 
   // matchmaking strategy that only pairs two clients
   def matchmaker[T]: Matchmaker[T] = map => map.toList match {
@@ -60,17 +43,13 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
   }
 
   before {
-    matchmakingActor1 = system actorOf MatchmakingActor(RoomType, ServerUri, "")
-    matchmakingActor2 = system actorOf MatchmakingActor(RoomType, ServerUri, "")
+    matchmakingActor1 = system actorOf MatchmakingActor(ClosableRoomWithState.name, ServerUri, "")
+    matchmakingActor2 = system actorOf MatchmakingActor(ClosableRoomWithState.name, ServerUri, "")
 
     gameServer = GameServer(ServerAddress, ServerPort)
-    gameServer.defineRoomWithMatchmaking(RoomType, () => ServerRoom(), matchmaker)
+    gameServer.defineRoomWithMatchmaking(ClosableRoomWithState.name, () => ServerRoom(), matchmaker)
     gameServer.defineRoomWithMatchmaking(
-<<<<<<< HEAD
       ClosableRoomWithState.name,
-=======
-      Name,
->>>>>>> upstream/develop
       () => ExampleRooms.ClosableRoomWithState(),
       matchmaker)
     Await.ready(gameServer.start(), DefaultDuration)
@@ -82,16 +61,10 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
 
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
-
-<<<<<<< HEAD
-      matchmakerActor1 ! JoinMatchmaking
-      matchmakerActor2 ! JoinMatchmaking
-=======
   "MatchmakingActor" should {
     "join a matchmaking queue and return matchmaking infos when the match is created" in {
       matchmakingActor1 ! JoinMatchmaking
       matchmakingActor2 ! JoinMatchmaking
->>>>>>> upstream/develop
       expectMsgPF() {
         case Success(res) =>
           assert(res.isInstanceOf[MatchmakingInfo])
@@ -101,16 +74,6 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
     }
 
     "leave a matchmaking queue" in {
-<<<<<<< HEAD
-      matchmakerActor1 ! JoinMatchmaking
-      matchmakerActor1 ! LeaveMatchmaking
-      expectMsgType[Any]
-      matchmakerActor1 ! PoisonPill
-
-
-      //this should never respond because the other actor left the matchmake
-      matchmakerActor2 ! JoinMatchmaking
-=======
       matchmakingActor1 ! JoinMatchmaking
       matchmakingActor1 ! LeaveMatchmaking
       expectMsgType[Any]
@@ -118,9 +81,7 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
 
       //this should never respond because the other actor left the matchmaking queue
       matchmakingActor2 ! JoinMatchmaking
->>>>>>> upstream/develop
       expectNoMessage()
     }
   }
-
 }
