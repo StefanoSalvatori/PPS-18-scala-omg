@@ -1,36 +1,22 @@
 package server.room
 
-import akka.actor.{Actor, ActorLogging, PoisonPill, Props, Timers}
+import akka.actor.{Actor, PoisonPill, Props, Timers}
 import common.communication.CommunicationProtocol.ProtocolMessageType._
 import common.communication.CommunicationProtocol.SessionId.SessionId
-import common.communication.CommunicationProtocol.{ProtocolMessage, SessionId}
+import common.communication.CommunicationProtocol.ProtocolMessage
 import common.room.Room.RoomPassword
-import server.RoomHandler
+import server.core.RoomHandler
 
 import scala.concurrent.ExecutionContextExecutor
 
-object RoomActor {
+private[server] object RoomActor {
 
-  sealed trait RoomCommand
-
-  case class Join(client: Client, sessionId: SessionId, password: RoomPassword) extends RoomCommand
-
-  case class Leave(client: Client) extends RoomCommand
-
-  case class Reconnect(client: Client, sessionId: SessionId, password: RoomPassword) extends RoomCommand
-
-  case class Msg(client: Client, payload: Any) extends RoomCommand
-
-  case object Close extends RoomCommand
-
-  case object StartAutoCloseTimeout
-
-  private trait InternalMessage
-
-  private case object AutoCloseRoomTimer
-
-  private case object AutoCloseRoom extends InternalMessage
-
+  /**
+   * It creates a room actor associated to a room.
+   * @param serverRoom the room associated to the actor
+   * @param roomHandler the room handler that is charged to handle the room
+   * @return [[akka.actor.Props]] needed to create the actor
+   */
   def apply(serverRoom: ServerRoom, roomHandler: RoomHandler): Props = Props(classOf[RoomActor], serverRoom, roomHandler)
 
   /**
@@ -45,15 +31,29 @@ object RoomActor {
    */
   case class WorldUpdateTick(lastUpdate: Long)
 
+  // Command
+  sealed trait RoomCommand
+  case class Join(client: Client, sessionId: SessionId, password: RoomPassword) extends RoomCommand
+  case class Leave(client: Client) extends RoomCommand
+  case class Reconnect(client: Client, sessionId: SessionId, password: RoomPassword) extends RoomCommand
+  case class Msg(client: Client, payload: Any) extends RoomCommand
+  case object Close extends RoomCommand
+
+  case object StartAutoCloseTimeout
+
+  private trait InternalMessage
+  private case object AutoCloseRoom extends InternalMessage
+
+  private case object AutoCloseRoomTimer
 }
 
 /**
- * This actor acts as a wrapper for a server room to handle concurrency
+ * This actor acts as a wrapper for a server room to handle concurrency.
  *
  * @param serverRoom the room linked with this actor
  */
-class RoomActor(private val serverRoom: ServerRoom,
-                private val roomHandler: RoomHandler) extends Actor with ActorLogging with Timers {
+private[server] class RoomActor(private val serverRoom: ServerRoom,
+                private val roomHandler: RoomHandler) extends Actor with Timers {
 
   import RoomActor._
 
@@ -64,7 +64,7 @@ class RoomActor(private val serverRoom: ServerRoom,
   override def preStart(): Unit = {
     super.preStart()
     this.serverRoom.onCreate()
-    if (this.serverRoom.checkAutoClose()) {
+    if (serverRoom isAutoCloseAllowed) {
       self ! StartAutoCloseTimeout
     }
   }
@@ -74,7 +74,7 @@ class RoomActor(private val serverRoom: ServerRoom,
   }
 
   override def receive: Receive = {
-    case Join(client, _, password) => //client first join
+    case Join(client, _, password) => // a client joins for the first time
       this.timers cancel AutoCloseRoomTimer
       val joined = serverRoom tryAddClient(client, password)
       sender ! (if (joined) ProtocolMessage(JoinOk, client.id) else ProtocolMessage(ClientNotAuthorized, client.id))
@@ -87,24 +87,29 @@ class RoomActor(private val serverRoom: ServerRoom,
     case Leave(client) =>
       this.serverRoom removeClient client
       sender ! ProtocolMessage(LeaveOk)
+      if (serverRoom isAutoCloseAllowed) {
+        self ! StartAutoCloseTimeout
+      }
 
     case Msg(client, payload) =>
-      if (this.serverRoom.clientAuthorized(client)) {
+      if (serverRoom isClientAuthorized client) {
         this.serverRoom.onMessageReceived(client, payload)
       } else {
-        client.send(ClientNotAuthorized)
+        client send ClientNotAuthorized
         sender ! ProtocolMessage(ClientNotAuthorized, client.id)
       }
 
     case Close =>
-      this.roomHandler.removeRoom(this.serverRoom.roomId)
+      roomHandler removeRoom serverRoom.roomId
       self ! PoisonPill
 
     case StartAutoCloseTimeout =>
       this.timers.startSingleTimer(AutoCloseRoomTimer, AutoCloseRoom, this.serverRoom.autoCloseTimeout)
 
     case AutoCloseRoom =>
-      this.serverRoom.close()
+      if (serverRoom.connectedClients.isEmpty) {
+        this.serverRoom.close()
+      }
 
     case StateSyncTick(onTick) =>
       serverRoom.connectedClients foreach onTick

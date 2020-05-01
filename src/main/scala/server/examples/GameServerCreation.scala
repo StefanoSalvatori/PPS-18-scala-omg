@@ -1,6 +1,6 @@
 package server.examples
 
-import server.GameServer
+import server.core.GameServer
 
 import scala.concurrent.ExecutionContext
 import scala.io.StdIn
@@ -14,10 +14,10 @@ object GameServerCreation extends App {
 
   private val gameServer = GameServer(Host, Port)
   gameServer onStart {
-    println("GAMESERVER STARTED")
+    println("GAME SERVER STARTED")
   }
   gameServer onStop {
-    println("GAMESERVER IS DOWN :-(")
+    println("GAME SERVER IS DOWN :-(")
   }
 
   gameServer.start() onComplete {

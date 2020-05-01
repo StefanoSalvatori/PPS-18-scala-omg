@@ -8,7 +8,6 @@ import scalafx.application.Platform
 import javafx.{fxml => jfxf}
 import javafx.{scene => jfxs}
 
-
 class MatchController {
   @jfxf.FXML private var labelWaitingPlayer: Label = _
   @jfxf.FXML private var splitPaneButtons: SplitPane = _

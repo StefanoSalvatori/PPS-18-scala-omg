@@ -26,19 +26,22 @@ case class RoomSocket(private val room: ActorRef,
 
   override protected val onMessageFromSocket: PartialFunction[ProtocolMessage, Unit] = {
     case ProtocolMessage(JoinRoom, SessionId.Empty, payload) =>
-      room ! Join(this.client, SessionId.Empty, payload.asInstanceOf[RoomPassword])
+      room ! Join(client, SessionId.Empty, payload.asInstanceOf[RoomPassword])
+
     case ProtocolMessage(JoinRoom, sessionId, payload) =>
-      this.client = Client.asActor(sessionId, this.clientActor)
-      room ! Join(this.client, sessionId, payload.asInstanceOf[RoomPassword])
+      client = Client.asActor(sessionId, this.clientActor)
+      room ! Join(client, sessionId, payload.asInstanceOf[RoomPassword])
+
     case ProtocolMessage(ReconnectRoom, sessionId, payload) =>
-      this.client = Client.asActor(sessionId, this.clientActor)
-      room ! Reconnect(this.client, sessionId, payload.asInstanceOf[RoomPassword])
+      client = Client.asActor(sessionId, this.clientActor)
+      room ! Reconnect(client, sessionId, payload.asInstanceOf[RoomPassword])
+
     case ProtocolMessage(LeaveRoom, _, _) =>
-      room ! Leave(this.client)
+      room ! Leave(client)
+
     case ProtocolMessage(MessageRoom, _, payload) =>
-      room ! Msg(this.client, payload)
+      room ! Msg(client, payload)
   }
 
   override protected def onSocketClosed(): Unit = room ! Leave(client)
-
 }

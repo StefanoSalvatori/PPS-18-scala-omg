@@ -5,7 +5,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
-import server.RoomHandler
+import server.core.RoomHandler
 import test_utils.TestConfig
 
 class GameLoopSpec extends AnyFlatSpecLike
@@ -26,7 +26,6 @@ class GameLoopSpec extends AnyFlatSpecLike
     // Can't directly use roomHandler.createRoom since we need server room type instance
     room = RoomWithGameLoop()
     roomActor = actorSystem actorOf RoomActor(room, RoomHandler())
-    //room setAssociatedActor roomActor
   }
 
   behavior of "Server room with game loop"
@@ -74,6 +73,4 @@ class GameLoopSpec extends AnyFlatSpecLike
     // In a real application the world state could be the same, in the test example the counter is incremented at each tick
     assert(room.state != currentState)
   }
-
-
 }

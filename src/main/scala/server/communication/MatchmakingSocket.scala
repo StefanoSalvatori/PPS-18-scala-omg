@@ -9,12 +9,18 @@ import server.matchmaking.MatchmakingService.{LeaveQueue, _}
 
 import scala.concurrent.duration.Duration
 
+/**
+ * Socket used for handling matchmaking requests between a client and the matchmaking service.
+ * @param matchmakingService the matchmaking service that will handle clients requests
+ * @param parser a parser used to read and write messages on the socket
+ */
 case class MatchmakingSocket(private val matchmakingService: ActorRef,
                              override val parser: ProtocolMessageSerializer) extends Socket[ProtocolMessage] {
+
   override protected val pingMessage: ProtocolMessage = ProtocolMessage(ProtocolMessageType.Ping)
   override protected val pongMessage: ProtocolMessage = ProtocolMessage(ProtocolMessageType.Pong)
 
-  //no idle timeout since we don't know how much it will take to match a player with other ones. We only check that
+  // No idle timeout since we don't know how much it will take to match a player with other ones. We only check that
   // client is still active with an heartbeat every 5 seconds
   override val connectionConfig: ConnectionConfigurations = ConnectionConfigurations(Duration.Inf, 5 seconds)
 

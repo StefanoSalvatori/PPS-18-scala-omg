@@ -26,6 +26,5 @@ case class TestClient(override val id: String) extends Client {
   override def send[T](msg: T): Unit = synchronized {
     this.messagesReceivedList = msg :: messagesReceivedList
   }
-
 }
 
