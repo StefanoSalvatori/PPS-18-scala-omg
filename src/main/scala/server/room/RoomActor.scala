@@ -107,7 +107,9 @@ private[server] class RoomActor(private val serverRoom: ServerRoom,
       this.timers.startSingleTimer(AutoCloseRoomTimer, AutoCloseRoom, this.serverRoom.autoCloseTimeout)
 
     case AutoCloseRoom =>
-      this.serverRoom.close()
+      if (serverRoom.connectedClients.isEmpty) {
+        this.serverRoom.close()
+      }
 
     case StateSyncTick(onTick) =>
       serverRoom.connectedClients foreach onTick
