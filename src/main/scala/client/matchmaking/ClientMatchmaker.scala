@@ -25,7 +25,7 @@ trait ClientMatchmaker {
    * Join the server-side matchmaking queue for this type of room
    *
    * @param roomType       matchmaking room type to join
-   * @param requestTimeout how much time to wait before failing, defualt is 5 minutes
+   * @param requestTimeout how much time to wait before failing, default is 5 minutes
    * @return a future that completes successfully when the matchmaker server side creates the match
    */
   def joinMatchmaking(roomType: RoomType,
@@ -33,7 +33,7 @@ trait ClientMatchmaker {
                       requestTimeout: FiniteDuration = DefaultMatchmakingTimeout): Future[JoinedRoom]
 
   /**
-   * Leave the server-side matchmaking queue for this type of room serverside
+   * Leave the server-side matchmaking queue for this type of room server side
    *
    * @param roomType matchmaking room room type to leave
    */
@@ -104,7 +104,7 @@ private class ClientMatchmakerImpl(private val coreClient: ActorRef,
     }
   }
 
-  private def removeMatchmakingConnection(roomType: RoomType) = {
+  private def removeMatchmakingConnection(roomType: RoomType): Unit = {
     this.promises = this.promises - roomType
     this.matchmakingConnections(roomType) ! PoisonPill
     this.matchmakingConnections = this.matchmakingConnections - roomType

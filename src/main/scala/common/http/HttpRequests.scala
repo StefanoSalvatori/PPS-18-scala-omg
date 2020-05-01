@@ -7,7 +7,7 @@ import common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import spray.json.RootJsonFormat
 
 /**
- * Factory to generate valid http requests to the gameserver
+ * Factory to generate valid http requests to the game server
  */
 object HttpRequests extends RoomJsonSupport {
 

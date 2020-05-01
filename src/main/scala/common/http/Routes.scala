@@ -3,7 +3,7 @@ package common.http
 import common.room.Room.{RoomId, RoomType}
 
 /**
- * Object that defines the routes that the gameserver provides
+ * Object that defines the routes that the game server provides
  */
 object Routes {
 

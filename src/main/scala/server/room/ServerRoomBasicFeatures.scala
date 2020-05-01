@@ -1,6 +1,6 @@
 package server.room
 
-trait PrivateRoomSupport {
+private[server] trait PrivateRoomSupport {
 
   import common.room.Room
   import common.room.Room.RoomPassword
@@ -31,11 +31,11 @@ trait PrivateRoomSupport {
    * @param providedPassword the password provided, supposedly by a client
    * @return true if the password is correct or if the room is public, false otherwise.
    */
-  protected def checkPasswordCorrectness(providedPassword: RoomPassword): Boolean =
+  protected def isPasswordCorrect(providedPassword: RoomPassword): Boolean =
     password == Room.DefaultPublicPassword || password == providedPassword
 }
 
-trait RoomLockingSupport {
+private[server] trait RoomLockingSupport {
 
   private var _isLocked = false
 
@@ -57,7 +57,7 @@ trait RoomLockingSupport {
   def unlock(): Unit = _isLocked = false
 }
 
-trait MatchmakingSupport {
+private[server] trait MatchmakingSupport {
 
   import server.matchmaking.Group.GroupId
   private var _matchmakingGroups: Map[Client, GroupId] = Map.empty
@@ -79,4 +79,48 @@ trait MatchmakingSupport {
    * @return true if some groups are defined, false otherwise
    */
   def isMatchmakingEnabled: Boolean = _matchmakingGroups.nonEmpty
+}
+
+private[server] trait ReconnectionSupport { self: ServerRoom =>
+
+  import common.communication.CommunicationProtocol.ProtocolMessage
+  import common.communication.CommunicationProtocol.ProtocolMessageType.{ClientNotAuthorized, JoinOk}
+
+  import server.utils.Timer
+  // Clients that are allowed to reconnect with the associate expiration timer
+  private var reconnectingClients: Seq[(Client, Timer)] = Seq.empty
+
+  /**
+   * Reconnect the client to the room.
+   *
+   * @param client the client that wants to reconnect
+   * @return true if the client successfully reconnected to the room, false otherwise
+   */
+  def tryReconnectClient(client: Client): Boolean = {
+    val reconnectingClient = this.reconnectingClients.find(_._1.id == client.id)
+    if (reconnectingClient.nonEmpty) {
+      reconnectingClient.get._2.stopTimer()
+      this.reconnectingClients = this.reconnectingClients.filter(_._1.id != client.id)
+      clients = client +: clients
+      client.send(ProtocolMessage(JoinOk, client.id))
+    } else {
+      client.send(ProtocolMessage(ClientNotAuthorized, client.id))
+    }
+    reconnectingClient.nonEmpty
+  }
+
+  /**
+   * Allow the given client to reconnect to this room within the specified amount of time.
+   *
+   * @param client the reconnecting client
+   * @param period time in seconds within which the client can reconnect
+   */
+  def allowReconnection(client: Client, period: Long): Unit = {
+    val timer = Timer()
+    reconnectingClients = (client, timer) +: reconnectingClients
+
+    timer.scheduleOnce(() => {
+      reconnectingClients = reconnectingClients.filter(_._1.id != client.id)
+    }, period * 1000) //seconds to millis
+  }
 }

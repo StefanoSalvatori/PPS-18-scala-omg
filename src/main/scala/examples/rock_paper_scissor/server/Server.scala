@@ -1,7 +1,7 @@
 package examples.rock_paper_scissor.server
 
 
-import server.GameServer
+import server.core.GameServer
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}

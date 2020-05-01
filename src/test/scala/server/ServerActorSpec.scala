@@ -11,15 +11,15 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.ServerActor._
+import server.core.ServerActor
 import utils.HttpRequestsActor
 import server.utils.HttpRequestsActor.{Request, RequestFailed}
 import test_utils.TestConfig
+import server.core.ServerActor._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
-
 
 class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.load()))
   with ImplicitSender
@@ -71,7 +71,7 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
     }
 
     "use the routes passed as parameters in the StartServer message" in {
-      makeGetRequestAt(s"$RoutesBasePath")
+      makeGetRequest()
       val response = expectMsgType[HttpResponse]
       response.status shouldBe StatusCodes.OK
       response.discardEntityBytes()
@@ -84,13 +84,13 @@ class ServerActorSpec extends TestKit(ActorSystem("ServerSystem", ConfigFactory.
 
       // Await.ready(Http(system).shutdownAllConnectionPools(), MAX_WAIT_CONNECTION_POOL_SHUTDOWN)
       //Now requests fail
-      makeGetRequestAt(s"$RoutesBasePath")
+      makeGetRequest()
       expectMsgType[RequestFailed](RequestFailTimeout)
     }
   }
 
-  private def makeGetRequestAt(path: String): Unit = {
-    httpClientActor ! Request(HttpRequest(HttpMethods.GET, s"http://$Host:$Port/$path"))
+  private def makeGetRequest(): Unit = {
+    httpClientActor ! Request(HttpRequest(HttpMethods.GET, s"http://$Host:$Port/$RoutesBasePath"))
   }
 
 }

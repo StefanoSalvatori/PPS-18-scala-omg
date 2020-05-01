@@ -2,6 +2,7 @@ package client.room
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
+import server.core.GameServer
 import client.core.CoreClient
 import client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
@@ -12,10 +13,9 @@ import common.room.Room
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.GameServer
 import test_utils.ExampleRooms.ClosableRoomWithState
-import test_utils.ExampleRooms.ClosableRoomWithState._
-import test_utils.{ExampleRooms, TestConfig}
+import test_utils.TestConfig
+
 import scala.concurrent.{Await, ExecutionContext, Promise}
 import scala.util.{Success, Try}
 
@@ -40,10 +40,10 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
   before {
     coreClient = system actorOf CoreClient(ServerUri)
     gameServer = GameServer(ServerAddress, ServerPort)
-    gameServer.defineRoom(Name, () => ExampleRooms.ClosableRoomWithState())
+    gameServer.defineRoom(ClosableRoomWithState.name, ClosableRoomWithState.apply)
     Await.ready(gameServer.start(), DefaultDuration)
 
-    coreClient ! CreatePublicRoom(Name, Set.empty)
+    coreClient ! CreatePublicRoom(ClosableRoomWithState.name, Set.empty)
     val room = expectMsgType[Success[ClientRoom]]
     clientRoomActor = system actorOf ClientRoomActor(coreClient, ServerUri, room.value)
   }
@@ -126,6 +126,7 @@ class ClientRoomActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFact
 
       clientRoomActor ! SendJoin(None, Room.DefaultPublicPassword)
       expectMsgType[Try[Any]]
+
 
       clientRoomActor ! SendStrictMessage(ClosableRoomWithState.CloseRoomMessage)
       Await.result(close.future, DefaultTimeout)

@@ -9,14 +9,14 @@ import common.http.Routes
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.GameServer
+import server.core.GameServer
 import server.matchmaking.Matchmaker
 import server.room.ServerRoom
-import test_utils.ExampleRooms.ClosableRoomWithState._
 import test_utils.{ExampleRooms, TestConfig}
 
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}
+import test_utils.ExampleRooms._
 
 class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with ImplicitSender
@@ -31,12 +31,10 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
   private val ServerAddress = Localhost
   private val ServerPort = MatchmakingSpecServerPort
   private val ServerUri = Routes.httpUri(ServerAddress, ServerPort)
-  private val RoomType = "test"
 
   private var matchmakingActor1: ActorRef = _
   private var matchmakingActor2: ActorRef = _
   private var gameServer: GameServer = _
-
 
   // matchmaking strategy that only pairs two clients
   def matchmaker[T]: Matchmaker[T] = map => map.toList match {
@@ -45,13 +43,13 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
   }
 
   before {
-    matchmakingActor1 = system actorOf MatchmakingActor(RoomType, ServerUri, "")
-    matchmakingActor2 = system actorOf MatchmakingActor(RoomType, ServerUri, "")
+    matchmakingActor1 = system actorOf MatchmakingActor(ClosableRoomWithState.name, ServerUri, "")
+    matchmakingActor2 = system actorOf MatchmakingActor(ClosableRoomWithState.name, ServerUri, "")
 
     gameServer = GameServer(ServerAddress, ServerPort)
-    gameServer.defineRoomWithMatchmaking(RoomType, () => ServerRoom(), matchmaker)
+    gameServer.defineRoomWithMatchmaking(ClosableRoomWithState.name, () => ServerRoom(), matchmaker)
     gameServer.defineRoomWithMatchmaking(
-      Name,
+      ClosableRoomWithState.name,
       () => ExampleRooms.ClosableRoomWithState(),
       matchmaker)
     Await.ready(gameServer.start(), DefaultDuration)
@@ -62,7 +60,6 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
   }
 
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
-
 
   "MatchmakingActor" should {
     "join a matchmaking queue and return matchmaking infos when the match is created" in {
@@ -87,5 +84,4 @@ class MatchmakingActorSpec extends TestKit(ActorSystem("ClientSystem", ConfigFac
       expectNoMessage()
     }
   }
-
 }

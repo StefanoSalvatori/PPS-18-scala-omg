@@ -5,7 +5,7 @@ import server.room.RoomActor.WorldUpdateTick
 import server.utils.Timer
 
 /**
- * It defines a room that uses game loop, i.e. the state of the world is updated periodically
+ * It defines a room that uses game loop, i.e. there is a state of the world that needs to be updated periodically.
  */
 trait GameLoop extends ServerRoom {
 
@@ -14,7 +14,7 @@ trait GameLoop extends ServerRoom {
   private var lastUpdate: Long = 0
 
   /**
-   * How often the world will be updated (time expressed in milliseconds)
+   * How often the world will be updated (time expressed in milliseconds).
    */
   protected val worldUpdateRate = 50 //milliseconds
 
@@ -24,49 +24,44 @@ trait GameLoop extends ServerRoom {
   }
 
   /**
-   * Start updating the world with a fixed period
+   * Start updating the world with a fixed period.
    */
   def startWorldUpdate(): Unit =
-    worldTimer.scheduleAtFixedRate(() => this.generateWorldUpdateTick(), 0, worldUpdateRate)
+    worldTimer.scheduleAtFixedRate(generateWorldUpdateTick, period = worldUpdateRate)
 
   /**
-   * Stop updating the world
+   * Stop updating the world.
    */
   def stopWorldUpdate(): Unit = worldTimer.stopTimer()
 
   /**
-   * Function called at each tick to update the world
+   * Function called at each tick to update the world.
    */
   def updateWorld(elapsed: Long): Unit
 
   private def generateWorldUpdateTick(): Unit = {
-    this.roomActor.foreach(_ ! WorldUpdateTick(this.lastUpdate))
-    this.lastUpdate = System.currentTimeMillis()
+    roomActor foreach { _ ! WorldUpdateTick(lastUpdate) }
+    lastUpdate = System.currentTimeMillis()
   }
 }
 
-object GameLoop {
+private[server] object GameLoop {
 
+  // Example room with empty behavior
   private case class BasicServerRoomWithGameLoop() extends ServerRoom with GameLoop {
     override def onCreate(): Unit = {}
-
     override def onClose(): Unit = {}
-
     override def onJoin(client: Client): Unit = {}
-
     override def onLeave(client: Client): Unit = {}
-
     override def onMessageReceived(client: Client, message: Any): Unit = {}
-
     override def joinConstraints: Boolean = true
-
     override def updateWorld(elapsed: Long): Unit = {}
   }
 
   private def apply(): BasicServerRoomWithGameLoop = BasicServerRoomWithGameLoop()
 
   /**
-   * Getter of the game loop properties
+   * Getter of the game loop properties.
    *
    * @return a set containing the defined properties
    */

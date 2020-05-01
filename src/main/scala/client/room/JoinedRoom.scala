@@ -21,7 +21,6 @@ trait JoinedRoom extends ClientRoom {
    */
   def sessionId: SessionId
 
-
   /**
    * Leave this room server side
    *

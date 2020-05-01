@@ -9,13 +9,13 @@ class MatchmakerSpec extends AnyFlatSpec
   with Matchers {
 
   private var matchmaker: Matchmaker[Any] = _
-  private var clients: Map[Client, Any] = _
+  private var clients: Map[Client, Any] = Map.empty
 
   behavior of "default matchmaker"
 
   it should "create an empty grouping if no info about groups are provided" in {
-    matchmaker = Matchmaker defaultMatchmaker Map()
-    clients = Map()
+    matchmaker = Matchmaker defaultMatchmaker Map.empty
+    clients = Map.empty
     matchmaker.createFairGroup(clients).getOrElse(fail).size shouldEqual 0
   }
 

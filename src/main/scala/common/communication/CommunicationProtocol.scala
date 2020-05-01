@@ -69,7 +69,7 @@ object CommunicationProtocol {
                              payload: java.io.Serializable = "") extends java.io.Serializable
 
   /**
-   * A socket serializer for socket protocol messages
+   * A socket serializer for [[common.communication.CommunicationProtocol.ProtocolMessage]]
    */
   trait ProtocolMessageSerializer extends SocketSerializer[ProtocolMessage]
 

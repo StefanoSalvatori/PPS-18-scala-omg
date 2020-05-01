@@ -11,7 +11,7 @@ import common.room.Room
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import server.RoomHandler
+import server.core.RoomHandler
 import server.room.RoomActor._
 
 import scala.concurrent.duration._
@@ -45,7 +45,6 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
   }
-
 
   "A room actor" should {
     "allow clients to join" in {
@@ -140,11 +139,8 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
     }
   }
 
-
   private def makeClient(id: String = UUID.randomUUID.toString): Client = {
     val client1TestProbe = TestProbe()
     Client.asActor(id, client1TestProbe.ref)
   }
-
-
 }
