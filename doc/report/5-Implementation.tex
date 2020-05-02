@@ -1,14 +1,14 @@
 \chapter{Implementation}
 \section{Data Serialization}
-As we decribed in the design section (\ref{sec:communication_design}) there are two main types of serialization that we needed:
+As decribed in design section \ref{sec:communication_design}, there are two main types of serialization we dealt with, that is:
 \begin{itemize}
-	\item json serialization for request-response interaction
-	\item binary serialization for  data exhanged through websockets
+	\item Json serialization: request-response interaction
+	\item Binary serialization: data exhanged through websockets
 \end{itemize}
 
-For the first one we decided to use the \texttt{spray-json} library since it is the one recommended to be used with akka.
+Regarding the first one, we decided to use the \texttt{spray-json} library since it is the recommended one when using akka.
 
-Regadring binary serialization we chose instead to use \texttt{java.io} serialization. This is because there were no strict performance constraints in the requirements and we preferred to favor user-side usability: indeed the user of the library is able to exchange messages between clients and server simply defining classes that extend the \texttt{java.io.Serializable} inetrface.
+About binary serialization, we chose to use \texttt{java.io} serialization. This is because there are no strict performance constraints in requirements, and we preferred to favor user-side usability: indeed, the user of the library is able to let exchange messages between clients and server just defining classes that extend \texttt{java.io.Serializable} interface.
 
 
 
