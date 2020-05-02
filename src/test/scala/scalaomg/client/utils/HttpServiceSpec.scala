@@ -1,22 +1,21 @@
-package scalaomg.client
+package scalaomg.client.utils
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
-import scalaomg.client.utils.HttpService
-import scalaomg.client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.wordspec.AnyWordSpecLike
+import scalaomg.client.utils.MessageDictionary._
 import scalaomg.common.communication.BinaryProtocolSerializer
 import scalaomg.common.http.Routes
 import scalaomg.common.room.{FilterOptions, SharedRoom}
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.wordspec.AnyWordSpecLike
 import scalaomg.server.core.GameServer
 import scalaomg.server.room.ServerRoom
 import test_utils.TestConfig
 
 import scala.concurrent.Await
 
-class HttpClientSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
+class HttpServiceSpec extends TestKit(ActorSystem("ClientSystem", ConfigFactory.load()))
   with ImplicitSender
   with AnyWordSpecLike
   with BeforeAndAfterAll

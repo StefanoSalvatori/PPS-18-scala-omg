@@ -141,6 +141,6 @@ class RoomActorSpec extends TestKit(ActorSystem("Rooms", ConfigFactory.load()))
 
   private def makeClient(id: String = UUID.randomUUID.toString): Client = {
     val client1TestProbe = TestProbe()
-    Client.asActor(id, client1TestProbe.ref)
+    Client.asActor(client1TestProbe.ref)(id)
   }
 }
