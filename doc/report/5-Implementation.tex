@@ -21,13 +21,29 @@ During the third and fourth sprint of the project i developed the \textit{MoneyG
 
 \section{Gabriele Guerrini}
 
+\begin{itemize}
 
+\item[\em{Client infrastructure}] Realization of the main client infrastructure based upon main concepts of \texttt{CoreClient} (i.e. the main actor of a client), client facade (\texttt{Client}) and \texttt{HttpService}. My version, realized in the first sprint, has been then improved in the second one by Riccardo Salvatori.   
 
+\item[\em{Room}] Design of rooms (\texttt{Room}, \texttt{BasicRoom}, \texttt{SharedRoom}, all client rooms, \texttt{ServerRoom}) and their interactions. Implementation of common rooms with contribution of Riccardo Salvatori.
 
+\item[\em{Server room}] Design and implementation of \texttt{ServerRoom} featuring with Stefano Salvatori. In particular, I've realized the handling of room properties, game loop (\texttt{GameLoop}), and various other features contained in \texttt{ServerRoomBasicFeatures} such as private state, locking and matchmaking integration.
 
+\item[\em{Room property}] Design of room property (\texttt{RoomProperty}) and its integration in client and server rooms both.
 
+\item[\em{Room filters}] Design of room filters (\texttt{RoomFilters}) and its usage on client and server side both.
 
+\item[\em{Json serialization}] Implementation of Json serialization (\texttt{RoomJsonSupport}).
 
+\item[\em{Matchmaking}] Design of \texttt{Matchmaker}, implementation of the default one, handling of rooms with matchmaking (opposed to rooms without it) in \texttt{RoomHandler}.
+
+\item[\em{Roll The Dice}] Implementation of the third example game \textit{``Roll The Dice''} that shows usage of matchmaking as well as other functionalities exhibited in the first two.
+
+\end{itemize}
+
+Since usability is a core aspect of the library, advanced features like reflection and annotations have been combined and widely used on \texttt{ServerRoom} in order to mantain the best of it while creating custom rooms. This way, the developer can freely define a room property just by declaring a field marked with an appropriate annotation.
+\\
+In the end, a DSL was developed to easily manage room properties and filters.
 
 
 
