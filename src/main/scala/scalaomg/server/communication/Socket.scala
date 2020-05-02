@@ -106,7 +106,7 @@ private[server] trait Socket[T] {
     val (socketOutputActor, publisher) = this.outputStream.run()
     //Link this socket to the client
     this.clientActor = socketOutputActor
-    this.client = Client.asActor(UUID.randomUUID.toString, this.clientActor)
+    this.client = Client.asActor(this.clientActor)(UUID.randomUUID.toString)
     if (connectionConfig.isKeepAliveActive) {
       this.startHeartbeat(client, connectionConfig.keepAlive.toSeconds seconds)
     }

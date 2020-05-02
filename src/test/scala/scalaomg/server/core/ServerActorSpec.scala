@@ -1,4 +1,4 @@
-package scalaomg.server
+package scalaomg.server.core
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
@@ -11,11 +11,10 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import scalaomg.server.core.ServerActor
-import utils.HttpRequestsActor
+import scalaomg.server.core.ServerActor._
+import scalaomg.server.utils.HttpRequestsActor
 import scalaomg.server.utils.HttpRequestsActor.{Request, RequestFailed}
 import test_utils.TestConfig
-import scalaomg.server.core.ServerActor._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._

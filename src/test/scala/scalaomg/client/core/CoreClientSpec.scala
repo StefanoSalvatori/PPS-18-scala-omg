@@ -1,16 +1,15 @@
-package scalaomg.client
+package scalaomg.client.core
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit}
-import scalaomg.client.core.CoreClient
-import scalaomg.client.room.{ClientRoom, JoinedRoom}
-import scalaomg.client.utils.MessageDictionary._
 import com.typesafe.config.ConfigFactory
-import scalaomg.common.http.Routes
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import scalaomg.client.room.{ClientRoom, JoinedRoom}
+import scalaomg.client.utils.MessageDictionary._
+import scalaomg.common.http.Routes
 import scalaomg.server.core.GameServer
 import scalaomg.server.room.ServerRoom
 import test_utils.TestConfig

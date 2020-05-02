@@ -1,14 +1,13 @@
-package scalaomg.client
+package scalaomg.client.core
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
-import scalaomg.client.core.Client
 import com.typesafe.scalalogging.LazyLogging
-import scalaomg.common.room.RoomPropertyValue.Conversions._
-import scalaomg.common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import scalaomg.common.room.RoomPropertyValue.Conversions._
+import scalaomg.common.room.{FilterOptions, RoomJsonSupport, RoomProperty}
 import scalaomg.server.core.GameServer
 import scalaomg.server.room.ServerRoom
 import test_utils.ExampleRooms._

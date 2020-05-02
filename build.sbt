@@ -9,6 +9,10 @@ val akkaVersion = "2.6.4"
 val akkaHttpVersion = "10.1.11"
 scalastyleFailOnWarning := true
 
+// Test coverage
+coverageEnabled := true
+coverageExcludedPackages := ".*examples.*"
+
 libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-swing" % "2.1.1",
   "org.scalatest" %% "scalatest" % "3.1.1" % "test",

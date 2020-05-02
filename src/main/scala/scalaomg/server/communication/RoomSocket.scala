@@ -29,11 +29,11 @@ private[server] case class RoomSocket(private val room: ActorRef,
       room ! Join(client, payload.asInstanceOf[RoomPassword])
 
     case ProtocolMessage(JoinRoom, sessionId, payload) =>
-      client = Client.asActor(sessionId, this.clientActor)
+      client = Client.asActor(this.clientActor)(sessionId)
       room ! Join(client, payload.asInstanceOf[RoomPassword])
 
     case ProtocolMessage(ReconnectRoom, sessionId, _) =>
-      client = Client.asActor(sessionId, this.clientActor)
+      client = Client.asActor(this.clientActor)(sessionId)
       room ! Reconnect(client)
 
     case ProtocolMessage(LeaveRoom, _, _) =>

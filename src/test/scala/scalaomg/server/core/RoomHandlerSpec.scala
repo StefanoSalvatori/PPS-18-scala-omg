@@ -1,14 +1,13 @@
-package scalaomg.server
+package scalaomg.server.core
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
+import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import scalaomg.server.room.ServerRoom
 import scalaomg.common.room.RoomPropertyValue.Conversions._
 import scalaomg.common.room.{FilterOptions, RoomProperty}
-import org.scalatest.BeforeAndAfter
-import scalaomg.server.core.RoomHandler
+import scalaomg.server.room.ServerRoom
 import scalaomg.server.routes.RouteCommonTestOptions
 import test_utils.ExampleRooms._
 
