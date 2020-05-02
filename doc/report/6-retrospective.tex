@@ -4,108 +4,129 @@
 
 \subsection{Sprint 0}
 \subsubsection{Report}
-During the first meeting the product backlog of the project and the product items were defined. Each product item was associated with an estimate of his development effort.
-The organizational structure of the project was also defined. We discussed tools and development environments to support continuous integration.
-An initial analysis and design process was carried out in order to define the main entities and how to manage their interactions.
-It was therefore decided to internally use an approach base on actors, which however would have been transparent to the final user (developer). 
-We decided to rely upon akka-core library and akka-http library. 
-In the end it was decided to carry out the development of clients and server modules in parallel in order to have a working core in the shortest time. This core would be extended incrementally during the project lifetime.
+Product backlog was defined during first meetings. Each item in the backlog was associated to an estimate of his development effort.
+\\
+The organizational structure of the project was defined too. We discussed tools and development environments to support continuous integration.
+\\
+Initial analysis and design process were performed in order to define main entities of the system and their interactions.
+Therefore, it was decided to internally use an approach base on actors, which however would have been transparent to the final user (developer). This is due to an elevated complexity of the system, and an actor model could semplify few aspects. 
+We decided to rely upon ``akka-core library'' and ``akka-http library''. 
+\\
+In the end, it was decided to carry out client and server modules development in parallel in order to have a working core in the shortest time. This core would be extended incrementally during the project lifetime.
 
 
 
 
 \subsection{Sprint 1}
 \subsubsection{Report}
-The goal of this first sprint was to define the main client and server interfaces and reach a minimal working system that allows:
+The goal of this first sprint was to define main client and server interfaces and to set up a minimal working system that allows:
 \begin{itemize}
-	\item game server execution 
-	\item room types definition
-	\item client requests to create rooms.
+	\item Game server execution 
+	\item Room types definition
+	\item Handling of client requests to create rooms.
 \end{itemize}
-This goal was completed successfully. 
-
-The task effort concerning the creation of a game server based on an existsing server was underestimated; this ended up in a revision on some decision that were made about server creation. The result is that is possible for the user to specify some external routes, this will be handled by the game server if they don't conflict with existing routes used internally. 
+These goals were completed successfully. 
+\\
+An issue regarding the extension of an already existing server was found due to internal ``Akka'' policies. 
+This ended up in a revision on some decisions that were made about server creation. The result is that it is possible for the user to specify external routes which will be handled by the game server (if they don't conflict with the already existing ones internally used  by the game server itself). 
 However, it is not possible to attach the game server to an existing one.
-
+\\
+However, even if in a different way than the one prospected at the beginning, the requirement can be considred fulfilled.   
 
 
 
 
 \subsubsection{Retrospective}
-The team was able to effectivly use continuous integration and project managemenet tools settled during the firts meeting  and complete all tasks.
-A problem that arised was that some scalastyle rules were too strict and tests were failing with no good reason. We decided then to disable such rules in further development.
+The task effort concerning the creation of a game server based on an existing one was underestimated, and it created few troubles during the whole week.
+\\
+The team was able to complete all tasks and effectively use continuous integration and project managemenet tools decided during first meetings.
+\\
+A problem that arised was that some ``scalastyle'' rules were too strict, and tests were failing for no good reasons. We decided then to disable such rules for further development.
+
 
 \subsection{Sprint 2}
 \subsubsection{Report}
 
 During this week some of the main features of the library about clients and rooms have been developed.
-Tasks regarding web socket support was underestimated so it was not fully completed during this sprint. Given the amount of work spent on the task some other were left behind and were not fully completed too.
-The task of creating a room with custom options was not completed due to the lack of communication about who was the volunteer of that task.
+\\
+Tasks regarding web socket support was underestimated, and it was not fully completed during this sprint.
+The interaction between clients and rooms required the definition of an ad hoc protocol to manage messages internally used by the library. This introduced some dependecies between client and server tasks causing little slowdown in the development process.
+\\
+Given the amount of work spent on such task, some others were left behind and not fully achieved too (e.g. the creation of rooms with custom options).
+\\
 Uncompleted tasks will be completed in the next sprint.
-
-The interaction between client and rooms required the definition of an ad hoc protocol to manage the messages used internally by the library. This introduced some dependecies between client and server tasks causing some slowdown in the development process.
 
 
 
 \subsubsection{Retrospective}
-Even if the amount of work spent on this sprint was certainly greater than the previous one, the fact that the team was not able to complete all task require some further considerations.
-It's important to better define the work in advance. For example we should consider splitting tricky tasks in multiple sub-tasks when needed, so that parallel work can be easily carried out.
-Furthermore the team communication should be increased even during the week.
-This could help solving problems that arises during development in advance, before reaching the end of the sprint.
-
+Even if the amount of work spent on this sprint was certainly greater than the previous one, the fact that the team was not able to complete all tasks requires some further considerations.
+\\
+It's important to better define the work in advance. For example, we should consider splitting tricky tasks in multiple sub-tasks when needed, so that hidden dependencies are found and parallel work can be easily planned and carried out.
+\\
+The creation of rooms with custom options was not completed due to the lack of communication about who was the volunteer of such task, and, in the end, we run out of time.
+\\
+Furthermore, team communication should be increased during the week.
+This could help by solving in advance problems that arise during development.
 
 \subsection{Sprint 3}
 \subsubsection{Report}
 
-In this week tasks pending from the previous sprint were completed.
+In this week, pending tasks from previous sprint were completed.
 
-During the implementation of the automatic state update we decided to use binary serialization instead of json serialization. Json serialization required the user to define his own parsers while binary serialization allowed a more generic and simple approach.
+While implementing automatic state update, we decided to use binary serialization instead of Json one. The latter required the user to define his own parsers while binary serialization allowed a more generic and simple approach.
 
-Since the work done in the previous weeks contained the core library functionalities, we were able to implement a simple online multiplayer game:  Rock-Paper-Scissor. 
-The main purpose was to verify that the code produced so far was robust and usable in a simple manner both client and server side.
-The final code is also a good example on how to use the library and his basic functionality.
+Since the work done in the previous weeks contained the core features of the library, we were able to implement a first simple example of online multiplayer game: ``Rock-Paper-Scissor''. 
+The main purpose was to verify effective usability of features produced so far, both for client and server sides.
+The final code is also a good explanation about how to use the library and its basic functionalities.
 
 
 \subsubsection{Retrospective}
-This time the tasks were all completed; anyway the lack of documentation and diagrams relative to some common concepts led to different integration issues between code written by different team members. Sometimes ad hoc refactoring was needed to keep high quality software throughout the development.
-More attention must be paid in the future to the documentation process, particulary the one concerning important aspects of the library. 
-
-During the week were added to the test suite a subset of unpredictable tests.
-They were immediatly fixed after their discovery, within the end of the sprint.
+Tasks were all completed this time; anyway, the lack of documentation and diagrams relative to some common concepts led to few integration issues on code produced by different team members. Sometimes, ad hoc refactoring was needed to keep high software quality throughout the development.
+\\
+Increased care must be granted to future documentation process.
+\\
+During the week, few unpredictable tests were added to the test suite.
+As they were found, they were immediately fixed within the end of the sprint.
 
 
 
 
 \subsection{Sprint 4}
 \subsubsection{Report}
-In this sprint was implemeneted 'MoneyGrabber', a game that takes advantage of the most advanced features of the library, such as the automatic state update and the management of rooms with multiple players.
-It was therefore possible to verify the actual versatility of the library showing a further and more complex example of use in a real context.
+In this sprint, other main features were added, such as game loop on server rooms and client reconnection.
+\\
+Moreover, it was implemeneted ``MoneyGrabber'', a second game that takes advantage of more advanced features of the library, such as the automatic state update and the management of rooms with multiple players.
+Therefore, it was possible to verify the actual versatility of the library showing a further and more complex example of use in a real context.
+\\
 All tasks were completed ahead of time.
-Probably we should have considered the addition of some more tasks to the backlog in the previous sprint review. By the way the remaining time of the sprint was used by the whole team to improve the existing code quility and produce some more detailed documentation.
-
 
 
 \subsubsection{Retrospective}
 
-During this sprint the team worked really well, probably helped by the solid core already implemented that was easily extensible.
-
-
-
+During this sprint the team worked very well, probably helped by the solid core already implemented that was easily extensible.
+\\
+Probably, we should have considered the addition of some more tasks to the backlog in the sprint planning.
+\\
+By the way, the remaining time of the sprint was used by the whole team to improve the existing code quality and to produce some more detailed documentation.
+\\
+The only drawback was the underrate of game loop consequences on the whole system. Indeed, game loop, and also the already implemented state synchronization feature, might imperil system safety due to possible concurrency problems. A meeting with the team was required to improve some design aspects so it was possible to solve any issue while keeping it transparent to final user; it took a non negligible amount of time.
 
 \section{Sprint 5}
 
 \subsubsection{Report}
-During this sprint the Matchmaking functionality was implemented.
-Some refactoring on the previous client-server communication protocol was necessay to support this feature.
+Matchmaking functionality was implemented during this sprint.
+A revise on client-server communication protocol was required to integrate matchmaking service in the system.
 
 \subsubsection{Retrospective}
 
-Given the importance of the new matchmaking feature we decided to develop a further example showing its use in an example application. This will be done in the next sprint.
-
-We noticed that the client room closure feature was not yet explicitly defined. 
-After a brief discussion we noticed that a developer could implement such functionanlity by the use of existing features (e.g autoclose feature) in a safer and robust manner. So we considered that requirement fullfilled.
-
-At this point all the main features are completed, library is ready for deployment.
+Given the importance of the new matchmaking feature, we decided to develop a further example showing its use in an example application. This will be done in the next sprint.
+\\
+The revision of communication protocol was due to some non trivial matchmaking aspects that were non fully considered in advance, such as data flows and separation between normal and matchamaking rooms. 
+\\
+In the end, we noticed that client-side room closure feature was not explicitly defined yet. 
+After a brief discussion, we decided that a developer could implement such functionanlity by using existing features (e.g autoclose feature on server-side) in a safer and robust manner. Hence, we considered that requirement unnecessary, and so the task as fullfilled.
+\\
+Thus, all requirements are satisfied, and library is almost ready for deployment.
 
 
 \section{Sprint 6}
