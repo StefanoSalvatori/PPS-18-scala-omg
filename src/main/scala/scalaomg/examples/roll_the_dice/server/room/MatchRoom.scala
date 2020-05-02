@@ -85,7 +85,7 @@ case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState]
       // Proceed with next turn if the game is still going on (anyone din't win)
       if (gameStarted) {
         currentTurn = turnsOrder.next
-        clientTurnMapping.keys.foreach(tell(_, NextTurn(currentTurn)))
+        broadcast(NextTurn(currentTurn))
       }
   }
 

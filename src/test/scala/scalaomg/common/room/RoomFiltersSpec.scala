@@ -1,12 +1,11 @@
-package scalaomg.client
+package scalaomg.common.room
 
-import scalaomg.common.room.RoomPropertyValue.Conversions._
-import scalaomg.common.room.{EqualStrategy, FilterOption, FilterOptions, FilterStrategy, GreaterStrategy, NotEqualStrategy, RoomProperty, RoomPropertyValue}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import scalaomg.common.room.RoomPropertyValue.Conversions._
 
-class RoomFilterSpec extends AnyFlatSpec with Matchers with BeforeAndAfter {
+class RoomFiltersSpec extends AnyFlatSpec with Matchers with BeforeAndAfter {
 
   private val intPropertyName = "A"
   private val intPropertyValue = 1
@@ -17,6 +16,9 @@ class RoomFilterSpec extends AnyFlatSpec with Matchers with BeforeAndAfter {
   private val booleanPropertyName = "C"
   private val booleanPropertyValue = true
   private val booleanProperty: RoomProperty = RoomProperty(booleanPropertyName, booleanPropertyValue)
+  private val doublePropertyName = "D"
+  private val doublePropertyValue = 0.2
+  private val doubleProperty = RoomProperty(doublePropertyName, doublePropertyValue)
 
   behavior of "RoomFilters"
 
@@ -37,12 +39,13 @@ class RoomFilterSpec extends AnyFlatSpec with Matchers with BeforeAndAfter {
   }
 
   "A concatenation of filter clauses " should "create a filter with all such clauses" in {
-    val filter = intProperty =!= 1 and stringProperty =:= "aba" and booleanProperty =:= true
+    val filter = intProperty =!= 1 and stringProperty =:= "aba" and booleanProperty =:= true and doubleProperty < 0.3
     val options = filter.options
-    options should have size 3
+    options should have size 4
     checkFilterOptionCorrectness(options.head)(intProperty.name, NotEqualStrategy(), 1)
     checkFilterOptionCorrectness(options(1))(stringProperty.name, EqualStrategy(), "aba")
     checkFilterOptionCorrectness(options(2))(booleanProperty.name, EqualStrategy(), true)
+    checkFilterOptionCorrectness(options(3))(doubleProperty.name, LowerStrategy(), 0.3)
   }
 
   private def checkFilterOptionCorrectness(option: FilterOption)(propertyName: String, strategy: FilterStrategy, value: RoomPropertyValue): Unit = {

@@ -30,11 +30,11 @@ private[server] object Client {
 
   /**
    * Creates a client that echoes messages to a specific actor.
-   * @param id    the id of the client
    * @param actor the actor that will receive the messages
+   * @param id    the id of the client
    * @return the client instance
    */
-  def asActor(id: String, actor: ActorRef): Client = new ClientImpl(id, actor)
+  def asActor(actor: ActorRef)(id: String): Client = new ClientImpl(id, actor)
 
   /**
    * It creates a mocked client that may have an Id and that can't send any message.

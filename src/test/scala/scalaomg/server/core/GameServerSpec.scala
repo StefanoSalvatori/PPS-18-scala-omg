@@ -1,4 +1,4 @@
-package scalaomg.server
+package scalaomg.server.core
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -8,12 +8,11 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
-import scalaomg.common.http.{HttpRequests, Routes}
-import scalaomg.common.room.{FilterOptions, RoomJsonSupport, SharedRoom}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import scalaomg.server.core.GameServer
+import scalaomg.common.http.{HttpRequests, Routes}
+import scalaomg.common.room.{FilterOptions, RoomJsonSupport, SharedRoom}
 import scalaomg.server.room.ServerRoom
 import test_utils.TestConfig
 

@@ -69,6 +69,11 @@ class JsonSerializationSpec extends AnyFlatSpec
     checkCorrectJsonEncoding(boolProp)
   }
 
+  "Room property with double values" must "be correctly JSON encoded and decoded" in {
+    val doubleProp = RoomProperty("A", 0.1)
+    checkCorrectJsonEncoding(doubleProp)
+  }
+
   "A set of room property" must "be correctly JSON encoded and decoded" in {
     val empty: Set[RoomProperty] = Set.empty
     checkCorrectJsonEncoding(empty)
