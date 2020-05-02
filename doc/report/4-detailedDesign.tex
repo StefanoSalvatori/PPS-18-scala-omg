@@ -5,12 +5,24 @@
 \section{Rooms}
 
 \subsection{ServerRoom}
-\begin{figure}[h]
+\begin{figure}[H]
 	\centering
-	\includegraphics[scale=0.6]{images/4-design/server-room.png}
+	\includegraphics[scale=0.5]{images/4-design/server-room.png}
 	\caption{Server room class diagram}
 	\label{fig:server_room_class_diagram}
 \end{figure}
+\texttt{ServerRoom} is a trait that encapsulate the concept of room used server-side; as we see in figure \ref{fig:server_room_class_diagram} it extends the \texttt{Room} trait adding methods to handle clients (add,remove, tell and broadcast) and some event handlers. These handlers are the ones that the developer must implement to define his own type of rooms.
+
+Since the developer may also want to automatically synchronize the state of the game and have an inner game loop (requirements 2.1.2.1 and 2.1.2.2), there are two extension of the server room: \texttt{SynchronizedRoomState} and \texttt{GameLoop} that provide this functionalities. The first one is a trait generic in the type of the state that needs to be synchronized to clients; this trait has all methods implemented except for \texttt{currentState} that must be defined by the user and will be called periodically at the specified rate: \texttt{stateUpdateRate}.
+The second one, \texttt{Gameloop}, is also a trait but is not generic and requires to define \texttt{updateWorld}, a void method that will be called every \texttt{worldUpdaterate} milliseconds.
+
+While this two traits can be optionally mixed in a ServerRoom, all those that in figure \ref{fig:server_room_class_diagram} are shown on the left, are functionalities that a room has by default:
+\begin{itemize}
+	\item \texttt{MatchmakingSupport}: gives the developer access to the matchmaking groups that the matchmaking service associated with this room has created.
+	\item \texttt{ProvateRoomSupport}: used to set a password to the room in order to prevent access to some clients.
+	\item \texttt{RoomLockingSupport}: enables lock and unlock functionalities to the room. 
+	\item \texttt{ReconnectionSupport}: allows clients to reconnect to the room within a certain period of time.
+\end{itemize}
 
 \subsection{ClientRoom}
 
@@ -25,7 +37,7 @@ Class diagram in figure \ref{fig:server_class_diagram} describes in detail the s
 	\label{fig:server_class_diagram}
 \end{figure}
 
-The \texttt{GameServer} class is the facade interface that is exposed to the developer. It internally creates a \texttt{ServerActor} that is the entity that acts as the real server listening for clients requests. This actor creates a \texttt{RouteService} object that is used to know which routes to use and how to handle request; it also allows to dynamically define new room types that will be used by te server. 
+The \texttt{GameServer} class is the facade interface that is exposed to the developer. It internally creates a \texttt{ServerActor} that is the entity that acts as the real server listening for clients requests. This actor creates a \texttt{RouteService} object that is used to know which routes to use and how to handle requests; it also allows to dynamically define new room types that will be used by te server. 
 
 The \texttt{ServerActor} also uses a \texttt{RoomHandler} to create and define rooms from the server. The same RoomHandler used by the RouteService.
 
