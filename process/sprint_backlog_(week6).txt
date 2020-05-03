@@ -1,0 +1,29 @@
+Sprint Backlog (week 6)											
+											
+Product backlog Item	Sprint Task	Volunteer	Size Estimate	1	2	3	4	5	6		
+Implement RollTheDiceGame		GG	34	21	13	1	1	0			
+Prepare for deployment	Add branch 'deploy'	SS	1	1	0						
+	Server code refactoring	GG	13	13	13	5	2	0			
+	Client code refactoring	RS	13	8	0						
+	Common code refactoring	SS	5	5	0						
+Package refactoring	Add 'core'  package on client and server	SS	2	2	2	1	1	0			
+	Create scala-omg package that contains all the others	SS	2	2	2	2	2	0			
+Deploy code	Create separate project foreach game	SS	8	6	3	2	0				
+	Generate jar foreach game	SS	3	3	3	2	0	1	0		
+	"Publish library on ""Maven"""	GG	2	2	2	2	1	1	8		
+											
+											
+											
+											
+											
+											
+											
+											
+											
+											
+											
+											
+											
+											
+											
+											
