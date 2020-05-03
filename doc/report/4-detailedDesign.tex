@@ -11,10 +11,13 @@
 	\caption{Server room class diagram}
 	\label{fig:server_room_class_diagram}
 \end{figure}
-\texttt{ServerRoom} is a trait that encapsulate the concept of room used server-side; as we see in figure \ref{fig:server_room_class_diagram} it extends the \texttt{Room} trait adding methods to handle clients (add,remove, tell and broadcast) and some event handlers. These handlers are the ones that the developer must implement to define his own type of rooms.
+\texttt{ServerRoom} is a trait that encapsulate the concept of room used server-side; as we see in figure \ref{fig:server_room_class_diagram} it extends the \texttt{Room} trait adding methods to manage clients (add,remove, tell and broadcast) and defining abstract handlers for room events. These handlers are the ones that the developer must implement to define his own type of rooms.
 
-Since the developer may also want to automatically synchronize the state of the game and have an inner game loop (requirements 2.1.2.1 and 2.1.2.2), there are two extension of the server room: \texttt{SynchronizedRoomState} and \texttt{GameLoop} that provide this functionalities. The first one is a trait generic in the type of the state that needs to be synchronized to clients; this trait has all methods implemented except for \texttt{currentState} that must be defined by the user and will be called periodically at the specified rate: \texttt{stateUpdateRate}.
-The second one, \texttt{Gameloop}, is also a trait but is not generic and requires to define \texttt{updateWorld}, a void method that will be called every \texttt{worldUpdaterate} milliseconds.
+Since the developer may also want to automatically synchronize the state of the game and have an inner game loop (requirements 2.1.2.1 and 2.1.2.2), there are two extension of the server room: \texttt{SynchronizedRoomState} and \texttt{GameLoop} that provide this functionalities. 
+
+The first one is a trait generic in the type of the state that needs to be synchronized to clients; this trait has all methods implemented except for \texttt{currentState} that must be defined by the user and will be called periodically at the specified rate: \texttt{stateUpdateRate}.
+
+The second one, \texttt{Gameloop}, is also a trait but is not generic and requires to define \texttt{updateWorld}, a void method that will be called every \texttt{worldUpdateRate} milliseconds.
 
 While this two traits can be optionally mixed in a ServerRoom, all those that in figure \ref{fig:server_room_class_diagram} are shown on the left, are functionalities that a room has by default:
 \begin{itemize}
@@ -29,7 +32,7 @@ While this two traits can be optionally mixed in a ServerRoom, all those that in
 \subsection{Properties and Filters}
 
 \section{Server}
-Class diagram in figure \ref{fig:server_class_diagram} describes in detail the server architecture with the addition of actors, displaying the main functionalities of the classes.
+Class diagram in figure \ref{fig:server_class_diagram} describes in detail the server architecture displaying the main functionalities of the classes and showing how actors interact with all the other components. 
 \begin{figure}[h]
 	\hspace*{-1.1in}
 	\includegraphics[scale=0.55]{images/4-design/server_class.png}
@@ -41,9 +44,9 @@ The \texttt{GameServer} class is the facade interface that is exposed to the dev
 
 The \texttt{ServerActor} also uses a \texttt{RoomHandler} to create and define rooms from the server. The same RoomHandler used by the RouteService.
 
-As we described for the server architecture in section \ref{sec:server_arch}, the purpose of the \texttt{RoomHandler} is to manage the active rooms in the applications. Specifically though it doesn't directly create rooms but instead it creates RoomActors: actors used as 'wrappers' for ServerRooms to avoid concurrency issues.  More than one client can indeed interact with a single room at the same time, so, in order to avoid race coditions, we decided to make clients communicate with RoomActors that process messages sequentially. Each actor is in charge of notifying clients' actions to the room that is associated with.
+As we described for the server architecture in section \ref{sec:server_arch}, the purpose of the \texttt{RoomHandler} is to manage the active rooms in the applications. Specifically though it doesn't directly create rooms but instead it creates \texttt{RoomActors}: actors used as 'wrappers' for ServerRooms to avoid concurrency issues; more than one client can indeed interact with a single room at the same time, so, in order to avoid race coditions, we decided to make clients communicate with RoomActors that process messages sequentially. Each actor is in charge of notifying clients' actions to the room that is associated with.
 
-Each \texttt{ServerRoom} liked to the actor keeps track of connected clients (\texttt{Client} class in figure) to know which clients have joined and can interact with the room and also to know who are the receivers of \texttt{broadcast} operations. Clients are uniquely identified by their id and expose a \texttt{send} method that allows to send messages to them. It is important to notice that each room has its own view of clients: the same client connected to different rooms will have a different id in each of them. 
+Each \texttt{ServerRoom} is linked to an actor and keeps track of connected clients (\texttt{Client} class in figure). Clients are uniquely identified by their id and expose a \texttt{send} method that allows to send messages to them. It is important to notice that each room has its own view of clients: the same client connected to different rooms will have a different id in each of them. 
 
 Clients are also used by the \texttt{MatchmakingService} since is the actor that performs matchmaking operations and needs to know which clients are waiting to start a match. \texttt{MatchmakingService} actors are spawned during server startup if the developer used the \texttt{defineRoomWithMatchmaking} method to define a room. 
 
