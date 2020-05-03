@@ -43,10 +43,7 @@ case class ControllerImpl(serverInfo: ServerInfo) extends Controller with Subscr
     view.startGUI()
   }
 
-  override def closeApplication(): Unit = {
-    // TODO close client?
-    System exit 0
-  }
+  override def closeApplication(): Unit = model.leaveRoom()
 
   override def joinGameWithMatchmaking(desiredTeam: Team): Unit = model.joinGameWithMatchmaking(desiredTeam)
 
@@ -63,7 +60,9 @@ case class ControllerImpl(serverInfo: ServerInfo) extends Controller with Subscr
       view changeTurn newTurn
     case PubSubWin(team) =>
       view endGame team
-    case LeavedMatchmaking =>
+    case LeftMatchmaking =>
       view.showMainMenu()
+    case LeftRoom =>
+      System exit 0
   }
 }

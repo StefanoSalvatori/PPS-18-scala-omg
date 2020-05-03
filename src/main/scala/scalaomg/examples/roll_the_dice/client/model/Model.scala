@@ -2,7 +2,7 @@ package scalaomg.examples.roll_the_dice.client.model
 
 import scalaomg.client.core.Client
 import scalaomg.client.room.JoinedRoom
-import scalaomg.examples.roll_the_dice.client.{LeavedMatchmaking, PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, PubSubWin, Publisher}
+import scalaomg.examples.roll_the_dice.client.{LeftMatchmaking, LeftRoom, PubSubMessage, PubSubNextTurn, PubSubRoomState, PubSubSetupGame, PubSubWin, Publisher}
 import scalaomg.examples.roll_the_dice.common.{ClientInfo, MatchState, ServerInfo, Team, Turn}
 import scalaomg.examples.roll_the_dice.common.MessageDictionary.{NextTurn, Roll, StartGame, Win}
 
@@ -18,6 +18,8 @@ trait Model {
   def leaveMatchmakingQueue(): Unit
 
   def rollDice(): Unit
+
+  def leaveRoom(): Unit
 }
 
 object Model {
@@ -58,12 +60,14 @@ class ModelImpl(serverInfo: ServerInfo) extends Model with Publisher {
         room onStateChanged { newState =>
           publish(newState.asInstanceOf[MatchState])
         }
-
-      case _ =>
     }
 
+  override def leaveRoom(): Unit = room.leave onComplete {
+    _ => publish(LeftRoom)
+  }
+
   override def leaveMatchmakingQueue(): Unit = client.matchmaker leaveMatchmaking roomName onComplete {
-    _ => publish(LeavedMatchmaking)
+    _ => publish(LeftMatchmaking)
   }
 
   override def rollDice(): Unit = {

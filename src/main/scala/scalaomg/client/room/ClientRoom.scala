@@ -33,7 +33,7 @@ trait ClientRoom extends BasicRoom {
   override def propertyOf(propertyName: String): RoomProperty =
     tryReadingProperty(propertyName)(p => RoomProperty(p, propertiesAsMap(p)))
 
-  private def tryReadingProperty[T](propertyName: String)(f: Function[String, T]): T = try {
+  private def tryReadingProperty[T](propertyName: String)(f: String => T): T = try {
     f(propertyName)
   } catch {
     case _: NoSuchElementException => throw NoSuchPropertyException()
