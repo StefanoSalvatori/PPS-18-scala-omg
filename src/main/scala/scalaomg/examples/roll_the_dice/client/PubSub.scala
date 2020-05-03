@@ -7,7 +7,8 @@ case class PubSubRoomState(state: MatchState) extends PubSubMessage
 case class PubSubSetupGame(assignedTurn: Turn, startingState: MatchState, goalPoints: Int) extends PubSubMessage
 case class PubSubNextTurn(turn: Turn) extends PubSubMessage
 case class PubSubWin(team: Team) extends PubSubMessage
-case object LeavedMatchmaking extends PubSubMessage
+case object LeftMatchmaking extends PubSubMessage
+case object LeftRoom extends PubSubMessage
 
 trait Subscriber {
 
