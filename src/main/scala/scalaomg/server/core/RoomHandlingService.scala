@@ -9,7 +9,7 @@ import scalaomg.server.core.RoomHandlingService._
 import scalaomg.server.matchmaking.Group.GroupId
 import scalaomg.server.room.{Client, RoomActor, ServerRoom}
 
-object RoomHandlingService {
+private[server] object RoomHandlingService {
 
   /**
    * Create a new room of specific type with properties.
@@ -83,6 +83,7 @@ object RoomHandlingService {
    */
   case class HandleClientConnection(roomId: RoomId)
 
+  //Possibible responses of this actor
   case object RoomTypeDefined
   case object RoomRemoved
   case class RoomCreated(room: SharedRoom)
@@ -93,15 +94,15 @@ object RoomHandlingService {
 }
 
 /**
- * Actro used to manage rooms
+ * Actor used to manage rooms
  */
-class RoomHandlingService extends Actor {
+private class RoomHandlingService extends Actor {
 
   implicit val system: ActorSystem = this.context.system
 
-  var roomTypesHandlers: Map[RoomType, () => ServerRoom] = Map.empty
-  var _roomsByType: Map[RoomType, Map[ServerRoom, ActorRef]] = Map.empty
-  var _roomsWithMatchmakingByType: Map[RoomType, Map[ServerRoom, ActorRef]] = Map.empty
+  private var roomTypesHandlers: Map[RoomType, () => ServerRoom] = Map.empty
+  private var roomsByType: Map[RoomType, Map[ServerRoom, ActorRef]] = Map.empty
+  private var roomsWithMatchmakingByType: Map[RoomType, Map[ServerRoom, ActorRef]] = Map.empty
 
   override def receive: Receive = {
     case CreateRoom(roomType, roomProperties) =>
@@ -119,33 +120,33 @@ class RoomHandlingService extends Actor {
       }
 
     case GetRoomsByType(roomType, filterOptions) =>
-      sender ! this.roomsByType(roomType, filterOptions)
+      sender ! this.availableRoomsByType(roomType, filterOptions)
 
     case GetRoomByTypeAndId(roomType, roomId) =>
-      sender ! this.roomsByType(roomType).find(_.roomId == roomId)
+      sender ! this.availableRoomsByType(roomType).find(_.roomId == roomId)
 
     case GetAvailableRooms(filterOptions) =>
-      sender ! this._roomsByType.keys.flatMap(roomsByType(_, filterOptions)).toSeq
+      sender ! this.roomsByType.keys.flatMap(availableRoomsByType(_, filterOptions)).toSeq
 
     case GetMatchmakingRooms() =>
-      sender ! this._roomsWithMatchmakingByType.flatMap(e => e._2.keys).toSeq
+      sender ! this.roomsWithMatchmakingByType.flatMap(e => e._2.keys).toSeq
 
     case DefineRoomType(roomType, roomFactory) =>
-      this._roomsByType = this._roomsByType + (roomType -> Map.empty)
+      this.roomsByType = this.roomsByType + (roomType -> Map.empty)
       this.roomTypesHandlers += (roomType -> roomFactory)
       sender ! RoomTypeDefined
 
     case RemoveRoom(roomId) =>
-      this._roomsByType find (_._2.keys.map(_.roomId) exists (_ == roomId)) foreach (entry => {
+      this.roomsByType find (_._2.keys.map(_.roomId) exists (_ == roomId)) foreach (entry => {
         val room = entry._2.find(_._1.roomId == roomId)
         room foreach { r =>
-          this._roomsByType = this._roomsByType.updated(entry._1, entry._2 - r._1)
+          this.roomsByType = this.roomsByType.updated(entry._1, entry._2 - r._1)
         }
       })
       sender ! RoomRemoved
 
     case HandleClientConnection(roomId) =>
-      sender ! (this._roomsByType ++ this._roomsWithMatchmakingByType)
+      sender ! (this.roomsByType ++ this.roomsWithMatchmakingByType)
         .flatMap(_._2)
         .find(_._1.roomId == roomId)
         .map(room => RoomSocket(room._2, BinaryProtocolSerializer(), room._1.socketConfigurations).open())
@@ -156,15 +157,15 @@ class RoomHandlingService extends Actor {
     val newRoom = roomTypesHandlers(roomType)()
     newRoom.matchmakingGroups = matchmakingGroups
     val newRoomActor = this.context.system actorOf RoomActor(newRoom, self)
-    this._roomsWithMatchmakingByType +=
-      (roomType -> (this._roomsWithMatchmakingByType.getOrElse(roomType, Map.empty) + (newRoom -> newRoomActor)))
+    this.roomsWithMatchmakingByType +=
+      (roomType -> (this.roomsWithMatchmakingByType.getOrElse(roomType, Map.empty) + (newRoom -> newRoomActor)))
     newRoom
   }
 
   private def createRoom(roomType: RoomType, roomProperties: Set[RoomProperty]): SharedRoom = {
     val newRoom = roomTypesHandlers(roomType)()
     val newRoomActor = this.system actorOf RoomActor(newRoom, self)
-    this._roomsByType += (roomType -> (this._roomsByType.getOrElse(roomType, Map.empty) + (newRoom -> newRoomActor)))
+    this.roomsByType += (roomType -> (this.roomsByType.getOrElse(roomType, Map.empty) + (newRoom -> newRoomActor)))
     // Set property and password
     roomProperties.find(_.name == Room.RoomPasswordPropertyName) match {
       case Some(password) =>
@@ -185,8 +186,8 @@ class RoomHandlingService extends Actor {
    * @param filterOptions filters to apply
    * @return a sequence of rooms
    */
-  private def roomsByType(roomType: RoomType, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] =
-    this._roomsByType get roomType match {
+  private def availableRoomsByType(roomType: RoomType, filterOptions: FilterOptions = FilterOptions.empty): Seq[SharedRoom] =
+    this.roomsByType get roomType match {
       case Some(value) =>
         value.keys
           .filter(this filterRoomsWith filterOptions)
