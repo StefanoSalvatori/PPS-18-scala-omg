@@ -33,6 +33,45 @@ While this two traits can be optionally mixed in a ServerRoom, all those that in
 
 \subsection{Properties and Filters}
 
+UML class diagram in figure \ref{fig:property-class} shows the detailed architecture of room properties and filters. 
+
+\bigskip
+\textit{Room properties}
+\\
+Each property (\texttt{RoomProperty}) owns a name and a value.
+\\
+The values, since can be of four types (server requirements 2.2.2), are modelled as classes that extend a common trait \texttt{RoomPropertyValue} and wrap a ``real'' value of type \texttt{Int}, \texttt{Double}, \texttt{Boolean} or \texttt{String}. 
+\\
+Each property value exposes two main feaures: the real value wrapped by the class and a method that compares such value to another one of the same type (e.g. compare the Int value wrapped by the class to another given Int); this is useful since different type of values can define different comparing logics.
+Moreover, there is also a static factory that permits to create a property value from a given first class value (if possible).
+\\
+Notice that, in order to encourage library usability, the value wrapper can be made be transparent to final users thanks to implicit conversions that can be defined in Scala.
+
+\bigskip
+\textit{Filters}
+\\
+By looking to client requiremnt 1.6.1, there are four available filter strategies. Similarly to property values, they are hidden behind a common trait \texttt{FilterStrategy}. Such trait defines a name for the strategy and an evaluation predicate that permits to apply the strategy to two values. The evaluation result expresses if the filtering defined by the strategy is satisfied.
+
+\bigskip
+Since library usability is a core aspect, a simple DSL language is created in order to easily manage filters.
+\\
+Room properties functionalities are extended to include filters by using a decorator pattern. This way, filter strategies can be directly called by the property itself.
+\\
+A \texttt{FilterOption} is something that contains the name of the property to be filtered, the strategy to be uses and a value the property value should be compared to. It exposes an utility method to concatenate two \texttt{FilterOption} too.
+A \texttt{FilterOptions} is a wrapper around a set of \texttt{FilterOption}; this is useful when talking about DSL since it permits to define static factories (\texttt{empty}, \texttt{just}) and utility methods such as concatenation (\texttt{and}) and union (\texttt{++}).
+
+\bigskip
+\textit{Design notes}
+\\
+Before on choosing this desing, few different options have been analyzed, and this has been decided to be the most feasible one. The only lack that can be detected is on the value getter of \texttt{RoomPropertyValue}. Indeed, it is absent in the class instance itself, and it is only available through the static method \texttt{valueOf}.
+
+\begin{figure}[h]
+	\hspace*{-0.1in}
+	\includegraphics[scale=0.55]{images/4-design/property_and_filters-class.png}
+	\caption{Properties and filters class diagram.}
+	\label{fig:property-class}
+\end{figure}
+
 
 \section{Server}
 Class diagram in figure \ref{fig:server_class_diagram} describes in detail the server architecture displaying the main functionalities of the classes and showing how actors interact with all the other components. 
@@ -95,12 +134,12 @@ They both are Socket where the generic type T is a \texttt{ProtocolMessage}. Thi
 In order for a Socket object to send and receive data, it must be able to serialize and deserialize the messages that pass through it. It uses for this purpose a \texttt{SocketSerializer} that has two methods: parsefromSocket and writeToSocket. This class is also generic in T that is the type of messages that needs to read and write.
 
 Since \texttt{RoomSocket} and \texttt{MatchmakingSocket} needs to handle \texttt{ProtocolMessage}s we defined a \texttt{ProtocolMessageSerializer} interface that specifically defines a serializer for protocol messages. We implemented two types of serializers: \texttt{BinaryProtoclSerializer} and \texttt{TextProtocolSerializer}. The first one serialize protocol messages as binary data; the latter instead as text messages.
- 
+\\
 We have two different implementations because we initially thought to use json also for socket communication and this would be done by the \texttt{TextProtocolSerializer}. However we eventually decided to use binary representation both to improve performance and usability, so we switched to the \texttt{BinaryProtoclSerializer}
 
 
 An example of a full interaction between client and server is shown in the sequence diagram in figure \ref{fig:create_room_seq}
-\begin{figure}[]
+\begin{figure}
 	\hspace*{-1in}
 	\includegraphics[scale=0.5]{images/4-design/crate_room_seq.png}
 	\caption{Example of a client-server interaction upon a 'create room' request}
