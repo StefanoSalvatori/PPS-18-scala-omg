@@ -92,7 +92,6 @@ The requirements analysis led to the definition of three types of interaction be
 		\begin{tabular}{p{2cm}p{4cm}p{2cm}p{5.5cm}}
 			\textbf{Http Method} & \textbf{Path}	  & \textbf{Payload}  & \textbf{Result}                                                            		\\\\
 			GET                  & /rooms             & filters           & get all the rooms that match the filters in the payload                        	\\\\
-			GET                  & /rooms/:id         & empty             & get the room with the given id                                                 	\\\\
 			GET                  & /rooms/:type       & filters           & get all the rooms with the given type (filtered by filters in the payload)     	\\\\
 			GET                  & /rooms/:type/:id   & empty             & get the room with the given id searching among rooms of the given type         	\\\\
 			POST                 & /rooms/:type       & options           & create a room of the given type with the option passed in the payload          	\\\\
