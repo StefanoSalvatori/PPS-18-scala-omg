@@ -1,20 +1,17 @@
 package scalaomg.server.matchmaking
 
 import akka.actor.{Actor, ActorRef, Props, Stash}
-import scalaomg.common.communication.CommunicationProtocol.{MatchmakingInfo, ProtocolMessage}
-import scalaomg.common.communication.CommunicationProtocol.ProtocolMessageType._
-import scalaomg.common.room.Room.RoomType
-import akka.pattern.ask
 import akka.util.Timeout
-import scalaomg.common.room.{Room, SharedRoom}
+import scalaomg.common.communication.CommunicationProtocol.ProtocolMessageType._
+import scalaomg.common.communication.CommunicationProtocol.{MatchmakingInfo, ProtocolMessage}
+import scalaomg.common.room.Room.RoomType
 import scalaomg.server.core.RoomHandlingService.{CreateRoomWithMatchmaking, RoomCreated, TypeNotDefined}
 import scalaomg.server.matchmaking.Group.GroupId
 import scalaomg.server.matchmaking.MatchmakingService.{JoinQueue, LeaveQueue}
 import scalaomg.server.room.Client
 
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContextExecutor
-import scala.util.Success
+import scala.concurrent.duration._
 
 private[server] object MatchmakingService {
   trait MatchmakingRequest
@@ -57,6 +54,9 @@ private class MatchmakingService[T](private val matchmaker: Matchmaker[T],
     case RoomCreated(room) =>
       grouping.keys.foreach(c => c send ProtocolMessage(MatchCreated, c.id, MatchmakingInfo(c.id, room.roomId)))
       waitingClients = waitingClients -- grouping.keys
+      unstashAll()
+      context.become(receive)
+    case TypeNotDefined =>
       unstashAll()
       context.become(receive)
     case JoinQueue(_, _) => stash()

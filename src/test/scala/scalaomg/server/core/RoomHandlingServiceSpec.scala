@@ -59,6 +59,11 @@ class RoomHandlingServiceSpec extends TestKit(ActorSystem("RoomHandlingService",
     getAvailableRooms() should have size 1
   }
 
+  it should "reply with an error when creating a room that has not been defined" in {
+    this.roomHandler ! CreateRoom("randomType")
+    expectMsg(TypeNotDefined)
+  }
+
   it should "not create a room if the room type is not defined" in {
     this.roomHandler ! CreateRoom(roomRandomType)
     expectMsg(TypeNotDefined)
