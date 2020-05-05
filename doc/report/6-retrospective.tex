@@ -9,7 +9,7 @@ Product backlog was defined during first meetings. Each item in the backlog was 
 The organizational structure of the project was defined too. We discussed tools and development environments to support continuous integration.
 \\
 Initial analysis and design process were performed in order to define main entities of the system and their interactions.
-Therefore, it was decided to internally use an approach base on actors, which however would have been transparent to the final user (developer). This is due to an elevated complexity of the system, and an actor model could semplify few aspects. 
+Therefore, it was decided to internally use an approach base on actors, which however would have been transparent to the final user (developer). This is due to an elevated complexity of the system, and an actor model could simplify few aspects. 
 We decided to rely upon ``akka-core library'' and ``akka-http library''. 
 \\
 In the end, it was decided to carry out client and server modules development in parallel in order to have a working core in the shortest time. This core would be extended incrementally during the project lifetime.
@@ -31,7 +31,7 @@ An issue regarding the extension of an already existing server was found due to 
 This ended up in a revision on some decisions that were made about server creation. The result is that it is possible for the user to specify external routes which will be handled by the game server (if they don't conflict with the already existing ones internally used  by the game server itself). 
 However, it is not possible to attach the game server to an existing one.
 \\
-However, even if in a different way than the one prospected at the beginning, the requirement can be considred fulfilled.   
+However, even if in a different way than the one prospected at the beginning, the requirement can be considered fulfilled.   
 
 
 
@@ -39,9 +39,9 @@ However, even if in a different way than the one prospected at the beginning, th
 \subsubsection{Retrospective}
 The task effort concerning the creation of a game server based on an existing one was underestimated, and it created few troubles during the whole week.
 \\
-The team was able to complete all tasks and effectively use continuous integration and project managemenet tools decided during first meetings.
+The team was able to complete all tasks and effectively use continuous integration and project management tools decided during first meetings.
 \\
-A problem that arised was that some ``scalastyle'' rules were too strict, and tests were failing for no good reasons. We decided then to disable such rules for further development.
+A problem that arose was that some ``scalastyle'' rules were too strict, and tests were failing for no good reasons. We decided then to disable such rules for further development.
 
 
 \subsection{Sprint 2}
@@ -50,7 +50,7 @@ A problem that arised was that some ``scalastyle'' rules were too strict, and te
 During this week some of the main features of the library about clients and rooms have been developed.
 \\
 Tasks regarding web socket support was underestimated, and it was not fully completed during this sprint.
-The interaction between clients and rooms required the definition of an ad hoc protocol to manage messages internally used by the library. This introduced some dependecies between client and server tasks causing little slowdown in the development process.
+The interaction between clients and rooms required the definition of an ad hoc protocol to manage messages internally used by the library. This introduced some dependencies between client and server tasks causing little slowdown in the development process.
 \\
 Given the amount of work spent on such task, some others were left behind and not fully achieved too (e.g. the creation of rooms with custom options).
 \\
@@ -93,9 +93,9 @@ As they were found, they were immediately fixed within the end of the sprint.
 
 \subsection{Sprint 4}
 \subsubsection{Report}
-In this sprint, other main features were added, such as game loop on server rooms and client reconnection.
+In this sprint, other main features were added, such as game loop on server rooms and client re-connection.
 \\
-Moreover, it was implemeneted ``MoneyGrabber'', a second game that takes advantage of more advanced features of the library, such as the automatic state update and the management of rooms with multiple players.
+Moreover, it was implemented ``MoneyGrabber'', a second game that takes advantage of more advanced features of the library, such as the automatic state update and the management of rooms with multiple players.
 Therefore, it was possible to verify the actual versatility of the library showing a further and more complex example of use in a real context.
 \\
 All tasks were completed ahead of time.
@@ -121,10 +121,10 @@ A revise on client-server communication protocol was required to integrate match
 
 Given the importance of the new matchmaking feature, we decided to develop a further example showing its use in an example application. This will be done in the next sprint.
 \\
-The revision of communication protocol was due to some non trivial matchmaking aspects that were non fully considered in advance, such as data flows and separation between normal and matchamaking rooms. 
+The revision of communication protocol was due to some non trivial matchmaking aspects that were non fully considered in advance, such as data flows and separation between normal and matchmaking rooms. 
 \\
 In the end, we noticed that client-side room closure feature was not explicitly defined yet. 
-After a brief discussion, we decided that a developer could implement such functionanlity by using existing features (e.g autoclose feature on server-side) in a safer and robust manner. Hence, we considered that requirement unnecessary, and so the task as fullfilled.
+After a brief discussion, we decided that a developer could implement such functionality by using existing features (e.g auto-close feature on server-side) in a safer and robust manner. Hence, we considered that requirement unnecessary, and so the task as fulfilled.
 \\
 Thus, all requirements are satisfied, and library is almost ready for deployment.
 
@@ -133,7 +133,25 @@ Thus, all requirements are satisfied, and library is almost ready for deployment
 
 \subsubsection{Report}
 
+During this sprint the team worked on the deployment process. Some refactoring was done on both code and package structure. Particular attention was given to visibility rules aspects.
+The three produced examples have been refined and executable jars have been created for each. Every example comes with two jars, one for the client side application and one for the server side initialization.
+\\
+We were not able to complete the library publishing on Maven because the whole process require some more understanding.
+In the next few days the team will work together to complete the task.
+
+
+
 \subsubsection{Retrospective}
 
 
+The complexity of the publishing process on Maven was underestimated.
+This is an important requirement that existed from the beginning of the project, so we should have discuss this topic in earliest Sprints. 
+An initial discussion would have led to greater awareness, making it possible to increase the knowledge on the topic incrementally during the project lifetime.
+\\
+Also the package structure could have been settled in advanced. 
+Indeed some (avoidable) extra-work was done to fix the structure both in source and test code.
+
 \section{Final comments}
+\subsection{Stefano Salvatori}
+\subsection{Gabriele Guerrini}
+\subsection{Riccardo Salvatori}
