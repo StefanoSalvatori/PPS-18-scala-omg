@@ -40,34 +40,36 @@ While this two traits can be optionally mixed in a ServerRoom, all those that in
 UML class diagram in figure \ref{fig:property-class} shows the detailed architecture of room properties and filters. 
 
 \bigskip
-\textit{Room properties}
+\textit{Basic room properties}
 \\
-Each property (\texttt{RoomProperty}) owns a name and a value.
+Each property (\texttt{BasicRoomProperty}) owns a name and a value.
 \\
-The values, since can be of four types (server requirements 2.2.2), are modelled as classes that extend a common trait \texttt{RoomPropertyValue} and wrap a ``real'' value of type \texttt{Int}, \texttt{Double}, \texttt{Boolean} or \texttt{String}. 
+Values, since they can be of four types (server requirements 2.2.2), are modelled as classes that extend a common trait \texttt{RoomPropertyValue}. This trait wraps a ``real'' value of type \texttt{Int}, \texttt{Double}, \texttt{Boolean} or \texttt{String}. 
 \\
-Each property value exposes two main feaures: the real value wrapped by the class and a method that compares such value to another one of the same type (e.g. compare the Int value wrapped by the class to another given Int); this is useful since different type of values can define different comparing logics.
+Each property value exposes two main feaures: the real value wrapped by the class and a method that compares such value to another one of the same type (e.g. compare the Int value wrapped by the class to another given Int); this is useful since different type of values may define different comparing logics.
 Moreover, there is also a static factory that permits to create a property value from a given first class value (if possible).
-\\
-Notice that, in order to encourage library usability, the value wrapper can be made be transparent to final users thanks to implicit conversions that can be defined in Scala.
 
 \bigskip
 \textit{Filters}
 \\
-By looking to client requiremnt 1.6.1, there are four available filter strategies. Similarly to property values, they are hidden behind a common trait \texttt{FilterStrategy}. Such trait defines a name for the strategy and an evaluation predicate that permits to apply the strategy to two values. The evaluation result expresses if the filtering defined by the strategy is satisfied.
+By looking to client requirement 1.6.1, there are four available filter strategies. Similarly to property values, they are hidden behind a common trait \texttt{FilterStrategy}. Such trait defines a name for the strategy and an evaluation predicate that permits to apply the strategy to two values. The evaluation result expresses if the filtering defined by the strategy is satisfied.
 
 \bigskip
 Since library usability is a core aspect, a simple DSL language is created in order to easily manage filters.
 \\
-Room properties functionalities are extended to include filters by using a decorator pattern. This way, filter strategies can be directly called by the property itself.
+\texttt{BasicRoomProperty} functionalities are extended to include filters by using mixins. This way, filter strategies can be directly called by the property itself.
 \\
-A \texttt{FilterOption} is something that contains the name of the property to be filtered, the strategy to be uses and a value the property value should be compared to. It exposes an utility method to concatenate two \texttt{FilterOption} too.
+A \texttt{FilterOption} is something that contains the name of the property to be filtered, the strategy to be uses and a value the property should be compared to. It exposes an utility method to concatenate two \texttt{FilterOption} too.
+\\
 A \texttt{FilterOptions} is a wrapper around a set of \texttt{FilterOption}; this is useful when talking about DSL since it permits to define static factories (\texttt{empty}, \texttt{just}) and utility methods such as concatenation (\texttt{and}) and union (\texttt{++}).
 
 \bigskip
-\textit{Design notes}
+\textit{Design notes / implementation directives}
 \\
-Before on choosing this desing, few different options have been analyzed, and this has been decided to be the most feasible one. The only lack that can be detected is on the value getter of \texttt{RoomPropertyValue}. Indeed, it is absent in the class instance itself, and it is only available through the static method \texttt{valueOf}.
+\begin{itemize}
+\item Before on choosing this desing, few different options have been analyzed, and this has been decided to be the most feasible one. The only lack that can be detected is on the value getter of \texttt{RoomPropertyValue}. Indeed, it is absent in the class instance itself, and it is only available through the static method \texttt{valueOf}.
+\item Notice that, in order to encourage library usability, the value wrapper can be made be transparent to final users thanks to implicit conversions that can be defined in Scala.
+\end{itemize}
 
 \begin{figure}[h]
 	\hspace*{-0.1in}
