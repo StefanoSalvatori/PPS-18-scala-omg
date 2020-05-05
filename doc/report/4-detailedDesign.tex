@@ -93,7 +93,7 @@ In order for a Socket object to send and receive data, it must be able to serial
 
 Since \texttt{RoomSocket} and \texttt{MatchmakingSocket} needs to handle \texttt{ProtocolMessage}s we defined a \texttt{ProtocolMessageSerializer} interface that specifically defines a serializer for protocol messages. We implemented two types of serializers: \texttt{BinaryProtoclSerializer} and \texttt{TextProtocolSerializer}. The first one serialize protocol messages as binary data; the latter instead as text messages.
  
-We have two different implementations because we initially thought to use json also for socket communication and this would be done by the \texttt{TextProtocolSerializer}. However we eventually decided to use binary representation both to improve performance and usability, so we switched to the \texttt{BinaryProtocolSerializer}.
+We have two different implementations because we initially planned to use json format also for socket communication and this would be done by the \texttt{TextProtocolSerializer}. However we decided during the development phase to use binary representation both to improve performance and usability, so we switched to the \texttt{BinaryProtocolSerializer}. The \texttt{TextProtocolSerializer} has been still kept since was still usefull for testing purposes.
 
 
 An example of a full interaction between client and server is shown in the sequence diagram in figure \ref{fig:create_room_seq}
