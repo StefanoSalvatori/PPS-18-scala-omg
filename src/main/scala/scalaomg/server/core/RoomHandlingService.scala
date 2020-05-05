@@ -83,7 +83,7 @@ private[server] object RoomHandlingService {
    */
   case class HandleClientConnection(roomId: RoomId)
 
-  //Possibible responses of this actor
+  //Possible responses of this actor
   case object RoomTypeDefined
   case object RoomRemoved
   case class RoomCreated(room: SharedRoom)
@@ -206,7 +206,7 @@ private class RoomHandlingService extends Actor {
   private def filterRoomsWith(filterOptions: FilterOptions): ServerRoom => Boolean = room => {
     filterOptions.options forall { filterOption =>
       try {
-        val propertyValue = room `valueOf~AsPropertyValue` filterOption.optionName
+        val propertyValue = room `valueOf~AsPropertyValue` filterOption.name
         val filterValue = filterOption.value.asInstanceOf[propertyValue.type]
         filterOption.strategy evaluate(propertyValue, filterValue)
       } catch {
