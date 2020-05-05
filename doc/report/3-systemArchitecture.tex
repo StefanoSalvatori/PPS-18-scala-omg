@@ -49,10 +49,10 @@ The GameServer is the main component of the architecture. It is the one that lis
 
 A developer will mostly use the server module of the library working with the interface that this component exposes.
 
-As shown in figure \ref{fig:server_classes} it is connected with two other classes that are the RouteService and the RoomHandler.
+As shown in figure \ref{fig:server_classes} it is connected with two other classes that are the RouteService and the RoomHandlingService.
 
 \bigskip
-\textit{RoomHandler}
+\textit{RoomHandlingService}
 \\
 As the name suggests, the RoomHandler is the component used to manage rooms. It is meant to: 
 \begin{itemize}
@@ -86,8 +86,9 @@ TODO
 \section{Client-Server Interaction}
 The requirements analysis led to the definition of three types of interaction between client and server:
 \begin{enumerate}
-	\item Request-Reponse \\
-	This interaction takes place in those situations where the client makes a request to the server and wait for a specific response: for example getting the list of all joinable rooms. We decided to handle this kind of requests defining a REST protocol as shown in table \ref{table:server_routes}.
+	\item Client to GameServer \\
+	This interaction takes place in those situations where the client makes a request to the server and waits for a specific response: for example getting the list of all joinable rooms. We decided to handle this kind of requests defining a REST protocol as shown in table
+	 \ref{table:server_routes}.
 	\begin{table}[]
 		\begin{tabular}{p{2cm}p{4cm}p{2cm}p{5.5cm}}
 			\textbf{Http Method} & \textbf{Path}	  & \textbf{Payload}  & \textbf{Result}                                                            		\\\\
@@ -100,7 +101,7 @@ The requirements analysis led to the definition of three types of interaction be
 		\end{tabular}
 		\caption{\label{table:server_routes} \textit{Server REST protocol for request-response interaction}}
 	\end{table}
-	\item  Client-Room communication \\
+	\item  Client to Room \\
 	In this case we are in a situation where a client wants to establish a connection with a given a room to both send and receive messages from it. The request-response pattern doesn't work here because now the communication channel must be full-duplex: the server can send data to the client even without a specific client request (for example if the room broadcasts a message to all connected clients).
 	
 	The chosen solution here is the webosckets protocol since it provides the exact described behavior. Specifically, when a client wants to interact with a room, a websocket between that client and the server is created; the messages that the client sends through the socket are redirected to the room and the messages that the room wants to send to that client are forwarded through the socket. 
@@ -109,7 +110,7 @@ The requirements analysis led to the definition of three types of interaction be
 	In order to identify this different kind of messages we decided to define a communication protocol that is used for messages in the websocket.
 	
 	
-	\item Client-Matchmaking communication \\
+	\item Client to Matchmaking \\
 	The last type of interaction is the one that takes place when a client wants to join the matchmaking queue for a given type of room. In this case the client asks the server to be added to the queue and waits to be grouped with other clients. We have decided to use websockets here too since when the client sends the request, the server response is not immediate. The communication must be kept open until the matchmaking service doesn't create the group of client to start the match. Only then the server can respond to the client with a message that contains the information to join the room that will host the game.
 \end{enumerate}
 

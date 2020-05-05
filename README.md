@@ -1,9 +1,9 @@
 # scala-omg
 A Scala library for online multiplayer games
 
-[![Build Status](https://travis-ci.com/StefanoSalvatori/PPS-18-scala-omg.svg?branch=develop)](https://travis-ci.com/StefanoSalvatori/PPS-18-scala-omg)
+[![Build Status](https://travis-ci.com/StefanoSalvatori/PPS-18-scala-omg.svg?branch=roomhandler_actor)](https://travis-ci.com/StefanoSalvatori/PPS-18-scala-omg)
 [![License](http://img.shields.io/badge/License-MIT-blue.svg)](https://mit-license.org/)
-[![codecov](https://codecov.io/gh/StefanoSalvatori/PPS-18-scala-omg/branch/develop/graph/badge.svg)](https://codecov.io/gh/StefanoSalvatori/PPS-18-scala-omg)
+[![codecov](https://codecov.io/gh/StefanoSalvatori/PPS-18-scala-omg/branch/roomhandler_actor/graph/badge.svg)](https://codecov.io/gh/StefanoSalvatori/PPS-18-scala-omg)
 
 ## Description
 
