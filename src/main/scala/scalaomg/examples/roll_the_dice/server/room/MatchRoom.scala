@@ -2,7 +2,8 @@ package scalaomg.examples.roll_the_dice.server.room
 
 import scalaomg.examples.roll_the_dice.common.MessageDictionary._
 import scalaomg.examples.roll_the_dice.common.{A, A1, A2, B, B1, B2, Dice, MatchState, Team, Turn}
-import scalaomg.server.room.{Client, ServerRoom, SynchronizedRoomState}
+import scalaomg.server.room.features.SynchronizedRoomState
+import scalaomg.server.room.{Client, ServerRoom}
 
 case class MatchRoom() extends ServerRoom with SynchronizedRoomState[MatchState] {
 

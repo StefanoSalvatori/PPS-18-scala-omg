@@ -1,14 +1,14 @@
 \chapter{Implementation}
 \section{Data Serialization}
-As decribed in design section \ref{sec:communication_design}, there are two main types of serialization we dealt with, that is:
+As described in design section \ref{sec:communication_design}, there are two main types of serialization we dealt with, that is:
 \begin{itemize}
 	\item Json serialization: request-response interaction
-	\item Binary serialization: data exhanged through websockets
+	\item Binary serialization: data exchanged through websockets
 \end{itemize}
 
 Regarding the first one, we decided to use the \texttt{spray-json} library since it is the recommended one when using akka.
 
-About binary serialization, we chose to use \texttt{java.io} serialization. This is because there are no strict performance constraints in requirements, and we preferred to favor user-side usability: indeed, the user of the library is able to let exchange messages between clients and server just defining classes that extend \texttt{java.io.Serializable} interface.
+About binary serialization, we chose to use \texttt{java.io} serialization. This is because there are no strict performance constraints in requirements, and we preferred to favour user-side usability: indeed, the user of the library is able to let exchange messages between clients and server just defining classes that extend \texttt{java.io.Serializable} interface.
 
 
 
@@ -19,11 +19,24 @@ Later on I worked on the communication protocol implementing all the classes in 
 
 During the third and fourth sprint of the project i developed the \textit{MoneyGrabber} game as an example of the main functionalities of the library. 
 
+
+
+\section{Riccardo Salvatori}
+Initially I worked on the Route service component. I used a DSL provided by the akka-http library to easily define and handle specific routes used by the library. Then I defined the \texttt{RoomHandler} component that is in fact used by the \texttt{RouteService}.
+I worked on the client facade extending the infrastructure developed by Gabriele Guerrini. I worked on the client side room api defining the client room trait \texttt{ClientRoom} with the implementations \texttt{JoinableRoom} and \texttt{JoinedRoom}. Therefore I worked on functionality to join, reconnect and leave rooms.
+I worked on the implementation of the \textit{matchmaking} functionality client side: \texttt{ClientMatchmaker} and \texttt{ClientMatchmakerActor}.
+\\
+I implemented the \texttt{RockPaperScissor} example using scalafx and prolog.
+\\
+In the client side developing I was able to make an extensive use of reactive and asynchronous programming by the use of actors, futures and reactive streams.
+I could appreciate the use of \textit{for comprehension} syntax provided by scala to combine and work with futures.
+I was also able to improve my knowledge of Akka library and actor programming, also combined with a functional approach.
+
 \section{Gabriele Guerrini}
 
 \begin{itemize}
 
-\item[\em{Client infrastructure}] Realization of the main client infrastructure based upon main concepts of \texttt{CoreClient} (i.e. the main actor of a client), client facade (\texttt{Client}) and \texttt{HttpService}. My version, realized in the first sprint, has been then improved in the second one by Riccardo Salvatori.   
+\item[\em{Client infrastructure}] Realization of the main client infrastructure based upon main concepts of \texttt{CoreClient} (i.e. the main actor of a client), client facade (\texttt{Client}) and \texttt{HttpService}. My version, realized in the first sprint, has been then improved in the second one by Riccardo Salvatori.
 
 \item[\em{Room}] Design of rooms (\texttt{Room}, \texttt{BasicRoom}, \texttt{SharedRoom}, all client rooms, \texttt{ServerRoom}) and their interactions. Implementation of common rooms with contribution of Riccardo Salvatori.
 
@@ -41,10 +54,7 @@ During the third and fourth sprint of the project i developed the \textit{MoneyG
 
 \end{itemize}
 
-Since usability is a core aspect of the library, advanced features like reflection and annotations have been combined and widely used on \texttt{ServerRoom} in order to mantain the best of it while creating custom rooms. This way, the developer can freely define a room property just by declaring a field marked with an appropriate annotation.
-\\
-In the end, always talking about library usability, I developed a DSL to easily manage room properties and filters.
-
+Since usability is a core aspect of the library, advanced features like reflection and annotations have been combined and widely used on \texttt{ServerRoom} in order to maintain the best of it while creating custom rooms. This way, the developer can freely define a room property just by declaring a field marked with an appropriate annotation.
 
 
 

@@ -1,13 +1,12 @@
-package scalaomg.server.core
+package scalaomg.server.room
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import scalaomg.common.communication.BinaryProtocolSerializer
 import scalaomg.common.room.Room.{RoomId, RoomPassword, RoomType}
 import scalaomg.common.room._
 import scalaomg.server.communication.RoomSocket
-import scalaomg.server.core.RoomHandlingService._
 import scalaomg.server.matchmaking.Group.GroupId
-import scalaomg.server.room.{Client, RoomActor, ServerRoom}
+import scalaomg.server.room.RoomHandlingService._
 
 private[server] object RoomHandlingService {
 
@@ -83,7 +82,7 @@ private[server] object RoomHandlingService {
    */
   case class HandleClientConnection(roomId: RoomId)
 
-  //Possibible responses of this actor
+  //Possible responses of this actor
   case object RoomTypeDefined
   case object RoomRemoved
   case class RoomCreated(room: SharedRoom)
@@ -206,7 +205,7 @@ private class RoomHandlingService extends Actor {
   private def filterRoomsWith(filterOptions: FilterOptions): ServerRoom => Boolean = room => {
     filterOptions.options forall { filterOption =>
       try {
-        val propertyValue = room `valueOf~AsPropertyValue` filterOption.optionName
+        val propertyValue = room `valueOf~AsPropertyValue` filterOption.name
         val filterValue = filterOption.value.asInstanceOf[propertyValue.type]
         filterOption.strategy evaluate(propertyValue, filterValue)
       } catch {

@@ -2,7 +2,8 @@ package scalaomg.examples.moneygrabber.server.rooms
 
 import scalaomg.examples.moneygrabber.common.Entities.{Direction, Player}
 import scalaomg.examples.moneygrabber.common.{Board, GameModes}
-import scalaomg.server.room.{Client, GameLoop, RoomPropertyMarker, ServerRoom, SynchronizedRoomState}
+import scalaomg.server.room.features.{GameLoop, SynchronizedRoomState}
+import scalaomg.server.room.{Client, RoomPropertyMarker, ServerRoom}
 
 case class MatchRoom() extends ServerRoom with SynchronizedRoomState[Board] with GameLoop {
   @RoomPropertyMarker val boardSize: Int = 40

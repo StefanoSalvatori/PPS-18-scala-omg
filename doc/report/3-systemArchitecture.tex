@@ -25,7 +25,7 @@ At the most abstract level, a room is an entity with a unique id and some shared
 \bigskip
 \textit{ServerRoom}
 \\
-The server room is the one that will be used by the server side developer. It provides methods to communicate and interact with clients who are connected to ther room. Its behavior can be defined by the developer according to the application logic he wants to implement.
+The server room is the one that will be used by the server side developer. It provides methods to communicate and interact with clients who are connected to the room. Its behavior can be defined by the developer according to the application logic he wants to implement.
 
 \bigskip
 \textit{ClientRoom}
@@ -67,8 +67,8 @@ Defines the routes that the clients should use to interact with the server and i
 
 Client requests can basically be split in two types:
 \begin{itemize}
-	\item requests concerning rooms (e.g connect to a room or retreive available rooms...)
-	\item requests concerning matchamking (e.g join a matchmaking queue)
+	\item requests concerning rooms (e.g connect to a room or retrieve available rooms...)
+	\item requests concerning matchmaking (e.g join a matchmaking queue)
 \end{itemize}
 This component uses a RoomHandler to manage the first type and a list of MatchamkingServices (one for each type of room defined by the user) for the second type. 
 
@@ -81,13 +81,18 @@ The MatchmakingService is the component that implement the matchmaking logic for
 
 \section{Client Architecture}
 
-TODO
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.65]{images/3-architecture/client-architecture.png}
+	\caption{Client architecture diagram}
+	\label{fig:client_architecture}
+\end{figure}
 
 \section{Client-Server Interaction}
 The requirements analysis led to the definition of three types of interaction between client and server:
 \begin{enumerate}
 	\item Client to GameServer \\
-	This interaction takes place in those situations where the client makes a request to the server and waits for a specific response: for example getting the list of all joinable rooms. We decided to handle this kind of requests defining a REST protocol as shown in table
+	This interaction takes place in those situations where the client makes a request to the server and waits for a specific response: for example getting the list of all rooms that can be joined. We decided to handle this kind of requests defining a REST protocol as shown in table
 	 \ref{table:server_routes}.
 	\begin{table}[]
 		\begin{tabular}{p{2cm}p{4cm}p{2cm}p{5.5cm}}
@@ -104,7 +109,7 @@ The requirements analysis led to the definition of three types of interaction be
 	\item  Client to Room \\
 	In this case we are in a situation where a client wants to establish a connection with a given a room to both send and receive messages from it. The request-response pattern doesn't work here because now the communication channel must be full-duplex: the server can send data to the client even without a specific client request (for example if the room broadcasts a message to all connected clients).
 	
-	The chosen solution here is the webosckets protocol since it provides the exact described behavior. Specifically, when a client wants to interact with a room, a websocket between that client and the server is created; the messages that the client sends through the socket are redirected to the room and the messages that the room wants to send to that client are forwarded through the socket. 
+	The chosen solution here is the websockets protocol since it provides the exact described behavior. Specifically, when a client wants to interact with a room, a websocket between that client and the server is created; the messages that the client sends through the socket are redirected to the room and the messages that the room wants to send to that client are forwarded through the socket. 
 	
 	Another consideration to make here is that clients can receive and send different types of messages through the socket: first of all they need to send a join message to notify the room that they want to enter; then they may want to send generic messages to that room (e.g. actions that affect the current game state) and eventually they'll want to leave the room, and so on \dots
 	In order to identify this different kind of messages we decided to define a communication protocol that is used for messages in the websocket.
