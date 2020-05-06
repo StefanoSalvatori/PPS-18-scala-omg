@@ -99,7 +99,8 @@ Moreover, it was implemented ``MoneyGrabber'', a second game that takes advantag
 Therefore, it was possible to verify the actual versatility of the library showing a further and more complex example of use in a real context.
 \\
 All tasks were completed ahead of time.
-
+\\
+In the end, a first closing process, that is the sistematic writing of the report by using gathered informal notes and documentation, has been started.
 
 \subsubsection{Retrospective}
 
@@ -111,8 +112,7 @@ By the way, the remaining time of the sprint was used by the whole team to impro
 \\
 The only drawback was the underrate of game loop consequences on the whole system. Indeed, game loop, and also the already implemented state synchronization feature, might imperil system safety due to possible concurrency problems. A meeting with the team was required to improve some design aspects so it was possible to solve any issue while keeping it transparent to final user; it took a non negligible amount of time.
 
-\section{Sprint 5}
-
+\subsection{Sprint 5}
 \subsubsection{Report}
 Matchmaking functionality was implemented during this sprint.
 A revise on client-server communication protocol was required to integrate matchmaking service in the system.
@@ -129,47 +129,66 @@ After a brief discussion, we decided that a developer could implement such funct
 Thus, all requirements are satisfied, and library is almost ready for deployment.
 
 
-\section{Sprint 6}
+\subsection{Sprint 6}
 
 \subsubsection{Report}
-
-During this sprint the team worked on the deployment process. Some refactoring was done on both code and package structure. Particular attention was given to visibility rules aspects.
-The three usage examples have been refined and executable jars have been created for each. Every example comes with two jars, one for the client side application and one for the server side initialization.
+During this sprint, some refactoring was done on both code and packages structure. Particular attention was given to visibility rules aspects.
+The three usage examples have been refined and, for each one, an executable jars has been created. Each example comes with two jars, one for the client side application and one for the server side initialization.
 \\
-We were not able to complete the library publishing on Maven because the whole process require some more understanding.
-In the next few days the team will work together to complete the task.
-
+In the end, another closing process was started, namely the system deployment.
 
 
 \subsubsection{Retrospective}
-
-
 The complexity of the publishing process on Maven was underestimated.
-This is an important requirement that existed from the beginning of the project, probably we should have discuss this topic in earliest Sprints. 
-An initial discussion would have led to greater awareness, making it possible to increase the knowledge on the topic incrementally during the project lifetime.
+This is an important requirement that existed from the beginning, and we probably should have discussed it at the project start to refine some details that could affect the whole project development.
 \\
-Also the basic package structure could have been settled in advanced. 
-Indeed some (avoidable) extra-work was done to fix the structure both in source and test code.
+Also, we noticed that the correct package structure could have been settled in advance.
+Indeed, some avoidable extra-work was done to fix the structure both in source and test code.
 
 \section{Final comments}
 \subsection{Stefano Salvatori}
-I am satisfied with the overall result of the project. 
+I am satisfied with the overall result of the project.
 All the requirements have been fulfilled and the developed library is actually usable in real case scenarios, as we showed with the examples games we proposed.
 
-I think that this project gave me the opportunity to develop good programming skills in Scala, a language that i had already used in the past but without ever going into some detailed aspects. 
+I think that this project gave me the opportunity to develop good programming skills in Scala, a language that i had already used in the past but without ever going into some detailed aspects.
 
 I used for the first time an agile development methodology such as SCRUM; this was perhaps one of the most innovative aspects for me. Following the SCRUM principles forced me to change some of my development habits and allowed me to improve my teamwork skills.
 The use of this approach certainly contributed to the success of the project although, being the first experience with this methodology, some aspects could have been improved.
 
 Another topic that I am pleased to have explored in greater detail is continuous integration: i've learned the importance of regression tests and how they can be extremely helpful in later stages of a project when you don't want code changes to break the existing infrastructure.
 
-I think this i will keep this project an example for future ones where I will try to replicate what worked well and 
+I think this i will keep this project an example for future ones where I will try to replicate what worked well and
 obviously improve all the aspects that i think i could have done better.
 
 
 
 
-
+\subsection{Riccardo Salvatori}
 
 \subsection{Gabriele Guerrini}
-\subsection{Riccardo Salvatori}
+In my opinion, talking about Scala, the project is essential to really understand its features. Actually, I also think the language was essential to speed up the project development, and its functionalities useful to fix some issues the team slipped into because of lacks in the starting system design.
+\\
+The project was not trivial, and its early deadline complicated it furthermore. Nonetheless, we were able to complete it in time. I think this was possible thanks to the usage of Scala functionalities that, combined with the actor model (that was essential too), simplified it so much.
+
+\bigskip
+The project should be realized using an agile approach. It was a good opportunity to practice with those agile methodologies that differs from the usual ones we have been taught to use.
+Moreover, I could apply in ``real-time'' few aspects that I'm currently learning in other courses I'm attending this semester (Project Management).
+Thus, I'm very satisfied about how the project was developed and managed.
+\\
+The only drawback I see is that, in this case, since both what to do and how to do it were almost clear, the agile approach was a bit an overkill and, on the contrary, it led me to sometimes neglect a bit the design phase, where I usually spend more time. Indeed, differently from other projects, I found myself in awkard situations where I needed to carry out refactoring on the code more than once just because of lacks of organization. This must be a remark for the future: agile does not mean less design, individual and team both.
+
+\bigskip
+About testing, I prevailed myself about the importance of tests in a real project. Indeed, regression tests have been a fundamental capability that often saved our work.
+
+\bigskip
+In the end, regarding some external aspects, by putting them in practice, I became more confident with building and CI tools. Morevoer, I learnt how open source libraries are handled, and how to publish something on Maven, a skill that may be useful in future.
+
+
+
+
+
+
+
+
+
+
