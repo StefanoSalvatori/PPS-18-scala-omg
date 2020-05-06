@@ -47,38 +47,38 @@ The main components of the server side architecture are visible in figure \ref{f
 \bigskip
 \textit{GameServer}
 \\
-The GameServer is the main component of the architecture. It is the one that listen and handle client connections and is also the starting point from where all the other components are created.
+The \texttt{GameServer} is the core component of the architecture and the starting point from where all the other components are created.
+When dealing with the server module, a developer will mostly make use of its interface.
 
-A developer will mostly use the server module of the library working with the interface that this component exposes.
-
-As shown in figure \ref{fig:server_classes} it is connected with two other classes that are the RouteService and the RoomHandlingService.
+As shown in figure \ref{fig:server_classes}, it is connected to two other components: the \texttt{RouteService} and the \texttt{RoomHandlingService}.
 
 \bigskip
 \textit{RoomHandlingService}
 \\
-As the name suggests, the RoomHandler is the component used to manage rooms. It is meant to: 
+As the name suggests, the \texttt{RoomHandlingService} is the component used to manage rooms. It is meant to: 
 \begin{itemize}
-	\item Keep track of which rooms are currently active in the system providing a way to interact with them (e.g create new ones or delete existing)
-	\item Provide a way to define new type of rooms that, upon a specific client requests, will be created.
+	\item Keep track of which rooms are currently active in the system
+	\item Provide a way to interact with rooms (e.g creating and deleting rooms)
+	\item Provide a way to define admissible types of room.
 \end{itemize}
 
 \bigskip
 \textit{RouteService}
 \\
-Defines the routes that the clients should use to interact with the server and implements all the handlers associated with them. A client request received by the gameserver is indeed served by this component. 
-
+This service is the classic routing module.
+Every client request received by the gameserver using the request-response pattern is served by this component.
+It defines routes (and associated handlers) that clients should contact when interacting with the server.
+\\
 Client requests can basically be split in two types:
 \begin{itemize}
-	\item requests concerning rooms (e.g connect to a room or retrieve available rooms...)
-	\item requests concerning matchmaking (e.g join a matchmaking queue)
+	\item Requests concerning rooms (e.g. connect to a room or retrieve available rooms). These requests are directly satisfied by the helping of the \texttt{RoomHandlingService}.
+	\item Requests concerning matchmaking (e.g. join a matchmaking queue). These requests are fowarded and delegated to the right \texttt{MatchmakingService}, depending on the room type.
 \end{itemize}
-This component uses a RoomHandler to manage the first type and a list of MatchamkingServices (one for each type of room defined by the user) for the second type. 
 
 \bigskip
 \textit{MatchmakingService}
 \\
-The MatchmakingService is the component that implement the matchmaking logic for a given type of room (i.e. adding clients to a queue and eventually create groups according to some information on those clients). It also needs to use a RoomHandler since, when the a group of client is formed, a room where this clients will connect must be created.
-
+The \texttt{MatchmakingService} is the component that implements the matchmaking logic for a given type of room (i.e. adding clients to a queue, and eventually create fair groups according to some information about such clients). It needs to interact with the \texttt{RoomHandlingService} since, when a group of clients is formed, it must be created a room where those clients should connect to.
 
 
 \section{Client Architecture}
