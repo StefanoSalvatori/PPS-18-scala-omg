@@ -1,15 +1,15 @@
 \chapter{System architecture}
-The library is based on the client-server architectural pattern and his functionalities are indeed split in two distinct modules: 
+Since the library is based on the client-server architectural pattern, its functionalities are split in two distinct modules: 
 \begin{itemize}
-	\item \textit{Client module} - Provides the main methods to connect and communicate with a game server. In particular allows the client side developer to create rooms (that will be hosted on the server) and to perform operations on them (e.g join, leave, message...).
-	\item \textit{Server module} - Internally implements the logic to handle client connections and allows the developer to run a gameserver and define new type of rooms. It also contains all the logic to handle matchmaking requests.
+	\item \textit{Client module} - It provides the features required to connect and communicate with a game server. In particular, it allows the client side developer to create rooms (that will be hosted on the server) and to perform operations on them (e.g. join, leave, message...).
+	\item \textit{Server module} - It internally implements the logic to handle clients connections and it allows the developer to run a gameserver and to define new types of room. Moreover, it contains all the logic to handle matchmaking requests too.
 \end{itemize}
 
-Client and server modules are not fully separated; they share some common concepts like communication protocol and data serialization utilities to parse data received and sent through the network. All these are grouped in a common packages used by both client and server.
+Client and server modules are not fully separated but, on the contrary, they share some common concepts like communication protocol and data serialization utilities required when parsing data received and sent through the network.
+\\
+A common notion of room is the most important concept that clients and server must agree to. That is decribed in section \ref{room-arch}. 
 
-The most important concept that client and server share is anyway the concept of room that is described in detail in the next section. 
-
-\section{Room}
+\section{Room} \label{room-arch}
 
 
 \begin{figure}[H]
@@ -20,17 +20,19 @@ The most important concept that client and server share is anyway the concept of
 \end{figure}
 
 
-At the most abstract level, a room is an entity with a unique id and some shared properties that 'describe' the room (figure \ref{fig:room_classes}). This fields are accessible both on the client and the server. Then each module extends his own concept of room.
+At the most abstract level, a room is an entity that owns an unique Id and some properties that describe the room itself (figure \ref{fig:room_classes}).
+\\
+This is the basic model shared beween clients and server that each model will extend.
 
 \bigskip
 \textit{ServerRoom}
 \\
-The server room is the one that will be used by the server side developer. It provides methods to communicate and interact with clients who are connected to the room. Its behavior can be defined by the developer according to the application logic he wants to implement.
+The server room is the one that will be used by the server side developer. It provides functionalities to communicate and interact with connected clients. Besides, as specified in server requirement 2.1, the room behavior can be defined by the developer according to the application custom logic.
 
 \bigskip
 \textit{ClientRoom}
 \\
-This is, on the other hand, the room that a client side developer will use. This component is meant to provide an interface towards the server side room so that the developer can both send and receive messages from it.
+On the other hand, the client room is the room that a client side developer will use. This component is meant to provide an interface towards the server side room, so that the developer can both send and receive messages from it. Obsviously, it exposes functionalities to define custom behavior too, as specified in client requirement 9.
 
 \section{Server architecture} \label{sec:server_arch}
 The main components of the server side architecture are visible in figure \ref{fig:server_classes}. 
