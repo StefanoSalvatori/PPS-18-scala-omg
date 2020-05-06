@@ -54,7 +54,7 @@ As shown in figure \ref{fig:server_classes} it is connected with two other class
 \bigskip
 \textit{RoomHandlingService}
 \\
-As the name suggests, the RoomHandler is the component used to manage rooms. It is meant to: 
+As the name suggests, the RoomHandlingService is the component used to manage rooms. It is meant to: 
 \begin{itemize}
 	\item Keep track of which rooms are currently active in the system providing a way to interact with them (e.g create new ones or delete existing)
 	\item Provide a way to define new type of rooms that, upon a specific client requests, will be created.
@@ -81,7 +81,7 @@ The MatchmakingService is the component that implement the matchmaking logic for
 
 \section{Client Architecture}
 
-\begin{figure}[H]
+\begin{figure}[]
 	\centering
 	\includegraphics[scale=0.65]{images/3-architecture/client-architecture.png}
 	\caption{Client architecture diagram}
