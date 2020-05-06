@@ -1,6 +1,7 @@
 package scalaomg.server.examples.rooms
 
-import scalaomg.server.room.{Client, GameLoop, RoomPropertyMarker, ServerRoom, SynchronizedRoomState}
+import scalaomg.server.room.features.{GameLoop, SynchronizedRoomState}
+import scalaomg.server.room.{Client, RoomPropertyMarker, ServerRoom}
 
 object ExampleRooms {
 
