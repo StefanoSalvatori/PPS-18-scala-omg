@@ -29,7 +29,8 @@ While this two traits can be optionally mixed in a ServerRoom, all those that in
 
 \subsection{ClientRoom}
 
-RS
+
+
 
 \subsection{Properties and Filters}
 
@@ -59,7 +60,12 @@ Since clients can make requests for matchmaking, the \texttt{RouteService} use a
 
 \section{Client}
 
-RS
+\begin{figure}[H]
+	\hspace*{-1.7in}
+	\includegraphics[scale=0.55]{images/4-design/client_class.png}
+	\caption{Client class diagram}
+	\label{fig:client_class_diagram}
+\end{figure}
 
 \section{Communication}\label{sec:communication_design}
 
@@ -73,6 +79,8 @@ For Request-Response interaction (described in section 3.4), we decided to use j
 \end{itemize}
 
 \subsection{Websockets}
+
+
 \begin{figure}[h]
 	\hspace*{-0.5in}
 	\includegraphics[scale=0.6]{images/4-design/communication_protocol.png}
@@ -105,7 +113,7 @@ We have two different implementations because we initially thought to use json a
 An example of a full interaction between client and server is shown in the sequence diagram in figure \ref{fig:create_room_seq}
 \begin{figure}[]
 	\hspace*{-1in}
-	\includegraphics[scale=0.5]{images/4-design/crate_room_seq.png}
+	\includegraphics[scale=0.5]{images/4-design/create_room_seq.png}
 	\caption{Example of a client-server interaction upon a 'create room' request}
 	\label{fig:create_room_seq}
 \end{figure}
