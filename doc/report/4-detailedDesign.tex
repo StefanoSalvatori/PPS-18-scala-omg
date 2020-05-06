@@ -2,6 +2,12 @@
 
 \section{Actor model}
 
+In each module we can detect few different components that may interact in a very complex way. Moreover, each component may own more than one control flow. This could lead to a growth in design complexity and to potential concurrency issues to be solved.
+\\
+In order to cut those aspects down, components are organized using an actor model. This way, components can be seen as self-contained services that communicate using message passing.
+\\
+The only drawback is the exposure of the actor model to users that may be forced to think in term of a non trivial programming paradigm. In order to prevent that, library logic and structure is hidden behind an interface layer. This can be achieved just by using a simple facade pattern that permits to mask actor model and message passing by using the solely asynchronous programming, simpler to users the may not know the actor model and more general for users that wouldn't structure their programs using actors.
+
 \section{Rooms}
 
 \subsection{ServerRoom}
@@ -29,12 +35,49 @@ While this two traits can be optionally mixed in a ServerRoom, all those that in
 
 \subsection{ClientRoom}
 
-
-
-
 \subsection{Properties and Filters}
 
-GG
+UML class diagram in figure \ref{fig:property-class} shows the detailed architecture of room properties and filters.
+
+\bigskip
+\textit{Basic room properties}
+\\
+Each property (\texttt{BasicRoomProperty}) owns a name and a value.
+\\
+Values, since they can be of four types (server requirements 2.2.2), are modelled as classes that extend a common trait \texttt{RoomPropertyValue}. This trait wraps a ``real'' value of type \texttt{Int}, \texttt{Double}, \texttt{Boolean} or \texttt{String}.
+\\
+Each property value exposes two main feaures: the real value wrapped by the class and a method that compares such value to another one of the same type (e.g. compare the Int value wrapped by the class to another given Int); this is useful since different type of values may define different comparing logics.
+Moreover, there is also a static factory that permits to create a property value from a given first class value (if possible).
+
+\bigskip
+\textit{Filters}
+\\
+By looking to client requirement 1.6.1, there are four available filter strategies. Similarly to property values, they are hidden behind a common trait \texttt{FilterStrategy}. Such trait defines a name for the strategy and an evaluation predicate that permits to apply the strategy to two values. The evaluation result expresses if the filtering defined by the strategy is satisfied.
+
+\bigskip
+Since library usability is a core aspect, a simple DSL language is created in order to easily manage filters.
+\\
+\texttt{BasicRoomProperty} functionalities are extended to include filters by using mixins. This way, filter strategies can be directly called by the property itself.
+\\
+A \texttt{FilterOption} is something that contains the name of the property to be filtered, the strategy to be uses and a value the property should be compared to. It exposes an utility method to concatenate two \texttt{FilterOption} too.
+\\
+A \texttt{FilterOptions} is a wrapper around a set of \texttt{FilterOption}; this is useful when talking about DSL since it permits to define static factories (\texttt{empty}, \texttt{just}) and utility methods such as concatenation (\texttt{and}) and union (\texttt{++}).
+
+\bigskip
+\textit{Design notes / implementation directives}
+\\
+\begin{itemize}
+\item Before on choosing this desing, few different options have been analyzed, and this has been decided to be the most feasible one. The only lack that can be detected is on the value getter of \texttt{RoomPropertyValue}. Indeed, it is absent in the class instance itself, and it is only available through the static method \texttt{valueOf}.
+\item Notice that, in order to encourage library usability, the value wrapper can be made be transparent to final users thanks to implicit conversions that can be defined in Scala.
+\end{itemize}
+
+\begin{figure}[h]
+	\hspace*{-0.1in}
+	\includegraphics[scale=0.55]{images/4-design/property_and_filters-class.png}
+	\caption{Properties and filters class diagram.}
+	\label{fig:property-class}
+\end{figure}
+
 
 \section{Server}
 Class diagram in figure \ref{fig:server_class_diagram} describes in detail the server architecture displaying the main functionalities of the classes and showing how actors interact with all the other components. 
@@ -79,8 +122,6 @@ For Request-Response interaction (described in section 3.4), we decided to use j
 \end{itemize}
 
 \subsection{Websockets}
-
-
 \begin{figure}[h]
 	\hspace*{-0.5in}
 	\includegraphics[scale=0.6]{images/4-design/communication_protocol.png}
@@ -107,11 +148,11 @@ In order for a Socket object to send and receive data, it must be able to serial
 
 Since \texttt{RoomSocket} and \texttt{MatchmakingSocket} needs to handle \texttt{ProtocolMessage}s we defined a \texttt{ProtocolMessageSerializer} interface that specifically defines a serializer for protocol messages. We implemented two types of serializers: \texttt{BinaryProtoclSerializer} and \texttt{TextProtocolSerializer}. The first one serialize protocol messages as binary data; the latter instead as text messages.
  
-We have two different implementations because we initially thought to use json also for socket communication and this would be done by the \texttt{TextProtocolSerializer}. However we eventually decided to use binary representation both to improve performance and usability, so we switched to the \texttt{BinaryProtocolSerializer}.
+We have two different implementations because we initially thought to use Json also for socket communication and this would be done by the \texttt{TextProtocolSerializer}. However, we eventually decided to use binary representation both to improve performance and usability, so we switched to the \texttt{BinaryProtocolSerializer}.
 
 
 An example of a full interaction between client and server is shown in the sequence diagram in figure \ref{fig:create_room_seq}
-\begin{figure}[]
+\begin{figure}
 	\hspace*{-1in}
 	\includegraphics[scale=0.5]{images/4-design/create_room_seq.png}
 	\caption{Example of a client-server interaction upon a 'create room' request}
