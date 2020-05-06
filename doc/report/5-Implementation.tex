@@ -1,14 +1,14 @@
 \chapter{Implementation}
 \section{Data Serialization}
-As decribed in design section \ref{sec:communication_design}, there are two main types of serialization we dealt with, that is:
+As described in design section \ref{sec:communication_design}, there are two main types of serialization we dealt with, that is:
 \begin{itemize}
 	\item Json serialization: request-response interaction
-	\item Binary serialization: data exhanged through websockets
+	\item Binary serialization: data exchanged through websockets
 \end{itemize}
 
 Regarding the first one, we decided to use the \texttt{spray-json} library since it is the recommended one when using akka.
 
-About binary serialization, we chose to use \texttt{java.io} serialization. This is because there are no strict performance constraints in requirements, and we preferred to favor user-side usability: indeed, the user of the library is able to let exchange messages between clients and server just defining classes that extend \texttt{java.io.Serializable} interface.
+About binary serialization, we chose to use \texttt{java.io} serialization. This is because there are no strict performance constraints in requirements, and we preferred to favour user-side usability: indeed, the user of the library is able to let exchange messages between clients and server just defining classes that extend \texttt{java.io.Serializable} interface.
 
 
 
@@ -28,7 +28,7 @@ I worked on the implementation of the \textit{matchmaking} functionality client 
 \\
 I implemented the \texttt{RockPaperScissor} example using scalafx and prolog.
 \\
-In the client side developing I was able to make an extensive use of reactive and asynchronus programming by the use of actors, futures and reactive streams.
+In the client side developing I was able to make an extensive use of reactive and asynchronous programming by the use of actors, futures and reactive streams.
 I could appreciate the use of \textit{for comprehension} syntax provided by scala to combine and work with futures.
 I was also able to improve my knowledge of Akka library and actor programming, also combined with a functional approach.
 
@@ -54,7 +54,7 @@ I was also able to improve my knowledge of Akka library and actor programming, a
 
 \end{itemize}
 
-Since usability is a core aspect of the library, advanced features like reflection and annotations have been combined and widely used on \texttt{ServerRoom} in order to mantain the best of it while creating custom rooms. This way, the developer can freely define a room property just by declaring a field marked with an appropriate annotation.
+Since usability is a core aspect of the library, advanced features like reflection and annotations have been combined and widely used on \texttt{ServerRoom} in order to maintain the best of it while creating custom rooms. This way, the developer can freely define a room property just by declaring a field marked with an appropriate annotation.
 
 
 

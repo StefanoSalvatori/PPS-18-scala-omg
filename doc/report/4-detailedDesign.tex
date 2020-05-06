@@ -46,7 +46,7 @@ Each property (\texttt{BasicRoomProperty}) owns a name and a value.
 \\
 Values, since they can be of four types (server requirements 2.2.2), are modelled as classes that extend a common trait \texttt{RoomPropertyValue}. This trait wraps a ``real'' value of type \texttt{Int}, \texttt{Double}, \texttt{Boolean} or \texttt{String}.
 \\
-Each property value exposes two main feaures: the real value wrapped by the class and a method that compares such value to another one of the same type (e.g. compare the Int value wrapped by the class to another given Int); this is useful since different type of values may define different comparing logics.
+Each property value exposes two main features: the real value wrapped by the class and a method that compares such value to another one of the same type (e.g. compare the Int value wrapped by the class to another given Int); this is useful since different type of values may define different comparing logics.
 Moreover, there is also a static factory that permits to create a property value from a given first class value (if possible).
 
 \bigskip
@@ -67,7 +67,7 @@ A \texttt{FilterOptions} is a wrapper around a set of \texttt{FilterOption}; thi
 \textit{Design notes / implementation directives}
 \\
 \begin{itemize}
-\item Before on choosing this desing, few different options have been analyzed, and this has been decided to be the most feasible one. The only lack that can be detected is on the value getter of \texttt{RoomPropertyValue}. Indeed, it is absent in the class instance itself, and it is only available through the static method \texttt{valueOf}.
+\item Before on choosing this design, few different options have been analyzed, and this has been decided to be the most feasible one. The only lack that can be detected is on the value getter of \texttt{RoomPropertyValue}. Indeed, it is absent in the class instance itself, and it is only available through the static method \texttt{valueOf}.
 \item Notice that, in order to encourage library usability, the value wrapper can be made be transparent to final users thanks to implicit conversions that can be defined in Scala.
 \end{itemize}
 
@@ -92,11 +92,11 @@ The \texttt{GameServer} class is the facade interface that is exposed to the dev
 
 The \texttt{ServerActor} also uses a \texttt{RoomHandlingService} actor to create and define rooms from the server. The same actor is used by the RouteService.
 
-As we described for the server architecture in section \ref{sec:server_arch}, the purpose of the \texttt{RoomHandlingService} is to manage the active rooms in the applications. Specifically though it doesn't directly create rooms but instead it creates \texttt{RoomActors}: actors used as 'wrappers' for ServerRooms to avoid concurrency issues; more than one client can indeed interact with a single room at the same time, so, in order to avoid race coditions, we decided to make clients communicate with RoomActors that process messages sequentially. Each actor is in charge of notifying clients' actions to the room that is associated with.
+As we described for the server architecture in section \ref{sec:server_arch}, the purpose of the \texttt{RoomHandlingService} is to manage the active rooms in the applications. Specifically though it doesn't directly create rooms but instead it creates \texttt{RoomActors}: actors used as 'wrappers' for ServerRooms to avoid concurrency issues; more than one client can indeed interact with a single room at the same time, so, in order to avoid race conditions, we decided to make clients communicate with RoomActors that process messages sequentially. Each actor is in charge of notifying clients' actions to the room that is associated with.
 
 Each \texttt{ServerRoom} is linked to an actor and keeps track of connected clients (\texttt{Client} class in figure). Clients are uniquely identified by their id and expose a \texttt{send} method that allows to send messages to them. It is important to notice that each room has its own view of clients: the same client connected to different rooms will have a different id in each of them. 
 
-Clients are also used by the \texttt{MatchmakingService} since is the actor that performs matchmaking operations and needs to know which clients are waiting to start a match. \texttt{MatchmakingService} actors are spawned during server startup if the developer used the \texttt{defineRoomWithMatchmaking} method to define a room. 
+Clients are also used by the \texttt{MatchmakingService} since is the actor that performs matchmaking operations and needs to know which clients are waiting to start a match. \texttt{MatchmakingService} actors are spawned during server start-up if the developer used the \texttt{defineRoomWithMatchmaking} method to define a room. 
 
 Since clients can make requests for matchmaking, the \texttt{RouteService} use a \texttt{MatchmakingHandler} to redirect those requests to the right \texttt{MatchmakingService} actor.
 
@@ -132,19 +132,19 @@ Regarding websockets instead, the design is more structured. A class diagram des
 The \texttt{Socket} abstract class provides the main functionalities for a socket communication and allows to define the configurations for the connection: heartbeat rate and idle timeout. It is generic in T where T represents the type of messages sent through that socket . Two concrete implementations are provided for this class:
 \begin{itemize}
 	\item \texttt{RoomSocket}: used for the communication between client and rooms.
-	\item \texttt{MatchmakingSocket}: used for the communication between client and matchmaking servicess
+	\item \texttt{MatchmakingSocket}: used for the communication between client and matchmaking services
 \end{itemize}
 They both are Socket where the generic type T is a \texttt{ProtocolMessage}. This is indeed the class that defines the communication protocol between client and server. It has 3 fields to describe a message sent through a socket:
 \begin{itemize}
 	\item \textit{messageType} \\
 	Used to identify the type of message that the client or the server want to send. The list of the possible message types is defined in the ProtocolMessageType enumeration.
 	\item \textit{sessionId} \\
-	This is used to identify the client that is sending the message through the socket. When a websocket connection is established between client and server, a unique id is genereated; the client must always uses the same sessionId to send messages through that socket.
+	This is used to identify the client that is sending the message through the socket. When a websocket connection is established between client and server, a unique id is generated; the client must always uses the same sessionId to send messages through that socket.
 	\item \textit{payload} \\ 
 	An optional payload that can be carried with the massage. This is for example the field that is set when the developer use the 'sendMessage' method on the client room. It must be Serializable since it will eventually be serialized to be sent to the server.
 \end{itemize}
 
-In order for a Socket object to send and receive data, it must be able to serialize and deserialize the messages that pass through it. It uses for this purpose a \texttt{SocketSerializer} that has two methods: parsefromSocket and writeToSocket. This class is also generic in T that is the type of messages that needs to read and write.
+In order for a Socket object to send and receive data, it must be able to serialize and de-serialize the messages that pass through it. It uses for this purpose a \texttt{SocketSerializer} that has two methods: parsefromSocket and writeToSocket. This class is also generic in T that is the type of messages that needs to read and write.
 
 Since \texttt{RoomSocket} and \texttt{MatchmakingSocket} needs to handle \texttt{ProtocolMessage}s we defined a \texttt{ProtocolMessageSerializer} interface that specifically defines a serializer for protocol messages. We implemented two types of serializers: \texttt{BinaryProtoclSerializer} and \texttt{TextProtocolSerializer}. The first one serialize protocol messages as binary data; the latter instead as text messages.
  
