@@ -94,31 +94,33 @@ The \texttt{MatchmakingService} is the component that implements the matchmaking
 The requirements analysis led to the definition of three types of interaction between client and server:
 \begin{enumerate}
 	\item Client to GameServer \\
-	This interaction takes place in those situations where the client makes a request to the server and waits for a specific response: for example getting the list of all rooms that can be joined. We decided to handle this kind of requests defining a REST protocol as shown in table
+	This interaction takes place in those situations where the client makes a request to the server and waits for a specific response: for example, getting the list of all rooms that can be joined. Such requests are based on the classical request-response pattern and will be handled by the definition of a REST protocol as shown in table
 	 \ref{table:server_routes}.
 	\begin{table}[]
 		\begin{tabular}{p{2cm}p{4cm}p{2cm}p{5.5cm}}
 			\textbf{Http Method} & \textbf{Path}	  & \textbf{Payload}  & \textbf{Result}                                                            		\\\\
 			GET                  & /rooms             & filters           & get all the rooms that match the filters in the payload                        	\\\\
-			GET                  & /rooms/:type       & filters           & get all the rooms with the given type (filtered by filters in the payload)     	\\\\
-			GET                  & /rooms/:type/:id   & empty             & get the room with the given id searching among rooms of the given type         	\\\\
-			POST                 & /rooms/:type       & options           & create a room of the given type with the option passed in the payload          	\\\\
-			GET                  & /connection/:id    & websocket request & open a web socket connection with the room that has the given id               	\\\\
+			GET                  & /rooms/:type       & filters           & get all the rooms with the given type (filtered by the payload)     	\\\\
+			GET                  & /rooms/:type/:id   & empty             & get the room with the given Id, searching among rooms of the given type         	\\\\
+			POST                 & /rooms/:type       & options           & create a room of the given type with the options (i.e. properties to be set) passed in the payload          	\\\\
+			GET                  & /connection/:id    & websocket request & open a web socket connection with the room that has the given Id               	\\\\
 			GET                  & /matchmaking/:type & websocket request & open a web socket with the matchmaking service relative to the given room type 	\\\\
 		\end{tabular}
 		\caption{\label{table:server_routes} \textit{Server REST protocol for request-response interaction}}
 	\end{table}
 	\item  Client to Room \\
-	In this case we are in a situation where a client wants to establish a connection with a given a room to both send and receive messages from it. The request-response pattern doesn't work here because now the communication channel must be full-duplex: the server can send data to the client even without a specific client request (for example if the room broadcasts a message to all connected clients).
+	In this case, we are in a situation where a client wants to establish a connection with a given a room in order to both send and receive messages. Since the server could send data to the client not just in front of an explicit client request (for example, on message broadcasting), the communication requires a full-duplex communication channel.
 	
-	The chosen solution here is the websockets protocol since it provides the exact described behavior. Specifically, when a client wants to interact with a room, a websocket between that client and the server is created; the messages that the client sends through the socket are redirected to the room and the messages that the room wants to send to that client are forwarded through the socket. 
+	The chosen solution is the usage of websockets protocol since it provides the exact described behavior. Specifically, when a client wants to interact with a room, a websocket between that client and the server is created, and then, messages exhcanged from the first and the room flow through such socket.
 	
-	Another consideration to make here is that clients can receive and send different types of messages through the socket: first of all they need to send a join message to notify the room that they want to enter; then they may want to send generic messages to that room (e.g. actions that affect the current game state) and eventually they'll want to leave the room, and so on \dots
-	In order to identify this different kind of messages we decided to define a communication protocol that is used for messages in the websocket.
+    The socket will be then closed when the client ends his interaction with the room (few scenarios are possible: e.g. failed join, room leaving, timeout kicking out).	
+ 	
+ 	As well as protocol messages required to handle lifecycle (e.g. joining, leaving),  clients can send custom messages once they joined the room. This means that a generic serialization format the developer can adhere to is required.
 	
 	
 	\item Client to Matchmaking \\
-	The last type of interaction is the one that takes place when a client wants to join the matchmaking queue for a given type of room. In this case the client asks the server to be added to the queue and waits to be grouped with other clients. We have decided to use websockets here too since when the client sends the request, the server response is not immediate. The communication must be kept open until the matchmaking service doesn't create the group of client to start the match. Only then the server can respond to the client with a message that contains the information to join the room that will host the game.
+	The last type of interaction is the one that takes place when a client is interacting with a matchmaking service. Websockets are used here too since another full-duplex channel is required. Indeed, when a client sends a request in order to join the matchmaking queue, the server response is not immediate, and the communication must be kept open until the matchmaking service will eventually create a group of clients. Only then the server will respond to the client with a message that contains some information required to join the room that will host the game.
+	In the end, since a matchmaking service is associated to a specific type of room, the client could have multiple sockets open in parallel with different matchmaking services.
 \end{enumerate}
 
 
