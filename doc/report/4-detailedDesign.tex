@@ -108,7 +108,7 @@ As we described for the server architecture in section \ref{sec:server_arch}, th
 
 Each \texttt{ServerRoom} is linked to an actor and keeps track of connected clients (\texttt{Client} class in figure). Clients are uniquely identified by their id and expose a \texttt{send} method that allows to send messages to them. It is important to notice that each room has its own view of clients: the same client connected to different rooms will have a different id in each of them. 
 
-Clients are also used by the \texttt{MatchmakingService} since is the actor that performs matchmaking operations and needs to know which clients are waiting to start a match. \texttt{MatchmakingService} actors are spawned during server start-up if the developer used the \texttt{defineRoomWithMatchmaking} method to define a room. 
+Clients are also used by the \texttt{MatchmakingService} since is the actor that performs matchmaking operations and needs to know which clients are waiting to start a match. \texttt{MatchmakingService} actors are spawned during server start-up if the developer used the \texttt{defineRoomWithMatchmaking} method to define a room.
 
 Since clients can make requests for matchmaking, the \texttt{RouteService} use a \texttt{MatchmakingHandler} to redirect those requests to the right \texttt{MatchmakingService} actor.
 
@@ -173,7 +173,7 @@ In order for a Socket object to send and receive data, it must be able to serial
 
 Since \texttt{RoomSocket} and \texttt{MatchmakingSocket} needs to handle \texttt{ProtocolMessage}s we defined a \texttt{ProtocolMessageSerializer} interface that specifically defines a serializer for protocol messages. We implemented two types of serializers: \texttt{BinaryProtoclSerializer} and \texttt{TextProtocolSerializer}. The first one serialize protocol messages as binary data; the latter instead as text messages.
  
-We have two different implementations because we initially thought to use Json also for socket communication and this would be done by the \texttt{TextProtocolSerializer}. However, we eventually decided to use binary representation both to improve performance and usability, so we switched to the \texttt{BinaryProtocolSerializer}.
+We have two different implementations because we initially planned to use json format also for socket communication and this would be done by the \texttt{TextProtocolSerializer}. However we decided during the development phase to use binary representation both to improve performance and usability, so we switched to the \texttt{BinaryProtocolSerializer}. The \texttt{TextProtocolSerializer} has been still kept since was still usefull for testing purposes.
 
 
 An example of a full interaction between client and server is shown in the sequence diagram in figure \ref{fig:create_room_seq}
