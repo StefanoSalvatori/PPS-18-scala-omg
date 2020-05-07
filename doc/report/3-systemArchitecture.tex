@@ -81,12 +81,36 @@ The MatchmakingService is the component that implement the matchmaking logic for
 
 \section{Client Architecture}
 
+The class diagram of the client side architecture is visible in figure \ref{fig:client_architecture}. 
 \begin{figure}[H]
 	\centering
 	\includegraphics[scale=0.65]{images/3-architecture/client-architecture.png}
 	\caption{Client architecture diagram}
 	\label{fig:client_architecture}
 \end{figure}
+\bigskip
+\textit{Client}
+\\
+The Client class is the main access to the client side functionality.
+It uses the HttpService to handle the interaction with the game server (e.g. retrieving or creating rooms).
+It keeps track of joined rooms and enables the access to the client side matchmaker.
+
+\bigskip
+\textit{HttpService}
+\\
+HttpService is a module that handle the http communication with the game server. It provides functionality to make http request (get, post) or ask for websocket connections opening. 
+
+\bigskip
+\textit{ClientMatchmaker}
+\\
+ ClientMatchmaker is the component that provides matchmaking functionality for the client (join or leave matchmaking queues). It keeps multiple websocket connections (\textit{MatchmakingConnection}) with the server side matchmakers: one for each queue joined by the client. 
+
+\bigskip
+\textit{ClientRoom}
+\\
+A ClientRoom represents the instance of a room from the client's perspective. A room is 'joinable' at first  (\textit{JoinableRoom}), meaning that a client can join or reconnect to such room. 
+When a room is accessed it becomes joined (\textit{JoinedRoom}). At this point a websocket connection (\textit{RoomConnection}) with the server side room is opened to enable the communication with the two sides.
+
 
 \section{Client-Server Interaction}
 The requirements analysis led to the definition of three types of interaction between client and server:
