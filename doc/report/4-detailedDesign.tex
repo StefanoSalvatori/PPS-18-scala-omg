@@ -8,10 +8,27 @@ In order to cut those aspects down, components are organized using an actor mode
 \\
 The only drawback is the exposure of the actor model to users that may be forced to think in term of a non trivial programming paradigm. In order to prevent that, library logic and structure is hidden behind an interface layer. This can be achieved just by using a simple facade pattern that permits to mask actor model and message passing by using the solely asynchronous programming, simpler to users the may not know the actor model and more general for users that wouldn't structure their programs using actors.
 
-\section{Rooms}
+\section{Room}
+
+Room is one central concept of the library both in server and client perspective; the figure \ref{fig:room_class_diagram} shows how it was designed. 
+ \texttt{Room} is the primary interface that defines a room. A room has a unique identifier and a set of properties. The identifier is an UUID string that can be used by clients to reference and join a specific room. On the other hand properties (described in section \ref{room_properties_section}) can be queried to retrieve some useful information exposed by the room. 
+Both \texttt{ClientRoom} and \texttt{ServerRoom} extends \texttt{BasicRoom} that provides common methods to access properties.
+ \\
+\texttt{SharedRoom} is the serializable object that is passed through the network to share room information. 
+\\
+Further sections provide a more detailed description of the client and server specializations of the room concept, focusing on \texttt{ClientRoom} and \texttt{ServerRoom} classes.
+
+
+
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.5]{images/4-design/room-class.png}
+	\caption{Room class diagram}
+	\label{fig:room_class_diagram}
+\end{figure}
 
 \subsection{ServerRoom}
-\begin{figure}[H]
+\begin{figure}
 	\centering
 	\includegraphics[scale=0.5]{images/4-design/server-room.png}
 	\caption{Server room class diagram}
@@ -35,8 +52,20 @@ While this two traits can be optionally mixed in a ServerRoom, all those that in
 
 \subsection{ClientRoom}
 
-\subsection{Properties and Filters}
+\texttt{ClientRoom}, is the client-side representation of the room. It extends the \texttt{Room} trait so it has a unique identifier \textit{roomId} and a set of properties (\ref{fig:property-class}) that can be queried by the user. 
+The client room concept has been specialized in two further concepts: Joinable and Joined.
+A \texttt{JoinableRoom} is a room that supports accessing protocol like join or reconnect, while
+a \texttt{JoinedRoom} represents a room that has been successfully joined. 
+This separation was made to provide the developer a consistent access to room functionality. Indeed, with this structure is not possible for example to leave a room that was never joined or joining a room that is still joined.
+\\
+\texttt{JoinedRoom} is the main interface with which a developer can interact with the game room.
+It extends the ClientRoom trait enabling the definition of callbacks on room events: message received, state changed, room closing or communication error.
+It also provides methods to send messages and leave the room. 
+The developer is also provided with the \textit{sessionId} associated to this client in the room.
+This can be used for example in the reconnection process to be recognized by the server room as a specific client.
 
+
+\subsection{Properties and Filters}  \label{room_properties_section}
 UML class diagram in figure \ref{fig:property-class} shows the detailed architecture of room properties and filters.
 
 \bigskip
@@ -44,7 +73,7 @@ UML class diagram in figure \ref{fig:property-class} shows the detailed architec
 \\
 Each property (\texttt{BasicRoomProperty}) owns a name and a value.
 \\
-Values, since they can be of four types (server requirements 2.2.2), are modelled as classes that extend a common trait \texttt{RoomPropertyValue}. This trait wraps a ``real'' value of type \texttt{Int}, \texttt{Double}, \texttt{Boolean} or \texttt{String}.
+Values, since they can be of four types (server requirements 2.2.2), are modeled as classes that extend a common trait \texttt{RoomPropertyValue}. This trait wraps a ``real'' value of type \texttt{Int}, \texttt{Double}, \texttt{Boolean} or \texttt{String}.
 \\
 Each property value exposes two main features: the real value wrapped by the class and a method that compares such value to another one of the same type (e.g. compare the Int value wrapped by the class to another given Int); this is useful since different type of values may define different comparing logics.
 Moreover, there is also a static factory that permits to create a property value from a given first class value (if possible).
@@ -103,8 +132,23 @@ Since clients can make requests for matchmaking, the \texttt{RouteService} use a
 
 \section{Client}
 
-\begin{figure}[H]
-	\hspace*{-1.7in}
+The class diagram in figure \ref{fig:client_class_diagram} describes the detailed client architecture.
+The \texttt{Client} class is the main access point to the api. It's a facade that exposes client's primary functionality, hiding the underlying actor model.  
+\\
+The main logic is handled internally by the \texttt{CoreClient} actor. It uses an \texttt{HttpService} actor to make http requests to the game server to get or create rooms. 
+It keeps track of currently joined rooms. The list is kept updated interacting with the \texttt{ClientRoomActor}'s associated to each room.
+\\
+The \texttt{ClientRoomActor} is an actor that handles the socket connection with the server side room. 
+It's spawned when joining a room and it's killed when the room is left or closed.  It notifies the CoreClient when the associated room is left, joined or closed so that the list of joined rooms is kept updated. 
+Callbacks specified by the user are handled internally by this actor.
+
+The \texttt{ClientMatchmaker} can be used to access matchmaking functionality. It exposes methods to join or leave matchmaking queues for given room types. It keeps track of active matchmaking connections so that is always possible to leave queues without waiting the matchmaking process to be completed.
+\\
+When a new matchmaking request is performed a \texttt{MatchmakingActor} is spawned. 
+This actor opens a websocket connection with the server side matchmaker and notifies the client when the match is ready and the room is joined. This actor is killed when the matchmaking process completes or the relative matchmaking queue is left.
+
+\begin{figure}
+	\hspace*{-1 in}
 	\includegraphics[scale=0.55]{images/4-design/client_class.png}
 	\caption{Client class diagram}
 	\label{fig:client_class_diagram}
