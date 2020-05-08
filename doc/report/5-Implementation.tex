@@ -10,14 +10,12 @@ Regarding the first one, we decided to use the \texttt{spray-json} library since
 About binary serialization, we chose to use \texttt{java.io} serialization. This is because there are no strict performance constraints in requirements, and we preferred to favour user-side usability: indeed, the user of the library is able to let exchange messages between clients and server just defining classes that extend \texttt{java.io.Serializable} interface.
 
 \section{Testing}
-Regarding tests, we decided to use the \texttt{scalatest} library to perform unit tests on passive components while \texttt{akka.test} was used for the actors. The test styles adopted are \textit{WordSpec} and \textit{FlatSpec} as they seemed, among many, the most expressive ones. 
+Regarding tests, we decided to use the \texttt{scalatest} library to perform unit tests on passive components and \texttt{akka.test} for actors. \textit{WordSpec} and \textit{FlatSpec} are the test styles adopted as they seemed, among many, the most expressive ones. 
 
-Some integration tests have also been included where communication scenarios between client and server were simulated. The asynchronous structure of these tests required special attention and made more advanced testing mechanisms necessary (e.g. \texttt{Eventually} pattern in scalatest or synchronous actor testing for akka).
+Integration tests have also been included where communication scenarios between client and server were simulated. The asynchronous nature of these tests required particular attention and the usage of advanced testing mechanisms (e.g. \texttt{Eventually} pattern in scalatest or synchronous actor testing for akka).
 
-Another important aspect of our testing environment has been regression testing. For this purpose we configured TravisCI to perform all the tests at each push on the repository. These tests were performed on multiple environments to ensure compatibility with other operating systems and versions of java: in particular Java 11 and Java 13 on MacOS and Linux.
-
-Finally, we tried to keep test coverage controlled by initially using the intellij's codecoverage tool and then moving on to \texttt{codecov.io}: a codecoverage tool integrated with TravisCI that automatically performs coverage at each push to the repository and also raises warnings when the percent drops down the level of the previous commits. 
-
+In the end, we tried to keep test coverage controlled by using few different plugins: \texttt{scoverage} and \texttt{codecov.io}.
+The latter one is newsworthy since it allows regression checkings too. Indeed, coverage percentage is verified when pushing on the repository, and the plugin can be set to fail if any file dropped down its coverage level from the previous version on the repository.
 
 
 \section{Stefano Salvatori}
