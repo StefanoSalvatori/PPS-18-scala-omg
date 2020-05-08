@@ -12,7 +12,7 @@ About binary serialization, we chose to use \texttt{java.io} serialization. This
 \section{Testing}
 Regarding tests, we decided to use the \texttt{scalatest} library to perform unit tests on passive components while \texttt{akka.test} was used for the actors. The test styles adopted are \textit{WordSpec} and \textit{FlatSpec} as they seemed, among many, the most expressive ones. 
 
-Some integration tests have also been included where communication scenarios between client and server was simulated. The asynchronous structure of these tests required special attention and made more advanced testing mechanisms necessary (e.g. \texttt{Eventually} pattern in scalatest or synchronous actor testing for akka).
+Some integration tests have also been included where communication scenarios between client and server were simulated. The asynchronous structure of these tests required special attention and made more advanced testing mechanisms necessary (e.g. \texttt{Eventually} pattern in scalatest or synchronous actor testing for akka).
 
 Another important aspect of our testing environment has been regression testing. For this purpose we configured TravisCI to perform all the tests at each push on the repository. These tests were performed on multiple environments to ensure compatibility with other operating systems and versions of java: in particular Java 11 and Java 13 on MacOS and Linux.
 
