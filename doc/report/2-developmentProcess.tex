@@ -49,6 +49,51 @@ By looking to non functional requirements, portability comes out to be a key asp
   \end{itemize} 
 \end{itemize}  
 
+\subsection{Ensuring system deployment}
+
+As described in section \ref{non-fun-req}, the ease of deployment is another key aspect for the library requirements. In order to fulfill this goal, it must be possible to import the library in a project just by using a build tool (e.g. sbt, gradle). This requires the release on a public repository; in this case, ``Maven central'' has been chosen as the designed one.
+
+Two main aspects should be defined to start the process, that is:
+\begin{itemize}
+  \item \textbf{GroupId}: owners of the library. In this case, an organization named ``com.github.scalaomg'' \footnote{ \url{https://github.com/scalaomg}} has been established.
+  \item \textbf{ArtifactId}: name of the library once published. It will be ``scala-omg''.
+\end{itemize}
+
+Once the library is be released, it may be found on Maven at: 
+
+\begin{center}
+\url{https://search.maven.org/artifact/com.github.scalaomg/scala-omg}.
+\end{center}
+
+\bigskip
+For example, when using sbt, it can be then imported just by adding 
+
+\begin{center}
+\textbf{"com.github.scalaomg" \% "scala-omg" \% "version"}
+\end{center}
+
+to library dependencies.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
