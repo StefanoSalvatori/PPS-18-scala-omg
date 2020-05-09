@@ -189,11 +189,11 @@ This actor opens a websocket connection with the server side matchmaker and noti
 
 
 \subsection{Json Serialization}
-For Request-Response interaction (described in section 3.4), we decided to use json format for both client requests and server responses. We have defined a class that provides json-formatted serialization capabilities for all entities that are exchanged at this stage of client-server interaction that are specifically:
+For Request-Response interaction (described in section 3.4), Json format has been used for client requests and server responses both. \texttt{RoomJsonSupport} class provides json-formatted serialization capabilities for all entities that are exchanged at this stage of client-server interaction, in particular:
 \begin{itemize}
-	\item SharedRoom objects
-	\item Room properties
-	\item Room filters
+	\item \texttt{SharedRoom} objects and related (e.g. roomId).
+	\item Room properties and related/derivatives (e.g. set of properties, property value).
+	\item Room filters and related/derivates (e.g. filter strategies, \texttt{FilterOptions}).
 \end{itemize}
 
 \subsection{Websockets}
@@ -203,30 +203,31 @@ For Request-Response interaction (described in section 3.4), we decided to use j
 	\caption{Websocket class diagram}
 	\label{fig:websocket_communication_design}
 \end{figure}
-Regarding websockets instead, the design is more structured. A class diagram describing the main classes is shown in figure \ref{fig:websocket_communication_design}.
-The \texttt{Socket} abstract class provides the main functionalities for a socket communication and allows to define the configurations for the connection: heartbeat rate and idle timeout. It is generic in T where T represents the type of messages sent through that socket . Two concrete implementations are provided for this class:
+Regarding websockets, a class diagram describing the main classes is shown in figure \ref{fig:websocket_communication_design}.
+The \texttt{Socket} abstract class provides the main functionalities for a socket communication and allows to define the configuration for the connection (heartbeat rate, idle timeout). It is generic in T where T represents the type of messages sent through that socket . Two concrete implementations are provided for this class:
 \begin{itemize}
 	\item \texttt{RoomSocket}: used for the communication between client and rooms.
-	\item \texttt{MatchmakingSocket}: used for the communication between client and matchmaking services
+	\item \texttt{MatchmakingSocket}: used for the communication between client and matchmaking services.
 \end{itemize}
-They both are Socket where the generic type T is a \texttt{ProtocolMessage}. This is indeed the class that defines the communication protocol between client and server. It has 3 fields to describe a message sent through a socket:
+They are \texttt{Socket} both where the generic type T is a \texttt{ProtocolMessage}. Indeed, this is the class that defines the communication protocol between client and server. It uses a structure made up of three fields to describe a message sent through a socket:
 \begin{itemize}
-	\item \textit{messageType} \\
-	Used to identify the type of message that the client or the server want to send. The list of the possible message types is defined in the ProtocolMessageType enumeration.
-	\item \textit{sessionId} \\
-	This is used to identify the client that is sending the message through the socket. When a websocket connection is established between client and server, a unique id is generated; the client must always uses the same sessionId to send messages through that socket.
-	\item \textit{payload} \\ 
-	An optional payload that can be carried with the massage. This is for example the field that is set when the developer use the 'sendMessage' method on the client room. It must be Serializable since it will eventually be serialized to be sent to the server.
+	\item \textit{MessageType} \\
+	Used to identify the type of message that the client or the server want to send. The list of the possible message types is defined in the \texttt{ProtocolMessageType} enumeration.
+	\item \textit{SessionId} \\
+	Used to identify the client that is sending the message through the socket. When a websocket connection is established between client and server, a unique Id is generated; the client must always use the same sessionId to send messages through that socket.
+	\item \textit{Payload} \\ 
+	An optional payload that can be carried with the massage. This is, for example, the field used to store messages when a client sends a message to the server through the usage of \texttt{sendMessage} method on the client room. It must be \texttt{Serializable} since it will eventually be serialized to be sent to the server.
 \end{itemize}
 
-In order for a Socket object to send and receive data, it must be able to serialize and de-serialize the messages that pass through it. It uses for this purpose a \texttt{SocketSerializer} that has two methods: parsefromSocket and writeToSocket. This class is also generic in T that is the type of messages that needs to read and write.
+In order for a \texttt{Socket} object to send and receive data, it must be able to serialize and deserialize messages that pass through it. It uses for this purpose a \texttt{SocketSerializer} that has two methods: \texttt{parsefromSocket} and \texttt{writeToSocket}. This class is generic in T that is the type of messages that needs to be read and written.
 
-Since \texttt{RoomSocket} and \texttt{MatchmakingSocket} needs to handle \texttt{ProtocolMessage}s we defined a \texttt{ProtocolMessageSerializer} interface that specifically defines a serializer for protocol messages. We implemented two types of serializers: \texttt{BinaryProtoclSerializer} and \texttt{TextProtocolSerializer}. The first one serialize protocol messages as binary data; the latter instead as text messages.
+Since \texttt{RoomSocket} and \texttt{MatchmakingSocket} need to handle \texttt{ProtocolMessage}(s), a \texttt{ProtocolMessageSerializer} interface specifically defines a serializer for protocol messages. Two types of serializers are implemented: \texttt{BinaryProtoclSerializer} and \texttt{TextProtocolSerializer}. The first one serializes protocol messages as binary data, the latter, instead, as text messages.
  
-We have two different implementations because we initially planned to use json format also for socket communication and this would be done by the \texttt{TextProtocolSerializer}. However we decided during the development phase to use binary representation both to improve performance and usability, so we switched to the \texttt{BinaryProtocolSerializer}. The \texttt{TextProtocolSerializer} has been still kept since was still usefull for testing purposes.
+Two different implementations are present because Json format may be also used for socket communication by exploting the \texttt{TextProtocolSerializer}. However, the binary representation improves performance and usability both (a developer just needs to extend \texttt{java.io.Serializable} vs. create a Json parser using \texttt{spray.sjon.RootJsonFormat}). Hence, at the moment, the binary representation is the used one, and the Json format is kept just because of its usefulness in testing purposes.
 
+\bigskip
+Sequence diagram in figure \ref{fig:create_room_seq} shows an example of full interaction between client and server. Specifically, it represents a client request about the creation of a new room.
 
-An example of a full interaction between client and server is shown in the sequence diagram in figure \ref{fig:create_room_seq}
 \begin{figure}
 	\hspace*{-1in}
 	\includegraphics[scale=0.5]{images/4-design/create_room_seq.png}
