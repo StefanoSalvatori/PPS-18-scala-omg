@@ -22,7 +22,7 @@ A common notion of room is the most important concept that clients and server mu
 
 At the most abstract level, a room is an entity that owns an unique Id and some properties that describe the room itself (figure \ref{fig:room_classes}).
 \\
-This is the basic model shared beween clients and server that each model will extend.
+This is the basic model shared between clients and server that each model will extend.
 
 \bigskip
 \textit{ServerRoom}
@@ -32,7 +32,7 @@ The server room is the one that will be used by the server side developer. It pr
 \bigskip
 \textit{ClientRoom}
 \\
-On the other hand, the client room is the room that a client side developer will use. This component is meant to provide an interface towards the server side room, so that the developer can both send and receive messages from it. Obsviously, it exposes functionalities to define custom behavior too, as specified in client requirement 9.
+On the other hand, the client room is the room that a client side developer will use. This component is meant to provide an interface towards the server side room, so that the developer can both send and receive messages from it. Obviously, it exposes functionalities to define custom behavior too, as specified in client requirement 9.
 
 \section{Server architecture} \label{sec:server_arch}
 The main components of the server side architecture are visible in figure \ref{fig:server_classes}. 
@@ -72,7 +72,7 @@ It defines routes (and associated handlers) that clients should contact when int
 Client requests can basically be split in two types:
 \begin{itemize}
 	\item Requests concerning rooms (e.g. connect to a room or retrieve available rooms). These requests are directly satisfied by the helping of the \texttt{RoomHandlingService}.
-	\item Requests concerning matchmaking (e.g. join a matchmaking queue). These requests are fowarded and delegated to the right \texttt{MatchmakingService}, depending on the room type.
+	\item Requests concerning matchmaking (e.g. join a matchmaking queue). These requests are forwarded and delegated to the right \texttt{MatchmakingService}, depending on the room type.
 \end{itemize}
 
 \bigskip
@@ -135,7 +135,7 @@ The requirements analysis led to the definition of three types of interaction be
 	\item  Client to Room \\
 	In this case, we are in a situation where a client wants to establish a connection with a given a room in order to both send and receive messages. Since the server could send data to the client not just in front of an explicit client request (for example, on message broadcasting), the communication requires a full-duplex communication channel.
 	
-	The chosen solution is the usage of websockets protocol since it provides the exact described behavior. Specifically, when a client wants to interact with a room, a websocket between that client and the server is created, and then, messages exhcanged from the first and the room flow through such socket.
+	The chosen solution is the usage of websockets protocol since it provides the exact described behavior. Specifically, when a client wants to interact with a room, a websocket between that client and the server is created, and then, messages exchanged from the first and the room flow through such socket.
 	
     The socket will be then closed when the client ends his interaction with the room (few scenarios are possible: e.g. failed join, room leaving, timeout kicking out).
 
