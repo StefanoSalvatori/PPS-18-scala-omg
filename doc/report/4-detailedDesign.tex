@@ -117,7 +117,7 @@ A \texttt{FilterOptions} is a wrapper around a set of \texttt{FilterOption}; thi
 
 
 \section{Server}
-Class diagram in figure \ref{fig:server_class_diagram} describes in detail the server architecture by describing its main functionalities and by showing components interactions. 
+Class diagram in figure \ref{fig:server_class_diagram} describes in detail the server architecture by describing its main functionalities and by showing its components interactions. 
 \begin{figure}[h]
 	\hspace*{-1.1in}
 	\includegraphics[scale=0.55]{images/4-design/server_class.png}
@@ -125,35 +125,58 @@ Class diagram in figure \ref{fig:server_class_diagram} describes in detail the s
 	\label{fig:server_class_diagram}
 \end{figure}
 
+\textit{Game server and routing service}
+\\
 The \texttt{GameServer} class is the facade interface that is exposed to the developer. It internally creates a \texttt{ServerActor} that is the entity acting as the real server listening for clients requests. This actor creates a \texttt{RouteService} object that is used to know which routes to use and how to handle requests; it also allows to dynamically define new room types that will be used by the server. 
 
 The \texttt{ServerActor} also uses a \texttt{RoomHandlingService} actor to create and define rooms from the server itself. The same actor is used by the \texttt{RouteService}.
 
-As we described for the server architecture in section \ref{sec:server_arch}, the purpose of the \texttt{RoomHandlingService} is to manage the active rooms in the application. Specifically, it doesn't directly create rooms; instead, it creates \texttt{RoomActor}(s), namely actors used as ``wrappers'' for \texttt{ServerRoom}(s) to avoid concurrency issues and to semplify the overall system design; indeed, more than one client can interact with a single room at the same time and so, in order to avoid race conditions, clients communicate with \texttt{RoomActor}(s) that process messages sequentially. Each actor is in charge of notifying clients' actions to the room it is associated with.
+\bigskip
+\textit{Rooms and room handling service}
+\\
+As we described for the server architecture in section \ref{sec:server_arch}, the purpose of the \texttt{RoomHandlingService} is to manage the active rooms in the application. Specifically, it doesn't directly create rooms; instead, it creates \texttt{RoomActor}(s), namely actors used as ``wrappers'' for \texttt{ServerRoom}(s) to avoid concurrency issues and to semplify the overall system design. This is required since more than one client can interact with a single room at the same time and so, in order to avoid race conditions, clients communicate with \texttt{RoomActor}(s) that process messages sequentially. Each actor is in charge of notifying clients' actions to the room it is associated with.
 
+\bigskip
+\textit{Client}
+\\
 Each \texttt{ServerRoom} is linked to an actor and keeps track of connected clients (\texttt{Client} class server-side). Clients are uniquely identified by their Id and expose a \texttt{send} method that allows to send messages to them. It is important to notice that each room has its own view of clients: the same client connected to different rooms will have a different Id in each of them. 
 
-\texttt{Client}(s) are also used by the \texttt{MatchmakingService} since the actor into the service, when performing matchmaking operations, needs to know which clients are waiting to start a match. \texttt{MatchmakingService} actors are spawned when the \texttt{defineRoomWithMatchmaking} method is called to define a room.
-
-Since clients may ask for matchmaking, the \texttt{RouteService} use a \texttt{MatchmakingHandler} to redirect those requests to the right \texttt{MatchmakingService} actor.
+\bigskip
+\textit{Matchmaking}
+\\
+Each matchmaking service has an internal actor assigned to handle all incoming requests. This actor needs to know which \texttt{Client}(s) are waiting for the match start.
+Since clients may ask for matchmaking, the \texttt{RouteService} uses a \texttt{MatchmakingHandler} to redirect those requests to the right \texttt{MatchmakingService} actor.
+Moreover, when defining a new room type with enabled matchmaking, the server will demand the \texttt{RouteService} to add the right route and to spawn the associated \texttt{MatchmakingService}. 
 
 
 \section{Client}
 
-The class diagram in figure \ref{fig:client_class_diagram} describes the detailed client architecture.
-The \texttt{Client} class is the main access point to the api. It's a facade that exposes client's primary functionality, hiding the underlying actor model.  
+Class diagram in figure \ref{fig:client_class_diagram} describes the detailed client architecture.
+
+\bigskip
+\textit{Core client}
 \\
-The main logic is handled internally by the \texttt{CoreClient} actor. It uses an \texttt{HttpService} actor to make http requests to the game server to get or create rooms. 
-It keeps track of currently joined rooms. The list is kept updated interacting with the \texttt{ClientRoomActor}'s associated with each room.
+The \texttt{Client} class is the main access point to its api. It's a facade that exposes client's primary functionalities while hiding the underlying actor model.  
+\\
+The main logic is internally handled by the \texttt{CoreClient} actor. It exploits an \texttt{HttpService} actor to make http requests to the game server when getting or creating rooms. 
+\\
+Moreover, it keeps track of currently joined rooms. The list, once created, is kept updated by interacting with the \texttt{ClientRoomActor}'s associated with each room.
+
+\bigskip
+\textit{Client room}
 \\
 The \texttt{ClientRoomActor} is an actor that handles the socket connection with the server side room. 
-It's spawned when joining a room and it's killed when the room is left or closed.  It notifies the CoreClient when the associated room is left, joined or closed so that the list of joined rooms is kept updated. 
-Callbacks specified by the user are handled internally by this actor.
+It's spawned when joining a room, and it's killed when the room is left or closed. It notifies the \texttt{CoreClient} when the associated room is left, joined or closed so that the list of joined rooms can be updated.
+\\ 
+In the end, the callbacks specified by the user, i.e. the ones that define the client side room reactive behavior, are handled by this actor internally.
 
-The \texttt{ClientMatchmaker} can be used to access matchmaking functionality. It exposes methods to join or leave matchmaking queues for given room types. It keeps track of active matchmaking connections so that is always possible to leave queues without waiting the matchmaking process to be completed.
+\bigskip
+\textit{Matchmaking}
 \\
-When a new matchmaking request is performed a \texttt{MatchmakingActor} is spawned. 
-This actor opens a websocket connection with the server side matchmaker and notifies the client when the match is ready and the room is joined. This actor is killed when the matchmaking process completes or the relative matchmaking queue is left.
+The \texttt{ClientMatchmaker} can be used to access the matchmaking functionality. It exposes methods to join or leave matchmaking queues for given room types. It keeps track of active matchmaking connections so that it is always possible to leave queues without waiting the matchmaking process to be completed.
+\\
+A \texttt{MatchmakingActor} is spawned when a new matchmaking request is performed. 
+This actor opens a websocket connection with the server side matchmaker and notifies the client after the the joinin operation on the room created by the matchmaking service. This actor is killed when the matchmaking process completes or the relative matchmaking queue is left.
 
 \begin{figure}
 	\hspace*{-1 in}
