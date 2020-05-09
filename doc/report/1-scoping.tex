@@ -46,9 +46,10 @@ Instead, when auto close in on, the room would close if there is no client in th
 \\
 The room must be aware of unreachable and/or inactive clients, and may kick them out after an established period of time. There are two possible ways to handle client liveness monitoring, that is:
 \begin{itemize}
-\item Heartbeat service: clients and server periodically exchange pings. Inactive clients are never kicked.  
-\item The room kicks a client out if no message flew between such client and the room (both directions) within a certain period of time. The length of the period must be configurable. This is considered as a leave event.
+\item Idle timeout: The room kicks a client out (considering this as a leave event) if no message flew between such client and the room (both directions) within a certain period of time. The length of the period must be configurable and optionally disabled.
+\item Heartbeat service: clients and server periodically exchange ping-pong messages: if a client misses a pong he is kicked out from the room (considering this as a leave event). The heartbeat rate must be configurable and optionally disabled.
 \end{itemize}
+When heartbeat and idle timeout are enabled at the same time, pong messages are considered as valid messages from the client so in this case the idle timeout could be triggered only if his rate is lower then the heartbeat one.
 
 \bigskip
 \textit{Room state}
@@ -145,11 +146,10 @@ Moreover, the server has the clearance to allocate rooms using matchmaking. Thos
 
 \subsection{Client} \label{client}
 
-A client should be able, in primis, to display all existing rooms of a given type, both for public and private rooms, using three different ways, that is:
+A client should be able, in primis, to display all existing rooms of a given type, both for public and private rooms, using two different ways, that is:
 \begin{itemize}
 \item \textbf{Get all}: it gets all available rooms, possibly filtered.
-\item \textbf{Get by type}: it gets all available rooms of a given certain type, possibly filtered.
-\item \textbf{Get by type and Id}: it gets a single room of a certain given type and with a certain Id.  
+\item \textbf{Get by type}: it gets all available rooms of a given certain type, possibly filtered. 
 \end{itemize}
 
 Currently locked rooms and room created using matchmaking must not be displayed.
@@ -231,6 +231,7 @@ In the end, a client can specify a reactive behavior associated to room events t
 \item \textbf{Receive message}: the client receives a message from the room.
 \item \textbf{State change}: the client is notified with the new public state of the world.
 \item \textbf{Close room}: the client is notified that the room has been closed.
+\item \textbf{Error event}: the client is notified when errors occur in the communication with the room.
 \end{itemize} 
 The feature is enabled once the client joined the room. 
 
@@ -268,27 +269,22 @@ ID   &  Specification \\
 \end{center}
 
 \subsection{User Requirements}
-
 \subsubsection{RBS}
-
 The requirements breakdown structure diagrams in figure \ref{fig:client-RBS} and \ref{fig:server-RBS} show stakeholders requirements for server and client programmers respectively.  
-
-\begin{figure}[H]
-  \includegraphics[scale=0.5]{images/2-scoping/server-RBS.png}
+\begin{figure}[h]
+  \includegraphics[scale=0.4]{images/2-scoping/server-RBS.png}
    \centering  
    \caption{\textit{RBS for server side user requirements.}}
   \label{fig:server-RBS}
 \end{figure}
-
-\begin{figure}[H]
-  \includegraphics[scale=0.5]{images/2-scoping/client-RBS.png}
+\begin{figure}[h]
+  \includegraphics[scale=0.4]{images/2-scoping/client-RBS.png}
    \centering  
    \caption{\textit{RBS for client side user requirements.}}
   \label{fig:client-RBS}
 \end{figure}
  
 \subsubsection{Use Cases}
-
 We can split use cases in two scenarios about role played by clients: clients that joined a room and clients that didn't. In the first case, the whole system is the context, and it explains high level functionalities of the system. In the latter case, the context is the interaction between a client in a room and such room.
 
 \bigskip
@@ -455,6 +451,7 @@ ID   &  Specification \\
 9.2     & Define behavior on state update \\
 9.3     & Define behavior on room closing \\
 9.4     & Definition of reactive behavior is allowed once the client joined the room \\
+9.4     & Define behavior on communication error\\
 10      & Close a room \\
 11      & Change public/private state of a room \\
 11.1    & Make a public room private \\

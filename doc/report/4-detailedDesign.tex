@@ -45,18 +45,18 @@ The second one, \texttt{Gameloop}, is also a trait but is not generic and requir
 While this two traits can be optionally mixed in a ServerRoom, all those that in figure \ref{fig:server_room_class_diagram} are shown on the left, are functionalities that a room has by default:
 \begin{itemize}
 	\item \texttt{MatchmakingSupport}: gives the developer access to the matchmaking groups that the matchmaking service associated with this room has created.
-	\item \texttt{ProvateRoomSupport}: used to set a password to the room in order to prevent access to some clients.
+	\item \texttt{PrivateRoomSupport}: used to set a password to the room in order to prevent access to some clients.
 	\item \texttt{RoomLockingSupport}: enables lock and unlock functionalities to the room. 
 	\item \texttt{ReconnectionSupport}: allows clients to reconnect to the room within a certain period of time.
 \end{itemize}
 
 \subsection{ClientRoom}
 
-\texttt{ClientRoom}, is the client-side representation of the room. It extends the \texttt{Room} trait so it has a unique identifier \textit{roomId} and a set of properties (\ref{fig:property-class}) that can be queried by the user. 
+\texttt{ClientRoom} is the client-side representation of the room. It extends the \texttt{Room} trait so it has a unique identifier \textit{roomId} and a set of properties (\ref{fig:property-class}) that can be queried by the user. 
 The client room concept has been specialized in two further concepts: Joinable and Joined.
 A \texttt{JoinableRoom} is a room that supports accessing protocol like join or reconnect, while
 a \texttt{JoinedRoom} represents a room that has been successfully joined. 
-This separation was made to provide the developer a consistent access to room functionality. Indeed, with this structure is not possible for example to leave a room that was never joined or joining a room that is still joined.
+This separation was made to provide the developer a consistent access to room functionalities. Indeed, with this structure is not possible for example to leave a room that was never joined or joining a room that is still joined.
 \\
 \texttt{JoinedRoom} is the main interface with which a developer can interact with the game room.
 It extends the ClientRoom trait enabling the definition of callbacks on room events: message received, state changed, room closing or communication error.
@@ -192,7 +192,7 @@ In order for a Socket object to send and receive data, it must be able to serial
 
 Since \texttt{RoomSocket} and \texttt{MatchmakingSocket} needs to handle \texttt{ProtocolMessage}s we defined a \texttt{ProtocolMessageSerializer} interface that specifically defines a serializer for protocol messages. We implemented two types of serializers: \texttt{BinaryProtoclSerializer} and \texttt{TextProtocolSerializer}. The first one serialize protocol messages as binary data; the latter instead as text messages.
  
-We have two different implementations because we initially planned to use json format also for socket communication and this would be done by the \texttt{TextProtocolSerializer}. However we decided during the development phase to use binary representation both to improve performance and usability, so we switched to the \texttt{BinaryProtocolSerializer}. The \texttt{TextProtocolSerializer} has been still kept since was still usefull for testing purposes.
+We have two different implementations because we initially planned to use json format also for socket communication and this would be done by the \texttt{TextProtocolSerializer}. However we decided during the development phase to use binary representation both to improve performance and usability, so we switched to the \texttt{BinaryProtocolSerializer}. The \texttt{TextProtocolSerializer} has been still kept since was still useful for testing purposes.
 
 
 An example of a full interaction between client and server is shown in the sequence diagram in figure \ref{fig:create_room_seq}
