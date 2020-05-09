@@ -152,7 +152,7 @@ The requirements analysis led to the definition of three types of interaction be
 	
 	\item Client to Matchmaking \\
 	The last type of interaction is the one that takes place when a client is interacting with a matchmaking service. Websockets are used here too since another full-duplex channel is required. Indeed, when a client sends a request in order to join the matchmaking queue, the server response is not immediate, and the communication must be kept open until the matchmaking service will eventually create a group of clients. Only then the server will respond to the client with a message that contains some information required to join the room that will host the game.
-	In the end, since a matchmaking service is associated to a specific type of room, the client could have multiple sockets open in parallel with different matchmaking services.
+	In the end, since a matchmaking service is associated with a specific type of room, the client could have multiple sockets open in parallel with different matchmaking services.
 \end{enumerate}
 
 
