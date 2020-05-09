@@ -10,13 +10,14 @@ The only drawback is the exposure of the actor model to users that may be forced
 
 \section{Room}
 
-Room is one central concept of the library both in server and client perspective; the figure \ref{fig:room_class_diagram} shows how it was designed. 
- \texttt{Room} is the primary interface that defines a room. A room has a unique identifier and a set of properties. The identifier is an UUID string that can be used by clients to reference and join a specific room. On the other hand properties (described in section \ref{room_properties_section}) can be queried to retrieve some useful information exposed by the room. 
-Both \texttt{ClientRoom} and \texttt{ServerRoom} extends \texttt{BasicRoom} that provides common methods to access properties.
- \\
-\texttt{SharedRoom} is the serializable object that is passed through the network to share room information. 
+Room is one of the main concept of the library, both on server and client perspective; the figure \ref{fig:room_class_diagram} shows its design.
 \\
-Further sections provide a more detailed description of the client and server specializations of the room concept, focusing on \texttt{ClientRoom} and \texttt{ServerRoom} classes.
+\texttt{Room} is the primary interface that defines a room. A room has a unique identifier and a set of properties. The identifier is an UUID string that can be used by clients to reference a specific room. On the other hand, properties (described in section \ref{room_properties_section}) can be queried to retrieve some useful information exposed by the room. 
+Both \texttt{ClientRoom} and \texttt{ServerRoom} extend \texttt{BasicRoom}, the one that provides common methods to access properties.
+ \\
+\texttt{SharedRoom} is the serializable object that is passed through the network to share room information between clients and server. 
+\\
+The following sections provide a more detailed description of client and server specializations of the room concept, focusing on \texttt{ClientRoom} and \texttt{ServerRoom} classes.
 
 
 
@@ -34,35 +35,42 @@ Further sections provide a more detailed description of the client and server sp
 	\caption{Server room class diagram}
 	\label{fig:server_room_class_diagram}
 \end{figure}
-\texttt{ServerRoom} is a trait that encapsulate the concept of room used server-side; as we see in figure \ref{fig:server_room_class_diagram} it extends the \texttt{Room} trait adding methods to manage clients (add,remove, tell and broadcast) and defining abstract handlers for room events. These handlers are the ones that the developer must implement to define his own type of rooms.
 
-Since the developer may also want to automatically synchronize the state of the game and have an inner game loop (requirements 2.1.2.1 and 2.1.2.2), there are two extension of the server room: \texttt{SynchronizedRoomState} and \texttt{GameLoop} that provide this functionalities. 
+\texttt{ServerRoom} is a trait that encapsulates the concept of room used server-side; as we see in figure \ref{fig:server_room_class_diagram}, it extends the \texttt{Room} trait by adding methods to manage clients (add, remove, tell and broadcast) and by defining abstract handlers for room events. These handlers are the ones that the developer must implement to define his own type of room.
+\\
+Few extensions are provided to enhance its functionalities, in particular:
 
-The first one is a trait generic in the type of the state that needs to be synchronized to clients; this trait has all methods implemented except for \texttt{currentState} that must be defined by the user and will be called periodically at the specified rate: \texttt{stateUpdateRate}.
-
-The second one, \texttt{Gameloop}, is also a trait but is not generic and requires to define \texttt{updateWorld}, a void method that will be called every \texttt{worldUpdateRate} milliseconds.
-
-While this two traits can be optionally mixed in a ServerRoom, all those that in figure \ref{fig:server_room_class_diagram} are shown on the left, are functionalities that a room has by default:
 \begin{itemize}
-	\item \texttt{MatchmakingSupport}: gives the developer access to the matchmaking groups that the matchmaking service associated with this room has created.
-	\item \texttt{ProvateRoomSupport}: used to set a password to the room in order to prevent access to some clients.
-	\item \texttt{RoomLockingSupport}: enables lock and unlock functionalities to the room. 
-	\item \texttt{ReconnectionSupport}: allows clients to reconnect to the room within a certain period of time.
+	\item \texttt{MatchmakingSupport}: it gives the developer access to the matchmaking groups created by the matchmaking service associated to this room.
+	\item \texttt{ProvateRoomSupport}: it manages private rooms by allowing the possibility to set a password to the room in order to prevent undesired accesses.
+	\item \texttt{RoomLockingSupport}: it enables lock and unlock functionalities to the room. 
+	\item \texttt{ReconnectionSupport}: it allows clients reconnection to the room.
+	\item \texttt{SynchronizedRoomState}: it permits to synchronize the public state of the room between clients using a period of \texttt{stateUpdateRate}.
+	\item \texttt{GameLoop}: it permits to update the room state using a period of \texttt{stateUpdateRate}.
 \end{itemize}
+
+Differently from the others, \texttt{SynchronizedRoomState} and \texttt{GameLoop} are optionals and can be included by the developer at will.
+
+The first one is a trait generic in the type of the state that needs to be synchronized to clients; all methods are implemented, except for \texttt{currentState} that must be defined by the user. This method should return the new world to be synchronized between the clients.
+
+The latter is also a trait and requires to define \texttt{updateWorld}, a method that is assigned to update the room using a given logic.
 
 \subsection{ClientRoom}
 
-\texttt{ClientRoom}, is the client-side representation of the room. It extends the \texttt{Room} trait so it has a unique identifier \textit{roomId} and a set of properties (\ref{fig:property-class}) that can be queried by the user. 
-The client room concept has been specialized in two further concepts: Joinable and Joined.
-A \texttt{JoinableRoom} is a room that supports accessing protocol like join or reconnect, while
-a \texttt{JoinedRoom} represents a room that has been successfully joined. 
-This separation was made to provide the developer a consistent access to room functionality. Indeed, with this structure is not possible for example to leave a room that was never joined or joining a room that is still joined.
+\texttt{ClientRoom} is the client-side representation of the room.
+This concept has been then specialized in two further concepts: ``Joinable'' and ``Joined''.
+This separation was made to provide the developer a consistent access to room functionalities. Indeed, by using this structure, it is not possible to execute unauthorized operations on rooms. For example, leaving a room that wasn't joined yet or joining a room that is already joined.
+
+\bigskip
+\texttt{JoinableRoom} extends a basic \texttt{ClientRoom} and adds join and reconnect accessing protocols.
+
+
+\bigskip
+\texttt{JoinedRoom} extends the \texttt{ClientRoom} trait too and enables the definition of callbacks on room events: message received, state changed, room closing or communication error.
+Furthermore, it also exposes methods to send messages and leave the room. 
 \\
-\texttt{JoinedRoom} is the main interface with which a developer can interact with the game room.
-It extends the ClientRoom trait enabling the definition of callbacks on room events: message received, state changed, room closing or communication error.
-It also provides methods to send messages and leave the room. 
-The developer is also provided with the \textit{sessionId} associated to this client in the room.
-This can be used for example in the reconnection process to be recognized by the server room as a specific client.
+A client is provided with a \textit{sessionId} that identifies the joining of the client to the room.
+This can be used, for example, in the reconnection process in order to recognize the client on the server.
 
 
 \subsection{Properties and Filters}  \label{room_properties_section}
@@ -75,7 +83,7 @@ Each property (\texttt{BasicRoomProperty}) owns a name and a value.
 \\
 Values, since they can be of four types (server requirements 2.2.2), are modeled as classes that extend a common trait \texttt{RoomPropertyValue}. This trait wraps a ``real'' value of type \texttt{Int}, \texttt{Double}, \texttt{Boolean} or \texttt{String}.
 \\
-Each property value exposes two main features: the real value wrapped by the class and a method that compares such value to another one of the same type (e.g. compare the Int value wrapped by the class to another given Int); this is useful since different type of values may define different comparing logics.
+Each property value exposes two main features: the real value wrapped by the class and a method that compares such value to another one of the same type (e.g. compare the \texttt{Int} value wrapped by the class to another given \texttt{Int}); this is useful since different type of values may define different comparing logics.
 Moreover, there is also a static factory that permits to create a property value from a given first class value (if possible).
 
 \bigskip
