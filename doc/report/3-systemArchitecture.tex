@@ -83,7 +83,7 @@ The \texttt{MatchmakingService} is the component that implements the matchmaking
 
 \section{Client Architecture}
 
-The class diagram of the client side architecture is visible in figure \ref{fig:client_architecture}. 
+Class diagram of client side architecture is shown in figure \ref{fig:client_architecture}. 
 \begin{figure}[H]
 	\centering
 	\includegraphics[scale=0.65]{images/3-architecture/client-architecture.png}
@@ -93,25 +93,33 @@ The class diagram of the client side architecture is visible in figure \ref{fig:
 \bigskip
 \textit{Client}
 \\
-The Client class is the main access to the client side functionality.
-It uses the HttpService to handle the interaction with the game server (e.g. retrieving or creating rooms).
-It keeps track of joined rooms and enables the access to the client side matchmaker.
+\texttt{Client} class is the main access to client side functionalities.
+It exposes three main capabilities, namely:
+\begin{itemize}
+  \item It handles few operations on rooms (e.g. to retrieve or create rooms) by exploiting the \texttt{HttpService}.
+  \item It keeps track of joined rooms.
+  \item It enables the access to client side matchmaker.
+\end{itemize}
 
 \bigskip
 \textit{HttpService}
 \\
-HttpService is a module that handle the http communication with the game server. It provides functionality to make http request (get, post) or ask for websocket connections opening. 
+\texttt{HttpService} is the module that handles http communication to the game server. It provides two main functionalities, that is:
+\begin{itemize}
+  \item It makes http requests to the server (Get, Post).
+  \item It allows the opening for websocket connections.
+\end{itemize}
 
 \bigskip
 \textit{ClientMatchmaker}
 \\
- ClientMatchmaker is the component that provides matchmaking functionality for the client (join or leave matchmaking queues). It keeps multiple websocket connections (\textit{MatchmakingConnection}) with the server side matchmakers: one for each queue joined by the client. 
+ \texttt{ClientMatchmaker} is the component that provides the matchmaking functionalities for clients (e.g. to join or leave matchmaking queues). It keeps a websocket connection (\texttt{MatchmakingConnection}) opened to a server side matchmaker for each queue joined by the client.
 
 \bigskip
 \textit{ClientRoom}
 \\
-A ClientRoom represents the instance of a room from the client's perspective. A room is 'joinable' at first  (\textit{JoinableRoom}), meaning that a client can join or reconnect to such room. 
-When a room is accessed it becomes joined (\textit{JoinedRoom}). At this point a websocket connection (\textit{RoomConnection}) with the server side room is opened to enable the communication with the two sides.
+A \texttt{ClientRoom} represents an instance of a room from the client's perspective. A room is ``joinable'' at first  (\texttt{JoinableRoom}), meaning that a client can join or reconnect to such room. 
+Then, when a room is accessed, it becomes ``joined'' (\texttt{JoinedRoom}). At this point, a websocket connection (\texttt{RoomConnection}) with the server side room is opened to enable the communication between the two sides.
 
 
 \section{Client-Server Interaction}

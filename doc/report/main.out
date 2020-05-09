@@ -1,0 +1,53 @@
+\BOOKMARK [0][-]{chapter.1}{Scoping}{}% 1
+\BOOKMARK [1][-]{section.1.1}{Introduction}{chapter.1}% 2
+\BOOKMARK [1][-]{section.1.2}{System Requirements Gathering}{chapter.1}% 3
+\BOOKMARK [2][-]{subsection.1.2.1}{Room}{section.1.2}% 4
+\BOOKMARK [2][-]{subsection.1.2.2}{Server}{section.1.2}% 5
+\BOOKMARK [2][-]{subsection.1.2.3}{Client}{section.1.2}% 6
+\BOOKMARK [1][-]{section.1.3}{Requirements formalization}{chapter.1}% 7
+\BOOKMARK [2][-]{subsection.1.3.1}{Business Requirements}{section.1.3}% 8
+\BOOKMARK [2][-]{subsection.1.3.2}{User Requirements}{section.1.3}% 9
+\BOOKMARK [2][-]{subsection.1.3.3}{Functional Requirements}{section.1.3}% 10
+\BOOKMARK [2][-]{subsection.1.3.4}{Non functional Requirements}{section.1.3}% 11
+\BOOKMARK [2][-]{subsection.1.3.5}{Implementation Requirements}{section.1.3}% 12
+\BOOKMARK [0][-]{chapter.2}{Development process}{}% 13
+\BOOKMARK [1][-]{section.2.1}{Interactions planning}{chapter.2}% 14
+\BOOKMARK [1][-]{section.2.2}{Tasks split and assignment}{chapter.2}% 15
+\BOOKMARK [1][-]{section.2.3}{Development tools: Build, Testing, CI}{chapter.2}% 16
+\BOOKMARK [2][-]{subsection.2.3.1}{Ensuring system portability}{section.2.3}% 17
+\BOOKMARK [2][-]{subsection.2.3.2}{Ensuring system deployment}{section.2.3}% 18
+\BOOKMARK [0][-]{chapter.3}{System architecture}{}% 19
+\BOOKMARK [1][-]{section.3.1}{Room}{chapter.3}% 20
+\BOOKMARK [1][-]{section.3.2}{Server architecture}{chapter.3}% 21
+\BOOKMARK [1][-]{section.3.3}{Client Architecture}{chapter.3}% 22
+\BOOKMARK [1][-]{section.3.4}{Client-Server Interaction}{chapter.3}% 23
+\BOOKMARK [0][-]{chapter.4}{Detailed design}{}% 24
+\BOOKMARK [1][-]{section.4.1}{Actor model}{chapter.4}% 25
+\BOOKMARK [1][-]{section.4.2}{Room}{chapter.4}% 26
+\BOOKMARK [2][-]{subsection.4.2.1}{ServerRoom}{section.4.2}% 27
+\BOOKMARK [2][-]{subsection.4.2.2}{ClientRoom}{section.4.2}% 28
+\BOOKMARK [2][-]{subsection.4.2.3}{Properties and Filters}{section.4.2}% 29
+\BOOKMARK [1][-]{section.4.3}{Server}{chapter.4}% 30
+\BOOKMARK [1][-]{section.4.4}{Client}{chapter.4}% 31
+\BOOKMARK [1][-]{section.4.5}{Communication}{chapter.4}% 32
+\BOOKMARK [2][-]{subsection.4.5.1}{Json Serialization}{section.4.5}% 33
+\BOOKMARK [2][-]{subsection.4.5.2}{Websockets}{section.4.5}% 34
+\BOOKMARK [0][-]{chapter.5}{Implementation}{}% 35
+\BOOKMARK [1][-]{section.5.1}{Data Serialization}{chapter.5}% 36
+\BOOKMARK [1][-]{section.5.2}{Testing}{chapter.5}% 37
+\BOOKMARK [1][-]{section.5.3}{Stefano Salvatori}{chapter.5}% 38
+\BOOKMARK [1][-]{section.5.4}{Riccardo Salvatori}{chapter.5}% 39
+\BOOKMARK [1][-]{section.5.5}{Gabriele Guerrini}{chapter.5}% 40
+\BOOKMARK [0][-]{chapter.6}{Retrospective}{}% 41
+\BOOKMARK [1][-]{section.6.1}{Development description in detail}{chapter.6}% 42
+\BOOKMARK [2][-]{subsection.6.1.1}{Sprint 0}{section.6.1}% 43
+\BOOKMARK [2][-]{subsection.6.1.2}{Sprint 1}{section.6.1}% 44
+\BOOKMARK [2][-]{subsection.6.1.3}{Sprint 2}{section.6.1}% 45
+\BOOKMARK [2][-]{subsection.6.1.4}{Sprint 3}{section.6.1}% 46
+\BOOKMARK [2][-]{subsection.6.1.5}{Sprint 4}{section.6.1}% 47
+\BOOKMARK [2][-]{subsection.6.1.6}{Sprint 5}{section.6.1}% 48
+\BOOKMARK [2][-]{subsection.6.1.7}{Sprint 6}{section.6.1}% 49
+\BOOKMARK [1][-]{section.6.2}{Final comments}{chapter.6}% 50
+\BOOKMARK [2][-]{subsection.6.2.1}{Stefano Salvatori}{section.6.2}% 51
+\BOOKMARK [2][-]{subsection.6.2.2}{Riccardo Salvatori}{section.6.2}% 52
+\BOOKMARK [2][-]{subsection.6.2.3}{Gabriele Guerrini}{section.6.2}% 53
