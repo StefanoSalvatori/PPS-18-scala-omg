@@ -12,10 +12,10 @@ The only drawback is the exposure of the actor model to users that may be forced
 
 Room is one of the main concept of the library, both on server and client perspective; the figure \ref{fig:room_class_diagram} shows its design.
 \\
-\texttt{Room} is the primary interface that defines a room. A room has a unique identifier and a set of properties. The identifier is an UUID string that can be used by clients to reference a specific room. On the other hand, properties (described in section \ref{room_properties_section}) can be queried to retrieve some useful information exposed by the room. 
+\texttt{Room} is the primary interface that defines a room. A room has a unique identifier and a set of properties. The identifier is an UUID string that can be used by clients to reference a specific room. On the other hand, properties (described in section \ref{room_properties_section}) can be queried to retrieve some useful information exposed by the room.
 Both \texttt{ClientRoom} and \texttt{ServerRoom} extend \texttt{BasicRoom}, the one that provides common methods to access properties.
  \\
-\texttt{SharedRoom} is the serializable object that is passed through the network to share room information between clients and server. 
+\texttt{SharedRoom} is the serializable object that is passed through the network to share room information between clients and server.
 \\
 The following sections provide a more detailed description of client and server specializations of the room concept, focusing on \texttt{ClientRoom} and \texttt{ServerRoom} classes.
 
@@ -41,9 +41,9 @@ The following sections provide a more detailed description of client and server 
 Few extensions are provided to enhance its functionalities, in particular:
 
 \begin{itemize}
-	\item \texttt{MatchmakingSupport}: it gives the developer access to the matchmaking groups created by the matchmaking service associated with this room.
-	\item \texttt{ProvateRoomSupport}: it manages private rooms by allowing the possibility to set a password to the room in order to prevent undesired accesses.
-	\item \texttt{RoomLockingSupport}: it enables lock and unlock functionalities to the room. 
+    \item \texttt{MatchmakingSupport}: it gives the developer access to the matchmaking groups created by the matchmaking service associated with this room.
+	\item \texttt{PrivateRoomSupport}: it manages private rooms by allowing the possibility to set a password to the room in order to prevent undesired accesses.
+	\item \texttt{RoomLockingSupport}: it enables lock and unlock functionalities to the room.
 	\item \texttt{ReconnectionSupport}: it allows clients reconnection to the room.
 	\item \texttt{SynchronizedRoomState}: it permits to synchronize the public state of the room between clients using a period of \texttt{stateUpdateRate}.
 	\item \texttt{GameLoop}: it permits to update the room state using a period of \texttt{stateUpdateRate}.
@@ -67,7 +67,7 @@ This separation was made to provide the developer a consistent access to room fu
 
 \bigskip
 \texttt{JoinedRoom} extends the \texttt{ClientRoom} trait too and enables the definition of callbacks on room events: message received, state changed, room closing or communication error.
-Furthermore, it also exposes methods to send messages and leave the room. 
+Furthermore, it also exposes methods to send messages and leave the room.
 \\
 A client is provided with a \textit{sessionId} that identifies the joining of the client to the room.
 This can be used, for example, in the reconnection process in order to recognize the client on the server.
@@ -102,22 +102,20 @@ A \texttt{FilterOptions} is a wrapper around a set of \texttt{FilterOption}; thi
 
 \bigskip
 \textit{Design notes / implementation directives}
-\\
 \begin{itemize}
 \item Before on choosing this design, few different options have been analyzed, and this has been decided to be the most feasible one. The only lack that can be detected is on the value getter of \texttt{RoomPropertyValue}. Indeed, it is absent in the class instance itself, and it is only available through the static method \texttt{valueOf}.
 \item Notice that, in order to encourage library usability, the value wrapper can be made be transparent to final users thanks to implicit conversions that can be defined in Scala.
 \end{itemize}
-
-\begin{figure}[h]
-	\hspace*{-0.1in}
-	\includegraphics[scale=0.55]{images/4-design/property_and_filters-class.png}
+\begin{figure}[H]
+	\includegraphics[scale=0.45]{images/4-design/property_and_filters-class.png}
 	\caption{Properties and filters class diagram.}
 	\label{fig:property-class}
 \end{figure}
 
+\newpage
 
 \section{Server}
-Class diagram in figure \ref{fig:server_class_diagram} describes in detail the server architecture by describing its main functionalities and by showing its components interactions. 
+Class diagram in figure \ref{fig:server_class_diagram} describes in detail the server architecture by describing its main functionalities and by showing its components interactions.
 \begin{figure}[h]
 	\hspace*{-1.1in}
 	\includegraphics[scale=0.55]{images/4-design/server_class.png}
@@ -127,7 +125,7 @@ Class diagram in figure \ref{fig:server_class_diagram} describes in detail the s
 
 \textit{Game server and routing service}
 \\
-The \texttt{GameServer} class is the facade interface that is exposed to the developer. It internally creates a \texttt{ServerActor} that is the entity acting as the real server listening for clients requests. This actor creates a \texttt{RouteService} object that is used to know which routes to use and how to handle requests; it also allows to dynamically define new room types that will be used by the server. 
+The \texttt{GameServer} class is the facade interface that is exposed to the developer. It internally creates a \texttt{ServerActor} that is the entity acting as the real server listening for clients requests. This actor creates a \texttt{RouteService} object that is used to know which routes to use and how to handle requests; it also allows to dynamically define new room types that will be used by the server.
 
 The \texttt{ServerActor} also uses a \texttt{RoomHandlingService} actor to create and define rooms from the server itself. The same actor is used by the \texttt{RouteService}.
 
@@ -139,26 +137,25 @@ As we described for the server architecture in section \ref{sec:server_arch}, th
 \bigskip
 \textit{Client}
 \\
-Each \texttt{ServerRoom} is linked to an actor and keeps track of connected clients (\texttt{Client} class server-side). Clients are uniquely identified by their Id and expose a \texttt{send} method that allows to send messages to them. It is important to notice that each room has its own view of clients: the same client connected to different rooms will have a different Id in each of them. 
+Each \texttt{ServerRoom} is linked to an actor and keeps track of connected clients (\texttt{Client} class server-side). Clients are uniquely identified by their Id and expose a \texttt{send} method that allows to send messages to them. It is important to notice that each room has its own view of clients: the same client connected to different rooms will have a different Id in each of them.
 
 \bigskip
 \textit{Matchmaking}
 \\
 Each matchmaking service has an internal actor assigned to handle all incoming requests. This actor needs to know which \texttt{Client}(s) are waiting for the match start.
 Since clients may ask for matchmaking, the \texttt{RouteService} uses a \texttt{MatchmakingHandler} to redirect those requests to the right \texttt{MatchmakingService} actor.
-Moreover, when defining a new room type with enabled matchmaking, the server will demand the \texttt{RouteService} to add the right route and to spawn the associated \texttt{MatchmakingService}. 
+Moreover, when defining a new room type with enabled matchmaking, the server will demand the \texttt{RouteService} to add the right route and to spawn the associated \texttt{MatchmakingService}.
 
 
 \section{Client}
-
 Class diagram in figure \ref{fig:client_class_diagram} describes the detailed client architecture.
 
 \bigskip
 \textit{Core client}
 \\
-The \texttt{Client} class is the main access point to its api. It's a facade that exposes client's primary functionalities while hiding the underlying actor model.  
+The \texttt{Client} class is the main access point to its api. It's a facade that exposes client's primary functionalities while hiding the underlying actor model.
 \\
-The main logic is internally handled by the \texttt{CoreClient} actor. It exploits an \texttt{HttpService} actor to make http requests to the game server when getting or creating rooms. 
+The main logic is internally handled by the \texttt{CoreClient} actor. It exploits an \texttt{HttpService} actor to make http requests to the game server when getting or creating rooms.
 \\
 Moreover, it keeps track of currently joined rooms. The list, once created, is kept updated by interacting with the \texttt{ClientRoomActor}'s associated with each room.
 
@@ -167,7 +164,7 @@ Moreover, it keeps track of currently joined rooms. The list, once created, is k
 \\
 The \texttt{ClientRoomActor} is an actor that handles the socket connection with the server side room. 
 It's spawned when joining a room, and it's killed when the room is left or closed. It notifies the \texttt{CoreClient} when the associated room is left, joined or closed so that the list of joined rooms can be updated.
-\\ 
+\\
 In the end, the callbacks specified by the user, i.e. the ones that define the client side room reactive behavior, are handled by this actor internally.
 
 \bigskip
@@ -175,11 +172,10 @@ In the end, the callbacks specified by the user, i.e. the ones that define the c
 \\
 The \texttt{ClientMatchmaker} can be used to access the matchmaking functionality. It exposes methods to join or leave matchmaking queues for given room types. It keeps track of active matchmaking connections so that it is always possible to leave queues without waiting the matchmaking process to be completed.
 \\
-A \texttt{MatchmakingActor} is spawned when a new matchmaking request is performed. 
+A \texttt{MatchmakingActor} is spawned when a new matchmaking request is performed.
 This actor opens a websocket connection with the server side matchmaker and notifies the client after the the joinin operation on the room created by the matchmaking service. This actor is killed when the matchmaking process completes or the relative matchmaking queue is left.
-
-\begin{figure}
-	\hspace*{-1 in}
+\begin{figure}[H]
+	\hspace*{-1in}
 	\includegraphics[scale=0.55]{images/4-design/client_class.png}
 	\caption{Client class diagram}
 	\label{fig:client_class_diagram}
@@ -215,7 +211,7 @@ They are \texttt{Socket} both where the generic type T is a \texttt{ProtocolMess
 	Used to identify the type of message that the client or the server want to send. The list of the possible message types is defined in the \texttt{ProtocolMessageType} enumeration.
 	\item \textit{SessionId} \\
 	Used to identify the client that is sending the message through the socket. When a websocket connection is established between client and server, a unique Id is generated; the client must always use the same sessionId to send messages through that socket.
-	\item \textit{Payload} \\ 
+	\item \textit{Payload} \\
 	An optional payload that can be carried with the massage. This is, for example, the field used to store messages when a client sends a message to the server through the usage of \texttt{sendMessage} method on the client room. It must be \texttt{Serializable} since it will eventually be serialized to be sent to the server.
 \end{itemize}
 
