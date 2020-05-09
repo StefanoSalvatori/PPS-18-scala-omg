@@ -102,19 +102,17 @@ A \texttt{FilterOptions} is a wrapper around a set of \texttt{FilterOption}; thi
 
 \bigskip
 \textit{Design notes / implementation directives}
-\\
 \begin{itemize}
 \item Before on choosing this design, few different options have been analyzed, and this has been decided to be the most feasible one. The only lack that can be detected is on the value getter of \texttt{RoomPropertyValue}. Indeed, it is absent in the class instance itself, and it is only available through the static method \texttt{valueOf}.
 \item Notice that, in order to encourage library usability, the value wrapper can be made be transparent to final users thanks to implicit conversions that can be defined in Scala.
 \end{itemize}
-
-\begin{figure}[h]
-	\hspace*{-0.1in}
-	\includegraphics[scale=0.55]{images/4-design/property_and_filters-class.png}
+\begin{figure}[H]
+	\includegraphics[scale=0.45]{images/4-design/property_and_filters-class.png}
 	\caption{Properties and filters class diagram.}
 	\label{fig:property-class}
 \end{figure}
 
+\newpage
 
 \section{Server}
 Class diagram in figure \ref{fig:server_class_diagram} describes in detail the server architecture by describing its main functionalities and by showing its components interactions.
@@ -150,7 +148,6 @@ Moreover, when defining a new room type with enabled matchmaking, the server wil
 
 
 \section{Client}
-
 Class diagram in figure \ref{fig:client_class_diagram} describes the detailed client architecture.
 
 \bigskip
@@ -177,9 +174,8 @@ The \texttt{ClientMatchmaker} can be used to access the matchmaking functionalit
 \\
 A \texttt{MatchmakingActor} is spawned when a new matchmaking request is performed.
 This actor opens a websocket connection with the server side matchmaker and notifies the client after the the joinin operation on the room created by the matchmaking service. This actor is killed when the matchmaking process completes or the relative matchmaking queue is left.
-
-\begin{figure}
-	\hspace*{-1 in}
+\begin{figure}[H]
+	\hspace*{-1in}
 	\includegraphics[scale=0.55]{images/4-design/client_class.png}
 	\caption{Client class diagram}
 	\label{fig:client_class_diagram}
