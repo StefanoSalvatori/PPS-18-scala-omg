@@ -1,0 +1,67 @@
+\chapter{Implementation}
+\section{Data Serialization}
+As described in design section \ref{sec:communication_design}, there are two main types of serialization we dealt with, that is:
+\begin{itemize}
+	\item Json serialization: request-response interaction
+	\item Binary serialization: data exchanged through websockets
+\end{itemize}
+Regarding the first one, we decided to use the \texttt{spray-json} library since it is the recommended one when using akka.
+
+About binary serialization, we chose to use \texttt{java.io} serialization. This is because there are no strict performance constraints in requirements, and we preferred to favour user-side usability: indeed, the user of the library is able to let exchange messages between clients and server just defining classes that extend \texttt{java.io.Serializable} interface.
+
+\section{Testing}
+Regarding tests, we decided to use the \texttt{scalatest} library to perform unit tests on passive components and \texttt{akka.test} for actors. \textit{WordSpec} and \textit{FlatSpec} are the test styles adopted as they seemed, among many, the most expressive ones. 
+
+Integration tests have also been included where communication scenarios between client and server were simulated. The asynchronous nature of these tests required particular attention and the usage of advanced testing mechanisms (e.g. \texttt{Eventually} pattern in scalatest or synchronous actor testing for akka).
+
+In the end, we tried to keep test coverage controlled by using few different plugins: \texttt{scoverage} and \texttt{codecov.io}.
+The latter one is newsworthy since it allows regression checkings too. Indeed, coverage percentage is verified when pushing on the repository, and the plugin can be set to fail if any file dropped down its coverage level from the previous version on the repository.
+
+
+\section{Stefano Salvatori}
+In the early stages of the project I have mainly worked on the server package. First I defined the \texttt{GameServer} trait providing a basic implementation of it with a \texttt{ServerActor} that allowed to run a server listening on specific host an port; then I started working on the \texttt{ServerRoom} class and the \texttt{RoomActor} so that it would be possible for clients to connect to a room and for developers to create their own type of room. Concerning ServerRoom class i've also implemented the automatic close functionality and the periodic state synchronization to clients.
+
+Later on I worked on the communication protocol implementing all the classes in the \texttt{common.communication} package. Regarding communication between client and server i've also designed and implemented the websocket utilities in the \texttt{server.communication} package. Here i had to use some advanced features of akka reactive streams. 
+
+During the third and fourth sprint of the project i developed the \textit{MoneyGrabber} game as an example of the main functionalities of the library. 
+
+
+
+\section{Riccardo Salvatori}
+Initially I worked on the Route service component. I used a DSL provided by the akka-http library to easily define and handle specific routes used by the library. Then I defined the \texttt{RoomHandler} component that is in fact used by the \texttt{RouteService}.
+I worked on the client facade extending the infrastructure developed by Gabriele Guerrini. I worked on the client side room api defining the client room trait \texttt{ClientRoom} with the implementations \texttt{JoinableRoom} and \texttt{JoinedRoom}. Therefore I worked on functionality to join, reconnect and leave rooms.
+I worked on the implementation of the \textit{matchmaking} functionality client side: \texttt{ClientMatchmaker} and \texttt{ClientMatchmakerActor}.
+\\
+I implemented the \texttt{RockPaperScissor} example using scalafx and prolog.
+\\
+In the client side developing I was able to make an extensive use of reactive and asynchronous programming by the use of actors, futures and reactive streams.
+I could appreciate the use of \textit{for comprehension} syntax provided by scala to combine and work with futures.
+I was also able to improve my knowledge of Akka library and actor programming, also combined with a functional approach.
+
+\section{Gabriele Guerrini}
+
+\begin{itemize}
+
+\item[\em{Client infrastructure}] Realization of the main client infrastructure based upon main concepts of \texttt{CoreClient} (i.e. the main actor of a client), client facade (\texttt{Client}) and \texttt{HttpService}. My version, realized in the first sprint, has been then improved in the second one by Riccardo Salvatori.
+
+\item[\em{Room}] Design of rooms (\texttt{Room}, \texttt{BasicRoom}, \texttt{SharedRoom}, all client rooms, \texttt{ServerRoom}) and their interactions. Implementation of common rooms with contribution of Riccardo Salvatori.
+
+\item[\em{Server room}] Design and implementation of \texttt{ServerRoom} featuring with Stefano Salvatori. In particular, I've realized the handling of room properties, game loop (\texttt{GameLoop}), and various other features contained in \texttt{ServerRoomBasicFeatures} such as private state, locking and matchmaking integration.
+
+\item[\em{Room property}] Design of room property (\texttt{RoomProperty}) and its integration in client and server rooms both.
+
+\item[\em{Room filters}] Design of room filters (\texttt{RoomFilters}) and its usage on client and server side both.
+
+\item[\em{Json serialization}] Implementation of Json serialization (\texttt{RoomJsonSupport}).
+
+\item[\em{Matchmaking}] Design of \texttt{Matchmaker}, implementation of the default one, handling of rooms with matchmaking (opposed to rooms without it) in \texttt{RoomHandler}.
+
+\item[\em{Roll The Dice}] Implementation of the third example game \textit{``Roll The Dice''} that shows usage of matchmaking as well as other functionalities exhibited in the first two.
+
+\end{itemize}
+
+Since usability is a core aspect of the library, advanced features like reflection and annotations have been combined and widely used on \texttt{ServerRoom} in order to maintain the best of it while creating custom rooms. This way, the developer can freely define a room property just by declaring a field marked with an appropriate annotation.
+
+
+
+

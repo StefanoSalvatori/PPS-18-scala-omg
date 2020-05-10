@@ -1,0 +1,107 @@
+\chapter{Development process}
+
+The chosen project management lifecycle (PMLC) is an agile one, in particular Scrum. 
+\section{Interactions planning}
+
+In order to end within the given deadline of 60 days, a total of 7 sprints is scheduled. Each sprint is planned to last one week, from Sunday to Sunday. Furthermore, remaining few days after the last sprint are dedicated to the completion of project closing processes, such as system tuning, deploy consummation, documentation refinement and so on.
+\\
+As Scrum process suggests, each sprint is provided with an initial planning phase and is concluded with review and retrospective meetings. Both current sprint closing and next sprint planning are supposed to be done on Sunday.
+\\
+Moreover, daily scrum would often be required when tricky features are realized or any non negligible issue is found. Obviously, informal quick message exchange is allowed between team members all day long.
+\\
+The only exception to such organization is given by the first sprint. Indeed, requirement analysis and system design are predominantly realized at this time, and daily meetings are required to achieve these tasks so that the product backlog, required to plan each sprint from the second on, is produced.
+\\
+During all the phases of the development process software like Trello and Microsoft Teams are used to support team interaction.
+
+
+\section{Tasks split and assignment}
+
+Once the product backlog is available, each sprint planning phase produces a sprint backlog containing tasks to complete before such sprint ends. Tasks are chosen from product backlog by priority (importance of a feature in term of business value), considering the estimated size of each task too, so that no sprint is excessively weighted down. Once a task is selected from product backlog, it is split in subtasks by detailing its aspects. Tasks and subtasks sizes are expressed using Fibonacci sequence. 
+\\
+Once the sprint backlog is built, starting tasks are agreed between all team members, and each one takes charge of a couple of them (2-3 approximatively). The remaining ones are assigned day by day, looking to how the development proceeds. There is no general a priori criteria for task assignment; the only aspect considered, when possible, is to minimize the dependency between tasks assigned to different team members. 
+\\
+During sprint review, individual work of each member is examined to understand the current situation and to realize if any improvement is needed.
+
+\section{Development tools: Build, Testing, CI}
+
+The building system is automated using the sbt build tool since it is well integrated with Scala.
+\\
+The development process is not strictly a TDD approach but unit tests on single components and integration tests on use case scenarios are provided to ensure system correctness.  
+\\
+Moreover,``TravisCI'' combined with ``Github'', is used as continuous integration tool to perform regression tests. Repository is handled with pull requests reviewing flow.
+\\
+In the end, other plugins/tools used would be ``scalastyle'' and ``scoverage''. The first is used to check code style adherence to specified conventions, meanwhile the latter one helps on quantify tested code and displaying it.
+
+\subsection{Ensuring system portability}
+
+By looking to non functional requirements, portability comes out to be a key aspect. In order to ensure this requirement, Travis is configured to build and test the library upon multiple platforms and OS. In particular:
+\begin{itemize}
+\item \textbf{OS\footnote{Scala integration with Windows in not available on Travis yet}}: 
+  \begin{itemize}
+  \item \textit{Linux}
+  \item \textit{Osx (MacOS)}
+  \end{itemize}
+\item \textbf{JDK}:
+  \begin{itemize}
+  \item \textit{openjdk11}
+  \item \textit{openjdk13}
+  \item \textit{openjdk-ea (early access)}
+  \end{itemize} 
+\end{itemize}  
+
+\subsection{Ensuring system deployment easiness}
+
+As described in section \ref{non-fun-req}, the ease of deployment is another key aspect for the library requirements. In order to fulfill this goal, it must be possible to import the library in a project just by using a build tool (e.g. sbt, gradle). This requires the release on a public repository; in this case, ``Maven central'' has been chosen as the designed one.
+
+Two main aspects should be defined to start the process, that is:
+\begin{itemize}
+  \item \textbf{GroupId}: owners of the library. In this case, an organization named ``com.github.scalaomg'' \footnote{ \url{https://github.com/scalaomg}} has been established.
+  \item \textbf{ArtifactId}: name of the library once published. It will be ``scala-omg''.
+\end{itemize}
+
+Once the library is be released, it may be found on Maven at: 
+
+\begin{center}
+\url{https://search.maven.org/artifact/com.github.scalaomg/scala-omg}.
+\end{center}
+
+\bigskip
+For example, when using sbt, it can be then imported just by adding 
+
+\begin{center}
+\textbf{"com.github.scalaomg" \% "scala-omg" \% "version"}
+\end{center}
+
+to library dependencies.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

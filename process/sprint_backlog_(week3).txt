@@ -1,0 +1,29 @@
+Sprint Backlog (week 3)										
+										
+Product backlog Item	Sprint Task	Volunteer	Size Estimate	1	2	3	4	5	6	
+Clients must join and leave rooms.
+    Add websocket support to keep  connection between client and server	RS	1	0
+	Implement ClientRoom that expose methods to leave or join a room	RS	1	0						
+										
+Rooms might have a modifiable State.
+    Modify existing RoomState trait to handle state updates for clients	SS	5	4	2	0
+	Define a binary serializer that send state through sockets as binary data	SS	8	4	2	0
+	Add client support to handle StateUpdate messages	SS	5	4	3	2	0			
+	Define a json serializer that send state through sockets as json	SS
+Clients should create private rooms.Private rooms must be accessible using room name or password.
+    add public/private state to rooms	GG	5	5	2	1	1	0
+	Implement client authorization logic	GG	3	3	3	3	3	3	0	
+Heartbeat service.
+    Implement heartbeat on server sockets. (see RoomSocketFlow class)	SS	8	8	8	8	8	8	0
+Rooms might have properties(owner, maxClients...), that could generate constraints.	
+    Improve room design in order to let them handle room properties, client side and server side both.	GG	13	13	
+    8	3	2	0		
+Implement prototype of Rock Paper Scissor  Lizard Spock	
+    Impement game logic	RS	3	2	1	0				
+	Create a game room that handle classic mode and lizard-spock mode	RS	2	1	0					
+	Create game interface 	RS	3	3	3	1	0			
+Rooms shootdown and deletion.	
+    Implement 'close' method on rooms	SS	8	8	5	3	0			
+	Edit room handler so that it can delete rooms	SS	3	3	3	1	0			
+	Automatically notify clients when the room is closed	SS	3	3	2	0				
+										
