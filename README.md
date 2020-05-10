@@ -43,6 +43,12 @@ The developer will be provided with high-level support that is game logic indepe
 - Communication and synchronization with the gameserver
 
 ## Usage
+### Import
+Add the following line to your build.sbt file
+```scala
+libraryDependencies += "com.github.scalaomg" % "scala-omg" % "1.0.1"
+```
+
 ### GameServer Creation
 To start and terminate a gameserver you can use the ```GameServer``` class:
 
