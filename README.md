@@ -189,5 +189,8 @@ object ChatRoomClient extends App {
   }
 }
   ```
+  
+## Deployment
+Since this library is based on akka-core and akka-http, reference.conf files must be merged when building fat jars. In order to do so you can use the sbt-assembly plugin https://github.com/sbt/sbt-assembly or follow the akka official guide at https://doc.akka.io/docs/akka/current/additional/packaging.html.
 
 
