@@ -44,10 +44,11 @@ The developer will be provided with high-level support that is game logic indepe
 
 ## Usage
 ### Import
-Add the following line to your build.sbt file
+If you are using sbt add the following line to your build.sbt file
 ```scala
-libraryDependencies += "com.github.scalaomg" % "scala-omg" % "1.0.1"
+libraryDependencies += "com.github.scalaomg" % "scala-omg" % "latest"
 ```
+For other build tools check: https://mvnrepository.com/artifact/com.github.scalaomg/scala-omg/latest 
 
 ### GameServer Creation
 To start and terminate a gameserver you can use the ```GameServer``` class:
