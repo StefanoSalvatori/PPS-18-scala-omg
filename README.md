@@ -4,7 +4,7 @@ A Scala library for online multiplayer games
 [![Build Status](https://travis-ci.com/StefanoSalvatori/PPS-18-scala-omg.svg?branch=master)](https://travis-ci.com/StefanoSalvatori/PPS-18-scala-omg)
 [![License](http://img.shields.io/badge/License-MIT-blue.svg)](https://mit-license.org/)
 [![codecov](https://codecov.io/gh/StefanoSalvatori/PPS-18-scala-omg/branch/master/graph/badge.svg)](https://codecov.io/gh/StefanoSalvatori/PPS-18-scala-omg)
-
+[![version](https://img.shields.io/badge/version-1.0-f39f37)](https://img.shields.io/badge/version-1.0-f39f37)
 ## Description
 
 Scala-omg is a library that ease the development of online multiplayer games based on a client-server infrastructure.

@@ -1,6 +1,6 @@
 name := "scala-omg"
 
-version := "0.1"
+version := "1.0"
 
 // fork in Test := true
 
